@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="homepage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>PetVerse</title>
+    <link rel="icon" href="icon.jpg">
+</head>
+<body>
+    <section class="hero">
+        <nav class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="#">PetVerse</a></div>
+                <div class="nav-icons">
+                    <button class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder="Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="#">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#searchby-pet">Pets</a></li>
+                    <li><a href="#">Products</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+        <div class="hero-content">
+            <h1>Find your perfect pet</h1>
+            <p>Adopt a pet today and give them a forever home</p>
+            <button class="adopt-btn">Adopt now</button>
+        </div>
+    </section>
+    
+    <section id="slideshow">
+        <div class="slideshow-container">
+            <div class="slide fade">
+                <img src="slide1.jpg" alt="slide1">
+                <div class="caption">All of your pet needs at one place</div>
+            </div>
+            <div class="slide fade">
+                <img src="slide2.jpg" alt="slide2">
+                <div class="caption">Find your new life companion and their needs at the same place</div>
+            </div>
+            <div class="slide fade">
+                <img src="slide3.jpg" alt="slide3">
+                <div class="caption">Your place for every type of pet</div>
+            </div>
+            <div class="slide fade">
+                <img src="slide4.jpg" alt="slide4">
+                <div class="caption">Book Veterinarian Appointments for your bud with ease</div>
+            </div>
+            <button class="slideshow-btn prev" onclick="changeSlide(-1)">&#10094;</button>
+            <button class="slideshow-btn next" onclick="changeSlide(1)">&#10095;</button>
+        </div>
+    </section>
+
+    <section id="searchby-pet" class="searchby-pet">
+        <div class="searchby-pet-content">
+            <h1 class="section-title">Search by Pets</h1>
+            <div class="pet-grid">
+                <div class="pet-card">
+                    <img src="dog.jpg" alt="dog">
+                    <h2 class="card-text">Dogs</h2>
+                    <button class="card-button">Explore</button>
+                </div>
+                <div class="pet-card">
+                    <img src="cat.jpg" alt="cat">
+                    <h2 class="card-text">Cats</h2>
+                    <button class="card-button">Explore</button>
+                </div>
+                <div class="pet-card">
+                    <img src="bird.jpg" alt="bird">
+                    <h2 class="card-text">Birds</h2>
+                    <button class="card-button">Explore</button>
+                </div>
+                <div class="pet-card">
+                    <img src="fish.jpg" alt="fish">
+                    <h2 class="card-text">Fishes</h2>
+                    <button class="card-button">Explore</button>
+                </div>
+                <div class="pet-card">
+                    <img src="hamster.jpg" alt="hamster">
+                    <h2 class="card-text">Hamsters</h2>
+                    <button class="card-button">Explore</button>
+                </div>
+            </div>
+        </div>
+    </section>
+        
+    <section class="feature-pets">
+        <div class="feature-pets-content">
+            <h1 class="section-title">Featured Pets</h1>
+            <div class="pet-grid">
+                <div class="feature-pets-card">
+                    <img src="dog1.jpg" alt="pet1">
+                    <h2 class="card-text">Rottweiler</h2>
+                    <p>Age: 2 Months</p>
+                    <p class="price"><strong>₹ 18000</strong></p>
+                    <button class="card-button">Details</button>
+                </div>
+                <div class="feature-pets-card">
+                    <img src="dog2.jpg" alt="pet2">
+                    <h2 class="card-text">Husky</h2>
+                    <p>Age: 1 Year</p>
+                    <p class="price"><strong>₹ 24000</strong></p>
+                    <button class="card-button">Details</button>
+                </div>
+                <div class="feature-pets-card">
+                    <img src="dog3.jpg" alt="pet3">
+                    <h2 class="card-text">Pitbull</h2>
+                    <p>Age: 3 Months</p>
+                    <p class="price"><strong>₹ 20000</strong></p>
+                    <button class="card-button">Details</button>
+                </div>
+                <div class="feature-pets-card">
+                    <img src="cat1.jpg" alt="pet4">
+                    <h2 class="card-text">Siamese Cat</h2>
+                    <p>Age: 1 Year 2 Months</p>
+                    <p class="price"><strong>₹ 5000</strong></p>
+                    <button class="card-button">Details</button>
+                </div>
+                <div class="feature-pets-card">
+                    <img src="cat2.jpg" alt="pet5">
+                    <h2 class="card-text">British Shorthair</h2>
+                    <p>Age: 1 Year 6 Months</p>
+                    <p class="price"><strong>₹ 8000</strong></p>
+                    <button class="card-button">Details</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="feature-prod">
+        <div class="feature-pets-content">
+            <h1 class="section-title">Featured Products</h1>
+            <div class="pet-grid">
+                <div class="feature-pdts-card">
+                    <img src="toy1.jpg" alt="pet1">
+                    <h2 class="card-text">Tug Ball</h2>
+                    <div class="star-rating">
+                        ★★★★★
+                    </div>
+                    <p class="price"><strong>₹ 249</strong></p>
+                    <button class="card-button">Buy</button>
+                </div>
+                <div class="feature-pdts-card">
+                    <img src="toy2.jpg" alt="pet2">
+                    <h2 class="card-text">Rubber Bone</h2>
+                    <div class="star-rating">
+                        ★★★<span style="color: gold;">½</span><span class="empty">★</span>
+                    </div>
+                    <p class="price"><strong>₹ 149</strong></p>
+                    <button class="card-button">Buy</button>
+                </div>
+                <div class="feature-pdts-card">
+                    <img src="food1.jpg" alt="pet3">
+                    <h2 class="card-text">Drools 1.2Kg</h2>
+                    <div class="star-rating">
+                        ★★★★<span class="empty">★</span>
+                    </div>
+                    <p class="price"><strong>₹ 799</strong></p>
+                    <button class="card-button">Buy</button>
+                </div>
+                <div class="feature-pdts-card">
+                    <img src="food2.jpg" alt="pet4">
+                    <h2 class="card-text">Purepet Biscuits</h2>
+                    <div class="star-rating">
+                        ★★★★<span class="empty">★</span>
+                    </div>
+                    <p class="price"><strong>₹ 399</strong></p>
+                    <button class="card-button">Buy</button>
+                </div>
+                <div class="feature-pdts-card">
+                    <img src="acc1.jpg" alt="pet5">
+                    <h2 class="card-text">Dog Collar (Red)</h2>
+                    <div class="star-rating">
+                        ★★★★<span class="empty">★</span>
+                    </div>
+                    <p class="price"><strong>₹ 199</strong></p>
+                    <button class="card-button">Buy</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section id="about" class="about">
+        <div class="container">
+            <h2 class="section-title">About Us</h1>
+            <p class="about-text">
+                Welcome to <strong>PetVerse</strong>, your trusted marketplace for all things pets!
+                Whether you're looking to find a loving home for a pet, shop for the best food and accessories,
+                or book professional services, we've got you covered.
+            </p>
+            <p class="about-text">
+                At <strong>PetVerse</strong>, we aim to build a vibrant community of pet lovers by making it easier than ever to care for and connect with pets.
+                Our vision is to ensure every pet finds a loving home and every pet parent has access to reliable services and products.
+            </p>
+            <h3 class="features-title">Our Features</h3>
+            <ul class="features-list">
+                <li><span class="point">✔ &nbsp</span><strong> Adoption & Sale:</strong> Buy, sell, or adopt pets through a safe and verified platform.</li>
+                <li><span class="point">✔ &nbsp</span><strong> Shop Essentials:</strong> Find premium pet food, toys, and accessories tailored to your pet's needs.</li>
+                <li><span class="point">✔ &nbsp</span><strong> Book Services:</strong> Schedule appointments with trusted vets, trainers, groomers, and more.</li>
+                <li><span class="point">✔ &nbsp</span><strong> Join Events:</strong> Discover and participate in exciting pet-friendly events in your area.</li>
+            </ul>
+        </div>
+    </section>
+    
+    <section class="testimonials">
+        <div class="testimonial-section">
+            <h2>What Our Customers Say</h2>
+            <div class="testimonial-cards">
+            <div class="testimonial">
+                <p>"Great service! My pet loved the food!"</p>
+                <span>- John Doe</span>
+            </div>
+            <div class="testimonial">
+                <p>"Booking a vet was super easy and hassle-free!"</p>
+                <span>- Sarah Lee</span>
+            </div>
+            <div class="testimonial">
+                <p>"The adoption process was smooth and transparent."</p>
+                <span>- Emily Clark</span>
+            </div>
+            <div class="testimonial">
+                <p>"Great service! My pet loved the food!"</p>
+                <span>- John Doe</span>
+            </div>
+            <div class="testimonial">
+                <p>"Booking a vet was super easy and hassle-free!"</p>
+                <span>- Sarah Lee</span>
+            </div>  
+            </div>
+        </div>
+    </section>
+    
+    <section class="call-to-action">
+        <h2>Ready to Explore the World of Pets?</h2>
+        <p>Whether you are looking for a new furry friend, shopping for essentials, or booking pet services, we're here to help!</p>
+        <div class="cta-buttons">
+            <button class="cta-btn">Join Now</button>
+            <button class="cta-btn">Explore pets</button>
+        </div>
+    </section>
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+        </div>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
