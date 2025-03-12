@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PetVerse</title>
+    <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="/images/favi-modified.png">
+</head>
+<body>
+    <div class="login-form-container">
+        <h1 id="logo"><i class="fa fa-paw"></i> PetVerse</h1>
+        <div class="login-header">
+            <h2>Welcome Back!</h2>
+            <p>Sign in to continue your pet journey</p>
+        </div>
+        <form>
+            <div class="input-group">
+                <input type="email" id="email" placeholder=" " required>
+                <label for="email">Email Address</label>
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder=" " required>
+                <label for="password">Password</label>
+            </div>
+
+            <div class="options-group">
+                <label class="remember-me">
+                    <input type="checkbox">
+                    Remember me
+                </label>
+                <a href="#" class="forgot-password">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="login-button">Sign In</button>
+            <div class="divider">
+                <span>Or continue with</span>
+            </div>
+            <div class="social-login">
+                <button type="button" class="social-button google">
+                    <i class="fab fa-google"></i>
+                </button>
+                <button type="button" class="social-button facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+                <button type="button" class="social-button apple">
+                    <i class="fab fa-apple"></i>
+                </button>
+            </div>
+
+            <div class="signup-link">
+                New to PetVerse? <a href="/signup">Sign up</a>
+            </div>
+        </form>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
