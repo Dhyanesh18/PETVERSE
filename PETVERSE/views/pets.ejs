@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetVerse - <%= categoryTitle %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/products.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="#"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="nav-icons">
+                    <button class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/pets">Pets</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/products/petfood">Pet Food</a></li>
+                            <li><a href="/products/toys">Toys</a></li>
+                            <li><a href="/products/accessories">Accessories</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#">Services</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Filters Sidebar -->
+        <div class="filters-sidebar">
+            <h2>Filters</h2>
+            
+            <!-- Category Filter -->
+            <div class="filter-section">
+                <h3>Category</h3>
+                <div class="filter-options">
+                    <% categoryFilters.forEach(filter => { %>
+                        <div class="filter-option">
+                            <input type="checkbox" id="<%= filter.id %>" name="category" value="<%= filter.value %>">
+                            <label for="<%= filter.id %>"><%= filter.label %></label>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+            
+            <!-- Price Filter -->
+            <div class="filter-section">
+                <h3>Price Range</h3>
+                <div class="price-filter">
+                    <input type="number" id="min-price" placeholder="Min" min="0">
+                    <span>to</span>
+                    <input type="number" id="max-price" placeholder="Max" min="0">
+                    <button id="apply-price">Apply</button>
+                </div>
+            </div>
+            
+            <!-- Dynamic Filters based on category type -->
+            <% if (dynamicFilters && dynamicFilters.length > 0) { %>
+                <% dynamicFilters.forEach(section => { %>
+                    <div class="filter-section">
+                        <h3><%= section.title %></h3>
+                        <div class="filter-options">
+                            <% section.options.forEach(option => { %>
+                                <div class="filter-option">
+                                    <input type="checkbox" id="<%= option.id %>" name="<%= section.name %>" value="<%= option.value %>">
+                                    <label for="<%= option.id %>"><%= option.label %></label>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+            
+            <button class="clear-filters">Clear All Filters</button>
+        </div>
+
+        <!-- Products Display Area -->
+        <div class="products-container">
+            <div class="products-header">
+                <h1><%= categoryTitle %></h1>
+                <select class="sort-dropdown">
+                    <option value="popular">Most Popular</option>
+                    <option value="newest">Newest First</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="age-young">Age: Youngest First</option>
+                </select>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="products-grid">
+                <% pets.forEach(pet => { %>
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="<%= pet.image %>" alt="<%= pet.name %>">
+                        </div>
+                        <div class="product-info">
+                            <h3 class="product-name"><%= pet.name %></h3>
+                            <p class="product-description"><%= pet.description %></p>
+                            <div class="product-price">₹<%= pet.price.toFixed(2) %></div>
+                            <div class="pet-details">
+                                <span class="pet-age"><i class="fas fa-birthday-cake"></i> <%= pet.age %></span>
+                                <span class="pet-gender">
+                                    <% if (pet.gender === 'male') { %>
+                                        <i class="fas fa-mars"></i> Male
+                                    <% } else { %>
+                                        <i class="fas fa-venus"></i> Female
+                                    <% } %>
+                                </span>
+                            </div>
+                            <br/>
+                            <div class="product-action">
+                                <button onclick="window.location.href='/pets/detail/<%= pet.id %>'" class="add-to-cart">View Details</button>
+                                <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination">
+                <button><i class="fas fa-chevron-left"></i></button>
+                <button class="active">1</button>
+                <button>2</button>
+                <button>3</button>
+                <button>...</button>
+                <button>10</button>
+                <button><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        const dropdownToggle = document.querySelector('.dropdown-toggle');
+const dropdownMenu = document.querySelector('.dropdown-menu');
+
+// Toggle dropdown when the toggle button is clicked
+dropdownToggle.addEventListener('click', function(event) {
+    event.stopPropagation(); // Prevent this click from triggering the document click handler
+    dropdownMenu.classList.toggle('show');
+});
+
+// Close dropdown when clicking anywhere else on the page
+document.addEventListener('click', function(event) {
+    // Check if click is outside of the dropdown
+    if (!event.target.closest('.dropdown')) {
+        // If dropdown is open, close it
+        if (dropdownMenu.classList.contains('show')) {
+            dropdownMenu.classList.remove('show');
+        }
+    }
+});
+
+        // Filter functionality
+        document.querySelector('.clear-filters').addEventListener('click', function() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('min-price').value = '';
+            document.getElementById('max-price').value = '';
+        });
+    </script>
+</body>
+</html>
