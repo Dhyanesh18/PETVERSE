@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Provider Signup - PetVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="favi-modified.png">
+    <link rel="stylesheet" href="/css/signup.css">
+    <link rel="stylesheet" href="/css/fileupload.css">
+    <style>
+        .input-group {
+            position: relative;
+            margin-top: 1.5rem; 
+            margin-bottom: 1rem;
+        }
+        
+        input {
+            margin-top: -5px;
+        }
+
+        #stypeclass {
+            margin-top: 38px;
+        }
+
+        #stypelabel {
+            margin-top: 10px;
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: white;
+            padding: 0 5px;
+            font-size: 0.9rem;
+            color: #666;
+            z-index: 2;
+            margin-bottom: 2px;
+        }
+
+        #service-type {
+            padding: 12px 15px;
+        }
+        
+        .input-group select {
+            padding-top: 16px; 
+        }
+
+        form{
+            margin-top: -35px;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-form-container">
+        <div class="header">
+            <h1 id="logo"><i class="fa fa-paw"></i> PetVerse</h1>
+            <div class="login-header"> 
+                <h2>Service Provider Registration</h2>
+                <p>Create your service provider account to offer services on PetVerse</p>
+            </div>
+        </div>
+        
+        <form id="signup-form" method="POST" action="/signup/service-provider" enctype="multipart/form-data">
+            <input type="hidden" name="userType" value="service-provider">
+            
+            <div class="form-container">
+                <div class="left-form">
+                    <div class="input-group">
+                        <input type="email" id="email" name="email" placeholder=" " required>
+                        <label for="email">Email Address<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" placeholder=" " required>
+                        <label for="password">Password<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="confirm-password" name="confirmPassword" placeholder=" " required>
+                        <label for="confirm-password">Confirm Password<span class="required">*</span></label>
+                    </div>
+                    <div id="stypeclass" class="input-group">
+                        <label id="stypelabel" for="service-type">Service Type<span class="required">*</span></label>
+                        <select id="service-type" name="serviceType" required>
+                            <option value="" disabled selected>Select your service</option>
+                            <option value="veterinarian">Veterinarian</option>
+                            <option value="trainer">Pet Trainer</option>
+                            <option value="pet-sitter">Pet Sitter</option>
+                            <option value="groomer">Pet Groomer</option>
+                            <option value="breeder">Breeder</option>
+                        </select>
+                    </div>
+                    <div class="input-group file-upload-group">
+                        <div class="file-input-container">
+                            <input type="file" id="certificate" name="certificate" accept=".pdf,.doc,.docx" required>
+                            <span class="file-input-label">Certificate</span>
+                            <span class="file-name">Upload your certificate</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="right-form">
+                    <div class="input-group">
+                        <input type="text" id="username" name="username" placeholder=" " required>
+                        <label for="username">Username<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="phone-number" name="phoneNumber" placeholder=" " required>
+                        <label for="phone-number">Phone Number<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="full-name" name="fullName" placeholder=" " required>
+                        <label for="full-name">Full Name<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="business-address" name="businessAddress" placeholder=" " required>
+                        <label for="business-address">Business Address<span class="required">*</span></label>
+                    </div>
+                    
+                </div>
+            </div>
+            
+            <div class="options-group">
+                <label class="terms-and-conditions">
+                    <input type="checkbox" id="agree" name="agree" required>
+                    I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a>
+                </label>
+            </div>
+            
+            <button type="submit" class="signup-button">Register as Service Provider</button>
+            <div class="login-link">
+                Already have an account? <a href="/login">Log In</a>
+            </div>
+        </form>
+    </div>
+    <script src="/js/signup-service.js"></script>
+    <script>
+        document.getElementById('certificate').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
+            document.querySelector('.file-name').textContent = fileName;
+        });
+    </script>
+</body>
+</html>

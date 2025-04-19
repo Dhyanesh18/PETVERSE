@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= product.name %> | Pet Shop</title>
+  <link rel="stylesheet" href="/css/detail.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+  <!-- Header space -->
+  <header class="header" id="header">
+    <nav id="navbar" class="navbar">
+        <div class="nav-content">
+            <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+            <div class="nav-icons">
+                <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
+            </div>
+            <div class="search">
+                <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                <button class="search-btn"><i class="fa fa-search"></i></button>
+            </div>
+            <button class="hamburger" id="hamburger">
+                <i class="fa fa-bars"></i>
+            </button>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/pets">Pets</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/products/petfood">Pet Food</a></li>
+                        <li><a href="/products/toys">Toys</a></li>
+                        <li><a href="/products/accessories">Accessories</a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/services">Services</a></li>
+                        <li><a href="/mate">PetMate</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+  <!-- Main Product Details Section -->
+  <div class="container mx-auto p-4">
+    <div class="product-detail flex flex-col md:flex-row gap-8">
+      <!-- Product Image -->
+      <div class="product-image w-full md:w-1/2 p-4">
+        <img src="<%= product.image %>" alt="<%= product.name %>" class="w-full rounded-lg shadow-lg">
+      </div>
+
+      <!-- Product Information -->
+      <div class="product-info w-full md:w-1/2 p-4">
+        <h1 class="text-3xl font-bold mb-4"><%= product.name %></h1>
+        <div class="rating flex items-center mb-2">
+          <% for(let i = 1; i <= 5; i++) { %>
+            <% if(i <= Math.floor(product.rating)) { %>
+              <i class="fas fa-star text-yellow-500"></i>
+            <% } else if(i <= product.rating + 0.5) { %>
+              <i class="fas fa-star-half-alt text-yellow-500"></i>
+            <% } else { %>
+              <i class="far fa-star text-yellow-500"></i>
+            <% } %>
+          <% } %>
+          <span class="ml-2">(<%= product.reviewCount %> reviews)</span>
+        </div>
+
+        <div class="price-section my-4">
+          <% if(product.regularPrice && product.regularPrice > product.price) { %>
+            <div class="original-price text-gray-500 line-through">₹<%= product.regularPrice.toLocaleString() %></div>
+            <div class="discount-badge bg-yellow-400 inline-block px-2 py-1 rounded text-sm">SAVE <%= Math.round(100 - (product.price/product.regularPrice * 100)) %>%</div>
+          <% } %>
+          <div class="current-price text-3xl font-bold">₹<%= product.price.toLocaleString() %></div>
+        </div>
+
+        <div class="lightning-deal mb-4">
+          <% if(product.isLightningDeal) { %>
+            <div class="deal-badge bg-red-600 text-white px-3 py-1 rounded inline-flex items-center">
+              <i class="fas fa-bolt mr-2"></i> Lightning Deal
+            </div>
+          <% } %>
+        </div>
+
+        <div class="delivery-info mb-4">
+          <div class="free-delivery flex items-center mb-2">
+            <i class="fas fa-truck text-blue-500 mr-2"></i> Free Delivery
+          </div>
+          <div class="delivery-estimate text-gray-600">
+            Estimated delivery: <%= product.deliveryEstimate || '2-4 days' %>
+          </div>
+        </div>
+
+        <div class="product-description my-4">
+          <p><%= product.description %></p>
+        </div>
+
+        <div class="actions flex flex-col md:flex-row gap-4 mt-6">
+          <button class="add-to-cart bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded flex-1 flex items-center justify-center">
+            <i class="fas fa-shopping-cart mr-2"></i> Add to Cart
+          </button>
+          <button class="wishlist-btn px-4 py-3 rounded">
+            <i class="far fa-heart"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service Features -->
+    <div class="service-features my-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="feature-card bg-white p-4 rounded-lg shadow-sm flex flex-col items-center">
+          <div class="icon-container mb-2">
+            <i class="fas fa-truck text-2xl"></i>
+          </div>
+          <div class="feature-title font-semibold">Free Delivery</div>
+        </div>
+        
+        <div class="feature-card bg-white p-4 rounded-lg shadow-sm flex flex-col items-center">
+          <div class="icon-container mb-2">
+            <i class="fas fa-ban text-2xl"></i>
+          </div>
+          <div class="feature-title font-semibold">No Returns & Exchange</div>
+        </div>
+        
+        <div class="feature-card bg-white p-4 rounded-lg shadow-sm flex flex-col items-center">
+          <div class="icon-container mb-2">
+            <i class="fas fa-hand-holding-usd text-2xl"></i>
+          </div>
+          <div class="feature-title font-semibold">Pay On Delivery</div>
+        </div>
+        
+        <div class="feature-card bg-white p-4 rounded-lg shadow-sm flex flex-col items-center">
+          <div class="icon-container mb-2">
+            <i class="fas fa-stethoscope text-2xl"></i>
+          </div>
+          <div class="feature-title font-semibold">Free Check Up</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Section -->
+    <div class="reviews my-8">
+      <h2 class="text-2xl font-bold mb-4 border-b pb-2">Review</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="rate-product p-6 bg-white rounded-lg shadow-sm">
+          <h3 class="text-xl font-semibold mb-4">Rate this Product</h3>
+          <div class="star-rating flex mb-4">
+            <% for(let i = 1; i <= 5; i++) { %>
+              <i class="far fa-star text-xl text-yellow-500 cursor-pointer hover:text-yellow-600 mr-1"></i>
+            <% } %>
+          </div>
+          <textarea class="w-full border rounded-lg p-3" rows="4" placeholder="Write your feedback..."></textarea>
+          <button class="mt-4 bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded">Submit</button>
+        </div>
+        
+        <div class="customer-reviews p-6 bg-white rounded-lg shadow-sm">
+          <h3 class="text-xl font-semibold mb-4">Customer Reviews</h3>
+          <% if(product.reviews && product.reviews.length > 0) { %>
+            <% product.reviews.forEach(function(review) { %>
+              <div class="review-item mb-4 pb-4 border-b">
+                <div class="reviewer-name font-medium"><%= review.name %></div>
+                <div class="review-rating flex items-center mb-1">
+                  <% for(let i = 1; i <= 5; i++) { %>
+                    <i class="<%= i <= review.rating ? 'fas' : 'far' %> fa-star text-yellow-500 text-sm"></i>
+                  <% } %>
+                  <span class="text-gray-500 text-sm ml-2"><%= review.date %></span>
+                </div>
+                <div class="review-text text-gray-700"><%= review.text %></div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <p class="text-gray-500">No reviews yet. Be the first to review this product!</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Similar Products Section -->
+    <div class="similar-products my-8">
+      <h2 class="text-2xl font-bold mb-4 border-b pb-2">Similar Products</h2>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <% similarProducts.forEach(function(product) { %>
+          <div class="product-card bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="product-image p-4 flex justify-center">
+              <img src="<%= product.image %>" alt="<%= product.name %>" class="h-48 object-contain">
+            </div>
+            <div class="product-info p-4">
+              <h3 class="text-lg font-semibold mb-1"><%= product.name %></h3>
+              <p class="text-gray-600 text-sm mb-2"><%= product.description.substring(0, 60) %>...</p>
+              <div class="price font-bold text-lg mb-2">₹<%= product.price.toLocaleString() %></div>
+              <div class="rating flex items-center mb-3">
+                <% for(let i = 1; i <= 5; i++) { %>
+                  <i class="<%= i <= Math.floor(product.rating) ? 'fas' : (i <= product.rating + 0.5 ? 'fas fa-star-half-alt' : 'far') %> fa-star text-yellow-500 text-sm"></i>
+                <% } %>
+                <span class="text-gray-500 text-sm ml-1">(<%= product.reviewCount %>)</span>
+              </div>
+              <div class="actions flex gap-2">
+                <button class="add-to-cart bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm flex-1">
+                  Add to Cart
+                </button>
+                <button class="wishlist-btn px-2 py-2 rounded">
+                  <i class="far fa-heart"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer space -->
+  <footer id="footer">
+    <div class="footer-container">
+        <div class="footer-logo">
+            <h2>PetVerse</h2>
+            <p>Your one-stop destination for all pet needs</p>
+        </div>
+        <div class="footer-links">
+            <h3>Quick Links</h3>
+            <ul>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Shop</a></li>
+                <li><a href="#">Services</a></li>
+                <li><a href="#">Events</a></li>
+                <li><a href="#">Contact Us</a></li>
+            </ul>
+        </div>
+        <div class="footer-social">
+            <h3>Follow Us</h3>
+            <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+            <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+            <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+    </div>
+  </footer>
+  <script>
+    // Get all dropdown toggles and menus
+    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+    const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+
+    // Add click event to each dropdown toggle
+    dropdownToggles.forEach((toggle, index) => {
+        toggle.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent this click from triggering the document click handler
+
+            // Close all other dropdown menus first
+            dropdownMenus.forEach((menu, menuIndex) => {
+                if (menuIndex !== index) {
+                    menu.classList.remove('show');
+                }
+            });
+    
+        // Toggle the current dropdown menu
+            const currentDropdownMenu = this.nextElementSibling;
+            currentDropdownMenu.classList.toggle('show');
+        });
+    });
+
+// Close all dropdowns when clicking anywhere else on the page
+    document.addEventListener('click', function(event) {
+        // Check if click is outside of any dropdown
+        if (!event.target.closest('.dropdown')) {
+        // Close all dropdown menus
+            dropdownMenus.forEach(menu => {
+                if (menu.classList.contains('show')) {
+                    menu.classList.remove('show');
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

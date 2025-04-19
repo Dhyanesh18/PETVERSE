@@ -1,0 +1,502 @@
+<!-- views/admin.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PetVerse Admin Panel</title>
+
+  <!-- Link to CSS -->
+  <link rel="stylesheet" href="/css/admin.css">
+  
+  <!-- Font Awesome (for icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" id="header">
+      <nav id="navbar" class="navbar">
+          <div class="nav-content">
+              <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+              <div class="nav-icons">
+                  <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                  <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
+              </div>
+              <div class="search">
+                  <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                  <button class="search-btn"><i class="fa fa-search"></i></button>
+              </div>
+              <button class="hamburger" id="hamburger">
+                  <i class="fa fa-bars"></i>
+              </button>
+              <ul class="nav-links">
+                  <li><a href="/">Home</a></li>
+                  <li><a href="/about">About</a></li>
+                  <li><a href="/pets">Pets</a></li>
+                  <li class="dropdown">
+                      <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                      <ul class="dropdown-menu">
+                          <li><a href="/products/petfood">Pet Food</a></li>
+                          <li><a href="/products/toys">Toys</a></li>
+                          <li><a href="/products/accessories">Accessories</a></li>
+                      </ul>
+                  </li>
+                  <li class="dropdown">
+                      <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
+                      <ul class="dropdown-menu">
+                          <li><a href="/services">Services</a></li>
+                          <li><a href="/mate">PetMate</a></li>
+                      </ul>
+                  </li>
+              </ul>
+          </div>
+      </nav>
+  </header>
+    <!-- Main Admin content -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <h2>Dashboard</h2>
+            <ul class="admin-menu">
+                <li class="active" data-tab="pending"><i class="fas fa-clock"></i> Pending Applications</li>
+                <li data-tab="approved"><i class="fas fa-check-circle"></i> Approved</li>
+                <li data-tab="rejected"><i class="fas fa-times-circle"></i> Rejected</li>
+                <li data-tab="all"><i class="fas fa-list"></i> All Applications</li>
+            </ul>
+            
+            <h2>Filters</h2>
+            <div class="filter-section">
+                <h3>Application Type</h3>
+                <div class="filter-options">
+                    <div class="filter-option">
+                        <input type="checkbox" class="filter-checkbox" name="type" value="pet" id="pet" checked>
+                        <label for="pet">Pets</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" class="filter-checkbox" name="type" value="product" id="product" checked>
+                        <label for="product">Products</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" class="filter-checkbox" name="type" value="service" id="service" checked>
+                        <label for="service">Services</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="filter-section">
+                <h3>Date Range</h3>
+                <div class="date-filter">
+                    <input type="date" id="start-date" placeholder="Start Date">
+                    <input type="date" id="end-date" placeholder="End Date">
+                    <button id="apply-date" class="filter-btn">Apply</button>
+                </div>
+            </div>
+            
+            <button class="clear-filters" id="clear-filters">Clear All Filters</button>
+        </div>
+
+        <!-- Admin Content -->
+        <div class="admin-content">
+            <h1 class="page-title">Admin Dashboard</h1>
+            
+            <!-- Success Message Container -->
+            <div id="success-message-container"></div>
+            
+            <!-- Stats Summary -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <i class="fas fa-clock stat-icon pending-icon"></i>
+                    <div class="stat-info">
+                        <h3>Pending</h3>
+                        <p class="stat-number" id="pending-count">15</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-check-circle stat-icon approved-icon"></i>
+                    <div class="stat-info">
+                        <h3>Approved</h3>
+                        <p class="stat-number" id="approved-count">42</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-times-circle stat-icon rejected-icon"></i>
+                    <div class="stat-info">
+                        <h3>Rejected</h3>
+                        <p class="stat-number" id="rejected-count">7</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-list stat-icon total-icon"></i>
+                    <div class="stat-info">
+                        <h3>Total</h3>
+                        <p class="stat-number" id="total-count">64</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Application Content Tabs -->
+            <div class="tab-content">
+                <!-- Pending Applications Tab (default active) -->
+                <div class="tab-pane active" id="pending-tab">
+                    <h2 class="tab-title">Pending Applications</h2>
+                    <div class="applications-list">
+                        <% pendingApplications.forEach(application => { %>
+                            <div class="application-card" data-id="<%= application.id %>" data-type="<%= application.type %>">
+                                <div class="application-header">
+                                    <span class="application-type <%= application.type %>"><%= application.type %></span>
+                                    <span class="application-date"><%= application.date %></span>
+                                </div>
+                                <div class="application-body">
+                                    <div class="application-info">
+                                        <h3 class="application-name"><%= application.name %></h3>
+                                        <p class="application-provider">
+                                            <i class="fa fa-user"></i> <%= application.provider.name %>
+                                        </p>
+                                        <p class="application-location">
+                                            <i class="fa fa-map-marker-alt"></i> <%= application.location %>
+                                        </p>
+                                        <p class="application-description"><%= application.description %></p>
+                                        
+                                        <% if (application.type === 'service') { %>
+                                            <div class="application-details">
+                                                <p class="application-category">
+                                                    <strong>Category:</strong> <%= application.category %>
+                                                </p>
+                                                <p class="application-price">
+                                                    <strong>Price:</strong> ₹<%= application.price %>
+                                                </p>
+                                            </div>
+                                        <% } else if (application.type === 'product') { %>
+                                            <div class="application-details">
+                                                <p class="application-category">
+                                                    <strong>Category:</strong> <%= application.category %>
+                                                </p>
+                                                <p class="application-price">
+                                                    <strong>Price:</strong> ₹<%= application.price %>
+                                                </p>
+                                                <p class="application-stock">
+                                                    <strong>Stock:</strong> <%= application.stock %> units
+                                                </p>
+                                            </div>
+                                        <% } else { %>
+                                            <div class="application-details">
+                                                <p class="application-breed">
+                                                    <strong>Breed:</strong> <%= application.breed || 'N/A' %>
+                                                </p>
+                                                <p class="application-age">
+                                                    <strong>Age:</strong> <%= application.age || 'N/A' %>
+                                                </p>
+                                                <p class="application-price">
+                                                    <strong>Price:</strong> ₹<%= application.price %>
+                                                </p>
+                                            </div>
+                                        <% } %>
+                                        
+                                        <div class="application-actions">
+                                            <button class="approve-btn" onclick="approveApplication('<%= application.id %>')">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                            <button class="reject-btn" onclick="rejectApplication('<%= application.id %>')">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                            <button class="view-details-btn" onclick="viewApplicationDetails('<%= application.id %>')">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </button>
+                                            <button class="view-credentials-btn" onclick="viewCredentials('<%= application.provider.id %>')">
+                                                <i class="fas fa-id-card"></i> View Credentials
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                    
+                    <!-- Improved Admin Profile Section (without image) -->
+                    <div class="admin-profile-section">
+                        <div class="admin-profile-card">
+                            <div class="admin-profile-info">
+                                <h2>John Doe</h2>
+                                <p><strong>Username:</strong> johndoe</p>
+                                <p><strong>Email:</strong> john.doe@example.com</p>
+                                <p><strong>Phone:</strong> 123-456-7890</p>
+                                <p><strong>Role:</strong> Administrator</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Approved Applications Tab -->
+                <div class="tab-pane" id="approved-tab">
+                    <h2 class="tab-title">Approved Applications</h2>
+                    <div class="applications-list">
+                        <% approvedApplications.forEach(application => { %>
+                            <div class="application-card" data-id="<%= application.id %>" data-type="<%= application.type %>">
+                                <div class="application-header">
+                                    <span class="application-type <%= application.type %>"><%= application.type %></span>
+                                    <span class="application-date"><%= application.date %></span>
+                                    <span class="approval-date">Approved on: <%= application.approvalDate %></span>
+                                </div>
+                                <div class="application-body">
+                                    <div class="application-info">
+                                        <h3 class="application-name"><%= application.name %></h3>
+                                        <p class="application-provider">
+                                            <i class="fa fa-user"></i> <%= application.provider.name %>
+                                        </p>
+                                        <p class="application-description"><%= application.description %></p>
+                                        
+                                        <div class="application-actions">
+                                            <button class="revoke-btn" onclick="revokeApproval('<%= application.id %>')">
+                                                <i class="fas fa-undo"></i> Revoke Approval
+                                            </button>
+                                            <button class="view-details-btn" onclick="viewApplicationDetails('<%= application.id %>')">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </button>
+                                            <button class="view-credentials-btn" onclick="viewCredentials('<%= application.provider.id %>')">
+                                                <i class="fas fa-id-card"></i> View Credentials
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+                
+                <!-- Rejected Applications Tab -->
+                <div class="tab-pane" id="rejected-tab">
+                    <h2 class="tab-title">Rejected Applications</h2>
+                    <div class="applications-list">
+                        <% rejectedApplications.forEach(application => { %>
+                            <div class="application-card" data-id="<%= application.id %>" data-type="<%= application.type %>">
+                                <div class="application-header">
+                                    <span class="application-type <%= application.type %>"><%= application.type %></span>
+                                    <span class="application-date"><%= application.date %></span>
+                                    <span class="rejection-date">Rejected on: <%= application.rejectionDate %></span>
+                                </div>
+                                <div class="application-body">
+                                    <div class="application-info">
+                                        <h3 class="application-name"><%= application.name %></h3>
+                                        <p class="application-provider">
+                                            <i class="fa fa-user"></i> <%= application.provider.name %>
+                                        </p>
+                                        <p class="rejection-reason">Reason: <%= application.rejectionReason %></p>
+                                        
+                                        <div class="application-actions">
+                                            <button class="reconsider-btn" onclick="reconsiderApplication('<%= application.id %>')">
+                                                <i class="fas fa-redo"></i> Reconsider
+                                            </button>
+                                            <button class="view-details-btn" onclick="viewApplicationDetails('<%= application.id %>')">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </button>
+                                            <button class="view-credentials-btn" onclick="viewCredentials('<%= application.provider.id %>')">
+                                                <i class="fas fa-id-card"></i> View Credentials
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+                
+                <!-- All Applications Tab -->
+                <div class="tab-pane" id="all-tab">
+                    <h2 class="tab-title">All Applications</h2>
+                    <div class="applications-list">
+                        <% allApplications.forEach(application => { %>
+                            <div class="application-card" data-id="<%= application.id %>" data-type="<%= application.type %>">
+                                <div class="application-header">
+                                    <span class="application-type <%= application.type %>"><%= application.type %></span>
+                                    <span class="application-status <%= application.status.toLowerCase() %>">
+                                        <i class="fas fa-<%= application.status === 'Pending' ? 'clock' : (application.status === 'Approved' ? 'check-circle' : 'times-circle') %>"></i>
+                                        <%= application.status %>
+                                    </span>
+                                    <span class="application-date"><%= application.date %></span>
+                                </div>
+                                <div class="application-body">
+                                    <div class="application-info">
+                                        <h3 class="application-name"><%= application.name %></h3>
+                                        <p class="application-provider">
+                                            <i class="fa fa-user"></i> <%= application.provider.name %>
+                                        </p>
+                                        <p class="application-description"><%= application.description %></p>
+                                        
+                                        <div class="application-actions">
+                                            <% if (application.status === 'Pending') { %>
+                                                <button class="approve-btn" onclick="approveApplication('<%= application.id %>')">
+                                                    <i class="fas fa-check"></i> Approve
+                                                </button>
+                                                <button class="reject-btn" onclick="rejectApplication('<%= application.id %>')">
+                                                    <i class="fas fa-times"></i> Reject
+                                                </button>
+                                            <% } else if (application.status === 'Approved') { %>
+                                                <button class="revoke-btn" onclick="revokeApproval('<%= application.id %>')">
+                                                    <i class="fas fa-undo"></i> Revoke Approval
+                                                </button>
+                                            <% } else { %>
+                                                <button class="reconsider-btn" onclick="reconsiderApplication('<%= application.id %>')">
+                                                    <i class="fas fa-redo"></i> Reconsider
+                                                </button>
+                                            <% } %>
+                                            <button class="view-details-btn" onclick="viewApplicationDetails('<%= application.id %>')">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </button>
+                                            <button class="view-credentials-btn" onclick="viewCredentials('<%= application.provider.id %>')">
+                                                <i class="fas fa-id-card"></i> View Credentials
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Application Detail Modal -->
+    <div class="modal" id="application-detail-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">Application Details</h2>
+            <div class="modal-body" id="application-detail-content">
+                <!-- Application details will be loaded here via JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button class="close-btn">Close</button>
+                <div class="modal-actions" id="modal-action-buttons">
+                    <!-- Action buttons will be loaded here via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rejection Reason Modal -->
+    <div class="modal" id="rejection-reason-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">Rejection Reason</h2>
+            <div class="modal-body">
+                <p>Please provide a reason for rejection:</p>
+                <textarea id="rejection-reason" rows="4" placeholder="Enter rejection reason..."></textarea>
+                <input type="hidden" id="rejection-application-id" value="">
+            </div>
+            <div class="modal-footer">
+                <button class="cancel-btn">Cancel</button>
+                <button class="confirm-reject-btn" id="confirm-reject-btn">
+                    <i class="fas fa-times"></i> Confirm Rejection
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Credentials Modal -->
+    <div class="modal" id="credentials-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 class="modal-title">Provider Credentials</h2>
+            <div class="modal-body" id="credentials-content">
+                <div class="credentials-info">
+                    <div class="credential-section">
+                        <h3>Personal Information</h3>
+                        <p><strong>Full Name:</strong> <span id="credential-name">...</span></p>
+                        <p><strong>Email:</strong> <span id="credential-email">...</span></p>
+                        <p><strong>Phone:</strong> <span id="credential-phone">...</span></p>
+                        <p><strong>Address:</strong> <span id="credential-address">...</span></p>
+                    </div>
+                    
+                    <div class="credential-section">
+                        <h3>Business Details</h3>
+                        <p><strong>Business Name:</strong> <span id="credential-business-name">...</span></p>
+                        <p><strong>Registration Number:</strong> <span id="credential-reg-number">...</span></p>
+                        <p><strong>Years in Business:</strong> <span id="credential-years">...</span></p>
+                    </div>
+                    
+                    <div class="credential-section">
+                        <h3>Documents</h3>
+                        <div class="document-links">
+                            <a href="#" class="document-link">ID Proof</a>
+                            <a href="#" class="document-link">Business License</a>
+                            <a href="#" class="document-link">Tax Certificate</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="close-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <!-- JS -->
+    <script src="/js/admin.js"></script>
+    <script>
+      // Get all dropdown toggles and menus
+      const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+      const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+
+// Add click event to each dropdown toggle
+        dropdownToggles.forEach((toggle, index) => {
+        toggle.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent this click from triggering the document click handler
+      
+      // Close all other dropdown menus first
+          dropdownMenus.forEach((menu, menuIndex) => {
+            if (menuIndex !== index) {
+              menu.classList.remove('show');
+            }
+        });
+      
+      // Toggle the current dropdown menu
+        const currentDropdownMenu = this.nextElementSibling;
+        currentDropdownMenu.classList.toggle('show');
+      });
+    });
+
+  // Close all dropdowns when clicking anywhere else on the page
+      document.addEventListener('click', function(event) {  
+      // Check if click is outside of any dropdown
+      if (!event.target.closest('.dropdown')) {
+      // Close all dropdown menus
+      dropdownMenus.forEach(menu => {
+          if (menu.classList.contains('show')) {
+              menu.classList.remove('show');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle || 'Shopping Cart' %> - PetVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="/css/Products.css">
+    <link rel="stylesheet" href="/css/cart.css">
+</head>
+
+<body>
+    <header class="header" id="header">
+        <nav id="navbar" class="navbar" style="background-color: black;">
+            <div class="nav-content">
+                <div class="logo"><a href="/">PetVerse</a></div>
+                <div class="nav-icons">
+                    <button class="icon-btn cart-icon" id="cartIcon">
+                        <i class="fa fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount"  style="font-size: small;background-color: #FF6B01;border-radius: 5px; width: 15px;position: absolute;">0</span>
+                    </button>
+                    <button onclick="window.location.href='/login'" class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder="Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/pets">Pets</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/products/petfood">Pet Food</a></li>
+                            <li><a href="/products/toys">Toys</a></li>
+                            <li><a href="/products/accessories">Accessories</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/services">Services</a></li>
+                            <li><a href="/mate">PetMate</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="cart-container">
+        <div class="cart-grid">
+            <div id="cartItems">
+                <!-- Cart items will be dynamically inserted here by JavaScript -->
+                <div class="loading-cart">Loading cart items...</div>
+            </div>
+
+            <div class="cart-summary">
+                <h2>Order Summary</h2>
+                <div class="summary-row">
+                    <span>Items</span>
+                    <span id="itemCount">0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span>FREE</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span>₹<span id="cartTotal">0</span></span>
+                </div>
+                <a href="/checkout" style="color: unset;text-decoration: unset;"> <button
+                        class="checkout-btn">Proceed to Checkout</button>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Convert price string to number
+        function priceToNumber(priceStr) {
+            if (!priceStr) return 0; // Handle undefined or null values
+            return parseInt(priceStr.toString().replace(/,/g, ''), 10);
+        }
+
+        // Format price with commas
+        function formatPrice(price) {
+            return new Intl.NumberFormat('en-IN').format(price);
+        }
+
+        // Function to add items to cart
+        function addToCart(productId) {
+            console.log("Adding product to cart:", productId);
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            // Check if the product already exists in cart
+            let existingItem = cart.find(item => Number(item.id) === Number(productId));
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ id: Number(productId), quantity: 1 });
+            }
+            
+            // Save to localStorage and update cart
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // Update cart count
+            updateCartCount();
+            
+            // Dispatch a custom event that other scripts can listen for
+            const cartUpdateEvent = new CustomEvent('cartUpdated', { 
+                detail: { cart: cart }
+            });
+            document.dispatchEvent(cartUpdateEvent);
+            
+            displayCart();
+        }
+
+        // Function to remove item from cart
+        function removeFromCart(productId) {
+            console.log("Removing product from cart:", productId);
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            // Find the item in the cart
+            let itemIndex = cart.findIndex(item => Number(item.id) === Number(productId));
+
+            if (itemIndex !== -1) {
+                // Decrease quantity if more than 1, else remove item
+                if (cart[itemIndex].quantity > 1) {
+                    cart[itemIndex].quantity -= 1;
+                } else {
+                    cart.splice(itemIndex, 1); // Remove item if quantity is 1
+                }
+            }
+
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // Update cart count
+            updateCartCount();
+            
+            // Dispatch a custom event that other scripts can listen for
+            const cartUpdateEvent = new CustomEvent('cartUpdated', { 
+                detail: { cart: cart }
+            });
+            document.dispatchEvent(cartUpdateEvent);
+            
+            displayCart();
+        }
+
+        // Function to completely remove an item from cart
+        function remove(productId) {
+            console.log("Completely removing product from cart:", productId);
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+            // Filter out the item completely from the cart
+            cart = cart.filter(item => Number(item.id) !== Number(productId));
+
+            // Save updated cart and refresh UI
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // Update cart count
+            updateCartCount();
+            
+            // Dispatch a custom event that other scripts can listen for
+            const cartUpdateEvent = new CustomEvent('cartUpdated', { 
+                detail: { cart: cart }
+            });
+            document.dispatchEvent(cartUpdateEvent);
+            
+            displayCart();
+        }
+        
+        // Function to update cart count
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const cartCount = document.getElementById('cartCount');
+            const itemCount = document.getElementById('itemCount');
+            
+            if (cartCount) {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                cartCount.textContent = totalItems;
+                cartCount.style.display = totalItems > 0 ? "inline-block" : "none";
+                
+                if (itemCount) {
+                    itemCount.textContent = totalItems;
+                }
+                
+                console.log("Cart count updated to:", totalItems);
+            }
+        }
+
+        // Function to display cart items
+        function displayCart() {
+            const cartItems = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+            const cartCount = document.getElementById('cartCount');
+            const itemCount = document.getElementById('itemCount');
+            
+            if (!cartItems || !cartTotal || !cartCount || !itemCount) {
+                console.error("Required elements not found");
+                return;
+            }
+
+            // Get fresh cart data from localStorage
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            console.log("Cart data:", cart);
+            
+            // Calculate total items and price
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            console.log("Total items in cart:", totalItems);
+            
+            // Update cart count and item count immediately
+            cartCount.textContent = totalItems;
+            cartCount.style.display = totalItems > 0 ? "inline-block" : "none";
+            itemCount.textContent = totalItems;
+            
+            if (cart.length === 0) {
+                cartItems.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">
+                            <i class="fa fa-shopping-bag"></i>
+                        </div>
+                        <h2>Your shopping cart is empty</h2>
+                        <p>Looks like you haven't added anything to your cart yet</p>
+                        <a href="/" class="continue-shopping">
+                            <i class="fa fa-arrow-left"></i>
+                            Continue Shopping
+                        </a>
+                    </div>
+                `;
+                cartTotal.textContent = "0";
+                return;
+            }
+
+            let cartHTML = '';
+            let totalPrice = 0;
+            
+           
+            const serverProducts = [
+                <% products.forEach(function(product, index) { %>
+                    {
+                        id: <%= product.id %>,
+                        title: "<%= product.title ? product.title.replace(/"/g, '\\"') : '' %>",
+                        Breed: "<%= product.Breed ? product.Breed.replace(/"/g, '\\"') : '' %>",
+                        price: "<%= product.price %>",
+                        image_url: "<%= product.image_url %>",
+                        category: "<%= product.category %>",
+                        age: "<%= product.age %>",
+                        dis: "<%= product.dis %>",
+                        stock: <%= product.stock || 0 %>
+                    }<%= index < products.length - 1 ? ',' : '' %>
+                <% }); %>
+            ];
+            
+            console.log("Server products:", serverProducts);
+            
+            // Loop through cart items and find matching product data
+            cart.forEach(cartItem => {
+                // Convert cart item ID to number to ensure proper matching
+                const cartItemId = Number(cartItem.id);
+                
+                // Find product by ID
+                const product = serverProducts.find(p => Number(p.id) === cartItemId);
+                console.log(`Looking for product ID ${cartItemId}:`, product ? "FOUND" : "NOT FOUND");
+                
+                if (product) {
+                    const itemPrice = priceToNumber(product.price) * cartItem.quantity;
+                    totalPrice += itemPrice;
+                    
+                    let stockValue = product.stock || 0;
+                    let stockText = stockValue > 0 ? "In Stock" : "Out of Stock";
+                    let stockColor = stockValue > 0 ? "green" : "red";
+                    
+                    cartHTML += `
+                        <div class="cart-item">
+                            <div class="cart-item-left" onclick="openProduct(${product.id})" style="cursor: pointer;">
+                                <div class="cart-image-container">
+                                    <img src="/images/dash/${product.image_url}" alt="${product.Breed || product.title}" class="cart-item-image">
+                                    <span class="cart-item-category">${product.category || ''}</span>
+                                </div>
+                                <div class="cart-item-details">
+                                    <div class="cart-item-header">
+                                        <h3 class="cart-item-title">${product.Breed || product.title}</h3>
+                                        <div class="cart-item-meta">
+                                            <span class="cart-item-age">${product.age ? 'Age: ' + product.age : ''}</span>
+                                            <span class="stock-status" style="color: ${stockColor}; font-weight: bold;">
+                                                ${stockText}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="cart-item-shipping">
+                                        <i class="fa fa-truck"></i>
+                                        <span>Free Delivery</span>
+                                        <div class="delivery-estimate">Estimated delivery: 2-4 days</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="cart-item-right">
+                                <div class="cart-item-price-container">
+                                    <div class="cart-item-price">₹${formatPrice(itemPrice)}</div>
+                                    <div class="cart-item-discount">
+                                        <i class="fa fa-tag"></i>
+                                        ${product.dis || '0%'} OFF
+                                    </div>
+                                </div>
+                                
+                                <div class="cart-item-controls">
+                                    <div class="quantity-controls">
+                                        <button class="quantity-btn" onclick="removeFromCart(${product.id})">
+                                            <i class="fa fa-minus"></i>
+                                        </button>
+                                        <span class="quantity-display">${cartItem.quantity}</span>
+                                        <button class="quantity-btn" onclick="addToCart(${product.id})">
+                                            <i class="fa fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <button class="remove-item-btn" onclick="remove(${product.id})">
+                                        <i class="fa fa-trash"></i>
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    console.warn(`Product with ID ${cartItemId} not found in server products`);
+                }
+            });
+            
+            // Update the cart items container
+            if (cartHTML) {
+                cartItems.innerHTML = cartHTML;
+            } else {
+                cartItems.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">
+                            <i class="fa fa-exclamation-circle"></i>
+                        </div>
+                        <h2>No matching products found</h2>
+                        <p>The items in your cart could not be found in our product database.</p>
+                        <p>Cart IDs: ${cart.map(item => item.id).join(', ')}</p>
+                        <p>Available IDs: ${serverProducts.map(p => p.id).join(', ')}</p>
+                        <a href="/" class="continue-shopping">
+                            <i class="fa fa-arrow-left"></i>
+                            Continue Shopping
+                        </a>
+                    </div>
+                `;
+            }
+            
+            // Update total price
+            cartTotal.textContent = formatPrice(totalPrice);
+            
+            console.log("Cart updated with total items:", totalItems, "and total price:", totalPrice);
+        }
+
+        // Function to open product detail page
+        function openProduct(productId) {
+            console.log("Opening product:", productId);
+            window.location.href = `/buy/${productId}`;
+        }
+
+        // Listen for cart updates from other scripts
+        document.addEventListener('cartUpdated', function(event) {
+            console.log('Cart updated event received:', event.detail);
+            updateCartCount();
+            displayCart();
+        });
+
+        // Initialize cart on page load
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log("DOM loaded, initializing cart");
+            
+            // Add click handler for cart icon
+            const cartIcon = document.getElementById("cartIcon");
+            if (cartIcon) {
+                cartIcon.addEventListener("click", function() {
+                    window.location.href = "/cart";
+                });
+            }
+            
+            // Display cart immediately
+            updateCartCount();
+            displayCart();
+            
+            // Debug cart data
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            console.log("Cart data on page load:", cart);
+            console.log("Cart item IDs:", cart.map(item => item.id));
+            
+            // Make updateCartCount available globally
+            window.updateCartCount = updateCartCount;
+        });
+    </script>
+    <script>
+        // Get all dropdown toggles and menus
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+
+        // Add click event to each dropdown toggle
+        dropdownToggles.forEach((toggle, index) => {
+            toggle.addEventListener('click', function(event) {
+                event.stopPropagation(); // Prevent this click from triggering the document click handler
+
+                // Close all other dropdown menus first
+                dropdownMenus.forEach((menu, menuIndex) => {
+                    if (menuIndex !== index) {
+                        menu.classList.remove('show');
+                    }
+                });
+        
+            // Toggle the current dropdown menu
+                const currentDropdownMenu = this.nextElementSibling;
+                currentDropdownMenu.classList.toggle('show');
+            });
+        });
+
+    // Close all dropdowns when clicking anywhere else on the page
+        document.addEventListener('click', function(event) {
+            // Check if click is outside of any dropdown
+            if (!event.target.closest('.dropdown')) {
+            // Close all dropdown menus
+                dropdownMenus.forEach(menu => {
+                    if (menu.classList.contains('show')) {
+                        menu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+    <script src="/js/cart.js"></script>
+</body>
+
+</html>

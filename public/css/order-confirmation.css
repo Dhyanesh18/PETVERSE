@@ -1,0 +1,378 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #f8fafc;
+}
+
+.navbar {
+
+    background-color: #111;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    box-shadow: 0 0 10px rgba(0,0,0,0.8);
+}
+
+.nav-content {
+position: relative;
+width: 100%;
+padding: 0 2rem;
+margin: 0 auto;
+display: flex;
+align-items: center;
+gap: 2rem;
+}
+
+.logo {
+margin: 0;
+}
+
+.logo a {
+font-family: 'Poppins', sans-serif;
+font-weight: bold;
+color: white;
+font-size: clamp(1.0rem, 3vw, 1.5rem);
+text-decoration: none;
+}
+
+.nav-icons {
+display: flex;
+gap: 2em;
+align-items: center;
+margin-left: auto;
+}
+
+.icon-btn {
+background: none;
+border: none;
+color: white;
+font-size: 1.4rem;
+cursor: pointer;
+margin-right: 10px;
+transition: all 0.3s ease;
+}
+
+.icon-btn:hover {
+transform: scale(1.2);
+color: cadetblue;
+}
+
+.search {
+position: relative;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+}
+
+.search-bar {
+width: clamp(150px, 30vw, 300px);
+min-width: 100px;
+max-width: 300px;
+border-radius: 8px;
+border: none;
+padding: 5px 10px;
+box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+transition: all 0.3s ease;
+}
+
+.search-bar:focus {
+outline-color: cadetblue;
+transform: scale(1.05)
+}
+
+.search-bar:hover, .search-bar:focus {
+box-shadow: 0 0 12px rgba(0,0,0,1);
+transform: scale(1.05);
+}
+
+.search-btn {
+border: none;
+padding: 5px 10px;
+border-radius: 8px;
+box-shadow: 0 0 6px rgba(0,0,0,0.8);
+cursor: pointer;
+transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+box-shadow: 0 0 12px rgba(0,0,0,1);
+transform: scale(1.1);
+}
+
+.nav-links {
+display: flex;
+gap: 2rem;
+list-style: none;
+align-items: center;
+}
+
+.nav-links a {
+color: white;
+text-decoration: none;
+font-weight: 500;
+font-size: calc(0.3rem + 1vw);
+transition: color 0.3s;
+}
+
+.nav-links a:hover {
+color: cadetblue;
+}
+
+.nav-links .dropdown {
+position: relative;
+}
+
+.dropdown-menu {
+display: none;
+position: absolute;
+top: 49px;
+left: -15px;
+background-color: #222;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+list-style: none;
+padding: 10px 0;
+min-width: 150px;
+transition: all 0.3s ease;
+z-index: 10;
+}
+
+.dropdown-menu li {
+padding: 8px 20px;
+}
+
+.dropdown-menu li a {
+color: white;
+text-decoration: none;
+display: block;
+font-size: 0.8rem;
+}
+
+.dropdown-menu li:hover {
+background-color: #333;
+box-shadow: 0 0 6px rgba(0,0,0,0.7);
+transition: all 0.3s ease;  
+}
+
+.dropdown-menu.show {
+display: block;
+}
+
+
+.hamburger {
+display: none;
+cursor: pointer;
+background: none;
+border: none;
+color: white;
+font-size: 1.7rem;
+padding: 0.5rem;
+margin-left: auto;
+transition: all 0.3s ease;
+}
+
+.hamburger:hover {
+transform: scale(1.2);
+}
+
+
+.confirmation-container {
+    max-width: 800px;
+    margin: 100px auto 40px;
+    padding: 0 20px;
+}
+
+.confirmation-card {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    text-align: center;
+}
+
+.success-icon {
+    font-size: 5rem;
+    color: #10b981;
+    margin-bottom: 20px;
+}
+
+.confirmation-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 16px;
+}
+
+.confirmation-message {
+    font-size: 1.1rem;
+    color: #4b5563;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.order-details {
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: #4b5563;
+}
+
+.detail-value {
+    color: #111827;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #FF6B01;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-align: center;
+    text-decoration: none;
+    margin: 0 10px;
+}
+
+.btn:hover {
+    background-color: #e05a00;
+}
+
+.btn-secondary {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.btn-secondary:hover {
+    background-color: #e5e7eb;
+}
+
+.order-items {
+    margin-top: 20px;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.order-item-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-right: 12px;
+}
+
+.order-item-details {
+    flex: 1;
+}
+
+.order-item-title {
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.order-item-price {
+    color: #4b5563;
+    font-size: 0.9rem;
+}
+
+.order-item-quantity {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.delivery-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 30px 0;
+    padding: 20px;
+    background-color: #f9fafb;
+    border-radius: 12px;
+}
+
+.delivery-icon {
+    font-size: 2.5rem;
+    color: #FF6B01;
+    margin-right: 20px;
+}
+
+.delivery-text {
+    text-align: left;
+}
+
+.delivery-text h3 {
+    font-size: 1.2rem;
+    color: #111827;
+    margin-bottom: 5px;
+}
+
+.delivery-text p {
+    color: #4b5563;
+    margin: 0;
+}
+
+.actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+@media (max-width: 640px) {
+    .confirmation-card {
+        padding: 30px 20px;
+    }
+
+    .order-details {
+        padding: 20px;
+    }
+
+    .actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn {
+        margin: 5px 0;
+    }
+} 

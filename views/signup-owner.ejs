@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup - PetVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="favi-modified.png">
+    <link rel="stylesheet" href="/css/signup.css">
+    
+</head>
+<body>
+    <div class="signup-form-container">
+        <div class="header">
+            <h1 id="logo"><i class="fa fa-paw"></i> PetVerse</h1>
+            <div class="login-header"> 
+                <h2>Join PetVerse Today</h2>
+                <p>Sign up to explore the world of PetVerse!</p>
+            </div>
+        </div>
+        
+        <form id="signup-form" method="POST" action="/signup" enctype="multipart/form-data">
+            <div class="form-container">
+                <div class="left-form">
+                    <div class="input-group">
+                        <input type="email" id="email" name="email" placeholder=" " required>
+                        <label for="email">Email Address<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" placeholder=" " required>
+                        <label for="password">Password<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="confirm-password" name="confirmPassword" placeholder=" " required>
+                        <label for="confirm-password">Confirm Password<span class="required">*</span></label>
+                    </div>
+                </div>
+                <div class="right-form">
+                    <div class="input-group">
+                        <input type="text" id="username" name="username" placeholder=" " required>
+                        <label for="username">Username<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="phone-number" name="phoneNumber" placeholder=" " required>
+                        <label for="phone-number">Phone Number<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="full-name" name="fullName" placeholder=" " required>
+                        <label for="full-name">Full Name<span class="required">*</span></label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="options-group">
+                <label class="terms-and-conditions">
+                    <input type="checkbox" id="agree" name="agree" required>
+                    I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a>
+                </label>
+            </div>
+            
+            <button type="submit" class="signup-button">Sign Up</button>
+            <div class="login-link">
+                Already have an account? <a href="/login">Log In</a>
+            </div>
+        </form>
+    </div>
+    <script src="/js/signup.js"></script>
+</body>
+</html>

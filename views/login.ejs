@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PetVerse</title>
+    <link rel="stylesheet" href="/css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="/images/favi-modified.png">
+</head>
+<body>
+    <div class="login-form-container">
+        <h1 id="logo"><i class="fa fa-paw"></i> PetVerse</h1>
+        <div class="login-header">
+            <h2>Welcome Back!</h2>
+            <p>Sign in to continue your pet journey</p>
+        
+            <% if (error) { %>
+                <div class="server-error-message">
+                    <i class="fa fa-exclamation-circle"></i> <%= error %>
+                </div>
+            <% } %>
+        </div>
+        <form id="login-form" method="POST" action="/login">
+            <div class="input-group">
+                <input type="email" id="email" name="email" placeholder=" " required>
+                <label for="email">Email Address</label>
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" name="password" placeholder=" " required>
+                <label for="password">Password</label>
+            </div>
+
+            <div class="options-group">
+                <label class="remember-me">
+                    <input type="checkbox">
+                    Remember me
+                </label>
+                <a href="#" class="forgot-password">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="login-button">Sign In</button>
+
+            <div class="signup-link">
+                New to PetVerse? <a href="/signup">Sign up</a>
+            </div>
+        </form>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('login-form');
+    
+            form.addEventListener('submit', function(e) {
+                // No need for `e.preventDefault();` (let the browser handle form submission)
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('login-form');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    
+    // Create error message elements with more visible styling
+    const createErrorElement = (id) => {
+    const errorElement = document.createElement('span');
+    errorElement.id = id;
+    errorElement.className = 'error-message';
+    errorElement.style.color = '#ff3860';
+    errorElement.style.fontSize = '14px';
+    errorElement.style.fontWeight = 'bold';
+    errorElement.style.marginTop = '5px';
+    errorElement.style.display = 'none';  // Hide initially
+    errorElement.style.padding = '5px 0';
+    return errorElement;
+};
+
+    
+    // Add error elements after inputs
+    const emailError = createErrorElement('email-error');
+    const passwordError = createErrorElement('password-error');
+    
+    // Set initial content for testing
+    emailError.textContent = 'Email validation will appear here';
+    passwordError.textContent = 'Password validation will appear here';
+    
+    // Append errors to DOM - use appendChild to ensure they're added to the DOM
+    emailInput.parentNode.appendChild(emailError);
+    passwordInput.parentNode.appendChild(passwordError);
+    
+    console.log('Error elements created and appended'); // Debug log
+    
+    // Validate email format with a more comprehensive regex
+    const isValidEmail = (email) => {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(email);
+    };
+    
+    // Validate password (minimum 6 characters)
+    const isValidPassword = (password) => {
+        return password.length >= 6;
+    };
+    
+    // Show error message with console log for debugging
+    const showError = (element, message) => {
+        element.textContent = message;
+        element.style.display = 'block';
+        console.log('Showing error:', message); // Debug log
+    };
+    
+    // Hide error message
+    const hideError = (element) => {
+        element.style.display = 'none';
+    };
+    
+    // Input validation on blur
+    emailInput.addEventListener('blur', function() {
+        console.log('Email blur event fired'); // Debug log
+        console.log('Email value:', this.value); // Debug log
+        
+        if (this.value.trim() === '') {
+            showError(emailError, 'Email is required');
+        } else if (!isValidEmail(this.value)) {
+            showError(emailError, 'Please enter a valid email address');
+        } else {
+            hideError(emailError);
+        }
+    });
+    
+    passwordInput.addEventListener('blur', function() {
+        console.log('Password blur event fired'); // Debug log
+        
+        if (this.value.trim() === '') {
+            showError(passwordError, 'Password is required');
+        } else if (!isValidPassword(this.value)) {
+            showError(passwordError, 'Password must be at least 6 characters');
+        } else {
+            hideError(passwordError);
+        }
+    });
+    
+    // Clear errors when typing
+    emailInput.addEventListener('input', function() {
+        hideError(emailError);
+    });
+    
+    passwordInput.addEventListener('input', function() {
+        hideError(passwordError);
+    });
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        console.log('Form submission event fired'); // Debug log
+        
+        let isValid = true;
+        
+        // Validate email
+        if (emailInput.value.trim() === '') {
+            showError(emailError, 'Email is required');
+            isValid = false;
+        } else if (!isValidEmail(emailInput.value)) {
+            showError(emailError, 'Please enter a valid email address');
+            isValid = false;
+        }
+        
+        // Validate password
+        if (passwordInput.value.trim() === '') {
+            showError(passwordError, 'Password is required');
+            isValid = false;
+        } else if (!isValidPassword(passwordInput.value)) {
+            showError(passwordError, 'Password must be at least 6 characters');
+            isValid = false;
+        }
+        
+        // Prevent form submission if validation fails
+        if (!isValid) {
+            console.log('Validation failed, preventing form submission'); // Debug log
+            e.preventDefault();
+        } else {
+            console.log('Validation passed, allowing form submission'); // Debug log
+        }
+    });
+    
+    console.log('Validation script initialized successfully'); // Debug log
+    });
+    </script>
+    
+</body>
+</html>

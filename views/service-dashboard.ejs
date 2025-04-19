@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetVerse Service Dashboard</title>
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="icon" href="/images/dash/icon.jpg">
+    <style>
+        :root {
+            /* Modern Color Palette */
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
+            --secondary: #10B981;
+            --accent: #F59E0B;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --success: #10B981;
+            --background: #F3F4F6;
+            --surface: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --text-tertiary: #6B7280;
+
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+            /* Border Radius */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-full: 9999px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .dashboard {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: var(--spacing-md);
+        }
+
+        /* Modern Header */
+        .header {
+            background: var(--surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .logout-btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-sm);
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .stat-label {
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+        }
+
+        /* Section Styles */
+        .section {
+            background: var(--surface);
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--spacing-xl);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Appointment Cards */
+        .appointment-list {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+
+        .appointment-card {
+            background: var(--surface);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: var(--spacing-lg);
+            align-items: center;
+        }
+
+        .appointment-time {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .appointment-details h4 {
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .appointment-details p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Service Table */
+        .service-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .service-table th {
+            text-align: left;
+            padding: var(--spacing-md);
+            background: var(--background);
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .service-table td {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .service-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Review Cards */
+        .review-list {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+
+        .review-card {
+            background: var(--surface);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .stars {
+            color: var(--warning);
+        }
+
+        .review-date {
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+        }
+
+        .review-content {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .review-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--spacing-md);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-full);
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(110%);
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-tertiary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard {
+                padding: var(--spacing-sm);
+            }
+
+            .header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                text-align: center;
+            }
+
+            .appointment-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .service-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card,
+        .appointment-card,
+        .review-card {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--background);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: var(--radius-full);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Navigation Bar Styles */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            width: 100%;
+            background-color: black;
+            padding: 1rem 2rem;
+        }
+
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .logo a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .nav-icons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #FF6B01;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+        }
+
+        .search {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: none;
+            font-size: 0.9rem;
+            width: clamp(150px, 30vw, 300px);
+            min-width: 100px;
+            max-width: 300px;
+            border-radius: 4px;
+            border: none;
+            padding: 5px 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .search-btn {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: #FF6B01;
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            .search {
+                margin: 0 1rem;
+            }
+        }
+
+        /* Header Styles */
+        .header {
+            background: var(--surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-title .petverse {
+            color: #4F46E5;
+        }
+
+        .header-title .dashboard-text {
+            color: #10B981;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #4F46E5;
+            color: white;
+            border-radius: 9999px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: #4338CA;
+            transform: translateY(-1px);
+        }
+
+        .dashboard-header {
+            background: var(--surface);
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Main Navigation Header -->
+    <header class="header" id="header">
+        <nav id="navbar" class="navbar" style="background-color: black;">
+            <div class="nav-content">
+                <div class="logo"><a href="#">PetVerse</a></div>
+                <div class="nav-icons">
+                    <button class="icon-btn cart-icon" id="cartIcon" onclick="window.location.href='/cart'">
+                        <i class="fa fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount"
+                            style="font-size: small;background-color: #FF6B01;border-radius: 5px; width: 15px;">0</span>
+                    </button>
+                    <button class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input type="text" class="search-bar" placeholder="Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#searchby-pet">Pets</a></li>
+                    <li><a href="#">Products</a></li>
+                    <li><a href="#">Services</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1 class="header-title">
+                <span class="petverse">PetVerse</span>
+                <span class="dashboard-text">Service Dashboard</span>
+            </h1>
+            <div class="user-info">
+                <span class="user-name">Welcome, <%= user.name %></span>
+                <a href="/" class="nav-btn">
+                    <i class="fas fa-home"></i>
+                    Back to Home
+                </a>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <i class="fas fa-calendar-check stat-icon"></i>
+                <div class="stat-value">
+                    <%= totalAppointments %>
+                </div>
+                <div class="stat-label">Total Appointments</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-clock stat-icon"></i>
+                <div class="stat-value">
+                    <%= todayAppointments %>
+                </div>
+                <div class="stat-label">Today's Appointments</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-rupee-sign stat-icon"></i>
+                <div class="stat-value">₹<%= totalRevenue.toLocaleString() %>
+                </div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-star stat-icon"></i>
+                <div class="stat-value">
+                    <%= rating %>/5
+                </div>
+                <div class="stat-label">Average Rating</div>
+            </div>
+        </div>
+
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Today's Schedule</h2>
+            </div>
+            <div class="appointment-list">
+                <% if (todaySchedule && todaySchedule.length> 0) { %>
+                    <% todaySchedule.forEach(appointment=> { %>
+                        <div class="appointment-card">
+                            <div class="appointment-time">
+                                <i class="far fa-clock"></i>
+                                <%= appointment.time %>
+                            </div>
+                            <div class="appointment-details">
+                                <h4>
+                                    <%= appointment.service %>
+                                </h4>
+                                <p>Client: <%= appointment.clientName %>
+                                </p>
+                                <p>Pet: <%= appointment.petName %>
+                                </p>
+                            </div>
+                            <div class="appointment-actions">
+                                <button onclick="completeAppointment('<%= appointment._id %>')" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Complete
+                                </button>
+                                <button onclick="cancelAppointment('<%= appointment._id %>')" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                        <% }) %>
+                            <% } else { %>
+                                <div class="empty-state">
+                                    <i class="far fa-calendar-times"></i>
+                                    <p>No appointments scheduled for today</p>
+                                </div>
+                                <% } %>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">My Services</h2>
+                <button onclick="openAddServiceModal()" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Service
+                </button>
+            </div>
+            <table class="service-table">
+                <thead>
+                    <tr>
+                        <th>Service Name</th>
+                        <th>Category</th>
+                        <th>Duration</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (services && services.length> 0) { %>
+                        <% services.forEach(service=> { %>
+                            <tr>
+                                <td>
+                                    <%= service.name %>
+                                </td>
+                                <td>
+                                    <%= service.category %>
+                                </td>
+                                <td>
+                                    <%= service.duration %> mins
+                                </td>
+                                <td>₹<%= service.price.toLocaleString() %>
+                                </td>
+                                <td>
+                                    <span class="status-badge <%= service.status %>">
+                                        <%= service.status %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="editService('<%= service._id %>')" class="btn btn-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                </td>
+                            </tr>
+                            <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="empty-state">
+                                                <i class="fas fa-box-open"></i>
+                                                <p>No services available</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% } %>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Reviews</h2>
+            </div>
+            <div class="review-list">
+                <% if (reviews && reviews.length> 0) { %>
+                    <% reviews.forEach(review=> { %>
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="stars">
+                                    <% for(let i=0; i < 5; i++) { %>
+                                        <i class="fas fa-star <%= i < review.rating ? 'filled' : '' %>"></i>
+                                        <% } %>
+                                </div>
+                                <div class="review-date">
+                                    <%= new Date(review.date).toLocaleDateString() %>
+                                </div>
+                            </div>
+                            <div class="review-content">
+                                <%= review.comment %>
+                            </div>
+                            <div class="review-footer">
+                                <div class="reviewer">
+                                    <i class="fas fa-user"></i>
+                                    <%= review.clientName %>
+                                </div>
+                                <% if (!review.response) { %>
+                                    <button onclick="openReplyModal('<%= review._id %>')" class="btn btn-primary">
+                                        <i class="fas fa-reply"></i> Reply
+                                    </button>
+                                    <% } else { %>
+                                        <div class="review-response">
+                                            <strong>Your Response:</strong>
+                                            <%= review.response %>
+                                        </div>
+                                        <% } %>
+                            </div>
+                        </div>
+                        <% }) %>
+                            <% } else { %>
+                                <div class="empty-state">
+                                    <i class="far fa-comment-alt"></i>
+                                    <p>No reviews yet</p>
+                                </div>
+                                <% } %>
+            </div>
+        </section>
+    </div>
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+        </div>
+    </footer>
+    <script src="/js/cart.js"></script>
+    <script>
+        // Appointment functions
+        function completeAppointment(appointmentId) {
+            if (confirm('Mark this appointment as complete?')) {
+                // Using localStorage instead of API
+                const appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+                const updatedAppointments = appointments.map(app => {
+                    if (app._id === appointmentId) {
+                        return { ...app, status: 'completed' };
+                    }
+                    return app;
+                });
+                localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+                location.reload();
+            }
+        }
+
+        function cancelAppointment(appointmentId) {
+            if (confirm('Are you sure you want to cancel this appointment?')) {
+                // Using localStorage instead of API
+                const appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+                const updatedAppointments = appointments.map(app => {
+                    if (app._id === appointmentId) {
+                        return { ...app, status: 'cancelled' };
+                    }
+                    return app;
+                });
+                localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+                location.reload();
+            }
+        }
+
+        // Service functions
+        function editService(serviceId) {
+            // Using localStorage instead of API
+            const services = JSON.parse(localStorage.getItem('services') || '[]');
+            const service = services.find(s => s._id === serviceId);
+            if (service) {
+                // Implement edit UI here
+                alert('Edit service: ' + service.name);
+            }
+        }
+
+        function openAddServiceModal() {
+            // Implement modal UI here
+            alert('Add new service modal');
+        }
+
+        function openReplyModal(reviewId) {
+            // Implement modal UI here
+            alert('Reply to review: ' + reviewId);
+        }
+
+        // Initialize data in localStorage if needed
+        if (!localStorage.getItem('appointments')) {
+            localStorage.setItem('appointments', JSON.stringify([]));
+        }
+        if (!localStorage.getItem('services')) {
+            localStorage.setItem('services', JSON.stringify([]));
+        }
+
+        // Update cart count on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            updateCartCount();
+        });
+
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const cartCount = document.getElementById('cartCount');
+            if (cartCount) {
+                cartCount.textContent = totalItems;
+                cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

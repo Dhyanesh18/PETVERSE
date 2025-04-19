@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seller Signup - PetVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="favi-modified.png">
+    <link rel="stylesheet" href="/css/signup.css">
+    <link rel="stylesheet" href="/css/fileupload.css">
+</head>
+<body>
+    <div class="signup-form-container">
+        <div class="header">
+            <h1 id="logo"><i class="fa fa-paw"></i> PetVerse</h1>
+            <div class="login-header"> 
+                <h2>Seller Registration</h2>
+                <p>Create your seller account to start selling on PetVerse</p>
+            </div>
+        </div>
+        
+        <form id="signup-form" method="POST" action="/signup/seller" enctype="multipart/form-data">
+            <input type="hidden" name="userType" value="pet-seller">
+            
+            <div class="form-container">
+                <div class="left-form">
+                    <div class="input-group">
+                        <input type="email" id="email" name="email" placeholder=" " required>
+                        <label for="email">Email Address<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" placeholder=" " required>
+                        <label for="password">Password<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="confirm-password" name="confirmPassword" placeholder=" " required>
+                        <label for="confirm-password">Confirm Password<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="business-name" name="businessName" placeholder=" " required>
+                        <label for="business-name">Business Name<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="tax-id" name="taxId" placeholder=" ">
+                        <label for="tax-id">Tax ID/VAT Number</label>
+                    </div>
+                </div>
+                <div class="right-form">
+                    <div class="input-group">
+                        <input type="text" id="username" name="username" placeholder=" " required>
+                        <label for="username">Username<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="phone-number" name="phoneNumber" placeholder=" " required>
+                        <label for="phone-number">Phone Number<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="full-name" name="fullName" placeholder=" " required>
+                        <label for="full-name">Full Name<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="business-address" name="businessAddress" placeholder=" " required>
+                        <label for="business-address">Business Address<span class="required">*</span></label>
+                    </div>
+                    <div class="input-group file-upload-group">
+                        <label for="license">Business License (PDF/DOC)<span class="required">*</span></label>
+                        <div class="file-input-container">
+                            <input type="file" id="license" name="license" accept=".pdf,.doc,.docx" required>
+                            <span class="file-input-label">License</span>
+                            <span class="file-name">Upload your license</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="options-group">
+                <label class="terms-and-conditions">
+                    <input type="checkbox" id="agree" name="agree" required>
+                    I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a>
+                </label>
+            </div>
+            
+            <button type="submit" class="signup-button">Register as Seller</button>
+            <div class="login-link">
+                Already have an account? <a href="/login">Log In</a>
+            </div>
+        </form>
+    </div>
+    <script src="/js/signup-seller.js"></script>
+    <script>
+        document.getElementById('license').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'No file chosen';
+            document.querySelector('.file-name').textContent = fileName;
+        });
+    </script>
+</body>
+</html>

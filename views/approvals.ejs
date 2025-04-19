@@ -1,0 +1,27 @@
+<% users.forEach(user => { %>
+    <div class="approval-card">
+      <h3><%= user.email %> (<%= user.role %>)</h3>
+      <p>Requested: <%= user.requestedAt.toLocaleString() %></p>
+      
+      <div class="documents">
+        <% user.documents.forEach(doc => { %>
+          <div class="document">
+            <span><%= doc.docType.toUpperCase() %></span>
+            <a href="/documents/<%= doc._id %>" target="_blank">View</a>
+            <button class="verify-doc" data-doc="<%= doc._id %>">
+              Verify
+            </button>
+          </div>
+        <% }) %>
+      </div>
+  
+      <div class="actions">
+        <button class="approve-user" data-user="<%= user._id %>">
+          Approve Account
+        </button>
+        <button class="reject-user" data-user="<%= user._id %>">
+          Request Changes
+        </button>
+      </div>
+    </div>
+  <% }) %>

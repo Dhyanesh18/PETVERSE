@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - PetVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="/css/order-confirmation.css">
+    <style>
+        .order-progress {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .order-progress-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #10b981;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+        }
+
+        .order-progress-icon i {
+            font-size: 30px;
+            color: white;
+        }
+
+        .order-progress-text h3 {
+            font-size: 1.4rem;
+            color: #10b981;
+            margin-bottom: 5px;
+        }
+
+        .order-progress-text p {
+            color: #4b5563;
+            margin: 0;
+        }
+
+        .order-number {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 10px;
+        }
+
+        .tracking-info {
+            background-color: #f9fafb;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e5e7eb;
+        }
+
+        .tracking-info h3 {
+            font-size: 1.2rem;
+            color: #111827;
+            margin-bottom: 15px;
+        }
+
+        .tracking-steps {
+            position: relative;
+        }
+
+        .tracking-step {
+            display: flex;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .tracking-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .tracking-step::before {
+            content: "";
+            position: absolute;
+            top: 30px;
+            left: 15px;
+            bottom: -30px;
+            width: 2px;
+            background-color: #e5e7eb;
+            z-index: 1;
+        }
+
+        .tracking-step:last-child::before {
+            display: none;
+        }
+
+        .tracking-step.completed::before {
+            background-color: #10b981;
+        }
+
+        .tracking-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tracking-icon i {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .tracking-step.completed .tracking-icon {
+            background-color: #10b981;
+        }
+
+        .tracking-step.completed .tracking-icon i {
+            color: white;
+        }
+
+        .tracking-content {
+            flex: 1;
+        }
+
+        .tracking-title {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+
+        .tracking-date {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .what-happens-next {
+            background-color: #fff8f3;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #ffedd5;
+        }
+
+        .what-happens-next h3 {
+            font-size: 1.2rem;
+            color: #FF6B01;
+            margin-bottom: 15px;
+        }
+
+        .what-happens-next ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .what-happens-next li {
+            margin-bottom: 10px;
+            color: #4b5563;
+        }
+
+        .what-happens-next li:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header" id="header">
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="nav-icons">
+                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/pets">Pets</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/products/petfood">Pet Food</a></li>
+                            <li><a href="/products/toys">Toys</a></li>
+                            <li><a href="/products/accessories">Accessories</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/services">Services</a></li>
+                            <li><a href="/mate">PetMate</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="confirmation-container">
+        <div class="confirmation-card">
+            <i class="fa fa-check-circle success-icon"></i>
+            <h1 class="confirmation-title">Thank you for your order!</h1>
+            <p class="confirmation-message">Your order has been received and is being processed. You will receive an email confirmation shortly.</p>
+            
+            <div class="order-number" id="orderNumber">#ORD-2023-0001</div>
+            
+            <div class="order-progress">
+                <div class="order-progress-icon">
+                    <i class="fa fa-check"></i>
+                </div>
+                <div class="order-progress-text">
+                    <h3>Order Confirmed</h3>
+                    <p id="orderDate">June 10, 2023</p>
+                </div>
+            </div>
+            
+            <div class="tracking-info">
+                <h3>Order Status</h3>
+                <div class="tracking-steps">
+                    <div class="tracking-step completed">
+                        <div class="tracking-icon">
+                            <i class="fa fa-check"></i>
+                        </div>
+                        <div class="tracking-content">
+                            <div class="tracking-title">Order Placed</div>
+                            <div class="tracking-date" id="orderPlacedDate">June 10, 2023</div>
+                        </div>
+                    </div>
+                    <div class="tracking-step">
+                        <div class="tracking-icon">
+                            <i class="fa fa-clock-o"></i>
+                        </div>
+                        <div class="tracking-content">
+                            <div class="tracking-title">Processing</div>
+                            <div class="tracking-date">Estimated: 1-2 days</div>
+                        </div>
+                    </div>
+                    <div class="tracking-step">
+                        <div class="tracking-icon">
+                            <i class="fa fa-truck"></i>
+                        </div>
+                        <div class="tracking-content">
+                            <div class="tracking-title">Shipping</div>
+                            <div class="tracking-date" id="estimatedShippingDate">Estimated: June 12, 2023</div>
+                        </div>
+                    </div>
+                    <div class="tracking-step">
+                        <div class="tracking-icon">
+                            <i class="fa fa-home"></i>
+                        </div>
+                        <div class="tracking-content">
+                            <div class="tracking-title">Delivery</div>
+                            <div class="tracking-date" id="estimatedDeliveryDate">Estimated: June 14, 2023</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="what-happens-next">
+                <h3>What Happens Next?</h3>
+                <ul>
+                    <li>We're preparing your order for shipment.</li>
+                    <li>You'll receive an email when your order ships with tracking information.</li>
+                    <li>You can track your order status anytime in your account.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="order-details">
+            <h2 class="section-title">Order Details</h2>
+            <div class="detail-row">
+                <span class="detail-label">Order Number:</span>
+                <span class="detail-value" id="orderNumberDetail">#ORD-2023-0001</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Order Date:</span>
+                <span class="detail-value" id="orderDateDetail">June 10, 2023</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Payment Method:</span>
+                <span class="detail-value" id="paymentMethod">Credit Card</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Shipping Address:</span>
+                <span class="detail-value" id="shippingAddress">123 Main St, Anytown, AN 12345</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Total Amount:</span>
+                <span class="detail-value" id="totalAmount">₹0.00</span>
+            </div>
+
+            <h3 class="section-title" style="margin-top: 30px;">Order Items</h3>
+            <div class="order-items" id="orderItems">
+                <!-- Order items will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="actions">
+            <a href="./Products.html" class="btn btn-secondary">Continue Shopping</a>
+            <a href="./homepage.html" class="btn">Back to Home</a>
+        </div>
+    </div>
+
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the most recent order
+            const orders = JSON.parse(localStorage.getItem('orders')) || [];
+
+            const latestOrder = orders[orders.length - 1];
+            displayOrderDetails(latestOrder);
+            updateCartCount();
+        });
+
+        function updateCartCount() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let cartCountElement = document.getElementById('cartCount');
+
+            let totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCountElement.textContent = totalItems;
+            cartCountElement.style.display = totalItems > 0 ? 'inline-block' : 'none';
+        }
+
+        function displayOrderDetails(order) {
+            // Generate a random order number
+            const orderNumber = `#ORD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+            document.getElementById('orderNumber').textContent = orderNumber;
+            document.getElementById('orderNumberDetail').textContent = orderNumber;
+
+            // Format and display order date
+            const orderDate = new Date(order.orderDate);
+            const formattedDate = orderDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('orderDate').textContent = formattedDate;
+            document.getElementById('orderDateDetail').textContent = formattedDate;
+            document.getElementById('orderPlacedDate').textContent = formattedDate;
+
+            // Calculate and display estimated shipping and delivery dates
+            const shippingDate = new Date(orderDate);
+            shippingDate.setDate(shippingDate.getDate() + 2);
+            const formattedShippingDate = shippingDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('estimatedShippingDate').textContent = `Estimated: ${formattedShippingDate}`;
+
+            const deliveryDate = new Date(orderDate);
+            deliveryDate.setDate(deliveryDate.getDate() + 4);
+            const formattedDeliveryDate = deliveryDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('estimatedDeliveryDate').textContent = `Estimated: ${formattedDeliveryDate}`;
+
+            // Display payment method
+            let paymentMethodText = 'Unknown';
+            switch(order.paymentMethod) {
+                case 'credit-card':
+                    paymentMethodText = 'Credit/Debit Card';
+                    break;
+                case 'upi':
+                    paymentMethodText = 'UPI';
+                    break;
+                case 'cod':
+                    paymentMethodText = 'Cash on Delivery';
+                    break;
+            }
+            document.getElementById('paymentMethod').textContent = paymentMethodText;
+
+            // Display shipping address
+            const address = order.customer;
+            const formattedAddress = `${address.address}, ${address.city}, ${address.state} ${address.zipCode}, ${address.country}`;
+            document.getElementById('shippingAddress').textContent = formattedAddress;
+
+            // Calculate and display total amount
+            let subtotal = 0;
+            order.items.forEach(item => {
+                const price = parseFloat(item.price.replace(/,/g, ''));
+                subtotal += price * item.quantity;
+            });
+
+            const shipping = subtotal > 1000 ? 0 : 100;
+            const tax = subtotal * 0.18; // 18% GST
+            const total = subtotal + shipping + tax;
+            document.getElementById('totalAmount').textContent = `₹${total.toLocaleString()}`;
+
+            // Display order items
+            const orderItemsContainer = document.getElementById('orderItems');
+            orderItemsContainer.innerHTML = '';
+
+            order.items.forEach(item => {
+                const price = parseFloat(item.price.replace(/,/g, ''));
+                
+                const orderItemElement = document.createElement('div');
+                orderItemElement.className = 'order-item';
+                orderItemElement.innerHTML = `
+                    <img src="${item.image_url}" alt="${item.title}" class="order-item-image">
+                    <div class="order-item-details">
+                        <div class="order-item-title">${item.title.substring(0, 30)}${item.title.length > 30 ? '...' : ''}</div>
+                        <div class="order-item-price">₹${price.toLocaleString()}</div>
+                        <div class="order-item-quantity">Qty: ${item.quantity}</div>
+                    </div>
+                `;
+                orderItemsContainer.appendChild(orderItemElement);
+            });
+        }
+    </script>
+</body>
+
+</html> 
