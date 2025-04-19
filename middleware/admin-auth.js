@@ -1,5 +1,5 @@
 module.exports = (req, res, next) => {
-    if (req.session.userId && (req.user.role === 'admin' || req.user.isAdmin)) {
+    if (req.session.userId && (req.user.role === 'admin' || (req.user.role==="admin"))) {
         return next();
     }
     res.status(403).render('error', { 

@@ -40,10 +40,6 @@ const userSchema = new mongoose.Schema({
         required: true,
         enum: ['owner', 'seller', 'service_provider', 'admin'],
     },
-    isAdmin: {
-        type: Boolean,
-        default: false
-    },
     businessName: {
         type: String,
         required: function() {
@@ -73,8 +69,8 @@ const userSchema = new mongoose.Schema({
     },
     isApproved: {
         type: Boolean,
-        default: function() {
-            return this.role === "owner";
+        required: function() {
+            return this.role === "service_provider" || this.role === "seller";
         }
     },
     createdAt: {
@@ -90,6 +86,7 @@ const userSchema = new mongoose.Schema({
 // Password hashing middleware
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
+    
     try {
         const salt = await bcrypt.genSalt(12);
         this.password = await bcrypt.hash(this.password, salt);
@@ -101,6 +98,7 @@ userSchema.pre('save', async function(next) {
 
 userSchema.pre('findOneAndUpdate', async function(next) {
     const update = this.getUpdate();
+    this.set({ updatedAt: Date.now() });
     if (update?.password) {
         try {
             const salt = await bcrypt.genSalt(12);

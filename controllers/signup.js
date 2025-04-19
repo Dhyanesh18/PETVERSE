@@ -24,78 +24,72 @@ module.exports = {
         } 
     },
 
-    handleSignupForm: async (req, res) => {
+    handleSignupOwner: async (req, res) => {
         try {
-            // Validate input
-            const { error } = validateSignup(req.body);
-            if (error) {
-                return res.status(400).render('signup',{error: null});
-            }
-
-            // Check if user exists
-            const existingUser = await User.findOne({ 
-                $or: [
-                    { email: req.body.email },
-                    { username: req.body.username }
-                ] 
-            });
-            if (existingUser) {
-                return res.status(400).render('signup', { 
-                    error: 'User with this email or username already exists',
-                    formData: req.body 
+            // Debug logging
+            console.log('Request received with body:', req.body);
+            
+            // Basic validation
+            if (!req.body || Object.keys(req.body).length === 0) {
+                console.error('Empty body received');
+                return res.status(400).json({ 
+                    message: "Request body is required",
+                    received: false
                 });
             }
-
-            // Handle file uploads
-            let licenseFileId, certificateFileId;
+    
+            const { email, username, password, fullName, phone } = req.body;
             
-            if (req.files?.license) {
-                licenseFileId = await uploadFileToGridFS(
-                    req.files.license[0].buffer,
-                    req.files.license[0].originalname,
-                    { userId: req.body.email }
-                );
+            // Field validation
+            if (!email || !username || !password || !fullName || !phone) {
+                return res.status(400).json({ 
+                    message: 'All fields are required',
+                    missingFields: {
+                        email: !email,
+                        username: !username,
+                        password: !password,
+                        fullName: !fullName,
+                        phone: !phone
+                    }
+                });
             }
-
-            if (req.files?.certificate) {
-                certificateFileId = await uploadFileToGridFS(
-                    req.files.certificate[0].buffer,
-                    req.files.certificate[0].originalname,
-                    { userId: req.body.email }
-                );
-            }
-
-            // Create new user (matching your user model fields)
-            const user = new User({
-                email: req.body.email,
-                username: req.body.username,
-                password: req.body.password,
-                phone: req.body.phone,
-                fullName: req.body.fullName,
-                role: req.body.role,
-                ...(req.body.role === 'seller' && {
-                    businessName: req.body.businessName,
-                    license: licenseFileId,
-                    isApproved: false // Sellers need approval
-                }),
-                ...(req.body.role === 'service_provider' && {
-                    serviceType: req.body.serviceType,
-                    certificate: certificateFileId,
-                    isApproved: false // Service providers need approval
-                }),
-                isApproved: req.body.role === 'owner' // Auto-approve owners
+    
+            // Check existing user
+            const existingUser = await User.findOne({ 
+                $or: [{ email }, { username }] 
             });
-
-            await user.save();
-
-            // Redirect to login with success message
-            req.flash('success', 'Registration successful! You can now login.');
-            res.redirect('/login');
+    
+            if (existingUser) {
+                return res.status(400).json({ 
+                    message: 'User with this email or username already exists' 
+                });
+            }
+    
+            // Create user
+            const newUser = await User.create({
+                email,
+                username,
+                password,
+                fullName,
+                phone,
+                role: 'owner'
+            });
+    
+            res.status(201).json({
+                message: 'Owner registration successful',
+                user: {
+                    email: newUser.email,
+                    username: newUser.username,
+                    fullName: newUser.fullName,
+                    role: newUser.role
+                }
+            });
+    
         } catch (error) {
             console.error('Signup error:', error);
-            res.status(500).render('signup', { 
-                error: 'Server error during registration',
-                formData: req.body 
+            res.status(500).json({ 
+                message: error.message,
+                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
             });
         }
     }
