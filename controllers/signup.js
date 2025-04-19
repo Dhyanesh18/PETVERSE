@@ -26,9 +26,6 @@ module.exports = {
 
     handleSignupOwner: async (req, res) => {
         try {
-            // Debug logging
-            console.log('Request received with body:', req.body);
-            
             // Basic validation
             if (!req.body || Object.keys(req.body).length === 0) {
                 console.error('Empty body received');
