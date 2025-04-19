@@ -1,7 +1,8 @@
 const User = require('../models/users');
 const mongoose = require('mongoose');
+require('dotenv').config();
 
-mongoose.connect("mongodb+srv://gamerksd18:jZoFscKX4ZNPWmDY@cluster0.kd8kkec.mongodb.net/petverseDB?retryWrites=true&w=majority&appName=Cluster0")
+mongoose.connect(process.env.MONGODB_URI)
     .then(async () => {
     await User.create({
         email: 'admin@petverse.com',

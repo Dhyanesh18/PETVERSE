@@ -1,15 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const signupForm = document.getElementById('signup-form');
+    console.log("DOM fully loaded");
     
-    // Form validation
+    const form = document.getElementById('signup-form');
+    console.log("Form element:", form);
+
+    // Form fields
     const emailInput = document.getElementById('email');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const confirmPassInput = document.getElementById('confirm-password');
-    const phoneInput = document.getElementById('phone-number');
-    const fullNameInput = document.getElementById('full-name');
+    const phoneInput = document.getElementById('phone');
+    const fullNameInput = document.getElementById('fullName');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+    // Error message helper
     function createErrorMessage(message) {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
@@ -25,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
         inputElement.parentElement.classList.remove('has-error');
     }
 
+    // Validation functions
     function validateEmail() {
         clearErrors(emailInput);
         const emailGroup = emailInput.closest('.input-group');
@@ -111,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
 
-        if (phoneInput.value.length !== 10) {
+        if (!/^[0-9]{10}$/.test(phoneInput.value)) {
             phoneGroup.appendChild(createErrorMessage('✖ Enter a valid 10-digit phone number'));
             phoneGroup.classList.add('has-error');
             return false;
@@ -140,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Phone number formatting - only allow digits and limit to 10
-    phoneInput.addEventListener("input", function () {
+    phoneInput.addEventListener("input", function() {
         this.value = this.value.replace(/\D/g, "").slice(0, 10);
     });
 
@@ -152,10 +157,20 @@ document.addEventListener('DOMContentLoaded', function() {
     phoneInput.addEventListener('blur', validatePhoneNumber);
     fullNameInput.addEventListener('blur', validateFullName);
 
-    // Form submission validation
-    signupForm.addEventListener('submit', function(e) {
-        let isValid = true;
+    // Clear errors when user starts typing
+    emailInput.addEventListener('input', () => clearErrors(emailInput));
+    usernameInput.addEventListener('input', () => clearErrors(usernameInput));
+    passwordInput.addEventListener('input', () => clearErrors(passwordInput));
+    confirmPassInput.addEventListener('input', () => clearErrors(confirmPassInput));
+    phoneInput.addEventListener('input', () => clearErrors(phoneInput));
+    fullNameInput.addEventListener('input', () => clearErrors(fullNameInput));
+
+    // Form submission - YOUR ORIGINAL WORKING CODE WITH ADDED VALIDATION
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
         
+        // Run all validations
+        let isValid = true;
         if (!validateEmail()) isValid = false;
         if (!validateUsername()) isValid = false;
         if (!validatePassword()) isValid = false;
@@ -181,20 +196,47 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (!isValid) {
-            e.preventDefault();
             // Scroll to the first error
             const firstError = document.querySelector('.has-error');
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+            return; // Don't proceed with submission if invalid
+        }
+
+        // YOUR ORIGINAL WORKING SUBMISSION CODE
+        const formData = {
+            email: emailInput.value.trim().toLowerCase(),
+            username: usernameInput.value.trim(),
+            password: passwordInput.value,
+            phone: phoneInput.value.replace(/\D/g, ''),
+            fullName: fullNameInput.value.trim(),
+            role: 'owner'
+        };
+        
+        console.log("Form Data:", formData);
+        
+        try {
+            const response = await fetch('/signup/owner', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message);
+            }
+            
+            const result = await response.json();
+            console.log("Success:", result);
+            window.location.href = '/login';
+        } catch (error) {
+            console.error("Error:", error);
+            alert(error.message);
         }
     });
-
-    // Clear errors when user starts typing
-    emailInput.addEventListener('input', () => clearErrors(emailInput));
-    usernameInput.addEventListener('input', () => clearErrors(usernameInput));
-    passwordInput.addEventListener('input', () => clearErrors(passwordInput));
-    confirmPassInput.addEventListener('input', () => clearErrors(confirmPassInput));
-    phoneInput.addEventListener('input', () => clearErrors(phoneInput));
-    fullNameInput.addEventListener('input', () => clearErrors(fullNameInput));
 });

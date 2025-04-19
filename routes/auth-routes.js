@@ -9,13 +9,9 @@ router.get('/login', loginController.showLoginForm);
 router.post('/login', loginController.handleLogin);
 
 router.get('/signup', signupController.showSignupForm);
-router.post('/signup', 
-    upload.fields([
-        { name: 'license', maxCount: 1 },
-        { name: 'certificate', maxCount: 1 }
-    ]),
-    signupController.handleSignupForm
-);
+
+
+router.post('/signup/owner', signupController.handleSignupOwner);
 
 router.get('/dashboard', (req, res)=>{
     res.render('about', {
@@ -27,6 +23,8 @@ router.get('/dashboard', (req, res)=>{
 });
 
 router.post('/select-user-type', signupController.profileChoice);
+
+
 
 router.get('/logout', (req, res)=>{
     const userId = req.session.userId;
