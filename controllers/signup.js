@@ -1,6 +1,5 @@
 const User = require("../models/users");
-const { uploadFileToGridFS } = require("../config/gridfs");
-const { validateSignup } = require("../middleware/validation");
+const Seller = require("../models/seller");
 
 module.exports = {
     showSignupForm: (req, res) => {
@@ -87,6 +86,87 @@ module.exports = {
             res.status(500).json({ 
                 message: error.message,
                 stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            });
+        }
+    },
+
+    handleSignupSeller: async (req, res) => {
+        try {
+            // 1. Debug incoming data
+            console.log("Request body:", req.body);
+            console.log("Request file:", req.file ? "Received" : "Missing");
+    
+            // 2. Validate required fields
+            const requiredFields = {
+                email: req.body.email,
+                username: req.body.username,
+                password: req.body.password,
+                phoneNumber: req.body.phoneNumber,
+                fullName: req.body.fullName,
+                businessName: req.body.businessName,
+                businessAddress: req.body.businessAddress
+            };
+    
+            const missingFields = Object.entries(requiredFields)
+                .filter(([_, value]) => !value)
+                .map(([key]) => key);
+    
+            if (missingFields.length > 0 || !req.file) {
+                return res.status(400).json({
+                    success: false,
+                    message: "All fields including license file are required",
+                    missing: [...missingFields, ...(!req.file ? ['license'] : [])]
+                });
+            }
+    
+            // 3. Check for existing user
+            const existingUser = await User.findOne({
+                $or: [{ email: req.body.email }, { username: req.body.username }]
+            });
+    
+            if (existingUser) {
+                return res.status(400).json({
+                    success: false,
+                    message: "User with this email or username already exists"
+                });
+            }
+    
+            // 4. Create new seller
+            const newSeller = await Seller.create({
+                email: req.body.email,
+                username: req.body.username,
+                password: req.body.password,
+                phone: req.body.phoneNumber,
+                fullName: req.body.fullName,
+                role: 'seller',
+                businessName: req.body.businessName,
+                businessAddress: req.body.businessAddress,
+                taxId: req.body.taxId || undefined, // Optional field
+                license: {
+                    data: req.file.buffer,
+                    contentType: req.file.mimetype
+                },
+                isApproved: false
+            });
+    
+            // 5. Return success (without sensitive data)
+            res.status(201).json({
+                success: true,
+                message: "Seller registration submitted for admin approval",
+                user: {
+                    id: newSeller._id,
+                    email: newSeller.email,
+                    businessName: newSeller.businessName
+                }
+            });
+    
+        } catch (error) {
+            console.error("Seller signup error:", error);
+            res.status(500).json({
+                success: false,
+                message: process.env.NODE_ENV === 'development' 
+                    ? error.message 
+                    : "Server error during registration"
             });
         }
     }

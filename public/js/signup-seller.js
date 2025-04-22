@@ -181,6 +181,13 @@ document.addEventListener('DOMContentLoaded', function() {
         input.addEventListener('input', () => clearErrors(input));
     });
 
+    licenseInput.addEventListener('change', function() {
+        const fileName = this.files[0] ? this.files[0].name : 'Upload your license';
+        this.closest('.file-input-container').querySelector('.file-name').textContent = fileName;
+        clearErrors(this);
+    });
+    
+
     // Form submission
     signupForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -238,20 +245,44 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/signup/seller', {
                 method: 'POST',
-                body: formData // Note: Don't set Content-Type header for FormData
+                body: formData
             });
             
+            const result = await response.json();
+            
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Registration failed');
+                throw new Error(result.message || 'Registration failed');
             }
             
-            const result = await response.json();
-            console.log("Success:", result);
-            window.location.href = '/login';
+            // Show success message
+            const successModal = document.createElement('div');
+            successModal.className = 'success-modal';
+            successModal.innerHTML = `
+                <div class="modal-content">
+                    <h3>✅ Registration Submitted</h3>
+                    <p>${result.message}</p>
+                    <p>Your account will be activated after admin approval.</p>
+                    <button onclick="window.location.href='/login'">Go to Login</button>
+                </div>
+            `;
+            document.body.appendChild(successModal);
+            
         } catch (error) {
             console.error("Error:", error);
-            alert(`Registration failed: ${error.message}`);
+            
+            // Show error in a more user-friendly way
+            const errorContainer = document.getElementById('form-error-container') || 
+                document.createElement('div');
+            
+            errorContainer.id = 'form-error-container';
+            errorContainer.className = 'form-error';
+            errorContainer.textContent = error.message;
+            
+            if (!document.getElementById('form-error-container')) {
+                signupForm.prepend(errorContainer);
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
 });

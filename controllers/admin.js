@@ -1,4 +1,3 @@
-// Get pending approvals
 exports.getApprovals = async (req, res) => {
     const pendingUsers = await User.find({
         isApproved: false,
