@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const signupForm = document.getElementById('signup-form');
     
-    // Form validation elements
+    // Form fields
     const emailInput = document.getElementById('email');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
@@ -9,11 +9,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneInput = document.getElementById('phone-number');
     const fullNameInput = document.getElementById('full-name');
     const businessNameInput = document.getElementById('business-name');
-    const businessAddressInput = document.getElementById('business-address');
     const taxIdInput = document.getElementById('tax-id');
+    const businessAddressInput = document.getElementById('business-address');
     const licenseInput = document.getElementById('license');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+    // Error message helper
     function createErrorMessage(message) {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
@@ -29,20 +30,17 @@ document.addEventListener('DOMContentLoaded', function() {
         inputElement.parentElement.classList.remove('has-error');
     }
 
-    // Common validations (same as your existing ones)
+    // Validation functions
     function validateEmail() {
         clearErrors(emailInput);
-        const emailGroup = emailInput.closest('.input-group');
-        
         if (!emailInput.value) {
-            emailGroup.appendChild(createErrorMessage('✖ Email is required'));
-            emailGroup.classList.add('has-error');
+            emailInput.parentElement.appendChild(createErrorMessage('✖ Email is required'));
+            emailInput.parentElement.classList.add('has-error');
             return false;
         }
-
         if (!emailRegex.test(emailInput.value)) {
-            emailGroup.appendChild(createErrorMessage('✖ Please enter a valid email address'));
-            emailGroup.classList.add('has-error');
+            emailInput.parentElement.appendChild(createErrorMessage('✖ Please enter a valid email address'));
+            emailInput.parentElement.classList.add('has-error');
             return false;
         }
         return true;
@@ -50,17 +48,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateUsername() {
         clearErrors(usernameInput);
-        const usernameGroup = usernameInput.closest('.input-group');
-
         if (!usernameInput.value.trim()) {
-            usernameGroup.appendChild(createErrorMessage('✖ Username is required'));
-            usernameGroup.classList.add('has-error');
+            usernameInput.parentElement.appendChild(createErrorMessage('✖ Username is required'));
+            usernameInput.parentElement.classList.add('has-error');
             return false;
         }
-
         if (usernameInput.value.length < 3) {
-            usernameGroup.appendChild(createErrorMessage('✖ Username must be at least 3 characters long'));
-            usernameGroup.classList.add('has-error');
+            usernameInput.parentElement.appendChild(createErrorMessage('✖ Username must be at least 3 characters'));
+            usernameInput.parentElement.classList.add('has-error');
             return false;
         }
         return true;
@@ -68,17 +63,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validatePassword() {
         clearErrors(passwordInput);
-        const passwordGroup = passwordInput.closest('.input-group');
-        
         if (!passwordInput.value) {
-            passwordGroup.appendChild(createErrorMessage('✖ Password is required'));
-            passwordGroup.classList.add('has-error');
+            passwordInput.parentElement.appendChild(createErrorMessage('✖ Password is required'));
+            passwordInput.parentElement.classList.add('has-error');
             return false;
         }
-        
         if (passwordInput.value.length < 8) {
-            passwordGroup.appendChild(createErrorMessage('✖ Password must be at least 8 characters long'));
-            passwordGroup.classList.add('has-error');
+            passwordInput.parentElement.appendChild(createErrorMessage('✖ Password must be at least 8 characters'));
+            passwordInput.parentElement.classList.add('has-error');
             return false;
         }
         return true;
@@ -86,17 +78,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateConfirmPassword() {
         clearErrors(confirmPassInput);
-        const confirmPassGroup = confirmPassInput.closest('.input-group');
-
         if (!confirmPassInput.value) {
-            confirmPassGroup.appendChild(createErrorMessage('✖ Please confirm your password'));
-            confirmPassGroup.classList.add('has-error');
+            confirmPassInput.parentElement.appendChild(createErrorMessage('✖ Please confirm your password'));
+            confirmPassInput.parentElement.classList.add('has-error');
             return false;
         }
-
         if (confirmPassInput.value !== passwordInput.value) {
-            confirmPassGroup.appendChild(createErrorMessage('✖ Passwords do not match'));
-            confirmPassGroup.classList.add('has-error');
+            confirmPassInput.parentElement.appendChild(createErrorMessage('✖ Passwords do not match'));
+            confirmPassInput.parentElement.classList.add('has-error');
             return false;
         }
         return true;
@@ -104,17 +93,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validatePhoneNumber() {
         clearErrors(phoneInput);
-        const phoneGroup = phoneInput.closest('.input-group');
-
         if (!phoneInput.value) {
-            phoneGroup.appendChild(createErrorMessage('✖ Phone number is required'));
-            phoneGroup.classList.add('has-error');
+            phoneInput.parentElement.appendChild(createErrorMessage('✖ Phone number is required'));
+            phoneInput.parentElement.classList.add('has-error');
             return false;
         }
-
-        if (phoneInput.value.length !== 10) {
-            phoneGroup.appendChild(createErrorMessage('✖ Enter a valid 10-digit phone number'));
-            phoneGroup.classList.add('has-error');
+        if (!/^[0-9]{10}$/.test(phoneInput.value)) {
+            phoneInput.parentElement.appendChild(createErrorMessage('✖ Enter a valid 10-digit phone number'));
+            phoneInput.parentElement.classList.add('has-error');
             return false;
         }
         return true;
@@ -122,30 +108,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateFullName() {
         clearErrors(fullNameInput);
-        const fullNameGroup = fullNameInput.closest('.input-group');
-
         if (!fullNameInput.value) {
-            fullNameGroup.appendChild(createErrorMessage('✖ Full name is required'));
-            fullNameGroup.classList.add('has-error');
+            fullNameInput.parentElement.appendChild(createErrorMessage('✖ Full name is required'));
+            fullNameInput.parentElement.classList.add('has-error');
             return false;
         }
-
         if (fullNameInput.value.split(' ').length < 2) {
-            fullNameGroup.appendChild(createErrorMessage('✖ Please enter your full name (first and last name)'));
-            fullNameGroup.classList.add('has-error');
+            fullNameInput.parentElement.appendChild(createErrorMessage('✖ Please enter your full name (first and last)'));
+            fullNameInput.parentElement.classList.add('has-error');
             return false;
         }
         return true;
     }
 
-    // Seller-specific validations
     function validateBusinessName() {
         clearErrors(businessNameInput);
-        const businessNameGroup = businessNameInput.closest('.input-group');
-
         if (!businessNameInput.value.trim()) {
-            businessNameGroup.appendChild(createErrorMessage('✖ Business name is required'));
-            businessNameGroup.classList.add('has-error');
+            businessNameInput.parentElement.appendChild(createErrorMessage('✖ Business name is required'));
+            businessNameInput.parentElement.classList.add('has-error');
             return false;
         }
         return true;
@@ -153,11 +133,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateBusinessAddress() {
         clearErrors(businessAddressInput);
-        const businessAddressGroup = businessAddressInput.closest('.input-group');
-
         if (!businessAddressInput.value.trim()) {
-            businessAddressGroup.appendChild(createErrorMessage('✖ Business address is required'));
-            businessAddressGroup.classList.add('has-error');
+            businessAddressInput.parentElement.appendChild(createErrorMessage('✖ Business address is required'));
+            businessAddressInput.parentElement.classList.add('has-error');
             return false;
         }
         return true;
@@ -165,27 +143,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateLicense() {
         clearErrors(licenseInput);
-        const licenseGroup = licenseInput.closest('.input-group');
-
-        if (!licenseInput.files || licenseInput.files.length === 0) {
-            licenseGroup.appendChild(createErrorMessage('✖ Business license is required'));
-            licenseGroup.classList.add('has-error');
+        if (!licenseInput.files || !licenseInput.files[0]) {
+            licenseInput.closest('.file-upload-group').querySelector('.file-name').textContent = 'License is required';
+            licenseInput.closest('.file-upload-group').classList.add('has-error');
             return false;
         }
-
-        const validTypes = ['application/pdf', 'application/msword', 
-                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-        const file = licenseInput.files[0];
         
-        if (!validTypes.includes(file.type)) {
-            licenseGroup.appendChild(createErrorMessage('✖ Only PDF or DOC files are allowed'));
-            licenseGroup.classList.add('has-error');
-            return false;
-        }
-
-        if (file.size > 5 * 1024 * 1024) { // 5MB limit
-            licenseGroup.appendChild(createErrorMessage('✖ File size must be less than 5MB'));
-            licenseGroup.classList.add('has-error');
+        const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!validTypes.includes(licenseInput.files[0].type)) {
+            licenseInput.closest('.file-upload-group').querySelector('.file-name').textContent = 'Only PDF/DOC files allowed';
+            licenseInput.closest('.file-upload-group').classList.add('has-error');
             return false;
         }
         return true;
@@ -194,16 +161,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Phone number formatting
     phoneInput.addEventListener("input", function() {
         this.value = this.value.replace(/\D/g, "").slice(0, 10);
-    });
-
-    // File input display
-    licenseInput.addEventListener('change', function() {
-        const fileNameDisplay = document.querySelector('.file-name');
-        if (this.files.length > 0) {
-            fileNameDisplay.textContent = this.files[0].name;
-        } else {
-            fileNameDisplay.textContent = 'No file chosen';
-        }
     });
 
     // Event listeners for validation
@@ -215,23 +172,28 @@ document.addEventListener('DOMContentLoaded', function() {
     fullNameInput.addEventListener('blur', validateFullName);
     businessNameInput.addEventListener('blur', validateBusinessName);
     businessAddressInput.addEventListener('blur', validateBusinessAddress);
-    licenseInput.addEventListener('change', validateLicense);
 
     // Clear errors when user starts typing
     const inputs = [emailInput, usernameInput, passwordInput, confirmPassInput, 
                    phoneInput, fullNameInput, businessNameInput, businessAddressInput];
     
     inputs.forEach(input => {
-        input.addEventListener('input', function() {
-            clearErrors(this);
-        });
+        input.addEventListener('input', () => clearErrors(input));
     });
 
-    // Form submission validation
-    signupForm.addEventListener('submit', function(e) {
-        let isValid = true;
+    licenseInput.addEventListener('change', function() {
+        const fileName = this.files[0] ? this.files[0].name : 'Upload your license';
+        this.closest('.file-input-container').querySelector('.file-name').textContent = fileName;
+        clearErrors(this);
+    });
+    
+
+    // Form submission
+    signupForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        // Validate all fields
+        // Run all validations
+        let isValid = true;
         if (!validateEmail()) isValid = false;
         if (!validateUsername()) isValid = false;
         if (!validatePassword()) isValid = false;
@@ -245,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Check terms and conditions
         const agreeCheckbox = document.getElementById('agree');
         if (!agreeCheckbox.checked) {
-            const termsLabel = document.querySelector('.checkbox-container');
+            const termsLabel = document.querySelector('.terms-and-conditions');
             const existingError = termsLabel.querySelector('.error-message');
             if (!existingError) {
                 const errorDiv = createErrorMessage('✖ You must agree to the terms and conditions');
@@ -253,19 +215,74 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             isValid = false;
         } else {
-            const existingError = document.querySelector('.checkbox-container .error-message');
+            const existingError = document.querySelector('.terms-and-conditions .error-message');
             if (existingError) {
                 existingError.remove();
             }
         }
         
         if (!isValid) {
-            e.preventDefault();
-            // Scroll to the first error
             const firstError = document.querySelector('.has-error');
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+            return;
+        }
+
+        // Prepare FormData for file upload
+        const formData = new FormData();
+        formData.append('email', emailInput.value.trim().toLowerCase());
+        formData.append('username', usernameInput.value.trim());
+        formData.append('password', passwordInput.value);
+        formData.append('phoneNumber', phoneInput.value);
+        formData.append('fullName', fullNameInput.value.trim());
+        formData.append('businessName', businessNameInput.value.trim());
+        formData.append('businessAddress', businessAddressInput.value.trim());
+        formData.append('taxId', taxIdInput.value.trim());
+        formData.append('license', licenseInput.files[0]);
+        formData.append('role', 'seller');
+        
+        try {
+            const response = await fetch('/signup/seller', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.message || 'Registration failed');
+            }
+            
+            // Show success message
+            const successModal = document.createElement('div');
+            successModal.className = 'success-modal';
+            successModal.innerHTML = `
+                <div class="modal-content">
+                    <h3>✅ Registration Submitted</h3>
+                    <p>${result.message}</p>
+                    <p>Your account will be activated after admin approval.</p>
+                    <button onclick="window.location.href='/login'">Go to Login</button>
+                </div>
+            `;
+            document.body.appendChild(successModal);
+            
+        } catch (error) {
+            console.error("Error:", error);
+            
+            // Show error in a more user-friendly way
+            const errorContainer = document.getElementById('form-error-container') || 
+                document.createElement('div');
+            
+            errorContainer.id = 'form-error-container';
+            errorContainer.className = 'form-error';
+            errorContainer.textContent = error.message;
+            
+            if (!document.getElementById('form-error-container')) {
+                signupForm.prepend(errorContainer);
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
 });

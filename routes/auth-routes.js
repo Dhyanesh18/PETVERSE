@@ -1,17 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const upload = multer({storage: multer.memoryStorage()});
 const loginController = require('../controllers/login');
 const signupController = require('../controllers/signup');
+const multer = require('multer');
+const upload = multer({
+    limits: { fileSize: 5 * 1024 * 1024 } // 5 MB limit
+});
 
+
+// Login routes ----------------------------------------
 router.get('/login', loginController.showLoginForm);
 router.post('/login', loginController.handleLogin);
+// -----------------------------------------------------
 
+// Signup routes ---------------------------------------
+router.post('/select-user-type', signupController.profileChoice); // Select the type of user for signing up
 router.get('/signup', signupController.showSignupForm);
-
-
 router.post('/signup/owner', signupController.handleSignupOwner);
+router.post('/signup/seller', upload.single('license'), signupController.handleSignupSeller);
+// -----------------------------------------------------
+
 
 router.get('/dashboard', (req, res)=>{
     res.render('about', {
@@ -22,7 +30,7 @@ router.get('/dashboard', (req, res)=>{
     });
 });
 
-router.post('/select-user-type', signupController.profileChoice);
+
 
 
 

@@ -1,14 +1,16 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const fileSchema = require('./fileSchema');
 
 const userSchema = new mongoose.Schema({
     email: {
-        type: String, 
+        type: String,
         required: true,
         unique: true,
-        trim: true,
-        lowercase: true,
-        match: [/.+\@.+\..+/, 'Invalid email format']
+        validate: {
+            validator: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), // Basic email regex
+            message: 'Invalid email format'
+        }
     },
     password: {
         type: String,
@@ -17,103 +19,56 @@ const userSchema = new mongoose.Schema({
     },
     fullName: {
         type: String,
-        required: true,
+        required: true
     },
     phone: {
         type: String,
         required: true,
         validate: {
-            validator: function(v) {
-                return /^[0-9]{10}$/.test(v);
-            },
-            message: 'Phone number must be 10 digits'
+            validator: v => /^\d{10}$/.test(v), // 10-digit phone regex
+            message: 'Phone must be 10 digits'
         }
     },
     username: {
         type: String,
         required: true,
-        unique: true,
-        trim: true
+        unique: true
     },
     role: {
-        type: String, 
+        type: String,
         required: true,
-        enum: ['owner', 'seller', 'service_provider', 'admin'],
-    },
-    businessName: {
-        type: String,
-        required: function() {
-            return this.role === 'seller';
-        }
-    },
-    license: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'uploads.files',
-        required: function() {
-            return this.role === 'seller';
-        }
-    },
-    serviceType: {
-        type: String,
-        required: function() {
-            return this.role === "service_provider";
-        },
-        enum: ['veterinarian', 'groomer', 'pet sitter', 'trainer', 'breeder']
-    },
-    certificate: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'uploads.files',
-        required: function() {
-            return this.role === "service_provider";
-        }
+        enum: ['owner', 'seller', 'service_provider', 'admin']
     },
     isApproved: {
         type: Boolean,
         required: function() {
-            return this.role === "service_provider" || this.role === "seller";
+            return ['seller', 'service_provider'].includes(this.role);
         }
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedAt: {
-        type: Date,
-        default: Date.now
     }
+}, { 
+    discriminatorKey: 'role',
+    timestamps: true 
 });
 
-// Password hashing middleware
+// Password hashing (basic try-catch, no fancy config)
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
-    
     try {
-        const salt = await bcrypt.genSalt(12);
-        this.password = await bcrypt.hash(this.password, salt);
+        this.password = await bcrypt.hash(this.password, 10);
         next();
     } catch (err) {
         next(err);
     }
 });
 
-userSchema.pre('findOneAndUpdate', async function(next) {
-    const update = this.getUpdate();
-    this.set({ updatedAt: Date.now() });
-    if (update?.password) {
-        try {
-            const salt = await bcrypt.genSalt(12);
-            const hashedPassword = await bcrypt.hash(update.password, salt);
-            this.setUpdate({ ...update, password: hashedPassword });
-        } catch (err) {
-            return next(err);
-        }
-    }
-    next();
-});
-
-// Method to compare passwords
+// Password comparison (basic try-catch, no dummy checks)
 userSchema.methods.comparePassword = async function(inputPassword) {
-    return await bcrypt.compare(inputPassword, this.password);
+    try {
+        return await bcrypt.compare(inputPassword, this.password);
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
 };
 
 module.exports = mongoose.model('User', userSchema);
