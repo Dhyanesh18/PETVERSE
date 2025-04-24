@@ -18,6 +18,7 @@ router.post('/select-user-type', signupController.profileChoice); // Select the 
 router.get('/signup', signupController.showSignupForm);
 router.post('/signup/owner', signupController.handleSignupOwner);
 router.post('/signup/seller', upload.single('license'), signupController.handleSignupSeller);
+router.post('/signup/service-provider', upload.single('certificate'), signupController.handleSignupServiceProvider);
 // -----------------------------------------------------
 
 

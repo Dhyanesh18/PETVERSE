@@ -228,7 +228,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Form submission validation
-    signupForm.addEventListener('submit', function(e) {
+    signupForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
         let isValid = true;
         
         // Validate all fields
@@ -261,11 +262,50 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!isValid) {
             e.preventDefault();
-            // Scroll to the first error
             const firstError = document.querySelector('.has-error');
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+        }
+        try {
+            const formData = new FormData(this);
+            
+            const response = await fetch('/signup/service-provider', {
+                method: 'POST',
+                body: formData
+            });
+    
+            const result = await response.json();
+            
+            if (response.ok) {
+                // Show success message
+                const successModal = document.createElement('div');
+                successModal.className = 'success-modal';
+                successModal.innerHTML = `
+                    <div class="modal-content">
+                        <h3>✅ Registration Submitted</h3>
+                        <p>${result.message}</p>
+                        <p>Your account will be activated after admin approval.</p>
+                        <button onclick="window.location.href='/login'">Go to Login</button>
+                    </div>
+                `;
+                document.body.appendChild(successModal);
+            } else {
+                throw new Error(result.message || 'Registration failed');
+            }
+        } catch (error) {
+            const errorContainer = document.getElementById('form-error-container') || 
+                document.createElement('div');
+            
+            errorContainer.id = 'form-error-container';
+            errorContainer.className = 'form-error';
+            errorContainer.textContent = error.message;
+            
+            if (!document.getElementById('form-error-container')) {
+                signupForm.prepend(errorContainer);
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     });
 });
