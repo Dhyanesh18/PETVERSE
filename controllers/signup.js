@@ -1,5 +1,6 @@
 const User = require("../models/users");
 const Seller = require("../models/seller");
+const ServiceProvider = require("../models/serviceProvider");
 
 module.exports = {
     showSignupForm: (req, res) => {
@@ -162,6 +163,85 @@ module.exports = {
     
         } catch (error) {
             console.error("Seller signup error:", error);
+            res.status(500).json({
+                success: false,
+                message: process.env.NODE_ENV === 'development' 
+                    ? error.message 
+                    : "Server error during registration"
+            });
+        }
+    },
+    handleSignupServiceProvider: async (req, res) => {
+        try {
+            // 1. Debug incoming data
+            console.log("Request body:", req.body);
+            console.log("Request file:", req.file ? "Received" : "Missing");
+
+            // 2. Validate required fields
+            const requiredFields = {
+                email: req.body.email,
+                username: req.body.username,
+                password: req.body.password,
+                phoneNumber: req.body.phoneNumber,
+                fullName: req.body.fullName,
+                serviceType: req.body.serviceType,
+                businessAddress: req.body.businessAddress
+            };
+
+            const missingFields = Object.entries(requiredFields)
+                .filter(([_, value]) => !value)
+                .map(([key]) => key);
+
+            if (missingFields.length > 0 || !req.file) {
+                return res.status(400).json({
+                    success: false,
+                    message: "All fields including certificate file are required",
+                    missing: [...missingFields, ...(!req.file ? ['certificate'] : [])]
+                });
+            }
+
+            // 3. Check for existing user
+            const existingUser = await User.findOne({
+                $or: [{ email: req.body.email }, { username: req.body.username }]
+            });
+
+            if (existingUser) {
+                return res.status(400).json({
+                    success: false,
+                    message: "User with this email or username already exists"
+                });
+            }
+
+            // 4. Create new service provider
+            const newProvider = await ServiceProvider.create({
+                email: req.body.email,
+                username: req.body.username,
+                password: req.body.password,
+                phone: req.body.phoneNumber,
+                fullName: req.body.fullName,
+                role: 'service_provider',
+                serviceType: req.body.serviceType,
+                serviceAddress: req.body.businessAddress,
+                certificate: {
+                    data: req.file.buffer,
+                    contentType: req.file.mimetype
+                },
+                isApproved: false
+            });
+
+            // 5. Return success (without sensitive data)
+            res.status(201).json({
+                success: true,
+                message: "Service provider registration submitted for approval",
+                user: {
+                    id: newProvider._id,
+                    email: newProvider.email,
+                    serviceType: newProvider.serviceType
+                }
+            });
+
+        } catch (error) {
+            console.error("Service provider signup error:", error);
             res.status(500).json({
                 success: false,
                 message: process.env.NODE_ENV === 'development' 
