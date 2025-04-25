@@ -1,6 +1,7 @@
 const User = require("../models/users");
 const Seller = require("../models/seller");
 const ServiceProvider = require("../models/serviceProvider");
+const Availability = require("../models/availability");
 
 module.exports = {
     showSignupForm: (req, res) => {
@@ -93,11 +94,7 @@ module.exports = {
 
     handleSignupSeller: async (req, res) => {
         try {
-            // 1. Debug incoming data
-            console.log("Request body:", req.body);
-            console.log("Request file:", req.file ? "Received" : "Missing");
-    
-            // 2. Validate required fields
+            //Validate required fields
             const requiredFields = {
                 email: req.body.email,
                 username: req.body.username,
@@ -120,7 +117,7 @@ module.exports = {
                 });
             }
     
-            // 3. Check for existing user
+            //Check for existing user
             const existingUser = await User.findOne({
                 $or: [{ email: req.body.email }, { username: req.body.username }]
             });
@@ -132,7 +129,7 @@ module.exports = {
                 });
             }
     
-            // 4. Create new seller
+            // Create new seller
             const newSeller = await Seller.create({
                 email: req.body.email,
                 username: req.body.username,
@@ -142,15 +139,14 @@ module.exports = {
                 role: 'seller',
                 businessName: req.body.businessName,
                 businessAddress: req.body.businessAddress,
-                taxId: req.body.taxId || undefined, // Optional field
+                taxId: req.body.taxId || undefined,
                 license: {
                     data: req.file.buffer,
                     contentType: req.file.mimetype
                 },
                 isApproved: false
             });
-    
-            // 5. Return success (without sensitive data)
+
             res.status(201).json({
                 success: true,
                 message: "Seller registration submitted for admin approval",
@@ -173,11 +169,7 @@ module.exports = {
     },
     handleSignupServiceProvider: async (req, res) => {
         try {
-            // 1. Debug incoming data
-            console.log("Request body:", req.body);
-            console.log("Request file:", req.file ? "Received" : "Missing");
-
-            // 2. Validate required fields
+            // validate required fields
             const requiredFields = {
                 email: req.body.email,
                 username: req.body.username,
@@ -200,7 +192,7 @@ module.exports = {
                 });
             }
 
-            // 3. Check for existing user
+            // check for existing user
             const existingUser = await User.findOne({
                 $or: [{ email: req.body.email }, { username: req.body.username }]
             });
@@ -212,7 +204,7 @@ module.exports = {
                 });
             }
 
-            // 4. Create new service provider
+            // Create new service provider
             const newProvider = await ServiceProvider.create({
                 email: req.body.email,
                 username: req.body.username,
@@ -229,7 +221,6 @@ module.exports = {
                 isApproved: false
             });
 
-            // 5. Return success (without sensitive data)
             res.status(201).json({
                 success: true,
                 message: "Service provider registration submitted for approval",
@@ -239,6 +230,7 @@ module.exports = {
                     serviceType: newProvider.serviceType
                 }
             });
+            res.redirect('/availability'); // Redirect to availability page after signup
 
         } catch (error) {
             console.error("Service provider signup error:", error);
@@ -248,6 +240,66 @@ module.exports = {
                     ? error.message 
                     : "Server error during registration"
             });
+        }
+    },
+
+    saveAvailability: async (req, res) => {
+        try {
+            const { days } = req.body;
+            const serviceProviderId = req.session.userId;
+    
+            if (!serviceProviderId) {
+                return res.status(401).send('Unauthorized: No user session found.');
+            }
+    
+            let existing = await Availability.findOne({ serviceProvider: serviceProviderId });
+            const existingDaysMap = {};
+    
+            if (existing) {
+                for (let d of existing.days) {
+                    existingDaysMap[d.day] = {
+                        isHoliday: d.isHoliday,
+                        slots: d.slots
+                    };
+                }
+            }
+    
+            for (let day in days) {
+                const isHoliday = !!days[day].isHoliday;
+                let slots = [];
+    
+                if (!isHoliday && days[day].slots) {
+                    const slotArr = Object.values(days[day].slots);
+                    slots = slotArr
+                        .filter(slot => slot.start && slot.end)
+                        .map(slot => ({
+                            start: slot.start,
+                            end: slot.end
+                        }));
+                }
+
+                existingDaysMap[day] = {
+                    isHoliday,
+                    slots: isHoliday ? [] : slots
+                };
+            }
+    
+            const finalDays = Object.entries(existingDaysMap).map(([day, data]) => ({
+                day,
+                isHoliday: data.isHoliday,
+                slots: data.slots
+            }));
+    
+            await Availability.findOneAndUpdate(
+                { serviceProvider: serviceProviderId },
+                { $set: { days: finalDays } },
+                { upsert: true, new: true, runValidators: true }
+            );
+    
+            res.redirect('/dashboard'); 
+        } catch (err) {
+            console.error('Error saving availability:', err);
+            res.status(500).send('Server error while saving availability');
         }
     }
 };

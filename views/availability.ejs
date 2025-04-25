@@ -1,0 +1,181 @@
+<!-- views/availability.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Set Your Availability</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+    
+        * {
+            box-sizing: border-box;
+        }
+    
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #2A9D8F, #264653);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+    
+        .container {
+            max-width: 900px;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+            margin: 40px auto;
+        }
+    
+        h2, p {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+    
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+    
+        .card-body {
+            padding: 20px 25px;
+        }
+    
+        .form-check-input {
+            accent-color: #2A9D8F;
+            cursor: pointer;
+        }
+    
+        .btn {
+            font-weight: 500;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            transition: all 0.3s ease-in-out;
+        }
+    
+        .btn-success {
+            background: linear-gradient(135deg, #2A9D8F, #1b7065);
+            border: none;
+            color: white;
+        }
+    
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(42, 157, 143, 0.2);
+        }
+    
+        .btn-danger {
+            background: #e63946;
+            border: none;
+        }
+    
+        .btn-danger:hover {
+            background: #d62839;
+        }
+    
+        .btn-primary {
+            background: linear-gradient(135deg, #2A9D8F, #264653);
+            border: none;
+            padding: 12px 28px;
+            font-size: 1.05rem;
+        }
+    
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(38, 70, 83, 0.25);
+        }
+    
+        .time-slot-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+    
+        .time-slot-group input[type="time"] {
+            width: 130px;
+        }
+    
+        .text-capitalize {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #264653;
+        }
+    </style>
+    
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <h2 class="text-center mb-2">Set Your Availability</h2>
+    <p class="text-center text-muted mb-4">Let pet owners know when you're available</p>
+    <form method="POST" action="/availability" id="availabilityForm">
+        <% const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']; %>
+        <% days.forEach(day => { %>
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong class="text-capitalize"><%= day %></strong>
+                    <div>
+                        <label class="form-check-label me-2">Holiday</label>
+                        <input type="checkbox" class="form-check-input holiday-toggle" data-day="<%= day %>" name="days[<%= day %>][isHoliday]">
+                    </div>
+                </div>
+                <div class="slot-container" id="slots-<%= day %>">
+                    <div class="time-slot-group">
+                        <input type="time" name="days[<%= day %>][slots][0][start]" class="form-control">
+                        <span>to</span>
+                        <input type="time" name="days[<%= day %>][slots][0][end]" class="form-control">
+                        <button type="button" class="btn btn-danger btn-sm remove-slot d-none">×</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-success btn-sm add-slot" data-day="<%= day %>">+ Add Time Slot</button>
+            </div>
+        </div>
+        <% }) %>
+
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary">Save Availability</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.querySelectorAll('.add-slot').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const day = this.getAttribute('data-day');
+            const container = document.getElementById('slots-' + day);
+            const index = container.children.length;
+            const group = document.createElement('div');
+            group.className = 'time-slot-group';
+            group.innerHTML = `
+                <input type="time" name="days[${day}][slots][${index}][start]" class="form-control">
+                <span>to</span>
+                <input type="time" name="days[${day}][slots][${index}][end]" class="form-control">
+                <button type="button" class="btn btn-danger btn-sm remove-slot">×</button>
+            `;
+            container.appendChild(group);
+        });
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('remove-slot')) {
+            e.target.parentElement.remove();
+        }
+    });
+
+    document.querySelectorAll('.holiday-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function () {
+            const day = this.getAttribute('data-day');
+            const container = document.getElementById('slots-' + day);
+            const isChecked = this.checked;
+            container.querySelectorAll('input').forEach(input => input.disabled = isChecked);
+        });
+    });
+</script>
+</body>
+</html>

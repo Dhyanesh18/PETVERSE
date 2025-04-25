@@ -19,6 +19,11 @@ router.get('/signup', signupController.showSignupForm);
 router.post('/signup/owner', signupController.handleSignupOwner);
 router.post('/signup/seller', upload.single('license'), signupController.handleSignupSeller);
 router.post('/signup/service-provider', upload.single('certificate'), signupController.handleSignupServiceProvider);
+router.get('/availability', (req,res)=>{
+    res.render('availability');
+});
+router.post('/availability', signupController.saveAvailability);
+
 // -----------------------------------------------------
 
 
