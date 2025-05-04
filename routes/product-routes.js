@@ -10,6 +10,7 @@ const upload = multer({
         files: 5 
     }
 });
+const productController = require('../controllers/products');
 
 // Add product page
 router.get('/products/add', sellerAuth, (req, res) => {
@@ -72,6 +73,8 @@ router.get('/products/:category', async (req, res) => {
         res.status(500).render('error', { message: 'Error loading products' });
     }
 });
+
+router.get("products/:id", productController.getProduct);
 
 router.get('/about', (req,res)=>{
     res.render('about', {

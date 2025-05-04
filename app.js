@@ -44,6 +44,8 @@ const authRoutes = require('./routes/auth-routes');
 const adminRoutes = require('./routes/admin-routes');
 const imageRoutes = require('./routes/image-routes');
 const productRoutes = require('./routes/product-routes');
+const reviewRoutes = require('./routes/review-routes');
+app.use('/', reviewRoutes);
 app.use('/seller', productRoutes);
 app.use('/', imageRoutes); 
 app.use('/', authRoutes);
