@@ -12,13 +12,13 @@ module.exports = {
                 return res.render('login', { error: 'Invalid credentials' });
             }
             
-            console.log('Session object before:', req.session);
-    
+            // Set session data
             req.session.userId = user._id;
             req.session.userRole = user.role;
+            req.session.isAuthenticated = true;
 
-            console.log('Session after setting:', req.session);
-            res.redirect('/dashboard');
+            // Redirect to home page
+            res.redirect('/home');
         } catch (err) {
             console.error('Login error:', err);
             res.render('login', { error: 'Server error' });

@@ -3,215 +3,314 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PetVerse - <%= categoryTitle %></title>
+    <title>PetVerse - Products</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="/css/products.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header" id="header">
-        <nav id="navbar" class="navbar">
-            <div class="nav-content">
-                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
-                <div class="nav-icons">
-                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                    <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
-                </div>
-                <div class="search">
-                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/products/petfood">Pet Food</a></li>
-                            <li><a href="/products/toys">Toys</a></li>
-                            <li><a href="/products/accessories">Accessories</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/services">Services</a></li>
-                            <li><a href="/mate">PetMate</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
 
     <!-- Main Content -->
     <div class="main-container">
-        <!-- Simplified Filters -->
+        <!-- Filters Sidebar -->
         <div class="filters-sidebar">
             <h2>Filters</h2>
+            
+            <!-- Category Filter -->
             <div class="filter-section">
-                <h3>Price</h3>
-                <input type="range" id="priceRange" min="0" max="10000" step="100">
-                <span id="priceValue">₹0 - ₹10000</span>
+                <h3>Category</h3>
+                <div class="filter-options">
+                    <div class="filter-option">
+                        <input type="checkbox" id="pet-food" name="category" value="Pet Food">
+                        <label for="pet-food">Pet Food</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="toys" name="category" value="Toys">
+                        <label for="toys">Toys</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="accessories" name="category" value="Accessories">
+                        <label for="accessories">Accessories</label>
+                    </div>
+                </div>
             </div>
+            
+            <!-- Price Filter -->
+            <div class="filter-section">
+                <h3>Price Range</h3>
+                <div class="price-filter">
+                    <input type="number" id="min-price" placeholder="Min" min="0">
+                    <span>to</span>
+                    <input type="number" id="max-price" placeholder="Max" min="0">
+                    <button id="apply-price">Apply</button>
+                </div>
+            </div>
+            
+            <!-- Brand Filter -->
+            <div class="filter-section">
+                <h3>Brand</h3>
+                <div class="filter-options">
+                    <% const brands = [...new Set(products.map(p => p.brand))]; %>
+                    <% brands.forEach(brand => { %>
+                        <div class="filter-option">
+                            <input type="checkbox" id="<%= brand %>" name="brand" value="<%= brand %>">
+                            <label for="<%= brand %>"><%= brand %></label>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+            
+            <!-- Rating Filter -->
             <div class="filter-section">
                 <h3>Rating</h3>
-                <select id="ratingFilter">
-                    <option value="0">All Ratings</option>
-                    <option value="4">4+ Stars</option>
-                    <option value="3">3+ Stars</option>
-                </select>
+                <div class="filter-options">
+                    <div class="filter-option">
+                        <input type="checkbox" id="rating4plus" name="rating" value="4">
+                        <label for="rating4plus">4★ & above</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="checkbox" id="rating3plus" name="rating" value="3">
+                        <label for="rating3plus">3★ & above</label>
+                    </div>
+                </div>
             </div>
-            <button onclick="clearFilters()" class="clear-filters">Clear Filters</button>
+            
+            <button class="clear-filters">Clear All Filters</button>
         </div>
 
         <!-- Products Display Area -->
         <div class="products-container">
-            <h1><%= category %></h1>
-            
+            <div class="products-header">
+                <h1><%= categoryTitle %></h1>
+                <select class="sort-dropdown">
+                    <option value="popular">Most Popular</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="rating">Highest Rated</option>
+                </select>
+            </div>
+
+            <!-- Products Grid -->
             <div class="products-grid">
                 <% products.forEach(product => { %>
-                <div class="product-card">
-                    <% if(product.images[0]) { %>
-                    <img src="/product/image/<%= product._id %>/0" 
-                         alt="<%= product.name %>" 
-                         class="product-image">
-                    <% } %>
-                    <h3><%= product.name %></h3>
-                    <p class="price">₹<%= product.price.toFixed(2) %></p>
-                    <div class="rating" data-rating="<%= product.avgRating %>">
-                        <% const roundedRating = Math.round(product.avgRating * 2) / 2; %>
-                        <% for(let i=0; i<5; i++) { %>
-                            <% if(i < Math.floor(roundedRating)) { %>
-                                ★
-                            <% } else if (i === Math.floor(roundedRating) && roundedRating % 1 !== 0) { %>
-                                ★½
-                            <% } else { %>
-                                ☆
-                            <% } %>
-                        <% } %>
-                        (<%= product.reviewCount %>)
+                    <div class="product-card" data-category="<%= product.category %>">
+                        <a href="/buy/<%= product._id %>" class="product-link">
+                            <div class="product-image">
+                                <% if (product.images && product.images.length > 0) { %>
+                                    <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" alt="<%= product.name %>">
+                                <% } else { %>
+                                    <img src="/images/default-product.jpg" alt="<%= product.name %>">
+                                <% } %>
+                            </div>
+                            <div class="product-info">
+                                <h3 class="product-name"><%= product.name %></h3>
+                                <p class="product-brand"><%= product.brand %></p>
+                                <div class="product-rating">
+                                    <div class="stars">
+                                        <% for(let i = 1; i <= 5; i++) { %>
+                                            <i class="fas fa-star <%= i <= product.avgRating ? 'filled' : '' %>"></i>
+                                        <% } %>
+                                    </div>
+                                    <span class="review-count">(<%= product.reviewCount %>)</span>
+                                </div>
+                                <p class="product-description"><%= product.description %></p>
+                                <div class="product-price">
+                                    <% if (product.discount > 0) { %>
+                                        <span class="original-price">₹<%= product.price.toFixed(2) %></span>
+                                        <span class="discounted-price">₹<%= (product.price * (1 - product.discount/100)).toFixed(2) %></span>
+                                        <span class="discount-badge"><%= product.discount %>% OFF</span>
+                                    <% } else { %>
+                                        <span class="discounted-price">₹<%= product.price.toFixed(2) %></span>
+                                    <% } %>
+                                </div>
+                                <div class="product-stock">
+                                    <% if (product.stock === 0) { %>
+                                        Out of Stock
+                                    <% } else if (product.stock <= 5) { %>
+                                        Only <%= product.stock %> left in stock!
+                                    <% } else { %>
+                                        In Stock
+                                    <% } %>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="product-action">
+                            <button class="add-to-cart" data-product-id="<%= product._id %>" <%= product.stock === 0 ? 'disabled' : '' %>>
+                                Add to Cart
+                            </button>
+                            <button class="wishlist-btn">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
                     </div>
-                    <button onclick="addToCart('<%= product._id %>')">Add to Cart</button>
-                    <a href="/products/<%= product._id %>" class="details-btn">Details</a>
-                </div>
                 <% }); %>
             </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                        <a href="?page=<%= currentPage - 1 %>" class="page-link">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    <% } %>
+                    
+                    <% for(let i = 1; i <= totalPages; i++) { %>
+                        <a href="?page=<%= i %>" class="page-link <%= i === currentPage ? 'active' : '' %>">
+                            <%= i %>
+                        </a>
+                    <% } %>
+                    
+                    <% if (currentPage < totalPages) { %>
+                        <a href="?page=<%= currentPage + 1 %>" class="page-link">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-logo">
-                <h2>PetVerse</h2>
-                <p>Your one-stop destination for all pet needs</p>
-            </div>
-            <div class="footer-links">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Shop</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Events</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
-            </div>
-            <div class="footer-social">
-                <h3>Follow Us</h3>
-                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
-                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
-                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
-        </div>
-    </footer>
+    <%- include('partials/footer') %>
 
-    <script src="/js/prod.js"></script>
+    <script src="/js/cart-manager.js"></script>
     <script>
-        // Image handling
-        let selectedFiles = [];
-        const maxFiles = 5;
-        const imageInput = document.getElementById('images');
-        const previewContainer = document.getElementById('imagePreview');
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize cart manager
+        cartManager.initializeCart();
 
-        imageInput?.addEventListener('change', function() {
-            const newFiles = Array.from(this.files);
-            const remainingSlots = maxFiles - selectedFiles.length;
-            selectedFiles = [...selectedFiles, ...newFiles].slice(0, maxFiles);
-            updatePreview();
-            const dataTransfer = new DataTransfer();
-            selectedFiles.forEach(file => dataTransfer.items.add(file));
-            this.files = dataTransfer.files;
+        // Add to cart button click handler - use event delegation
+        document.querySelector('.products-grid').addEventListener('click', async (e) => {
+            const addToCartBtn = e.target.closest('.add-to-cart');
+            if (addToCartBtn && !addToCartBtn.disabled) {
+                e.preventDefault();
+                const productId = addToCartBtn.getAttribute('data-product-id');
+                if (productId) {
+                    try {
+                        const result = await cartManager.addToCart(productId, 1);
+                        // Removed alert for cart
+                        // if (result.success) {
+                        //     alert('Product added to cart successfully!');
+                        // }
+                    } catch (error) {
+                        // Removed alert for cart error
+                        // alert(error.message || 'Failed to add item to cart. Please try again.');
+                    }
+                }
+            }
         });
 
-        function updatePreview() {
-            previewContainer.innerHTML = '';
-            selectedFiles.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'preview-image';
-                    previewContainer.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // Filtering
-        document.getElementById('priceRange').addEventListener('input', function() {
-            document.getElementById('priceValue').textContent = 
-                `₹0 - ₹${this.value}`;
-            filterProducts();
+        // Wishlist button click handler
+        document.querySelector('.products-grid').addEventListener('click', async (e) => {
+            const wishlistBtn = e.target.closest('.wishlist-btn');
+            if (wishlistBtn) {
+                e.preventDefault();
+                const productCard = wishlistBtn.closest('.product-card');
+                const productId = productCard.querySelector('.add-to-cart').getAttribute('data-product-id');
+                // Toggle heart icon (visual feedback)
+                const heartIcon = wishlistBtn.querySelector('i');
+                heartIcon.classList.toggle('far');
+                heartIcon.classList.toggle('fas');
+                heartIcon.classList.toggle('wishlist-active');
+                // Optionally, send to backend
+                try {
+                    const response = await fetch('/wishlist/toggle', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ productId })
+                    });
+                    const data = await response.json();
+                    // Removed alert for wishlist error
+                    // if (!data.success) {
+                    //     alert('Failed to update wishlist');
+                    // }
+                } catch (err) {
+                    // Removed alert for wishlist error
+                    // alert('Error updating wishlist');
+                }
+            }
         });
 
-        document.getElementById('ratingFilter').addEventListener('change', filterProducts);
-
+        // Filter logic
         function filterProducts() {
-            const maxPrice = parseInt(document.getElementById('priceRange').value);
-            const minRating = parseFloat(document.getElementById('ratingFilter').value);
-            
+            const selectedCategories = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(cb => cb.value);
+            const minPrice = parseFloat(document.getElementById('min-price').value) || 0;
+            const maxPrice = parseFloat(document.getElementById('max-price').value) || Infinity;
+            const selectedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value);
+            const selectedRatings = Array.from(document.querySelectorAll('input[name="rating"]:checked')).map(cb => parseInt(cb.value));
+
             document.querySelectorAll('.product-card').forEach(card => {
-                const price = parseFloat(card.querySelector('.price').textContent.replace('₹',''));
-                const rating = parseFloat(card.querySelector('.rating').dataset.rating);
-                
-                const priceValid = price <= maxPrice;
-                const ratingValid = rating >= minRating;
-                
-                card.style.display = (priceValid && ratingValid) ? 'block' : 'none';
+                const category = card.getAttribute('data-category');
+                const brand = card.querySelector('.product-brand')?.textContent.trim();
+                const price = parseFloat(card.querySelector('.discounted-price')?.textContent.replace(/[^\d.]/g, ''));
+                const rating = card.querySelectorAll('.product-rating .filled').length;
+
+                let show = true;
+
+                if (selectedCategories.length && !selectedCategories.includes(category)) show = false;
+                if (price < minPrice || price > maxPrice) show = false;
+                if (selectedBrands.length && !selectedBrands.includes(brand)) show = false;
+                if (selectedRatings.length && !selectedRatings.some(r => rating >= r)) show = false;
+
+                card.style.display = show ? '' : 'none';
             });
         }
 
-        function clearFilters() {
-            document.getElementById('priceRange').value = 10000;
-            document.getElementById('ratingFilter').value = 0;
+        // Attach filter event listeners
+        document.querySelectorAll('input[name="category"], input[name="brand"], input[name="rating"]').forEach(cb => {
+            cb.addEventListener('change', filterProducts);
+        });
+        document.getElementById('min-price').addEventListener('input', filterProducts);
+        document.getElementById('max-price').addEventListener('input', filterProducts);
+        document.getElementById('apply-price').addEventListener('click', filterProducts);
+
+        // Clear filters
+        document.querySelector('.clear-filters').addEventListener('click', function() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('min-price').value = '';
+            document.getElementById('max-price').value = '';
             filterProducts();
-        }
-
-        // Dropdown menus
-        document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-            toggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    if (menu !== this.nextElementSibling) menu.classList.remove('show');
-                });
-                this.nextElementSibling.classList.toggle('show');
-            });
         });
-
-        document.addEventListener('click', () => {
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.classList.remove('show');
-            });
-        });
+    });
     </script>
+        <script>
+            // Get all dropdown toggles and menus
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+            const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+    
+            // Add click event to each dropdown toggle
+            dropdownToggles.forEach((toggle, index) => {
+                toggle.addEventListener('click', function(event) {
+                    event.stopPropagation(); // Prevent this click from triggering the document click handler
+    
+                    // Close all other dropdown menus first
+                    dropdownMenus.forEach((menu, menuIndex) => {
+                        if (menuIndex !== index) {
+                            menu.classList.remove('show');
+                        }
+                    });
+            
+                // Toggle the current dropdown menu
+                    const currentDropdownMenu = this.nextElementSibling;
+                    currentDropdownMenu.classList.toggle('show');
+                });
+            });
+    
+        // Close all dropdowns when clicking anywhere else on the page
+            document.addEventListener('click', function(event) {
+                // Check if click is outside of any dropdown
+                if (!event.target.closest('.dropdown')) {
+                // Close all dropdown menus
+                    dropdownMenus.forEach(menu => {
+                        if (menu.classList.contains('show')) {
+                            menu.classList.remove('show');
+                        }
+                    });
+                }
+            });
+        </script>
+    <script src="/js/script.js"></script>
 </body>
 </html>

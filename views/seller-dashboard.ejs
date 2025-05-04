@@ -1,180 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PetVerse Seller Dashboard</title>
+    <title>PetVerse Service Dashboard</title>
     <link rel="stylesheet" href="/css/homepage.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="icon" href="/images/dash/icon.jpg">
-    <link rel="stylesheet" href="/css/products.css">
-    <script src="/js/cart.js"></script>
-    <script src="/js/Products.js"></script>
     <style>
         :root {
             /* Modern Color Palette */
-            --primary: rgb(0,180,180);
-            --primary-dark: teal;
+            --primary: #4F46E5;
+            --primary-dark: #4338CA;
             --secondary: #10B981;
             --accent: #F59E0B;
             --danger: #EF4444;
             --warning: #F59E0B;
             --success: #10B981;
-            --background: #F8FAFC;
+            --background: #F3F4F6;
             --surface: #FFFFFF;
             --text-primary: #111827;
             --text-secondary: #4B5563;
             --text-tertiary: #6B7280;
-            
+
             /* Spacing */
             --spacing-xs: 0.25rem;
             --spacing-sm: 0.5rem;
             --spacing-md: 1rem;
             --spacing-lg: 1.5rem;
             --spacing-xl: 2rem;
-            
+
             /* Shadows */
             --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
             --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-            
+
             /* Border Radius */
             --radius-sm: 0.375rem;
             --radius-md: 0.5rem;
             --radius-lg: 0.75rem;
             --radius-full: 9999px;
         }
-
-        body {
-            background-color: #f8fafc;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .dashboard-container {
-            padding: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Header Styles */
-        .header {
-            background: var(--surface);
-            padding: 1.5rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #e5e7eb;
-            margin-bottom: 2rem;
-        }
-
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .header-title .petverse {
-            color: rgb(0,180,180); /* Purple color */
-            font-size: 1.6rem;
-        }
-
-        .header-title .dashboard-text {
-            color: teal;/* Teal color */
-            font-size: 1.6rem;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .user-name {
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        .nav-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: teal;
-            color: white;
-            border-radius: 9999px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.2s ease;
-        }
-
-        .nav-btn:hover {
-            background: rgb(0,180,180);
-            transform: translateY(-1px);
-        }
-
-        .welcome-text {
-            color: #374151;
-            font-weight: 500;
-        }
-
-        .back-home {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background-color: #4F46E5;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .back-home:hover {
-            background-color: #4338CA;
-        }
-
-        .back-home i {
-            margin-right: 4px;
-        }
-
-        /* Modern Color Palette */
-        --primary: #4F46E5;
-        --primary-dark: #4338CA;
-        --secondary: #10B981;
-        --accent: #F59E0B;
-        --danger: #EF4444;
-        --warning: #F59E0B;
-        --success: #10B981;
-        --background: #F3F4F6;
-        --surface: #FFFFFF;
-        --text-primary: #111827;
-        --text-secondary: #4B5563;
-        --text-tertiary: #6B7280;
-        
-        /* Spacing */
-        --spacing-xs: 0.25rem;
-        --spacing-sm: 0.5rem;
-        --spacing-md: 1rem;
-        --spacing-lg: 1.5rem;
-        --spacing-xl: 2rem;
-        
-        /* Shadows */
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        
-        /* Border Radius */
-        --radius-sm: 0.375rem;
-        --radius-md: 0.5rem;
-        --radius-lg: 0.75rem;
-        --radius-full: 9999px;
 
         * {
             margin: 0;
@@ -189,128 +57,102 @@
             line-height: 1.5;
         }
 
-        .dashboard-container {
+        .dashboard {
             max-width: 1440px;
             margin: 0 auto;
             padding: var(--spacing-md);
         }
 
-        /* Modern Dashboard Header */
-        .dashboard-header {
-            background: white;
-            padding: 2rem;
-            border-radius: 20px;
-            margin: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        /* Modern Header */
+        .header {
+            background: var(--surface);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: white;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
         }
 
         .header-title {
-            font-size: 2.5rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            margin: 0;
-            background: linear-gradient(to right, #ffffff, #e2e8f0);
+            background: linear-gradient(to right, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             color: transparent;
         }
 
-        .header-actions {
+        .user-info {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: var(--spacing-md);
         }
 
-        .welcome-text {
-            font-size: 1.2rem;
-            color: #e2e8f0;
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
-        .back-home {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
+        .logout-btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--primary);
             color: white;
-            text-decoration: none;
+            border: none;
+            border-radius: var(--radius-full);
+            cursor: pointer;
             font-weight: 500;
             transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
         }
 
-        .back-home:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .back-home i {
-            font-size: 1.2rem;
+        .logout-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
         }
 
         /* Stats Grid */
-        .dashboard-stats {
+        .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            padding: 1.5rem;
-            margin-top: 1rem;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
         }
 
         .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            background: var(--surface);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             border: 1px solid rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
 
         .stat-icon {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #4F46E5, #6366F1);
-            border-radius: 50%;
-            margin-bottom: 1rem;
-        }
-
-        .stat-icon i {
             font-size: 1.5rem;
-            color: white;
+            margin-bottom: var(--spacing-sm);
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            color: transparent;
         }
 
         .stat-value {
             font-size: 2rem;
             font-weight: 700;
-            color: #1a1a1a;
-            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
         }
 
         .stat-label {
-            color: #6b7280;
+            color: var(--text-tertiary);
             font-size: 0.875rem;
-            font-weight: 500;
         }
 
-        /* Content Sections */
-        .content-section {
+        /* Section Styles */
+        .section {
             background: var(--surface);
             padding: var(--spacing-xl);
             border-radius: var(--radius-lg);
@@ -330,197 +172,174 @@
             font-size: 1.25rem;
             font-weight: 600;
             color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
-        /* Tables */
-        .data-table {
+        /* Appointment Cards */
+        .appointment-list {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+
+        .appointment-card {
+            background: var(--surface);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: var(--spacing-lg);
+            align-items: center;
+        }
+
+        .appointment-time {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .appointment-details h4 {
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .appointment-details p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Service Table */
+        .service-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            margin-top: var(--spacing-lg);
         }
 
-        .data-table th {
-            background-color: rgba(243, 244, 246, 0.5);
-            padding: var(--spacing-md);
+        .service-table th {
             text-align: left;
-            font-weight: 600;
+            padding: var(--spacing-md);
+            background: var(--background);
             color: var(--text-secondary);
-            border-bottom: 2px solid var(--border-color);
+            font-weight: 500;
+            font-size: 0.875rem;
         }
 
-        .data-table td {
+        .service-table td {
             padding: var(--spacing-md);
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
 
-        .data-table tr:hover {
-            background-color: rgba(243, 244, 246, 0.3);
+        .service-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Review Cards */
+        .review-list {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+
+        .review-card {
+            background: var(--surface);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .stars {
+            color: var(--warning);
+        }
+
+        .review-date {
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+        }
+
+        .review-content {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .review-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--spacing-md);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         /* Buttons */
         .btn {
             padding: var(--spacing-sm) var(--spacing-md);
             border-radius: var(--radius-full);
+            border: none;
             font-weight: 500;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: var(--spacing-sm);
             transition: all 0.3s ease;
-            border: none;
-            text-decoration: none;
         }
 
         .btn-primary {
-            background-color: var(--primary);
+            background: var(--primary);
             color: white;
         }
 
-        .btn-secondary {
-            background-color: rgba(79, 70, 229, 0.1);
-            color: var(--primary);
+        .btn-success {
+            background: var(--success);
+            color: white;
         }
 
         .btn-danger {
-            background-color: var(--danger);
+            background: var(--danger);
             color: white;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
+            filter: brightness(110%);
         }
 
-        /* Status Badges */
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: var(--radius-full);
-            font-size: 0.875rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-        }
-
-        .status-badge.pending {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-        }
-
-        .status-badge.processing {
-            background-color: rgba(79, 70, 229, 0.1);
-            color: var(--primary);
-        }
-
-        .status-badge.delivered {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .status-badge.cancelled {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-        }
-
-        /* Modals */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-content {
-            background: var(--surface);
-            margin: 5% auto;
+        /* Empty States */
+        .empty-state {
+            text-align: center;
             padding: var(--spacing-xl);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-lg);
-            width: 90%;
-            max-width: 600px;
-            position: relative;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-lg);
-        }
-
-        .modal-header h2 {
-            font-size: 1.5rem;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .close {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
             color: var(--text-tertiary);
-            transition: color 0.3s ease;
         }
 
-        .close:hover {
-            color: var(--text-primary);
-        }
-
-        /* Form Elements */
-        .form-group {
-            margin-bottom: var(--spacing-lg);
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: var(--spacing-sm);
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: var(--spacing-sm) var(--spacing-md);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: var(--radius-md);
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.5;
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .dashboard-stats {
-                grid-template-columns: 1fr;
+            .dashboard {
+                padding: var(--spacing-sm);
             }
 
-            .data-table {
+            .header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                text-align: center;
+            }
+
+            .appointment-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .service-table {
                 display: block;
                 overflow-x: auto;
-            }
-
-            .modal-content {
-                width: 95%;
-                margin: 10% auto;
             }
 
             .btn {
@@ -531,186 +350,235 @@
 
         /* Animations */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .stat-card, .content-section {
+        .stat-card,
+        .appointment-card,
+        .review-card {
             animation: fadeIn 0.5s ease-out forwards;
         }
 
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1.5rem;
-            padding: 1rem 0;
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
 
-        .product-card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        ::-webkit-scrollbar-track {
+            background: var(--background);
         }
 
-        .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: var(--radius-full);
         }
 
-        .product-image-container {
-            position: relative;
-            padding-top: 75%;
-            background: #f8f9fa;
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
         }
 
-        .product-image {
-            position: absolute;
+        /* Navigation Bar Styles */
+        .navbar {
+            position: sticky;
             top: 0;
-            left: 0;
+            z-index: 1000;
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            background-color: black;
+            padding: 1rem 2rem;
         }
 
-        .discount-tag {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            background: #fef3c7;
-            color: #d97706;
-            padding: 4px 8px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .status-indicator {
-            position: absolute;
-            bottom: 12px;
-            left: 12px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .status-indicator.active {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-        }
-
-        .status-indicator.inactive {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-        }
-
-        .product-info {
-            padding: 1rem;
-        }
-
-        .product-details {
-            margin-bottom: 1rem;
-        }
-
-        .price-stock {
+        .nav-content {
+            max-width: 1400px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.5rem;
+            color: white;
         }
 
-        .price {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text-primary);
+        .logo a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: bold;
         }
 
-        .stock {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .stock.low-stock {
-            color: var(--danger);
-        }
-
-        .product-title {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .product-actions {
+        .nav-icons {
             display: flex;
-            gap: 0.5rem;
-            justify-content: flex-end;
-        }
-
-        .btn-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            display: flex;
+            gap: 1rem;
             align-items: center;
-            justify-content: center;
+        }
+
+        .icon-btn {
+            background: none;
             border: none;
+            color: white;
             cursor: pointer;
-            transition: all 0.2s ease;
             position: relative;
         }
 
-        .btn-icon:hover::after {
-            content: attr(data-tooltip);
+        .cart-count {
             position: absolute;
-            right: calc(100% + 8px);
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.8);
+            top: -8px;
+            right: -8px;
+            background-color: #FF6B01;
             color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 2px 6px;
+            border-radius: 50%;
             font-size: 0.75rem;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            animation: fadeIn 0.2s ease forwards;
         }
 
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
+        .search {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: none;
+            font-size: 0.9rem;
+            width: clamp(150px, 30vw, 300px);
+            min-width: 100px;
+            max-width: 300px;
+            border-radius: 4px;
+            border: none;
+            padding: 5px 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .search-btn {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: #FF6B01;
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            .search {
+                margin: 0 1rem;
             }
         }
 
-        .btn-edit {
-            background: rgba(79, 70, 229, 0.1);
-            color: var(--primary);
+        /* Header Styles */
+        .header {
+            background: var(--surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: var(--shadow-sm);
         }
 
-        .btn-deactivate {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
 
-        .btn-icon:hover {
-            transform: translateY(-2px);
+        .header-title .petverse {
+            color: #4F46E5;
         }
 
-        @media (max-width: 640px) {
-            .products-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            }
+        .header-title .dashboard-text {
+            color: #10B981;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #4F46E5;
+            color: white;
+            border-radius: 9999px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: #4338CA;
+            transform: translateY(-1px);
+        }
+
+        .dashboard-header {
+            background: var(--surface);
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
     </style>
 </head>
+
 <body>
     <!-- Main Navigation Header -->
     <header class="header" id="header">
@@ -718,14 +586,15 @@
             <div class="nav-content">
                 <div class="logo"><a href="#">PetVerse</a></div>
                 <div class="nav-icons">
-                    <button class="icon-btn cart-icon" id="cartIcon">
+                    <button class="icon-btn cart-icon" id="cartIcon" onclick="window.location.href='/cart'">
                         <i class="fa fa-shopping-cart"></i>
-                        <span class="cart-count" id="cartCount" style="font-size: small;background-color: #FF6B01;border-radius: 5px; width: 15px;">0</span>
+                        <span class="cart-count" id="cartCount"
+                            style="font-size: small;background-color: #FF6B01;border-radius: 5px; width: 15px;">0</span>
                     </button>
                     <button class="icon-btn"><i class="fa fa-user"></i></button>
                 </div>
                 <div class="search">
-                    <input class="search-bar" type="text" placeholder="Search pets, products or services">
+                    <input type="text" class="search-bar" placeholder="Search pets, products or services">
                     <button class="search-btn"><i class="fa fa-search"></i></button>
                 </div>
                 <button class="hamburger" id="hamburger">
@@ -733,23 +602,10 @@
                 </button>
                 <ul class="nav-links">
                     <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/products/petfood">Pet Food</a></li>
-                            <li><a href="/products/toys">Toys</a></li>
-                            <li><a href="/products/accessories">Accessories</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/services">Services</a></li>
-                            <li><a href="/mate">PetMate</a></li>
-                        </ul>
-                    </li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#searchby-pet">Pets</a></li>
+                    <li><a href="#">Products</a></li>
+                    <li><a href="#">Services</a></li>
                 </ul>
             </div>
         </nav>
@@ -759,7 +615,7 @@
         <header class="dashboard-header">
             <h1 class="header-title">
                 <span class="petverse">PetVerse</span>
-                <span class="dashboard-text">Seller Dashboard</span>
+                <span class="dashboard-text">Service Dashboard</span>
             </h1>
             <div class="user-info">
                 <span class="user-name">Welcome, <%= user.name %></span>
@@ -770,275 +626,182 @@
             </div>
         </header>
 
-        <!-- Stats Grid -->
-        <div class="dashboard-stats">
+        <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-box"></i>
+                <i class="fas fa-calendar-check stat-icon"></i>
+                <div class="stat-value">
+                    <%= totalAppointments %>
                 </div>
-                <div class="stat-value"><%= products.length %></div>
-                <div class="stat-label">Total Products</div>
+                <div class="stat-label">Total Appointments</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-rupee-sign"></i>
+                <i class="fas fa-clock stat-icon"></i>
+                <div class="stat-value">
+                    <%= todayAppointments %>
                 </div>
-                <div class="stat-value">₹<%= totalSales.toLocaleString() %></div>
-                <div class="stat-label">Total Sales</div>
+                <div class="stat-label">Today's Appointments</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
+                <i class="fas fa-rupee-sign stat-icon"></i>
+                <div class="stat-value">₹<%= totalRevenue.toLocaleString() %>
                 </div>
-                <div class="stat-value"><%= pendingOrders %></div>
-                <div class="stat-label">Pending Orders</div>
+                <div class="stat-label">Total Revenue</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-star"></i>
+                <i class="fas fa-star stat-icon"></i>
+                <div class="stat-value">
+                    <%= rating %>/5
                 </div>
-                <div class="stat-value"><%= rating %>/5</div>
-                <div class="stat-label">Rating</div>
+                <div class="stat-label">Average Rating</div>
             </div>
         </div>
 
-        <div class="dashboard-content">
-            <div class="content-section">
-                <div class="section-header">
-                    <h2><i class="fas fa-box"></i> Product Management</h2>
-                    <button class="btn btn-primary" onclick="openAddProductModal()">
-                        <i class="fas fa-plus"></i> Add New Product
-                    </button>
-                </div>
-                
-                <div class="products-grid">
-                    <% if(products && products.length > 0) { %>
-                        <% products.forEach(product => { %>
-                            <div class="product-card">
-                                <div class="product-image-container">
-                                    <img src="/images/dash/<%= product.image_url %>" alt="<%= product.title %>" class="product-image">
-                                    <% if(product.dis && product.dis !== '0%') { %>
-                                        <span class="discount-tag"><%= product.dis %> OFF</span>
-                                    <% } %>
-                                    <span class="status-indicator <%= product.status.toLowerCase() %>">
-                                        <i class="fas fa-circle"></i> <%= product.status %>
-                                    </span>
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Today's Schedule</h2>
+            </div>
+            <div class="appointment-list">
+                <% if (todaySchedule && todaySchedule.length> 0) { %>
+                    <% todaySchedule.forEach(appointment=> { %>
+                        <div class="appointment-card">
+                            <div class="appointment-time">
+                                <i class="far fa-clock"></i>
+                                <%= appointment.time %>
+                            </div>
+                            <div class="appointment-details">
+                                <h4>
+                                    <%= appointment.service %>
+                                </h4>
+                                <p>Client: <%= appointment.clientName %>
+                                </p>
+                                <p>Pet: <%= appointment.petName %>
+                                </p>
+                            </div>
+                            <div class="appointment-actions">
+                                <button onclick="completeAppointment('<%= appointment._id %>')" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Complete
+                                </button>
+                                <button onclick="cancelAppointment('<%= appointment._id %>')" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </div>
+                        <% }) %>
+                            <% } else { %>
+                                <div class="empty-state">
+                                    <i class="far fa-calendar-times"></i>
+                                    <p>No appointments scheduled for today</p>
                                 </div>
-                                <div class="product-info">
-                                    <div class="product-details">
-                                        <div class="price-stock">
-                                            <span class="price">₹<%= product.price %></span>
-                                            <span class="stock <%= product.stock < 5 ? 'low-stock' : '' %>">
-                                                <%= product.stock %> units
-                                            </span>
-                                        </div>
-                                        <div class="product-title"><%= product.title %></div>
-                                    </div>
-                                    <div class="product-actions">
-                                        <button class="btn btn-icon btn-edit" data-tooltip="Edit Product" onclick="editProduct('<%= product._id %>')">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-icon btn-deactivate" data-tooltip="<%= product.status === 'active' ? 'Deactivate' : 'Activate' %>" onclick="toggleProductStatus('<%= product._id %>')">
-                                            <i class="fas fa-power-off"></i>
-                                        </button>
-                                    </div>
+                                <% } %>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">My Services</h2>
+                <button onclick="openAddServiceModal()" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Service
+                </button>
+            </div>
+            <table class="service-table">
+                <thead>
+                    <tr>
+                        <th>Service Name</th>
+                        <th>Category</th>
+                        <th>Duration</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (services && services.length> 0) { %>
+                        <% services.forEach(service=> { %>
+                            <tr>
+                                <td>
+                                    <%= service.name %>
+                                </td>
+                                <td>
+                                    <%= service.category %>
+                                </td>
+                                <td>
+                                    <%= service.duration %> mins
+                                </td>
+                                <td>₹<%= service.price.toLocaleString() %>
+                                </td>
+                                <td>
+                                    <span class="status-badge <%= service.status %>">
+                                        <%= service.status %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="editService('<%= service._id %>')" class="btn btn-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                </td>
+                            </tr>
+                            <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="empty-state">
+                                                <i class="fas fa-box-open"></i>
+                                                <p>No services available</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% } %>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Reviews</h2>
+            </div>
+            <div class="review-list">
+                <% if (reviews && reviews.length> 0) { %>
+                    <% reviews.forEach(review=> { %>
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="stars">
+                                    <% for(let i=0; i < 5; i++) { %>
+                                        <i class="fas fa-star <%= i < review.rating ? 'filled' : '' %>"></i>
+                                        <% } %>
+                                </div>
+                                <div class="review-date">
+                                    <%= new Date(review.date).toLocaleDateString() %>
                                 </div>
                             </div>
-                        <% }); %>
-                    <% } else { %>
-                        <div class="empty-state">
-                            <i class="fas fa-box-open"></i>
-                            <p>No products found. Add your first product!</p>
-                        </div>
-                    <% } %>
-                </div>
-            </div>
-
-            <div class="content-section">
-                <h2><i class="fas fa-shopping-bag"></i> Recent Orders</h2>
-                <% if(sellerOrders && sellerOrders.length > 0) { %>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Customer</th>
-                                <th>Products</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% sellerOrders.forEach(order => { %>
-                                <tr>
-                                    <td>#<%= order._id %></td>
-                                    <td><%= order.customer.name %></td>
-                                    <td>
-                                        <% order.items.filter(item => item.seller.toString() === user._id.toString()).forEach(item => { %>
-                                            <div class="order-item">
-                                                <%= item.product.name %> 
-                                                <span class="quantity">x<%= item.quantity %></span>
-                                            </div>
-                                        <% }); %>
-                                    </td>
-                                    <td>₹<%= order.total.toLocaleString() %></td>
-                                    <td>
-                                        <span class="status-badge <%= order.status.toLowerCase() %>">
-                                            <%= order.status %>
-                                        </span>
-                                    </td>
-                                    <td class="actions">
-                                        <% if(order.status === 'pending') { %>
-                                            <button class="btn btn-primary btn-sm" onclick="processOrder('<%= order._id %>')">
-                                                <i class="fas fa-check"></i> Process
-                                            </button>
-                                        <% } %>
-                                        <button class="btn btn-info btn-sm" onclick="viewOrderDetails('<%= order._id %>')">
-                                            <i class="fas fa-eye"></i> Details
-                                        </button>
-                                    </td>
-                                </tr>
-                            <% }); %>
-                        </tbody>
-                    </table>
-                <% } else { %>
-                    <div class="empty-state">
-                        <i class="fas fa-shopping-cart"></i>
-                        <p>No orders received yet.</p>
-                    </div>
-                <% } %>
-            </div>
-
-            <div class="content-section">
-                <h2><i class="fas fa-star"></i> Customer Reviews</h2>
-                <div class="reviews-grid">
-                    <% if(reviews && reviews.length > 0) { %>
-                        <% reviews.forEach(review => { %>
-                            <div class="review-card">
-                                <div class="review-header">
-                                    <div class="product-info">
-                                        <h4><%= review.product.name %></h4>
-                                        <div class="review-date">
-                                            <i class="far fa-calendar-alt"></i>
-                                            <%= new Date(review.createdAt).toLocaleDateString() %>
-                                        </div>
-                                    </div>
-                                    <div class="review-rating">
-                                        <% for(let i = 0; i < 5; i++) { %>
-                                            <i class="fas fa-star <%= i < review.rating ? 'filled' : '' %>"></i>
-                                        <% } %>
-                                    </div>
+                            <div class="review-content">
+                                <%= review.comment %>
+                            </div>
+                            <div class="review-footer">
+                                <div class="reviewer">
+                                    <i class="fas fa-user"></i>
+                                    <%= review.clientName %>
                                 </div>
-                                <div class="review-content">
-                                    <p><%= review.comment %></p>
-                                </div>
-                                <% if(review.reply) { %>
-                                    <div class="review-reply">
-                                        <i class="fas fa-reply"></i>
-                                        <strong>Your Reply:</strong>
-                                        <p><%= review.reply %></p>
-                                    </div>
-                                <% } else { %>
-                                    <button class="btn btn-secondary btn-sm" onclick="replyToReview('<%= review._id %>')">
+                                <% if (!review.response) { %>
+                                    <button onclick="openReplyModal('<%= review._id %>')" class="btn btn-primary">
                                         <i class="fas fa-reply"></i> Reply
                                     </button>
-                                <% } %>
+                                    <% } else { %>
+                                        <div class="review-response">
+                                            <strong>Your Response:</strong>
+                                            <%= review.response %>
+                                        </div>
+                                        <% } %>
                             </div>
-                        <% }); %>
-                    <% } else { %>
-                        <div class="empty-state">
-                            <i class="fas fa-comment-slash"></i>
-                            <p>No reviews received yet.</p>
                         </div>
-                    <% } %>
-                </div>
+                        <% }) %>
+                            <% } else { %>
+                                <div class="empty-state">
+                                    <i class="far fa-comment-alt"></i>
+                                    <p>No reviews yet</p>
+                                </div>
+                                <% } %>
             </div>
-        </div>
-    </div>
-
-    <!-- Add Product Modal -->
-    <div id="addProductModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-plus"></i> Add New Product</h2>
-                <button type="button" class="close" onclick="closeAddProductModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form id="addProductForm" action="/seller/products/add" method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="productName">Product Name</label>
-                    <input type="text" id="productName" name="name" required 
-                        placeholder="Enter product name">
-                </div>
-                <div class="form-group">
-                    <label for="category">Category</label>
-                    <select id="category" name="category" required>
-                        <option value="">Select a category</option>
-                        <option value="food">Pet Food</option>
-                        <option value="toys">Toys</option>
-                        <option value="accessories">Accessories</option>
-                        <option value="health">Health & Wellness</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="price">Price (₹)</label>
-                    <input type="number" id="price" name="price" min="0" step="0.01" required
-                        placeholder="Enter price">
-                </div>
-                <div class="form-group">
-                    <label for="stock">Initial Stock</label>
-                    <input type="number" id="stock" name="stock" min="0" required
-                        placeholder="Enter initial stock quantity">
-                </div>
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description" rows="4" required
-                        placeholder="Describe your product..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="images">Product Images</label>
-                    <input type="file" id="images" name="images" multiple accept="image/*" required>
-                    <small>You can select multiple images</small>
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Product
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeAddProductModal()">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Reply to Review Modal -->
-    <div id="replyModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-reply"></i> Reply to Review</h2>
-                <button type="button" class="close" onclick="closeReplyModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form id="replyForm" action="/seller/reviews/reply" method="POST">
-                <input type="hidden" id="reviewId" name="reviewId">
-                <div class="form-group">
-                    <label for="replyText">Your Reply</label>
-                    <textarea id="replyText" name="reply" rows="4" required
-                        placeholder="Write your response to the customer's review..."></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane"></i> Submit Reply
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeReplyModal()">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
+        </section>
     </div>
     <footer id="footer">
         <div class="footer-container">
@@ -1067,173 +830,83 @@
             <p>&copy; 2025 PetVerse. All Rights Reversed</p>
         </div>
     </footer>
+    <script src="/js/cart.js"></script>
     <script>
-        // Modal functions
-        function openAddProductModal() {
-            document.getElementById('addProductModal').style.display = 'block';
-            document.body.style.overflow = 'hidden';
+        // Appointment functions
+        function completeAppointment(appointmentId) {
+            if (confirm('Mark this appointment as complete?')) {
+                // Using localStorage instead of API
+                const appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+                const updatedAppointments = appointments.map(app => {
+                    if (app._id === appointmentId) {
+                        return { ...app, status: 'completed' };
+                    }
+                    return app;
+                });
+                localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+                location.reload();
+            }
         }
 
-        function closeAddProductModal() {
-            document.getElementById('addProductModal').style.display = 'none';
-            document.body.style.overflow = 'auto';
+        function cancelAppointment(appointmentId) {
+            if (confirm('Are you sure you want to cancel this appointment?')) {
+                // Using localStorage instead of API
+                const appointments = JSON.parse(localStorage.getItem('appointments') || '[]');
+                const updatedAppointments = appointments.map(app => {
+                    if (app._id === appointmentId) {
+                        return { ...app, status: 'cancelled' };
+                    }
+                    return app;
+                });
+                localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
+                location.reload();
+            }
+        }
+
+        // Service functions
+        function editService(serviceId) {
+            // Using localStorage instead of API
+            const services = JSON.parse(localStorage.getItem('services') || '[]');
+            const service = services.find(s => s._id === serviceId);
+            if (service) {
+                // Implement edit UI here
+                alert('Edit service: ' + service.name);
+            }
+        }
+
+        function openAddServiceModal() {
+            // Implement modal UI here
+            alert('Add new service modal');
         }
 
         function openReplyModal(reviewId) {
-            document.getElementById('reviewId').value = reviewId;
-            document.getElementById('replyModal').style.display = 'block';
-            document.body.style.overflow = 'hidden';
+            // Implement modal UI here
+            alert('Reply to review: ' + reviewId);
         }
 
-        function closeReplyModal() {
-            document.getElementById('replyModal').style.display = 'none';
-            document.body.style.overflow = 'auto';
+        // Initialize data in localStorage if needed
+        if (!localStorage.getItem('appointments')) {
+            localStorage.setItem('appointments', JSON.stringify([]));
+        }
+        if (!localStorage.getItem('services')) {
+            localStorage.setItem('services', JSON.stringify([]));
         }
 
-        // Product management functions
-        async function editProduct(productId) {
-            window.location.href = `/seller/products/${productId}/edit`;
-        }
-
-        async function toggleProductStatus(productId) {
-            try {
-                if(confirm('Are you sure you want to change this product\'s status?')) {
-                    const response = await fetch(`/seller/products/${productId}/toggle`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                    const data = await response.json();
-                    
-                    if(data.success) {
-                        showNotification('Product status updated successfully', 'success');
-                        setTimeout(() => location.reload(), 1000);
-                    } else {
-                        showNotification(data.message || 'Failed to update product status', 'error');
-                    }
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('An error occurred', 'error');
-            }
-        }
-
-        // Order management functions
-        async function processOrder(orderId) {
-            try {
-                const response = await fetch(`/seller/orders/${orderId}/process`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                const data = await response.json();
-                
-                if(data.success) {
-                    showNotification('Order processed successfully', 'success');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showNotification(data.message || 'Failed to process order', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('An error occurred', 'error');
-            }
-        }
-
-        function viewOrderDetails(orderId) {
-            window.location.href = `/seller/orders/${orderId}`;
-        }
-
-        // Notification function
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.innerHTML = `
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
-                ${message}
-            `;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
-        }
-
-        // Close modals when clicking outside
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('addProductModal')) {
-                closeAddProductModal();
-            }
-            if (event.target == document.getElementById('replyModal')) {
-                closeReplyModal();
-            }
-        }
-
-        // File input preview
-        document.getElementById('images').addEventListener('change', function(e) {
-            const files = Array.from(e.target.files);
-            const previewContainer = document.createElement('div');
-            previewContainer.className = 'image-preview';
-            
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.createElement('div');
-                    preview.className = 'preview-item';
-                    preview.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview">
-                        <span class="preview-name">${file.name}</span>
-                    `;
-                    previewContainer.appendChild(preview);
-                }
-                reader.readAsDataURL(file);
-            });
-
-            const existingPreview = document.querySelector('.image-preview');
-            if (existingPreview) {
-                existingPreview.remove();
-            }
-            e.target.parentNode.appendChild(previewContainer);
-        });
-    </script>
-    <script>
-        // Get all dropdown toggles and menus
-        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
-
-        // Add click event to each dropdown toggle
-        dropdownToggles.forEach((toggle, index) => {
-            toggle.addEventListener('click', function(event) {
-                event.stopPropagation(); // Prevent this click from triggering the document click handler
-
-                // Close all other dropdown menus first
-                dropdownMenus.forEach((menu, menuIndex) => {
-                    if (menuIndex !== index) {
-                        menu.classList.remove('show');
-                    }
-                });
-        
-            // Toggle the current dropdown menu
-                const currentDropdownMenu = this.nextElementSibling;
-                currentDropdownMenu.classList.toggle('show');
-            });
+        // Update cart count on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            updateCartCount();
         });
 
-    // Close all dropdowns when clicking anywhere else on the page
-        document.addEventListener('click', function(event) {
-            // Check if click is outside of any dropdown
-            if (!event.target.closest('.dropdown')) {
-            // Close all dropdown menus
-                dropdownMenus.forEach(menu => {
-                    if (menu.classList.contains('show')) {
-                        menu.classList.remove('show');
-                    }
-                });
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            const cartCount = document.getElementById('cartCount');
+            if (cartCount) {
+                cartCount.textContent = totalItems;
+                cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
             }
-        });
+        }
     </script>
 </body>
-</html> 
+
+</html>

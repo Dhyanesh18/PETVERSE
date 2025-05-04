@@ -98,8 +98,11 @@
             <div class="nav-content">
                 <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
                 <div class="nav-icons">
-                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                    <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
+                    <a href="/cart" class="icon-btn cart-icon" id="cartIcon">
+                        <i class="fa fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount" style="display: none;">0</span>
+                    </a>
+                    <a href="/login" class="icon-btn"><i class="fa fa-user"></i></a>
                 </div>
                 <div class="search">
                     <input class="search-bar" type="text" placeholder=" Search pets, products or services">
@@ -688,6 +691,7 @@
             window.location.href = 'order-confirmation.html';
         }
     </script>
+    <script src="/js/script.js"></script>
 </body>
 
 </html> 

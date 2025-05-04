@@ -14,45 +14,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header" id="header">
-        <nav id="navbar" class="navbar">
-            <div class="nav-content">
-                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
-                <div class="nav-icons">
-                    <button class="icon-btn" onclick="window.location.href='/cart'"><i class="fa fa-shopping-cart"></i></button>
-                    <button class="icon-btn" onclick="window.location.href='/login'"><i class="fa fa-user"></i></button>
-                </div>
-                <div class="search">
-                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/products/petfood">Pet Food</a></li>
-                            <li><a href="/products/toys">Toys</a></li>
-                            <li><a href="/products/accessories">Accessories</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/services">Services</a></li>
-                            <li><a href="/mate">PetMate</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
 
     <!-- Main container: sidebar + services content -->
     <div class="main-container">
@@ -172,33 +134,7 @@
     </div>
 
     <!-- Footer -->
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-logo">
-                <h2>PetVerse</h2>
-                <p>Your one-stop destination for all pet needs</p>
-            </div>
-            <div class="footer-links">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Shop</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Events</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
-            </div>
-            <div class="footer-social">
-                <h3>Follow Us</h3>
-                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
-                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
-                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
-        </div>
-    </footer>
+    <%- include('partials/footer') %>
 
     <!-- JS -->
     <script src="/js/Services.js"></script>
@@ -298,5 +234,42 @@
     });
 });
     </script>
+        <script src="/js/script.js"></script>
+        <script>
+          // Get all dropdown toggles and menus
+          const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+          const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+  
+          // Add click event to each dropdown toggle
+          dropdownToggles.forEach((toggle, index) => {
+              toggle.addEventListener('click', function(event) {
+                  event.stopPropagation(); // Prevent this click from triggering the document click handler
+  
+                  // Close all other dropdown menus first
+                  dropdownMenus.forEach((menu, menuIndex) => {
+                      if (menuIndex !== index) {
+                          menu.classList.remove('show');
+                      }
+                  });
+          
+              // Toggle the current dropdown menu
+                  const currentDropdownMenu = this.nextElementSibling;
+                  currentDropdownMenu.classList.toggle('show');
+              });
+          });
+  
+      // Close all dropdowns when clicking anywhere else on the page
+          document.addEventListener('click', function(event) {
+              // Check if click is outside of any dropdown
+              if (!event.target.closest('.dropdown')) {
+              // Close all dropdown menus
+                  dropdownMenus.forEach(menu => {
+                      if (menu.classList.contains('show')) {
+                          menu.classList.remove('show');
+                      }
+                  });
+              }
+          });
+      </script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 const productDataElement = document.getElementById("productData");
-let selectedProduct;
+let selectedProduct = null;
 let images = [];
-let currentIndex = 0;
+let imageIndex = 0;
 
 // Add debugging logs
 console.log("Buy.js loaded");
@@ -31,6 +31,23 @@ try {
 // Initialize the page when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM loaded in Buy.js");
+    
+    // Add click event listener to rating container for scrolling to reviews
+    const ratingContainer = document.getElementById("rating");
+    if (ratingContainer) {
+        ratingContainer.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-scroll-to');
+            if (targetId) {
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
+        });
+    }
     
     // Set the main image immediately
     if (images.length > 0) {
@@ -68,7 +85,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Add event listeners
+    // Add click event listeners to thumbnails
+    document.querySelectorAll('.thumbnail').forEach(thumbnail => {
+        thumbnail.addEventListener('click', function() {
+            const imageUrl = this.getAttribute('data-image');
+            if (imageUrl) {
+                changeImage(imageUrl);
+            }
+        });
+    });
+    
+    // Add click event listener to main image
+    const mainImage = document.getElementById("mainImage");
+    if (mainImage) {
+        mainImage.addEventListener('click', function() {
+            const imageUrl = this.getAttribute('data-image');
+            if (imageUrl) {
+                openFullscreen(imageUrl);
+            }
+        });
+    }
+    
+    // Add click event listeners to fullscreen controls
+    const closeBtn = document.querySelector('.close-btn');
+    const prevBtn = document.querySelector('.prev-btn');
+    const nextBtn = document.querySelector('.next-btn');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeFullscreen);
+    }
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', prevImage);
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', nextImage);
+    }
+    
+    // Add event listeners for cart and buy buttons
     document.querySelector('.add-to-cart-btn')?.addEventListener('click', () => {
         if (typeof addToCart === 'function') {
             addToCart(selectedProduct.id);
@@ -98,10 +153,21 @@ function changeImage(imageUrl) {
     console.log("Changing image to:", imageUrl);
     const mainImage = document.getElementById("mainImage");
     if (mainImage) {
-        mainImage.style.backgroundImage = `url('/images/dash/${imageUrl}')`;
-        console.log("Image changed successfully with URL:", `/images/dash/${imageUrl}`);
+        // Check if the imageUrl already includes /images/dash/
+        const fullImageUrl = imageUrl.startsWith('/images/dash/') 
+            ? imageUrl 
+            : `/images/dash/${imageUrl}`;
+            
+        mainImage.style.backgroundImage = `url('${fullImageUrl}')`;
+        console.log("Main image updated successfully with URL:", fullImageUrl);
+        
+        // Update current index
+        imageIndex = images.indexOf(imageUrl);
+        if (imageIndex === -1) {
+            console.error("Image not found in images array:", imageUrl);
+        }
     } else {
-        console.error("Main image element not found when changing image");
+        console.error("Main image element not found");
     }
 }
 
@@ -112,9 +178,23 @@ function openFullscreen(imageUrl) {
     const fullscreenContainer = document.getElementById("fullscreenContainer");
     
     if (fullscreenImage && fullscreenContainer) {
+        // Update imageIndex to match the clicked image
+        imageIndex = images.indexOf(imageUrl);
+        if (imageIndex === -1) {
+            console.error("Image not found in images array:", imageUrl);
+            return;
+        }
+        
+        // Set the fullscreen image source
         fullscreenImage.src = "/images/dash/" + imageUrl;
+        
+        // Show the fullscreen container
         fullscreenContainer.style.display = "flex";
-        console.log("Fullscreen opened successfully");
+        
+        // Prevent body scrolling when in fullscreen
+        document.body.style.overflow = "hidden";
+        
+        console.log("Fullscreen opened successfully with image:", imageUrl);
     } else {
         console.error("Fullscreen elements not found");
     }
@@ -126,40 +206,42 @@ function closeFullscreen() {
     const fullscreenContainer = document.getElementById("fullscreenContainer");
     if (fullscreenContainer) {
         fullscreenContainer.style.display = "none";
+        // Restore body scrolling
+        document.body.style.overflow = "auto";
     }
 }
 
 function prevImage() {
-    currentIndex = (currentIndex - 1 + images.length) % images.length;
-    console.log("Navigating to previous image:", images[currentIndex]);
+    imageIndex = (imageIndex - 1 + images.length) % images.length;
+    console.log("Navigating to previous image:", images[imageIndex]);
     
     // Update main image
     const mainImage = document.getElementById("mainImage");
     if (mainImage) {
-        mainImage.style.backgroundImage = `url('/images/dash/${images[currentIndex]}')`;
+        mainImage.style.backgroundImage = `url('/images/dash/${images[imageIndex]}')`;
     }
     
     // Update fullscreen image
     const fullscreenImage = document.getElementById("fullscreenImage");
     if (fullscreenImage) {
-        fullscreenImage.src = `/images/dash/${images[currentIndex]}`;
+        fullscreenImage.src = `/images/dash/${images[imageIndex]}`;
     }
 }
 
 function nextImage() {
-    currentIndex = (currentIndex + 1) % images.length;
-    console.log("Navigating to next image:", images[currentIndex]);
+    imageIndex = (imageIndex + 1) % images.length;
+    console.log("Navigating to next image:", images[imageIndex]);
     
     // Update main image
     const mainImage = document.getElementById("mainImage");
     if (mainImage) {
-        mainImage.style.backgroundImage = `url('/images/dash/${images[currentIndex]}')`;
+        mainImage.style.backgroundImage = `url('/images/dash/${images[imageIndex]}')`;
     }
     
     // Update fullscreen image
     const fullscreenImage = document.getElementById("fullscreenImage");
     if (fullscreenImage) {
-        fullscreenImage.src = `/images/dash/${images[currentIndex]}`;
+        fullscreenImage.src = `/images/dash/${images[imageIndex]}`;
     }
 }
 
@@ -174,8 +256,8 @@ function initializePage() {
     // Set the main image with the correct URL format
     const mainImage = document.getElementById("mainImage");
     if (mainImage && images.length > 0) {
-        mainImage.style.backgroundImage = `url('/images/dash/${images[currentIndex]}')`;
-        console.log("Main image set in initializePage with URL:", `/images/dash/${images[currentIndex]}`);
+        mainImage.style.backgroundImage = `url('/images/dash/${images[imageIndex]}')`;
+        console.log("Main image set in initializePage with URL:", `/images/dash/${images[imageIndex]}`);
     } else {
         console.error("Cannot set main image in initializePage");
     }

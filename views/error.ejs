@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - PetVerse</title>
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .error-container {
+            max-width: 800px;
+            margin: 100px auto;
+            padding: 30px;
+            text-align: center;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        .error-icon {
+            font-size: 80px;
+            color: #FF6B01;
+            margin-bottom: 20px;
+        }
+        .error-title {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .error-message {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .back-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #FF6B01;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .back-button:hover {
+            background-color: #e05a00;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+    
+    <div class="error-container">
+        <i class="fa fa-exclamation-circle error-icon"></i>
+        <h1 class="error-title">Oops! Something went wrong</h1>
+        <p class="error-message"><%= message || 'We encountered an error while processing your request.' %></p>
+        <a href="/home" class="back-button">Back to Home</a>
+    </div>
+    
+    <%- include('partials/footer') %>
+</body>
+</html> 
