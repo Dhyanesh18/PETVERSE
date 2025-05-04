@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
-  username: { type: String, required: true }, // can be user._id if login is used
-  service: { type: String, required: true },
-  date: { type: String, required: true }, // "YYYY-MM-DD"
-  timeSlot: { type: String, required: true }, // e.g., "10:00 AM - 11:00 AM"
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  service: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true },
+  date: { type: String, required: true }, // Format: 'YYYY-MM-DD'
+  slot: { type: String, required: true }, // e.g., '10:00 AM'
   createdAt: { type: Date, default: Date.now }
 });
 
