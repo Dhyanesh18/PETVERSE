@@ -93,11 +93,19 @@
             <label for="email">Email Address:</label>
             <input type="email" id="email" name="email" required>
 
+            <!-- ── UPDATED: Preferred Date → Date picker triggers slot fetch ── -->
             <label for="date">Preferred Date:</label>
-            <input type="date" id="date" name="date" required>
+            <input type="date" id="datePicker" name="date" required>
 
-            <label for="time">Preferred Time:</label>
-            <input type="time" id="time" name="time" required>
+            <!-- ── NEW: Available Slots Dropdown ── -->
+            <label for="slotSelect">Available Time Slot:</label>
+            <select id="slotSelect" name="slot" required>
+              <option value="">-- Select a slot --</option>
+            </select>
+
+            <!-- ── KEEP: Original Time Input Removed ── -->
+            <!-- <label for="time">Preferred Time:</label>
+            <input type="time" id="time" name="time" required> -->
 
             <button type="submit" class="book-now-btn">Confirm Booking</button>
           </form>
@@ -135,100 +143,74 @@
       </div>
   </footer>
 
-  <!-- Mobile nav toggle script -->
+  <!-- Mobile nav toggle & dropdown scripts -->
   <script>
     const hamburger = document.getElementById('hamburger');
     const navLinks = document.querySelector('.nav-links');
+    const navbar  = document.getElementById('navbar');
+
     hamburger.addEventListener('click', () => {
       navLinks.classList.toggle('active');
+      navbar.classList.add('scrolled');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+      const dropdownMenus   = document.querySelectorAll('.dropdown-menu');
+
+      dropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', e => {
+          e.preventDefault();
+          const menu = toggle.nextElementSibling;
+          dropdownMenus.forEach(m => { if (m !== menu) m.classList.remove('show'); });
+          menu.classList.toggle('show');
+          navbar.classList.add('scrolled');
+        });
+      });
+
+      document.addEventListener('click', e => {
+        let inside = false;
+        dropdownToggles.forEach(toggle => {
+          const menu = toggle.nextElementSibling;
+          if (toggle.contains(e.target) || (menu && menu.contains(e.target))) inside = true;
+        });
+        if (!inside) {
+          dropdownMenus.forEach(m => m.classList.remove('show'));
+          if (window.scrollY <= 50 && !navLinks.classList.contains('active')) {
+            navbar.classList.remove('scrolled');
+          }
+        }
+      });
+
+      document.addEventListener('scroll', () => {
+        if (window.scrollY > 50) navbar.classList.add('scrolled');
+        else if (!navLinks.classList.contains('active')) navbar.classList.remove('scrolled');
+      });
+    });
+
+    // ── SLOT FETCH SCRIPT ──
+    document.getElementById('datePicker').addEventListener('change', async function () {
+      const date      = this.value;
+      const serviceId = "<%= service.id %>";
+      if (!date) return;
+
+      try {
+        const res = await fetch(`/booking/available/slots?serviceId=${serviceId}&date=${date}`);
+        const { availableSlots } = await res.json();
+        const slotSelect = document.getElementById('slotSelect');
+
+        // Reset & populate
+        slotSelect.innerHTML = '<option value="">-- Select a slot --</option>';
+        availableSlots.forEach(slot => {
+          const opt = document.createElement('option');
+          opt.value = slot;
+          opt.textContent = slot;
+          slotSelect.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Could not load slots:', err);
+      }
     });
   </script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-// Dropdown menu functionality
-const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-const dropdownMenus = document.querySelectorAll('.dropdown-menu');
-
-// Hamburger menu functionality
-const hamburger = document.querySelector('.hamburger');
-const navLinks = document.querySelector('.nav-links');
-const navbar = document.getElementById('navbar');
-
-// Toggle hamburger menu when clicked
-if (hamburger && navLinks) {
-    hamburger.addEventListener('click', function() {
-        navLinks.classList.toggle('active');
-        navbar.classList.add('scrolled');
-    });
-}
-
-// Add click event to each dropdown toggle
-dropdownToggles.forEach(toggle => {
-    toggle.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        // Get the current dropdown menu
-        const currentDropdownMenu = this.nextElementSibling;
-        
-        // Close all other dropdown menus
-        dropdownMenus.forEach(menu => {
-            if (menu !== currentDropdownMenu) {
-                menu.classList.remove('show');
-            }
-        });
-        
-        // Toggle the current dropdown menu
-        currentDropdownMenu.classList.toggle('show');
-        
-        // Add scrolled class to navbar
-        if (navbar) {
-            navbar.classList.add('scrolled');
-        }
-    });
-});
-
-// Close dropdowns when clicking outside
-document.addEventListener('click', function(e) {
-    let clickedInsideDropdown = false;
-    
-    // Check if click was inside any dropdown toggle or menu
-    dropdownToggles.forEach(toggle => {
-        const dropdownMenu = toggle.nextElementSibling;
-        if (toggle.contains(e.target) || (dropdownMenu && dropdownMenu.contains(e.target))) {
-            clickedInsideDropdown = true;
-        }
-    });
-    
-    // If clicked outside dropdowns, close all of them
-    if (!clickedInsideDropdown) {
-        dropdownMenus.forEach(menu => {
-            menu.classList.remove('show');
-        });
-        
-        // Remove scrolled class if appropriate
-        if (navbar && window.scrollY <= 50 && (!navLinks || !navLinks.classList.contains('active'))) {
-            navbar.classList.remove('scrolled');
-        }
-    }
-});
-
-// Scroll event for navbar
-document.addEventListener('scroll', () => {
-    if (navbar) {
-        const scrollPosition = window.scrollY;
-        const threshold = 50;
-
-        if (scrollPosition > threshold) {
-            navbar.classList.add('scrolled');
-        } else {
-            // Only remove scrolled class if hamburger menu is not active
-            if (!navLinks || !navLinks.classList.contains('active')) {
-                navbar.classList.remove('scrolled');
-            }
-        }
-    }
-});
-});
-</script>
 </body>
 </html>
