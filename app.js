@@ -26,11 +26,26 @@ app.use(session({
 }));
 // -----------------------------------------
 
-
+// Add this before your route handlers
+app.use(async (req, res, next) => {
+    if (req.session.userId) {
+        try {
+            const User = require('./models/users');
+            req.user = await User.findById(req.session.userId);
+        } catch (err) {
+            console.error('User loading error:', err);
+        }
+    }
+    next();
+});
 
 // Mount the routes ------------------------
 const authRoutes = require('./routes/auth-routes');
 const adminRoutes = require('./routes/admin-routes');
+const imageRoutes = require('./routes/image-routes');
+const productRoutes = require('./routes/product-routes');
+app.use('/seller', productRoutes);
+app.use('/', imageRoutes); 
 app.use('/', authRoutes);
 app.use('/admin', adminRoutes);
 // -----------------------------------------
