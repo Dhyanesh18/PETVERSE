@@ -45,6 +45,34 @@ router.post('/products/add', sellerAuth, upload.array('images'), async (req, res
     }
 });
 
+
+router.get('/products/:category', async (req, res) => {
+    try {
+        const categoryMap = {
+            'petfood': 'Pet Food',
+            'toys': 'Toys',
+            'accessories': 'Accessories'
+        };
+
+        const category = req.params.category;
+        const categoryTitle = categoryMap[category] || 'Products';
+
+        const products = await Product.find({ 
+            category: categoryTitle,
+            isActive: true 
+        }).populate('seller', 'businessName');
+
+        res.render('products', {
+            categoryTitle: categoryTitle,
+            category: categoryTitle,
+            products: products
+        });
+
+    } catch (err) {
+        res.status(500).render('error', { message: 'Error loading products' });
+    }
+});
+
 router.get('/about', (req,res)=>{
     res.render('about', {
         activeUsers : 100,
