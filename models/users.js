@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const fileSchema = require('./fileSchema');
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -8,7 +7,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,
         validate: {
-            validator: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), // Basic email regex
+            validator: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), 
             message: 'Invalid email format'
         }
     },

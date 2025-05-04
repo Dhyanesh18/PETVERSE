@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Product - PetVerse</title>
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 400px;
+    position: relative;
+    text-align: center;
+}
+
+.close-modal {
+    position: absolute;
+    right: 1rem;
+    top: 0.5rem;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.modal-ok-btn {
+    background: rgb(0, 180, 180);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    margin-top: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-ok-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 8px rgba(0, 180, 180, 0.5);
+}
+
+        .navbar{
+            background-color: #222;
+        }
+
+        .product-form-container {
+            max-width: 800px;
+            margin: 100px auto 50px;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #444;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgb(0, 180, 180);
+            box-shadow: 0 0 5px rgba(0, 180, 180, 0.3);
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 1rem;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            border-color: rgb(0, 180, 180);
+            background: rgba(0, 180, 180, 0.05);
+        }
+
+        .submit-btn {
+            background: rgb(0, 180, 180);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 180, 180, 0.5);
+        }
+
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .preview-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header" id="header">
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="nav-icons">
+                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button onclick="window.location.href='/login'" class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/pets">Pets</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/products/petfood">Pet Food</a></li>
+                            <li><a href="/products/toys">Toys</a></li>
+                            <li><a href="/products/accessories">Accessories</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/services">Services</a></li>
+                            <li><a href="/mate">PetMate</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="product-form-container">
+        <h2 class="form-title">Add New Product</h2>
+        <form class="product-form" action="/seller/products/add" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label" for="name">Product Name</label>
+                <input class="form-input" type="text" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-input" id="description" name="description" rows="4" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="price">Price (₹)</label>
+                <input class="form-input" type="number" id="price" name="price" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="category">Category</label>
+                <select class="form-input" id="category" name="category" required>
+                    <option value="">Select Category</option>
+                    <option value="Pet Food">Pet Food</option>
+                    <option value="Toys">Toys</option>
+                    <option value="Accessories">Accessories</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="brand">Brand</label>
+                <input class="form-input" type="text" id="brand" name="brand" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="stock">Stock Quantity</label>
+                <input class="form-input" type="number" id="stock" name="stock" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Product Images (Max 5)</label>
+                <label class="file-input-label" for="images">
+                    Click to upload images
+                    <input type="file" id="images" name="images" multiple accept="image/*" hidden required>
+                </label>
+                <div class="image-preview" id="imagePreview"></div>
+            </div>
+
+            <button type="submit" class="submit-btn">Add Product</button>
+        </form>
+    </div>
+
+    <!-- Footer Section -->
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+        </div>
+    </footer>
+
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>✅ Product Added Successfully!</h2>
+            <p>Your new product is now live in our marketplace.</p>
+            <button onclick="window.location.href='/about'" class="modal-ok-btn">OK</button>
+        </div>
+    </div>    
+    <script>
+        // Image preview functionality
+        let selectedFiles = [];
+        const maxFiles = 5;
+        const imageInput = document.getElementById('images');
+        const previewContainer = document.getElementById('imagePreview');
+    
+        // Form submission handling
+        document.querySelector('.product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            try {
+                const response = await fetch('/seller/products/add', {
+                    method: 'POST',
+                    body: formData
+                });
+    
+                if (response.ok) {
+                    // Show success modal
+                    document.getElementById('successModal').style.display = 'block';
+                    // Clear form after success
+                    e.target.reset();
+                    selectedFiles = [];
+                    updatePreview();
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.message || 'Error submitting product');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while submitting the form');
+            }
+        });
+    
+        // Image handling
+        imageInput?.addEventListener('change', function() {
+            const newFiles = Array.from(this.files);
+            const remainingSlots = maxFiles - selectedFiles.length;
+            selectedFiles = [...selectedFiles, ...newFiles].slice(0, maxFiles);
+            updatePreview();
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => dataTransfer.items.add(file));
+            this.files = dataTransfer.files;
+        });
+    
+        function updatePreview() {
+            previewContainer.innerHTML = '';
+            selectedFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-image';
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    
+        // Image removal
+        previewContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('preview-image')) {
+                const index = Array.from(previewContainer.children).indexOf(e.target);
+                selectedFiles.splice(index, 1);
+                updatePreview();
+                imageInput.files = createNewFileList(selectedFiles);
+            }
+        });
+    
+        function createNewFileList(files) {
+            const dataTransfer = new DataTransfer();
+            files.forEach(file => dataTransfer.items.add(file));
+            return dataTransfer.files;
+        }
+    
+        // Dropdown menu functionality
+        document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                const menu = this.nextElementSibling;
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            });
+        });
+    
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
+    
+        // Hamburger menu functionality
+        document.getElementById('hamburger').addEventListener('click', function() {
+            document.querySelector('.nav-links').classList.toggle('active');
+        });
+    
+        // Modal handling
+        document.querySelector('.close-modal').addEventListener('click', () => {
+            document.getElementById('successModal').style.display = 'none';
+            window.location.href = '/about';
+        });
+    
+        // Close modal when clicking outside
+        window.onclick = (event) => {
+            const modal = document.getElementById('successModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                window.location.href = '/about';
+            }
+        };
+    
+        // Auto-redirect after 5 seconds
+        const successModal = document.getElementById('successModal');
+        successModal.addEventListener('shown', () => {
+            setTimeout(() => {
+                window.location.href = '/about';
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
