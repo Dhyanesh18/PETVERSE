@@ -286,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <h3>✅ Registration Submitted</h3>
                         <p>${result.message}</p>
                         <p>Your account will be activated after admin approval.</p>
-                        <button onclick="window.location.href='/login'">Go to Login</button>
+                        <button onclick="window.location.href='/availability'">Add availability</button>
                     </div>
                 `;
                 document.body.appendChild(successModal);
