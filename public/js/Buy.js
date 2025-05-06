@@ -1,7 +1,7 @@
 const productDataElement = document.getElementById("productData");
-let selectedProduct;
+let selectedProduct = null;
 let images = [];
-let currentIndex = 0;
+let imageIndex = 0;
 
 // Add debugging logs
 console.log("Buy.js loaded");
@@ -31,6 +31,28 @@ try {
 // Initialize the page when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM loaded in Buy.js");
+    
+    // Add click event listener to rating container for scrolling to reviews
+    const ratingContainer = document.getElementById("rating");
+    if (ratingContainer) {
+        ratingContainer.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-scroll-to');
+            if (targetId) {
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
+        });
+    }
+    
+    // Check if the user has already reviewed this product
+    if (selectedProduct && selectedProduct._id) {
+        checkExistingReview();
+    }
     
     // Set the main image immediately
     if (images.length > 0) {
@@ -68,7 +90,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Add event listeners
+    // Add click event listeners to thumbnails
+    document.querySelectorAll('.thumbnail').forEach(thumbnail => {
+        thumbnail.addEventListener('click', function() {
+            const imageUrl = this.getAttribute('data-image');
+            if (imageUrl) {
+                changeImage(imageUrl);
+            }
+        });
+    });
+    
+    // Add click event listener to main image
+    const mainImage = document.getElementById("mainImage");
+    if (mainImage) {
+        mainImage.addEventListener('click', function() {
+            const imageUrl = this.getAttribute('data-image');
+            if (imageUrl) {
+                openFullscreen(imageUrl);
+            }
+        });
+    }
+    
+    // Add click event listeners to fullscreen controls
+    const closeBtn = document.querySelector('.close-btn');
+    const prevBtn = document.querySelector('.prev-btn');
+    const nextBtn = document.querySelector('.next-btn');
+    
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeFullscreen);
+    }
+    
+    if (prevBtn) {
+        prevBtn.addEventListener('click', prevImage);
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener('click', nextImage);
+    }
+    
+    // Add event listeners for cart and buy buttons
     document.querySelector('.add-to-cart-btn')?.addEventListener('click', () => {
         if (typeof addToCart === 'function') {
             addToCart(selectedProduct.id);
@@ -98,10 +158,21 @@ function changeImage(imageUrl) {
     console.log("Changing image to:", imageUrl);
     const mainImage = document.getElementById("mainImage");
     if (mainImage) {
-        mainImage.style.backgroundImage = `url('/images/dash/${imageUrl}')`;
-        console.log("Image changed successfully with URL:", `/images/dash/${imageUrl}`);
+        // Check if the imageUrl already includes /images/dash/
+        const fullImageUrl = imageUrl.startsWith('/images/dash/') 
+            ? imageUrl 
+            : `/images/dash/${imageUrl}`;
+            
+        mainImage.style.backgroundImage = `url('${fullImageUrl}')`;
+        console.log("Main image updated successfully with URL:", fullImageUrl);
+        
+        // Update current index
+        imageIndex = images.indexOf(imageUrl);
+        if (imageIndex === -1) {
+            console.error("Image not found in images array:", imageUrl);
+        }
     } else {
-        console.error("Main image element not found when changing image");
+        console.error("Main image element not found");
     }
 }
 
@@ -112,9 +183,23 @@ function openFullscreen(imageUrl) {
     const fullscreenContainer = document.getElementById("fullscreenContainer");
     
     if (fullscreenImage && fullscreenContainer) {
+        // Update imageIndex to match the clicked image
+        imageIndex = images.indexOf(imageUrl);
+        if (imageIndex === -1) {
+            console.error("Image not found in images array:", imageUrl);
+            return;
+        }
+        
+        // Set the fullscreen image source
         fullscreenImage.src = "/images/dash/" + imageUrl;
+        
+        // Show the fullscreen container
         fullscreenContainer.style.display = "flex";
-        console.log("Fullscreen opened successfully");
+        
+        // Prevent body scrolling when in fullscreen
+        document.body.style.overflow = "hidden";
+        
+        console.log("Fullscreen opened successfully with image:", imageUrl);
     } else {
         console.error("Fullscreen elements not found");
     }
@@ -126,40 +211,42 @@ function closeFullscreen() {
     const fullscreenContainer = document.getElementById("fullscreenContainer");
     if (fullscreenContainer) {
         fullscreenContainer.style.display = "none";
+        // Restore body scrolling
+        document.body.style.overflow = "auto";
     }
 }
 
 function prevImage() {
-    currentIndex = (currentIndex - 1 + images.length) % images.length;
-    console.log("Navigating to previous image:", images[currentIndex]);
+    imageIndex = (imageIndex - 1 + images.length) % images.length;
+    console.log("Navigating to previous image:", images[imageIndex]);
     
     // Update main image
     const mainImage = document.getElementById("mainImage");
     if (mainImage) {
-        mainImage.style.backgroundImage = `url('/images/dash/${images[currentIndex]}')`;
+        mainImage.style.backgroundImage = `url('/images/dash/${images[imageIndex]}')`;
     }
     
     // Update fullscreen image
     const fullscreenImage = document.getElementById("fullscreenImage");
     if (fullscreenImage) {
-        fullscreenImage.src = `/images/dash/${images[currentIndex]}`;
+        fullscreenImage.src = `/images/dash/${images[imageIndex]}`;
     }
 }
 
 function nextImage() {
-    currentIndex = (currentIndex + 1) % images.length;
-    console.log("Navigating to next image:", images[currentIndex]);
+    imageIndex = (imageIndex + 1) % images.length;
+    console.log("Navigating to next image:", images[imageIndex]);
     
     // Update main image
     const mainImage = document.getElementById("mainImage");
     if (mainImage) {
-        mainImage.style.backgroundImage = `url('/images/dash/${images[currentIndex]}')`;
+        mainImage.style.backgroundImage = `url('/images/dash/${images[imageIndex]}')`;
     }
     
     // Update fullscreen image
     const fullscreenImage = document.getElementById("fullscreenImage");
     if (fullscreenImage) {
-        fullscreenImage.src = `/images/dash/${images[currentIndex]}`;
+        fullscreenImage.src = `/images/dash/${images[imageIndex]}`;
     }
 }
 
@@ -174,8 +261,8 @@ function initializePage() {
     // Set the main image with the correct URL format
     const mainImage = document.getElementById("mainImage");
     if (mainImage && images.length > 0) {
-        mainImage.style.backgroundImage = `url('/images/dash/${images[currentIndex]}')`;
-        console.log("Main image set in initializePage with URL:", `/images/dash/${images[currentIndex]}`);
+        mainImage.style.backgroundImage = `url('/images/dash/${images[imageIndex]}')`;
+        console.log("Main image set in initializePage with URL:", `/images/dash/${images[imageIndex]}`);
     } else {
         console.error("Cannot set main image in initializePage");
     }
@@ -242,6 +329,17 @@ function getProductRating() {
 }
 
 function displayRating() {
+    // Check if server-side rating is already displayed
+    const ratingValue = document.getElementById("ratingValue");
+    const ratingCount = document.getElementById("ratingCount");
+    
+    // If both elements already have content, don't override server-side data
+    if (ratingValue && ratingValue.textContent && 
+        ratingCount && ratingCount.textContent) {
+        console.log("Server-side rating already displayed, skipping client-side rating");
+        return;
+    }
+    
     const { rating, count } = getProductRating();
     
     let starsHTML = '';
@@ -256,197 +354,401 @@ function displayRating() {
     }
     
     const starsElement = document.getElementById("stars");
-    const ratingValueElement = document.getElementById("ratingValue");
-    const ratingCountElement = document.getElementById("ratingCount");
     
-    if (starsElement) starsElement.innerHTML = starsHTML;
-    if (ratingValueElement) ratingValueElement.innerText = rating.toFixed(1);
-    if (ratingCountElement) ratingCountElement.innerText = `(${count})`;
+    if (starsElement && !starsElement.innerHTML.trim()) starsElement.innerHTML = starsHTML;
+    if (ratingValue && !ratingValue.textContent) ratingValue.innerText = rating.toFixed(1);
+    if (ratingCount && !ratingCount.textContent) ratingCount.innerText = `(${count})`;
 }
 
 function submitRating() {
-    if (!selectedProduct || !selectedProduct.id) {
+    if (!selectedProduct || !selectedProduct._id) {
         alert("Error: Cannot identify product. Please refresh the page and try again.");
         return;
     }
     
-    const userRating = document.querySelectorAll(".rate-stars .fa.selected").length;
-    if (userRating === 0) {
-        alert("Please select a rating before submitting.");
+    // Get rating from the hidden input field
+    const userRating = parseInt(document.getElementById('rating-value').value);
+    
+    if (!userRating || userRating === 0) {
+        alert("Please select a star rating before submitting.");
         return;
     }
-    
-    const productId = selectedProduct.id;
-    const { rating, count } = getProductRating();
-    
-    // Calculate new average rating
-    const newRating = ((rating * count) + userRating) / (count + 1);
-    const newCount = count + 1;
-    
-    // Store product-specific ratings
-    sessionStorage.setItem(`rating_${productId}`, newRating);
-    sessionStorage.setItem(`ratingCount_${productId}`, newCount);
     
     // Get feedback text
     const feedbackText = document.getElementById("feedback").value.trim();
     
-    // Save the review
-    saveReview(userRating, feedbackText);
-    
-    // Update the displayed rating
-    displayRating();
-    
-    // Clear the form
-    document.getElementById("feedback").value = "";
-    document.getElementById("imagePreview").innerHTML = "";
-    document.querySelectorAll(".rate-stars .fa").forEach(s => s.classList.remove("selected"));
-    
-    alert("Thank you for your feedback!");
+    // Save the review to MongoDB
+    saveReviewToMongoDB(userRating, feedbackText);
 }
 
-function saveReview(userRating, feedback) {
-    if (!selectedProduct || !selectedProduct.id) return;
+function saveReviewToMongoDB(userRating, feedback) {
+    if (!selectedProduct || !selectedProduct._id) return;
     
-    const productId = selectedProduct.id;
-    
-    // Get product-specific reviews
-    let reviews = JSON.parse(sessionStorage.getItem(`reviews_${productId}`)) || [];
-    
-    // Get uploaded images
-    const uploadedImages = Array.from(document.querySelectorAll(".image-preview img"))
-        .map(img => img.src);
-    
-    // Create new review
-    let newReview = {
+    // Create review data
+    const reviewData = {
         rating: userRating,
-        feedback: feedback || "Great product!",
-        images: uploadedImages,
-        date: new Date().toLocaleDateString()
+        comment: feedback || "Great product!",
+        targetType: 'Product',
+        targetId: selectedProduct._id
     };
     
-    // Add new review to the beginning of the array
-    reviews.unshift(newReview);
+    // Show loading state
+    const submitButton = document.getElementById('submit-review');
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerText = 'Submitting...';
+    }
     
-    // Save product-specific reviews
-    sessionStorage.setItem(`reviews_${productId}`, JSON.stringify(reviews));
-    
-    // Refresh the reviews display
-    displayReviews();
+    // Send to server
+    fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(reviewData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to submit review');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Update the displayed reviews
+        displayReviews();
+        
+        // Reset form
+        document.getElementById("feedback").value = "";
+        document.getElementById('rating-value').value = "0";
+        
+        // Reset stars
+        const stars = document.querySelectorAll('.star');
+        stars.forEach(star => {
+            star.classList.remove('selected');
+            star.style.color = '#ddd';
+        });
+        
+        // Reset button
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerText = 'Submit';
+        }
+        
+        // Show success message
+        alert("Thank you for your feedback!");
+    })
+    .catch(error => {
+        console.error('Error saving review:', error);
+        alert("There was an error submitting your review. Please try again.");
+        
+        // Reset button
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerText = 'Submit';
+        }
+    });
 }
 
 function displayReviews() {
-    if (!selectedProduct || !selectedProduct.id) return;
+    if (!selectedProduct || !selectedProduct._id) return;
     
-    const productId = selectedProduct.id;
+    const productId = selectedProduct._id;
     const reviewSection = document.getElementById("reviewList");
     
     if (!reviewSection) return;
     
     // Clear existing reviews
-    reviewSection.innerHTML = "";
+    reviewSection.innerHTML = "<p>Loading reviews...</p>";
     
-    // Get product-specific reviews
-    let reviews = JSON.parse(sessionStorage.getItem(`reviews_${productId}`)) || [];
-    
-    // If no reviews, create default reviews based on product ID
-    if (reviews.length === 0) {
-        if (productId === 2) { // Royal Canin Dog Food
-            reviews = [
-                {
-                    rating: 5,
-                    feedback: "My dog loves this food! His coat is shinier and he has more energy.",
-                    images: [],
-                    date: "2023-10-15"
-                },
-                {
-                    rating: 4,
-                    feedback: "Good quality but a bit expensive. Still worth it for the health benefits.",
-                    images: [],
-                    date: "2023-09-22"
-                }
-            ];
-            sessionStorage.setItem(`reviews_${productId}`, JSON.stringify(reviews));
-        } else if (productId === 3) { // Siamese Cat
-            reviews = [
-                {
-                    rating: 5,
-                    feedback: "Beautiful cat! Very playful and affectionate. Adapts well to new environments.",
-                    images: [],
-                    date: "2023-11-05"
-                },
-                {
-                    rating: 4,
-                    feedback: "Lovely companion, though a bit vocal at night. Overall very satisfied!",
-                    images: [],
-                    date: "2023-10-18"
-                }
-            ];
-            sessionStorage.setItem(`reviews_${productId}`, JSON.stringify(reviews));
-        } else if (productId === 1) { // Rottweiler
-            reviews = [
-                {
-                    rating: 5,
-                    feedback: "Excellent temperament and very healthy puppy. The breeder was professional and caring.",
-                    images: [],
-                    date: "2023-11-10"
-                }
-            ];
-            sessionStorage.setItem(`reviews_${productId}`, JSON.stringify(reviews));
+    // Fetch reviews from server
+    fetch(`/api/reviews/product/${productId}`)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch reviews');
         }
-    }
-    
-    // If still no reviews, show a message
-    if (reviews.length === 0) {
-        reviewSection.innerHTML = "<p>No reviews yet. Be the first to review this product!</p>";
-        return;
-    }
-    
-    // Display each review
-    reviews.forEach(review => {
-        let reviewDiv = document.createElement("div");
-        reviewDiv.classList.add("review");
+        return response.json();
+    })
+    .then(data => {
+        reviewSection.innerHTML = "";
         
-        // Generate stars HTML
-        let starsHTML = "";
-        for (let i = 0; i < 5; i++) {
-            if (i < review.rating) {
-                starsHTML += `<i class='fa fa-star review-stars'></i>`;
-            } else {
-                starsHTML += `<i class='fa fa-star-o review-stars'></i>`;
+        // Check if we have reviews
+        if (!data.success || !data.reviews) {
+            reviewSection.innerHTML = "<p>No reviews yet. Be the first to review this product!</p>";
+            return;
+        }
+        
+        // Extract reviews array from the response
+        const reviews = data.reviews;
+        
+        // If no reviews, show a message
+        if (reviews.length === 0) {
+            reviewSection.innerHTML = "<p>No reviews yet. Be the first to review this product!</p>";
+            return;
+        }
+        
+        // Update the product rating if available
+        if (data.avgRating) {
+            updateProductRating(data.avgRating, data.count);
+        }
+        
+        // Create container for all reviews
+        const reviewsContainer = document.createElement('div');
+        reviewsContainer.className = 'reviews-container';
+        
+        // Display each review
+        reviews.forEach(review => {
+            const reviewDiv = document.createElement("div");
+            reviewDiv.classList.add("review");
+            
+            // Generate stars HTML
+            let starsHTML = "";
+            for (let i = 0; i < 5; i++) {
+                if (i < review.rating) {
+                    starsHTML += `<span class="star filled">★</span>`;
+                } else {
+                    starsHTML += `<span class="star">★</span>`;
+                }
             }
-        }
+            
+            // Format the date
+            const reviewDate = new Date(review.createdAt).toLocaleDateString();
+            
+            // Get user info
+            const username = review.user ? (review.user.username || review.user.firstName || 'Anonymous') : 'Anonymous';
+            
+            // Set review content
+            reviewDiv.innerHTML = `
+                <div class="review-header">
+                    <div class="reviewer-info">
+                        <strong>${username}</strong>
+                    </div>
+                    <div class="review-stars">${starsHTML}</div>
+                    <div class="review-date">${reviewDate}</div>
+                </div>
+                <p class="review-text">${review.comment || ''}</p>
+            `;
+            
+            // Add to reviews container
+            reviewsContainer.appendChild(reviewDiv);
+        });
         
-        // Generate images HTML
-        let imageHTML = "";
-        if (review.images && review.images.length > 0) {
-            imageHTML = review.images
-                .map(imgSrc => `<img src="${imgSrc}" alt="Review Image" class="review-image">`)
-                .join('');
-        }
+        // Add all reviews to the section
+        reviewSection.appendChild(reviewsContainer);
         
-        // Set review content
-        reviewDiv.innerHTML = `
-            <div class="review-header">
-                <div class="review-stars">${starsHTML}</div>
-                <div class="review-date">${review.date}</div>
-            </div>
-            <p class="review-text">${review.feedback}</p>
-            ${imageHTML ? `<div class="review-images">${imageHTML}</div>` : ''}
-        `;
-        
-        // Add to review section
-        reviewSection.appendChild(reviewDiv);
+        // Add styling for the reviews
+        addReviewStyles();
+    })
+    .catch(error => {
+        console.error('Error fetching reviews:', error);
+        reviewSection.innerHTML = "<p>Error loading reviews. Please try again later.</p>";
     });
 }
 
-// Handle star selection
-document.querySelectorAll(".rate-stars .fa").forEach(star => {
-    star.addEventListener("click", function () {
-        let value = parseInt(this.getAttribute("data-value"));
-        document.querySelectorAll(".rate-stars .fa").forEach((s, index) => {
-            s.classList.toggle("selected", index < value);
+// Add styling to reviews
+function addReviewStyles() {
+    // Check if we already added the styles
+    if (document.getElementById('review-styles')) return;
+    
+    const reviewStyle = document.createElement('style');
+    reviewStyle.id = 'review-styles';
+    reviewStyle.textContent = `
+        .reviews-container {
+            width: 100%;
+        }
+        .review {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .reviewer-info {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .review-stars {
+            display: flex;
+            gap: 2px;
+        }
+        .star {
+            color: #ddd;
+            font-size: 16px;
+        }
+        .star.filled {
+            color: #FFD700;
+        }
+        .review-date {
+            color: #777;
+            font-size: 12px;
+        }
+        .review-text {
+            color: #333;
+            line-height: 1.5;
+        }
+        #reviewList {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+    `;
+    document.head.appendChild(reviewStyle);
+}
+
+// Helper function to get current user ID
+function getUserId() {
+    const userDataElement = document.getElementById('userData');
+    if (userDataElement) {
+        return userDataElement.getAttribute('data-user-id');
+    }
+    return null;
+}
+
+// Function to update the product rating display with server data
+function updateProductRating(avgRating, count) {
+    // Get the elements
+    const ratingValue = document.getElementById("ratingValue");
+    const ratingCount = document.getElementById("ratingCount");
+    const stars = document.getElementById("stars");
+    
+    // Check if the elements already have server-rendered content
+    const hasServerRenderedRating = ratingValue && ratingValue.textContent && 
+                                    ratingCount && ratingCount.textContent;
+    
+    if (hasServerRenderedRating) {
+        console.log("Server-side rating already rendered, not updating from AJAX");
+        return;
+    }
+    
+    // Update the elements if they exist and don't have content
+    if (ratingValue && !ratingValue.textContent) ratingValue.textContent = avgRating;
+    if (ratingCount && !ratingCount.textContent) ratingCount.textContent = `(${count} reviews)`;
+    
+    if (stars && !stars.innerHTML.trim()) {
+        let starsHTML = '';
+        const rating = parseFloat(avgRating);
+        
+        for (let i = 1; i <= 5; i++) {
+            if (i <= Math.floor(rating)) {
+                starsHTML += `<i class='fa fa-star'></i>`;
+            } else if (i === Math.ceil(rating) && rating % 1 !== 0) {
+                starsHTML += `<i class='fa fa-star-half-o'></i>`;
+            } else {
+                starsHTML += `<i class='fa fa-star-o'></i>`;
+            }
+        }
+        
+        stars.innerHTML = starsHTML;
+    }
+}
+
+// Handle the star selection and form submission
+document.addEventListener('DOMContentLoaded', function() {
+    // Star rating functionality
+    const stars = document.querySelectorAll('.star');
+    const ratingValueInput = document.getElementById('rating-value');
+    const formRatingInput = document.getElementById('form-rating-value');
+    const formCommentInput = document.getElementById('form-comment-value');
+    const feedbackTextarea = document.getElementById('feedback');
+    const reviewForm = document.getElementById('review-form');
+    
+    // Initialize stars
+    stars.forEach(star => {
+        // Click handler
+        star.addEventListener('click', function() {
+            const value = parseInt(this.getAttribute('data-value'));
+            ratingValueInput.value = value;
+            
+            if (formRatingInput) {
+                formRatingInput.value = value;
+            }
+            
+            // Update star visual state
+            updateStars(value);
+        });
+        
+        // Hover effects
+        star.addEventListener('mouseover', function() {
+            const value = parseInt(this.getAttribute('data-value'));
+            hoverStars(value);
+        });
+        
+        star.addEventListener('mouseout', function() {
+            const selectedValue = parseInt(ratingValueInput.value) || 0;
+            updateStars(selectedValue);
         });
     });
+    
+    // Form submission
+    if (reviewForm) {
+        reviewForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get rating
+            const rating = parseInt(ratingValueInput.value);
+            if (!rating || rating === 0) {
+                alert("Please select a star rating before submitting.");
+                return;
+            }
+            
+            // Get comment
+            const comment = feedbackTextarea.value.trim();
+            
+            // Update form values
+            formRatingInput.value = rating;
+            formCommentInput.value = comment;
+            
+            // Submit form
+            this.submit();
+        });
+    }
+    
+    // Update stars based on rating
+    function updateStars(rating) {
+        stars.forEach(star => {
+            const value = parseInt(star.getAttribute('data-value'));
+            if (value <= rating) {
+                star.classList.add('selected');
+                star.style.color = '#FFD700';
+            } else {
+                star.classList.remove('selected');
+                star.style.color = '#ddd';
+            }
+        });
+    }
+    
+    // Temporarily highlight stars on hover
+    function hoverStars(rating) {
+        stars.forEach(star => {
+            const value = parseInt(star.getAttribute('data-value'));
+            if (value <= rating) {
+                star.style.color = '#FFD700';
+            } else {
+                star.style.color = '#ddd';
+            }
+        });
+    }
+    
+    // Check if there's a pre-existing review to populate the form
+    const existingRating = document.getElementById('existing-rating');
+    if (existingRating) {
+        const rating = parseInt(existingRating.value);
+        if (rating > 0) {
+            ratingValueInput.value = rating;
+            updateStars(rating);
+            
+            // Also populate comment if available
+            const existingComment = document.getElementById('existing-comment');
+            if (existingComment && feedbackTextarea) {
+                feedbackTextarea.value = existingComment.value;
+            }
+        }
+    }
 });
 
 const pincodeMapping = {
@@ -490,21 +792,43 @@ window.onload = function () {
 
     // If both pincode and address exist, display them
     if (storedPincode && storedAddress) {
-        document.getElementById("pincodeInput").value = storedPincode; // Fill the pincode input
-        document.getElementById("placeOutput").innerText = `Delivery available in ${storedAddress}`; // Display the address
+        const pincodeInput = document.getElementById("pincodeInput");
+        const placeOutput = document.getElementById("placeOutput");
+        if (pincodeInput) pincodeInput.value = storedPincode; // Fill the pincode input
+        if (placeOutput) placeOutput.innerText = `Delivery available in ${storedAddress}`; // Display the address
     }
-    const sellerInfo = {
-        name: "PetWorld Store",
-        rating: 4.5,  // This can be dynamically fetched
-        location: "Mumbai, Maharashtra"
-    };
+    
+    // Check if seller info elements exist before attempting to set them
+    const sellerNameText = document.getElementById('sellerNameText');
+    const sellerRatingText = document.getElementById('sellerRatingText');
+    const sellerLocationText = document.getElementById('sellerLocationText');
+    
+    if (sellerNameText || sellerRatingText || sellerLocationText) {
+        const sellerInfo = {
+            name: "PetWorld Store",
+            rating: 4.5,  // This can be dynamically fetched
+            location: "Mumbai, Maharashtra"
+        };
 
-    // Dynamically set the seller information in the HTML
-    document.getElementById('sellerNameText').innerText = sellerInfo.name;
-    document.getElementById('sellerRatingText').innerText = sellerInfo.rating + " / 5";
-    document.getElementById('sellerLocationText').innerText = sellerInfo.location;
+        // Dynamically set the seller information in the HTML only if elements exist
+        if (sellerNameText) sellerNameText.innerText = sellerInfo.name;
+        if (sellerRatingText) sellerRatingText.innerText = sellerInfo.rating + " / 5";
+        if (sellerLocationText) sellerLocationText.innerText = sellerInfo.location;
+    }
+    
+    // These function calls now check for server-rendered data before updating
     displayRating();
-    displayReviews();
+    
+    // Only call displayReviews if we're using client-side review loading
+    const ratingValue = document.getElementById("ratingValue");
+    const ratingCount = document.getElementById("ratingCount");
+    const hasServerRenderedRating = ratingValue && ratingValue.textContent && 
+                                    ratingCount && ratingCount.textContent;
+    
+    if (!hasServerRenderedRating) {
+        displayReviews();
+    }
+    
     updateCartCount();
 };
 
@@ -559,24 +883,6 @@ function scrollToRate() {
     }
 }
 
-function handleImageUpload(event) {
-    const imagePreview = document.getElementById("imagePreview");
-    if (imagePreview) {
-        imagePreview.innerHTML = ""; // Clear existing previews
-
-        Array.from(event.target.files).forEach((file) => {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const img = document.createElement("img");
-                img.src = e.target.result;
-                img.alt = "Uploaded Image";
-                imagePreview.appendChild(img);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-}
-
 // Add back the star selection event listeners
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll(".rate-stars .fa").forEach(star => {
@@ -588,4 +894,58 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Function to check if the user has already reviewed this product
+function checkExistingReview() {
+    if (!selectedProduct || !selectedProduct._id) return;
+    
+    fetch(`/api/reviews/user/Product/${selectedProduct._id}`)
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 401) {
+                    console.log('User not logged in');
+                    return null;
+                }
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.success && data.hasReview) {
+                // User has an existing review - populate the form
+                const review = data.review;
+                populateReviewForm(review);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking existing review:', error);
+        });
+}
+
+// Function to populate the review form with existing review data
+function populateReviewForm(review) {
+    if (!review) return;
+    
+    // Set rating
+    const ratingValue = document.getElementById('rating-value');
+    if (ratingValue) {
+        ratingValue.value = review.rating;
+    }
+    
+    // Set feedback text
+    const feedbackElement = document.getElementById('feedback');
+    if (feedbackElement && review.comment) {
+        feedbackElement.value = review.comment;
+    }
+    
+    // Update star display
+    const stars = document.querySelectorAll('.star');
+    stars.forEach(star => {
+        const value = parseInt(star.getAttribute('data-value'));
+        if (value <= review.rating) {
+            star.classList.add('selected');
+            star.style.color = '#FFD700';
+        }
+    });
+}
 
