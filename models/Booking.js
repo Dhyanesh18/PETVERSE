@@ -8,4 +8,7 @@ const bookingSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// Ensure unique booking per service, date, and slot
+bookingSchema.index({ service: 1, date: 1, slot: 1 }, { unique: true });
+
 module.exports = mongoose.model('Booking', bookingSchema);

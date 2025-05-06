@@ -3,18 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <title>Book Appointment</title>
-
-  <!-- Use the same CSS as the services page for the header -->
   <link rel="stylesheet" href="/css/services.css">
-  <!-- Additional booking form styles -->
   <link rel="stylesheet" href="/css/booking.css">
-
-  <!-- Font Awesome (optional) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
-  <!-- Header (same as services.ejs) -->
   <header class="header" id="header">
       <nav id="navbar" class="navbar">
           <div class="nav-content">
@@ -54,59 +48,39 @@
       </nav>
   </header>
 
-  <!-- Main Booking Container -->
   <div class="booking-container">
     <div class="booking-wrapper">
-      <!-- Left side: Service Info -->
       <div class="booking-info">
-        <h1><%= service.name %></h1>
-        <p><strong>Category:</strong> <%= service.category %></p>
-        <% if (service.category === 'Veterinary Doctor' || service.category === 'Dog Training') { %>
-          <p><strong>Price:</strong> ₹500 per session</p>
-        <% } else { %>
-          <p><strong>Price:</strong> ₹<%= service.price %></p>
-        <% } %>
-        <p><strong>Location:</strong> <%= service.location %></p>
+        <h1><%= service.serviceType %></h1>
         <p><strong>Description:</strong> <%= service.description %></p>
+        <p><strong>Price:</strong> ₹<%= service.rate %></p>
+        <p><strong>Location:</strong> <%= service.location || 'Not specified' %></p>
       </div>
 
-      <!-- Right side: Either form OR confirmation message -->
       <div class="booking-form-container">
+        <% if (error) { %>
+          <p style="color: red;"><%= error %></p>
+        <% } %>
         <% if (confirmed === true) { %>
-          <!-- Confirmation Message -->
           <h2>Booking Confirmed!</h2>
-          <p>Thank you, <strong><%= booking.name %></strong>! 
-             Your booking for <strong><%= booking.serviceName %></strong> is confirmed.</p>
-          <p>We will contact you at <strong><%= booking.email %></strong> soon.</p>
-          <p>Pet Name: <strong><%= booking.petName %></strong></p>
-          <a href="/services" class="back-link">Back to Services</a>
+          <p>Thank you, <strong><%= booking.name %></strong>!</p>
+          <p>Your appointment for <strong><%= service.serviceType %></strong> is confirmed on <strong><%= booking.date %></strong> at <strong><%= booking.slot %></strong>.</p>
         <% } else { %>
-          <!-- Booking Form -->
           <h2>Book Appointment</h2>
-          <form action="/book/<%= service.id %>" method="POST" class="booking-form">
+          <form action="/booking" method="POST" class="booking-form">
+            <input type="hidden" name="serviceId" value="<%= service._id %>">
             <label for="name">Full Name:</label>
             <input type="text" id="name" name="name" required>
-
             <label for="petName">Pet Name:</label>
             <input type="text" id="petName" name="petName" required>
-
             <label for="email">Email Address:</label>
             <input type="email" id="email" name="email" required>
-
-            <!-- ── UPDATED: Preferred Date → Date picker triggers slot fetch ── -->
             <label for="date">Preferred Date:</label>
             <input type="date" id="datePicker" name="date" required>
-
-            <!-- ── NEW: Available Slots Dropdown ── -->
             <label for="slotSelect">Available Time Slot:</label>
             <select id="slotSelect" name="slot" required>
               <option value="">-- Select a slot --</option>
             </select>
-
-            <!-- ── KEEP: Original Time Input Removed ── -->
-            <!-- <label for="time">Preferred Time:</label>
-            <input type="time" id="time" name="time" required> -->
-
             <button type="submit" class="book-now-btn">Confirm Booking</button>
           </form>
         <% } %>
@@ -114,7 +88,6 @@
     </div>
   </div>
 
-  <!-- Footer -->
   <footer id="footer">
       <div class="footer-container">
           <div class="footer-logo">
@@ -139,11 +112,10 @@
           </div>
       </div>
       <div class="footer-bottom">
-          <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+          <p>© 2025 PetVerse. All Rights Reversed</p>
       </div>
   </footer>
 
-  <!-- Mobile nav toggle & dropdown scripts -->
   <script>
     const hamburger = document.getElementById('hamburger');
     const navLinks = document.querySelector('.nav-links');
@@ -188,18 +160,15 @@
       });
     });
 
-    // ── SLOT FETCH SCRIPT ──
     document.getElementById('datePicker').addEventListener('change', async function () {
       const date      = this.value;
-      const serviceId = "<%= service.id %>";
+      const serviceId = "<%= service._id %>";
       if (!date) return;
 
       try {
         const res = await fetch(`/booking/available/slots?serviceId=${serviceId}&date=${date}`);
         const { availableSlots } = await res.json();
         const slotSelect = document.getElementById('slotSelect');
-
-        // Reset & populate
         slotSelect.innerHTML = '<option value="">-- Select a slot --</option>';
         availableSlots.forEach(slot => {
           const opt = document.createElement('option');

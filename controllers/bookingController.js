@@ -12,7 +12,7 @@ exports.getBookingPage = async (req, res) => {
     const serviceId = req.params.serviceId;
     const service = await Service.findById(serviceId);
     if (!service) return res.status(404).send('Service not found');
-    res.render('booking', { service, availableSlots: [], selectedDate: null });
+    res.render('booking', { service, error: null, confirmed: false });
   } catch (err) {
     res.status(500).send('Server error');
   }
@@ -32,9 +32,14 @@ exports.getAvailableSlots = async (req, res) => {
 
 exports.bookSlot = async (req, res) => {
   try {
-    const { serviceId, date, slot } = req.body;
+    const { serviceId, date, slot, name, petName, email } = req.body;
+    const service = await Service.findById(serviceId);
+    if (!service) return res.status(404).send('Service not found');
+
     const existing = await Booking.findOne({ service: serviceId, date, slot });
-    if (existing) return res.status(400).send('Slot already booked');
+    if (existing) {
+      return res.render('booking', { service, error: 'Slot already booked', confirmed: false });
+    }
 
     const booking = new Booking({
       user: req.user._id,
@@ -44,8 +49,14 @@ exports.bookSlot = async (req, res) => {
     });
 
     await booking.save();
-    res.redirect('/dashboard'); // or success page
+    res.render('booking', {
+      service,
+      error: null,
+      confirmed: true,
+      booking: { name, date, slot }
+    });
   } catch (err) {
+    console.error(err);
     res.status(500).send('Booking failed');
   }
 };
