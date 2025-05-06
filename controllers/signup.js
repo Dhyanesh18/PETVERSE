@@ -221,6 +221,8 @@ module.exports = {
                 isApproved: false
             });
 
+            req.session.userId = newProvider._id;
+
             res.status(201).json({
                 success: true,
                 message: "Service provider registration submitted for approval",
@@ -230,7 +232,6 @@ module.exports = {
                     serviceType: newProvider.serviceType
                 }
             });
-            res.redirect('/availability'); // Redirect to availability page after signup
 
         } catch (error) {
             console.error("Service provider signup error:", error);
