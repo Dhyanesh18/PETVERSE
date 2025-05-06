@@ -1,28 +1,121 @@
 <header class="header" id="header">
-    <nav id="navbar" class="navbar" style="background-color: black;">
+    <nav id="navbar" class="navbar">
         <div class="nav-content">
-            <div class="logo"><a href="#">PetVerse</a></div>
+            <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
             <div class="nav-icons">
-                <button class="icon-btn cart-icon" id="cartIcon">
+                <a href="/cart" class="icon-btn cart-icon" id="cartIcon">
                     <i class="fa fa-shopping-cart"></i>
-                    <span class="cart-count" id="cartCount" style="font-size: small;background-color: #FF6B01;border-radius: 5px; width: 15px;">0</span>
-                </button>
-                <button class="icon-btn"><i class="fa fa-user"></i></button>
+                    <span class="cart-count" id="cartCount" style="display: none;">0</span>
+                </a>
+                <a href="/login" class="icon-btn"><i class="fa fa-user"></i></a>
             </div>
             <div class="search">
-                <input class="search-bar" type="text" placeholder="Search pets, products or services">
+                <input class="search-bar" type="text" placeholder=" Search pets, products or services">
                 <button class="search-btn"><i class="fa fa-search"></i></button>
             </div>
             <button class="hamburger" id="hamburger">
                 <i class="fa fa-bars"></i>
             </button>
             <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/#about">About</a></li>
-                <li><a href="/#searchby-pet">Pets</a></li>
-                <li><a href="/products">Products</a></li>
-                <li><a href="/services">Services</a></li>
+                <% if (typeof navLinks !== 'undefined' && navLinks) { %>
+                    <% navLinks.forEach(function(link) { %>
+                        <% if (link.dropdown) { %>
+                            <li class="dropdown">
+                                <a href="<%= link.url %>" class="dropdown-toggle"><%= link.name %> <i class="fa fa-angle-down"></i></a>
+                                <ul class="dropdown-menu">
+                                    <% link.dropdownItems.forEach(function(item) { %>
+                                        <li><a href="<%= item.url %>"><%= item.name %></a></li>
+                                    <% }); %>
+                                </ul>
+                            </li>
+                        <% } else { %>
+                            <li><a href="<%= link.url %>"><%= link.name %></a></li>
+                        <% } %>
+                    <% }); %>
+                <% } else { %>
+                     <!-- Default links if navLinks not provided -->
+                     <li><a href="/home">Home</a></li>
+                     <li><a href="/pets">Pets</a></li>
+                     <li class="dropdown">
+                        <a href="/products" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/products/food">Food</a></li>
+                            <li><a href="/products/accessories">Accessories</a></li>
+                            <li><a href="/products/healthcare">Healthcare</a></li>
+                        </ul>
+                     </li>
+                     <li><a href="/services">Services</a></li>
+                     <li><a href="/about">About</a></li>
+                <% } %>
             </ul>
         </div>
     </nav>
 </header>
+
+<!-- Add JavaScript for dropdowns and hamburger menu if not already present globally -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dropdown menu functionality
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+        
+        // Hamburger menu functionality
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        
+        // Toggle hamburger menu when clicked
+        if (hamburger && navLinks) {
+            hamburger.addEventListener('click', function() {
+                navLinks.classList.toggle('active');
+            });
+        }
+        
+        // Add click event to each dropdown toggle
+        dropdownToggles.forEach((toggle) => {
+            toggle.addEventListener('click', function(e) {
+                // Prevent default link behavior if it's just a toggle (#)
+                if (this.getAttribute('href') === '#') {
+                   e.preventDefault(); 
+                }
+                
+                // Get the current dropdown menu
+                const currentDropdownMenu = this.nextElementSibling;
+                if (!currentDropdownMenu || !currentDropdownMenu.classList.contains('dropdown-menu')) return;
+
+                // Toggle the current dropdown menu
+                const isShown = currentDropdownMenu.classList.contains('show');
+
+                // Close all other dropdown menus first
+                dropdownMenus.forEach(menu => {
+                    menu.classList.remove('show');
+                });
+                
+                // If it wasn't shown before, show it now
+                if (!isShown) {
+                    currentDropdownMenu.classList.add('show');
+                }
+                
+                e.stopPropagation(); // Prevent this click from triggering the document click handler immediately
+            });
+        });
+
+        // Close all dropdowns when clicking anywhere else on the page
+        document.addEventListener('click', function(event) {
+            // Check if click is outside of any dropdown toggle or menu
+            if (!event.target.closest('.dropdown')) {
+                dropdownMenus.forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+
+        // Update cart count on page load
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const cartCount = document.getElementById('cartCount');
+            if (cartCount) {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                cartCount.textContent = totalItems;
+            cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
+        }
+    });
+</script>

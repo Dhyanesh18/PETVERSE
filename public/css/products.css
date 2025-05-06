@@ -13,7 +13,6 @@ body {
 }
 
 .navbar {
-
     top: 0;
     left: 0;
     background-color: #111;
@@ -174,7 +173,6 @@ body {
     display: block;
 }
 
-
 .hamburger {
     display: none;
     cursor: pointer;
@@ -190,9 +188,6 @@ body {
 .hamburger:hover {
     transform: scale(1.2);
 }
-
-
-
 
 @media screen and (max-width: 1240px) {
     .nav-links {
@@ -247,7 +242,6 @@ body {
     }
 }
 
-
 .main-container {
     max-width: 1200px;
     margin: 20px auto;
@@ -263,8 +257,6 @@ body {
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     padding: 20px;
     height: fit-content;
-    position: sticky;
-    top: 100px;
 }
 
 .filter-section {
@@ -298,39 +290,43 @@ body {
     color: #555;
 }
 
+.price-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .price-filter input {
     width: 70px;
     padding: 5px;
-    margin-right: 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
 }
 
 .price-filter button {
-    background-color: teal;
+    background-color: #00695c;
     color: white;
     border: none;
     padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    margin-top: 8px;
 }
 
 .clear-filters {
-    background-color: #f0f0f0;
-    color: #333;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
     width: 100%;
+    padding: 8px;
+    background-color: #f5f5f5;
+    border: none;
+    border-radius: 4px;
+    color: #333;
+    cursor: pointer;
     margin-top: 10px;
 }
 
 .products-container {
-    flex-grow: 1;
+    flex: 1;
 }
 
 .products-header {
@@ -340,8 +336,8 @@ body {
     margin-bottom: 20px;
 }
 
-.products-header h2 {
-    font-size: 22px;
+.products-header h1 {
+    font-size: 24px;
     color: #333;
 }
 
@@ -350,38 +346,48 @@ body {
     border: 1px solid #ddd;
     border-radius: 4px;
     outline: none;
-    font-size: 14px;
 }
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
 }
 
 .product-card {
-    background-color: white;
+    background: white;
     border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .product-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.product-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.product-link:hover {
+    text-decoration: none;
+    color: inherit;
 }
 
 .product-image {
-    height: 180px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f9f9f9;
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
 }
 
 .product-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -393,9 +399,31 @@ body {
 
 .product-name {
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
     color: #333;
     margin-bottom: 8px;
+}
+
+.product-brand {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.stars {
+    color: #ffc107;
+    margin-right: 5px;
+}
+
+.review-count {
+    font-size: 14px;
+    color: #666;
 }
 
 .product-description {
@@ -403,74 +431,79 @@ body {
     color: #666;
     margin-bottom: 10px;
     display: -webkit-box;
-    line-clamp:initial;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
 .product-price {
-    font-size: 18px;
-    font-weight: 600;
-    color: #4b8b3b;
+    display: flex;
+    align-items: center;
     margin-bottom: 10px;
 }
 
-.product-rating {
-    color: #ffc107;
+.discounted-price {
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Remove unused styles */
+.original-price,
+.discount-badge {
+    display: none;
+}
+
+.product-stock {
     font-size: 14px;
+    color: #00a152;
     margin-bottom: 10px;
 }
 
 .product-action {
-    display: grid;
-    grid-template-columns: 1fr 40px;
+    display: flex;
     gap: 10px;
-}
-
-.fa-mars {
-    color: rgb(0, 132, 255);
-}
-
-.fa-venus {
-    color: rgb(255, 0, 144);
+    padding: 0 15px 15px;
 }
 
 .add-to-cart {
-    background-color: teal;
+    flex: 1;
+    padding: 10px;
+    background: #00695c;
     color: white;
     border: none;
-    padding: 8px 0;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
+    font-weight: 500;
+    transition: background 0.2s;
 }
 
 .add-to-cart:hover {
-    background-color: rgb(0, 179, 179);
-    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    background: #004d40;
+}
+
+.add-to-cart:disabled {
+    background: #ccc;
+    cursor: not-allowed;
 }
 
 .wishlist-btn {
-    background-color: #f0f0f0;
-    border: none;
-    border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    background: white;
+    color: #666;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.3s;
+    transition: all 0.2s;
 }
 
 .wishlist-btn:hover {
-    background-color: #ff4b9f;
-    color: white;
-}
-
-.wishlist-btn:focus {
-    background-color: #ff4b9f;
-    color: white;
+    border-color: #e41749;
+    color: #e41749;
 }
 
 .pagination {
@@ -598,7 +631,6 @@ hr {
     margin-top: 60px;
 }
 
-
 /* Responsive Design */
 @media (max-width: 992px) {
     .nav-links {
@@ -631,16 +663,16 @@ hr {
     .main-container {
         flex-direction: column;
     }
-
+    
     .filters-sidebar {
         width: 100%;
-        position: static;
+        margin-bottom: 20px;
     }
 }
 
 @media (max-width: 768px) {
     .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -651,95 +683,36 @@ hr {
 
     .products-header {
         flex-direction: column;
-        align-items: flex-start;
         gap: 10px;
     }
-}
-
-
-.main-container {
-    max-width: 1400px; /* Increase from 1200px */
-    gap: 30px; /* Increase gap between sidebar and products */
-}
-
-/* Make the filters sidebar narrower */
-.filters-sidebar {
-    width: 300px; /* Reduce from 250px */
-    padding: 15px; /* Reduce padding slightly */
-}
-
-/* Adjust the products grid to fit 4 cards */
-.products-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Change to 4 columns instead of auto-fill */
-    gap: 15px; /* Slightly reduce gap to fit more cards */
-}
-
-/* Make product cards slightly smaller to fit 4 in a row */
-.product-card {
-    max-width: 100%;
-}
-
-/* Adjust product image height */
-.product-image {
-    height: 160px; /* Reduce from 180px */
-}
-
-/* Media queries for responsiveness */
-@media (max-width: 1200px) {
-    .products-grid {
-        grid-template-columns: repeat(3, 1fr); /* 3 columns on medium screens */
-    }
-}
-
-@media (max-width: 992px) {
-    .products-grid {
-        grid-template-columns: repeat(2, 1fr); /* 2 columns on smaller screens */
-    }
-}
-
-@media (max-width: 576px) {
-    .products-grid {
-        grid-template-columns: 1fr; /* 1 column on mobile */
-    }
-}
-
-/* Fix the filter sidebar width */
-.filters-sidebar {
-    width: 250px; /* Set a fixed width */
-    min-width: 200px; /* Ensure it doesn't shrink */
-    flex-shrink: 0; /* Prevent shrinking when space is limited */
-    box-sizing: border-box; /* Include padding in width calculation */
-    padding: 15px;
-    margin-right: 20px; /* Add space between sidebar and product grid */
-}
-
-/* Adjust main container to properly handle the fixed sidebar */
-.main-container {
-    display: flex;
-    max-width: 1400px;
-    margin: 20px auto;
-    padding: 0 20px;
-    gap: 0; /* Remove gap as we're using margin-right on sidebar */
-}
-
-/* Ensure products container takes remaining space */
-.products-container {
-    flex: 1;
-    min-width: 0; /* Allow container to shrink below content size if needed */
-}
-
-/* Media query for responsive design */
-@media (max-width: 992px) {
-    .filters-sidebar {
-        width: 100%;
-        min-width: 100%;
-        margin-right: 0;
-        margin-bottom: 20px;
-    }
     
-    .main-container {
-        flex-direction: column;
+    .sort-dropdown {
+        width: 100%;
+    }
+
+    .products-grid {
+        grid-template-columns: 1fr;
     }
 }
+
+.cart-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #e41749;
+    color: white;
+    font-size: 12px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.cart-icon {
+    position: relative;
+}
+
 

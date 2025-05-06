@@ -36,6 +36,15 @@ router.get('/dashboard', (req, res)=>{
     });
 });
 
+router.get('/about', (req, res)=>{
+    res.render('about', {
+        activeUsers : 100,
+        activeSellers : 15,
+        activeServiceProviders: 10,
+        petsAvailable: 250
+    });
+});
+
 
 
 
