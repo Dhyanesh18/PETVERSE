@@ -17,6 +17,14 @@ const serviceProviderSchema = new mongoose.Schema({
         type: fileSchema,
         required: true
     }
-}, { discriminatorKey: 'role' });
+});
 
-module.exports = User.discriminator('service_provider', serviceProviderSchema); 
+serviceProviderSchema.pre('save', function(next) {
+    this.role = 'service_provider';
+    next();
+});
+
+
+module.exports = User.discriminator('service_provider', serviceProviderSchema, {
+    discriminatorKey: 'role'
+});

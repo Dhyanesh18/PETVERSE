@@ -549,12 +549,21 @@ router.get('/booking', isAuthenticated, (req, res) => {
 router.get('/buy/:id', isAuthenticated, async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
-            .populate('seller', 'businessName email phone');
+  .populate({
+    path: 'seller',
+    match: { role: 'seller' }, // Only populate seller-type users
+    select: 'businessName email phone'
+  });
         
         if (!product) {
             return res.status(404).render('error', { message: 'Product not found' });
         }
 
+        if (!product.seller) {
+            return res.status(404).render('error', { 
+                message: 'Seller information not available for this product' 
+            });
+        }
         // Get seller reviews and calculate average rating
         const sellerReviews = await Review.aggregate([
             {
