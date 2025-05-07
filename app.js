@@ -59,7 +59,7 @@ app.use('/', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/booking', bookingRoutes);
-app.use('/api', reviewRoutes);
+app.use('/', reviewRoutes);
 
 app.get('/', (req, res) => {
   res.render('login', { error: null });
