@@ -672,6 +672,13 @@ hr {
     background-color: #c2185b;
 }
 
+.age-input-group {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+    align-items: center;
+}
+
 /* Responsive styling */
 @media (max-width: 768px) {
     .form-grid {

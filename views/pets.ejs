@@ -106,8 +106,13 @@
                          data-breed="<%= pet.breed || '' %>"
                          data-age="<%= pet.age || '' %>"
                          data-price="<%= pet.price %>">
-                        <div class="product-image">
-                            <img src="<%= pet.image %>" alt="<%= pet.name %>">
+                         <div class="product-image">
+                            <% if (pet.images && pet.images.length > 0) { %>
+                                <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
+                                     alt="<%= pet.name %>">
+                            <% } else { %>
+                                <img src="/images/default-pet.jpg" alt="No image available">
+                            <% } %>
                         </div>
                         <div class="product-info">
                             <h3 class="product-name"><%= pet.name %></h3>

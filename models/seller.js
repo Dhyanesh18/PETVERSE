@@ -18,26 +18,30 @@ const sellerSchema = new mongoose.Schema({
         type: fileSchema,
         required: [true, 'Business license is required'],
         validate: {
-        validator: function(v) {
-            return v.data && v.contentType;
-        },
-        message: 'Invalid license file format'
+            validator: function(v) {
+                return v.data && v.contentType;
+            },
+            message: 'Invalid license file format'
         }
     },
     taxId: {
         type: String,
         match: [/^[A-Za-z0-9-]+$/, 'Invalid tax ID format']
     }
-}, { 
-  // Inherit timestamps and other options from User
-    timestamps: true,
-    toJSON: { virtuals: true } 
 });
 
-// Create discriminator
-const Seller = User.discriminator('seller', sellerSchema);
+// Add pre-save hook to enforce role
+sellerSchema.pre('save', function(next) {
+    this.role = 'seller';
+    next();
+});
 
-// Optional: Add seller-specific methods
+// Create discriminator with explicit key
+const Seller = User.discriminator('seller', sellerSchema, {
+    discriminatorKey: 'role'
+});
+
+// Keep existing methods
 sellerSchema.methods.getBusinessInfo = function() {
     return `${this.businessName} - ${this.businessAddress}`;
 };
