@@ -47,6 +47,7 @@ const productRoutes = require('./routes/product-routes');
 const bookingRoutes = require('./routes/booking');
 const reviewRoutes = require('./routes/review-routes');
 const servicesRoutes = require('./routes/services-routes');
+const serviceProviderRoutes = require('./routes/service-provider-routes');
 
 app.use('/', reviewRoutes);
 app.use('/seller', productRoutes);
@@ -55,6 +56,7 @@ app.use('/', authRoutes);
 app.use('/admin', adminRoutes);
 app.use('/booking', bookingRoutes);
 app.use('/services', servicesRoutes);
+app.use('/service-provider', serviceProviderRoutes);
 
 app.get('/', (req, res) => {
   res.render('login', { error: null });
