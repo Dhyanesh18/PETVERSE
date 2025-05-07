@@ -60,6 +60,8 @@
       <!-- Product Information -->
       <div class="product-info w-full md:w-1/2 p-4">
         <h1 class="text-3xl font-bold mb-4"><%= product.name %></h1>
+        
+        <% if (!product.isPet) { %>
         <div class="rating flex items-center mb-2">
           <% for(let i = 1; i <= 5; i++) { %>
             <% if(i <= Math.floor(product.rating)) { %>
@@ -72,6 +74,7 @@
           <% } %>
           <span class="ml-2">(<%= product.reviewCount %> reviews)</span>
         </div>
+        <% } %>
 
         <div class="price-section my-4">
           <% if(product.regularPrice && product.regularPrice > product.price) { %>
@@ -80,6 +83,26 @@
           <% } %>
           <div class="current-price text-3xl font-bold">₹<%= product.price.toLocaleString() %></div>
         </div>
+
+        <% if (product.isPet) { %>
+        <!-- Pet specific details -->
+        <div class="pet-details mb-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="detail-item">
+              <span class="font-bold">Category:</span> <%= product.category %>
+            </div>
+            <div class="detail-item">
+              <span class="font-bold">Breed:</span> <%= product.breed %>
+            </div>
+            <div class="detail-item">
+              <span class="font-bold">Age:</span> <%= product.age %>
+            </div>
+            <div class="detail-item">
+              <span class="font-bold">Gender:</span> <%= product.gender %>
+            </div>
+          </div>
+        </div>
+        <% } %>
 
         <div class="lightning-deal mb-4">
           <% if(product.isLightningDeal) { %>
@@ -146,6 +169,7 @@
       </div>
     </div>
 
+    <% if (!product.isPet) { %>
     <!-- Review Section -->
     <div class="reviews my-8">
       <h2 class="text-2xl font-bold mb-4 border-b pb-2">Review</h2>
@@ -183,30 +207,35 @@
         </div>
       </div>
     </div>
+    <% } %>
 
     <!-- Similar Products Section -->
     <div class="similar-products my-8">
-      <h2 class="text-2xl font-bold mb-4 border-b pb-2">Similar Products</h2>
+      <h2 class="text-2xl font-bold mb-4 border-b pb-2"><%= product.isPet ? 'Similar Pets' : 'Similar Products' %></h2>
       
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        <% similarProducts.forEach(function(product) { %>
+        <% similarProducts.forEach(function(similar) { %>
           <div class="product-card bg-white rounded-lg shadow-md overflow-hidden">
             <div class="product-image p-4 flex justify-center">
-              <img src="<%= product.image %>" alt="<%= product.name %>" class="h-48 object-contain">
+              <img src="<%= similar.image %>" alt="<%= similar.name %>" class="h-48 object-contain">
             </div>
             <div class="product-info p-4">
-              <h3 class="text-lg font-semibold mb-1"><%= product.name %></h3>
-              <p class="text-gray-600 text-sm mb-2"><%= product.description.substring(0, 60) %>...</p>
-              <div class="price font-bold text-lg mb-2">₹<%= product.price.toLocaleString() %></div>
+              <h3 class="text-lg font-semibold mb-1"><%= similar.name %></h3>
+              <p class="text-gray-600 text-sm mb-2"><%= similar.description.substring(0, 60) %>...</p>
+              <div class="price font-bold text-lg mb-2">₹<%= similar.price.toLocaleString() %></div>
+              
+              <% if (!product.isPet) { %>
               <div class="rating flex items-center mb-3">
                 <% for(let i = 1; i <= 5; i++) { %>
-                  <i class="<%= i <= Math.floor(product.rating) ? 'fas' : (i <= product.rating + 0.5 ? 'fas fa-star-half-alt' : 'far') %> fa-star text-yellow-500 text-sm"></i>
+                  <i class="<%= i <= Math.floor(similar.rating) ? 'fas' : (i <= similar.rating + 0.5 ? 'fas fa-star-half-alt' : 'far') %> fa-star text-yellow-500 text-sm"></i>
                 <% } %>
-                <span class="text-gray-500 text-sm ml-1">(<%= product.reviewCount %>)</span>
+                <span class="text-gray-500 text-sm ml-1">(<%= similar.reviewCount %>)</span>
               </div>
+              <% } %>
+              
               <div class="actions flex gap-2">
-                <button class="add-to-cart bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm flex-1">
-                  Add to Cart
+                <button onclick="window.location.href='<%= product.isPet ? `/seller/detail/${similar._id}` : `/buy/${similar._id}` %>'" class="view-details bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm flex-1">
+                  View Details
                 </button>
                 <button class="wishlist-btn px-2 py-2 rounded">
                   <i class="far fa-heart"></i>

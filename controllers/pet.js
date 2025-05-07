@@ -71,22 +71,51 @@ exports.getPetById = async (req, res) => {
             .populate('addedBy', 'username phone');
 
         if (!pet) {
-            return res.status(404).json({
-                success: false,
-                message: 'Pet not found'
-            });
+            return res.status(404).render('error', { message: 'Pet not found' });
         }
 
-        res.status(200).json({
-            success: true,
-            pet
+        // Find similar pets (same category, different id)
+        const similarPets = await Pet.find({ 
+            category: pet.category,
+            _id: { $ne: pet._id },
+            available: true
+        }).limit(4);
+
+        // Render the pet detail view
+        res.render('detail', {
+            product: {
+                name: pet.name,
+                image: pet.images && pet.images.length > 0 ? 
+                    `data:${pet.images[0].contentType};base64,${pet.images[0].data.toString('base64')}` : 
+                    '/images/default-pet.jpg',
+                price: pet.price,
+                description: pet.description || 'No description available',
+                category: pet.category,
+                breed: pet.breed,
+                age: pet.age,
+                gender: pet.gender,
+                regularPrice: null, // Pets don't have regular/discount prices typically
+                isLightningDeal: false,
+                deliveryEstimate: '3-5 days',
+                seller: pet.addedBy ? {
+                    username: pet.addedBy.username,
+                    phone: pet.addedBy.phone
+                } : null,
+                isPet: true // Add a flag to identify as a pet in the template
+            },
+            similarProducts: similarPets.map(p => ({
+                _id: p._id,
+                name: p.name,
+                image: p.images && p.images.length > 0 ? 
+                    `data:${p.images[0].contentType};base64,${p.images[0].data.toString('base64')}` : 
+                    '/images/default-pet.jpg',
+                price: p.price,
+                description: p.description || 'No description available'
+            }))
         });
     } catch (err) {
         console.error('Get pet error:', err);
-        res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
+        res.status(500).render('error', { message: 'Server error' });
     }
 };
 

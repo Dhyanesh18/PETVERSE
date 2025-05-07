@@ -41,6 +41,7 @@ module.exports = {
                 res.redirect('/owner-dashboard');
             } else {
                 res.redirect('/home');
+
             }
         } catch (err) {
             console.error('Login error:', err);
