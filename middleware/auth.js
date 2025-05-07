@@ -4,10 +4,16 @@ module.exports.isAuthenticated = (req, res, next) => {
     res.header('Pragma', 'no-cache');
     res.header('Expires', '0');
     
+    console.log('Auth middleware - Session:', req.session);
+    console.log('Auth middleware - User ID in session:', req.session.userId);
+    
     if (req.user) {
-      console.log('User authenticated:', req.user.email);
+      console.log('User authenticated:', req.user.email, 'Role:', req.user.role);
       return next();
+    } else if (req.session && req.session.userId) {
+      console.log('User ID in session but user object not populated. This could be a middleware order issue.');
+      return res.redirect('/login'); // Redirect to login as user object wasn't properly loaded
     }
-    console.log('No authenticated user found');
+    console.log('No authenticated user found in request');
     res.redirect('/login');
   };

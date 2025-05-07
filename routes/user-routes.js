@@ -8,6 +8,9 @@ const Product = require('../models/products');
 const Service = require('../models/Service');
 const Cart = require('../models/cart');
 const Review = require('../models/reviews');
+const User = require('../models/users');
+const Order = require('../models/order');
+const Booking = require('../models/Booking');
 // const User = require('../models/users');
 
 // Common navigation links data
@@ -113,6 +116,71 @@ router.get('/home', isAuthenticated, async (req, res) => { // Made async for fut
     } catch (err) {
         console.error('Error fetching homepage data:', err);
         res.status(500).render('error', { message: 'Error loading homepage' });
+    }
+});
+
+// Owner Dashboard route
+router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
+    try {
+        // Check if user is an owner
+        if (req.user.role !== 'owner') {
+            return res.status(403).render('error', {
+                message: 'Access denied. This dashboard is for pet owners only.'
+            });
+        }
+
+        // Get mock data for dashboard or retrieve actual user data
+        const userData = {
+            username: req.user.username,
+            email: req.user.email,
+            phone: req.user.phone,
+            address: req.user.address || 'Not provided',
+            joinedDate: new Date(req.user.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }),
+            lastLogin: new Date().toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }),
+            totalOrders: 0,
+            activeOrders: 0,
+            totalSpent: 0,
+            wishlistItems: 0
+        };
+
+        // Mock order data - replace with actual data when available
+        const mockOrders = [];
+        
+        // Fetch user's bookings
+        const bookings = await Booking.find({ user: req.user._id })
+            .populate('service')
+            .sort({ date: 1 })
+            .lean();
+            
+        // Format the bookings for display
+        const formattedBookings = bookings.map(booking => ({
+            id: booking._id,
+            serviceName: booking.service?.name || 'Service Unavailable',
+            serviceType: booking.service?.type || 'Unknown',
+            date: booking.date,
+            time: booking.slot,
+            status: 'Confirmed'  // You can add actual status logic here
+        }));
+        
+        res.render('owner-dashboard', {
+            user: userData,
+            orders: mockOrders,
+            bookings: formattedBookings || [],
+            navLinks: navLinksData
+        });
+    } catch (err) {
+        console.error('Error loading owner dashboard:', err);
+        res.status(500).render('error', { 
+            message: 'Error loading dashboard. Please try again later.' 
+        });
     }
 });
 
