@@ -118,6 +118,14 @@
             transform: translateY(-1px);
         }
 
+        .logout-btn {
+            background: #EF4444;
+        }
+
+        .logout-btn:hover {
+            background: #DC2626;
+        }
+
         .welcome-text {
             color: #374151;
             font-weight: 500;
@@ -713,47 +721,7 @@
 </head>
 <body>
     <!-- Main Navigation Header -->
-    <header class="header" id="header">
-        <nav id="navbar" class="navbar" style="background-color: black;">
-            <div class="nav-content">
-                <div class="logo"><a href="#">PetVerse</a></div>
-                <div class="nav-icons">
-                    <button class="icon-btn cart-icon" id="cartIcon">
-                        <i class="fa fa-shopping-cart"></i>
-                        <span class="cart-count" id="cartCount" style="font-size: small;background-color: #FF6B01;border-radius: 5px; width: 15px;">0</span>
-                    </button>
-                    <button class="icon-btn"><i class="fa fa-user"></i></button>
-                </div>
-                <div class="search">
-                    <input class="search-bar" type="text" placeholder="Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/products/petfood">Pet Food</a></li>
-                            <li><a href="/products/toys">Toys</a></li>
-                            <li><a href="/products/accessories">Accessories</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/services">Services</a></li>
-                            <li><a href="/mate">PetMate</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+   
 
     <div class="dashboard-container">
         <header class="dashboard-header">
@@ -763,10 +731,12 @@
             </h1>
             <div class="user-info">
                 <span class="user-name">Welcome, <%= user.name %></span>
-                <a href="/" class="nav-btn">
-                    <i class="fas fa-home"></i>
-                    Back to Home
-                </a>
+                <form action="/logout" method="POST" style="display: inline;">
+                    <button type="submit" class="nav-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </form>
             </div>
         </header>
 
@@ -806,9 +776,9 @@
             <div class="content-section">
                 <div class="section-header">
                     <h2><i class="fas fa-box"></i> Product Management</h2>
-                    <button class="btn btn-primary" onclick="openAddProductModal()">
+                    <a href="/seller/products/add" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Add New Product
-                    </button>
+                    </a>
                 </div>
                 
                 <div class="products-grid">
@@ -816,7 +786,7 @@
                         <% products.forEach(product => { %>
                             <div class="product-card">
                                 <div class="product-image-container">
-                                    <img src="/images/dash/<%= product.image_url %>" alt="<%= product.title %>" class="product-image">
+                                    <img src="<%= product.image_url %>" alt="<%= product.title %>" class="product-image">
                                     <% if(product.dis && product.dis !== '0%') { %>
                                         <span class="discount-tag"><%= product.dis %> OFF</span>
                                     <% } %>
@@ -956,63 +926,6 @@
         </div>
     </div>
 
-    <!-- Add Product Modal -->
-    <div id="addProductModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-plus"></i> Add New Product</h2>
-                <button type="button" class="close" onclick="closeAddProductModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <form id="addProductForm" action="/seller/products/add" method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="productName">Product Name</label>
-                    <input type="text" id="productName" name="name" required 
-                        placeholder="Enter product name">
-                </div>
-                <div class="form-group">
-                    <label for="category">Category</label>
-                    <select id="category" name="category" required>
-                        <option value="">Select a category</option>
-                        <option value="food">Pet Food</option>
-                        <option value="toys">Toys</option>
-                        <option value="accessories">Accessories</option>
-                        <option value="health">Health & Wellness</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="price">Price (₹)</label>
-                    <input type="number" id="price" name="price" min="0" step="0.01" required
-                        placeholder="Enter price">
-                </div>
-                <div class="form-group">
-                    <label for="stock">Initial Stock</label>
-                    <input type="number" id="stock" name="stock" min="0" required
-                        placeholder="Enter initial stock quantity">
-                </div>
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description" rows="4" required
-                        placeholder="Describe your product..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="images">Product Images</label>
-                    <input type="file" id="images" name="images" multiple accept="image/*" required>
-                    <small>You can select multiple images</small>
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add Product
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeAddProductModal()">
-                        <i class="fas fa-times"></i> Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Reply to Review Modal -->
     <div id="replyModal" class="modal">
         <div class="modal-content">
@@ -1068,17 +981,28 @@
         </div>
     </footer>
     <script>
+        // Prevent back navigation after logout
+        window.onpageshow = function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        };
+        
+        // Debug the product images when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard loaded, checking products');
+            <% if(products && products.length > 0) { %>
+                <% products.forEach((product, index) => { %>
+                    console.log('Product <%= index %>: <%= product.title %>');
+                    console.log('Image URL type: <%= typeof product.image_url %>');
+                    console.log('Image URL starts with: <%= product.image_url.substring(0, 30) %>...');
+                <% }); %>
+            <% } else { %>
+                console.log('No products found');
+            <% } %>
+        });
+        
         // Modal functions
-        function openAddProductModal() {
-            document.getElementById('addProductModal').style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeAddProductModal() {
-            document.getElementById('addProductModal').style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-
         function openReplyModal(reviewId) {
             document.getElementById('reviewId').value = reviewId;
             document.getElementById('replyModal').style.display = 'block';
@@ -1164,40 +1088,40 @@
 
         // Close modals when clicking outside
         window.onclick = function(event) {
-            if (event.target == document.getElementById('addProductModal')) {
-                closeAddProductModal();
-            }
             if (event.target == document.getElementById('replyModal')) {
                 closeReplyModal();
             }
         }
 
         // File input preview
-        document.getElementById('images').addEventListener('change', function(e) {
-            const files = Array.from(e.target.files);
-            const previewContainer = document.createElement('div');
-            previewContainer.className = 'image-preview';
-            
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const preview = document.createElement('div');
-                    preview.className = 'preview-item';
-                    preview.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview">
-                        <span class="preview-name">${file.name}</span>
-                    `;
-                    previewContainer.appendChild(preview);
-                }
-                reader.readAsDataURL(file);
-            });
+        const imagesInput = document.getElementById('images');
+        if (imagesInput) {
+            imagesInput.addEventListener('change', function(e) {
+                const files = Array.from(e.target.files);
+                const previewContainer = document.createElement('div');
+                previewContainer.className = 'image-preview';
+                
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.createElement('div');
+                        preview.className = 'preview-item';
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview">
+                            <span class="preview-name">${file.name}</span>
+                        `;
+                        previewContainer.appendChild(preview);
+                    }
+                    reader.readAsDataURL(file);
+                });
 
-            const existingPreview = document.querySelector('.image-preview');
-            if (existingPreview) {
-                existingPreview.remove();
-            }
-            e.target.parentNode.appendChild(previewContainer);
-        });
+                const existingPreview = document.querySelector('.image-preview');
+                if (existingPreview) {
+                    existingPreview.remove();
+                }
+                e.target.parentNode.appendChild(previewContainer);
+            });
+        }
     </script>
     <script>
         // Get all dropdown toggles and menus

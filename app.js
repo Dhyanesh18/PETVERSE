@@ -28,10 +28,25 @@ app.use(async (req, res, next) => {
   if (req.session.userId) {
     try {
       const User = require('./models/users');
+      console.log('Attempting to load user with ID:', req.session.userId);
       req.user = await User.findById(req.session.userId);
+      
+      if (req.user) {
+        console.log('User loaded successfully:', req.user.email, 'Role:', req.user.role);
+      } else {
+        console.log('No user found with ID:', req.session.userId);
+        // Clear invalid session data
+        req.session.userId = null;
+        req.session.userRole = null;
+      }
     } catch (err) {
       console.error('User loading error:', err);
+      // Clear session on error
+      req.session.userId = null;
+      req.session.userRole = null;
     }
+  } else {
+    console.log('No user ID in session, skipping user loader');
   }
   next();
 });
@@ -50,14 +65,26 @@ const userRoutes = require('./routes/user-routes');
 const cartRoutes = require('./routes/cart');
 const petRoutes = require('./routes/pet-routes');
 const mateRoutes = require('./routes/mate-routes');
-app.use('/pets', mateRoutes);
-app.use('/seller', petRoutes);
+const sellerRoutes = require('./routes/seller');
+
+// Main routes
 app.use('/', userRoutes);
-app.use('/seller', productRoutes);
-app.use('/', imageRoutes);
 app.use('/', authRoutes);
+app.use('/', imageRoutes);
+
+// Pet related routes
+app.use('/pets', mateRoutes);
+app.use('/pets', petRoutes);
+
+// Seller related routes
+app.use('/seller', sellerRoutes);
+app.use('/seller', productRoutes);
+
+// Admin routes
 app.use('/admin', adminRoutes);
-app.use('/api/cart', cartRoutes);
+
+// Service routes
+app.use('/cart', cartRoutes);
 app.use('/booking', bookingRoutes);
 app.use('/', reviewRoutes);
 

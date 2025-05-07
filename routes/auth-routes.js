@@ -65,18 +65,54 @@ router.get('/about', (req, res)=>{
 
 
 
-router.get('/logout', (req, res)=>{
+router.get('/logout', (req, res) => {
+    // Add cache control headers
+    res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+    res.header('Pragma', 'no-cache');
+    res.header('Expires', '0');
+    
     const userId = req.session.userId;
     const logoutTime = new Date().toISOString();
 
-    req.session.destroy(err=>{
-        if (err){
+    req.session.destroy(err => {
+        if (err) {
             console.error('Logout error:', err);
             return res.status(500).send('Could not log out');
         }
         res.clearCookie('connect.sid');
         console.log(`User ${userId} logged out at ${logoutTime}`);
-        res.redirect('/login');
+        
+        // Use a simpler approach - render the login page directly with a message
+        res.render('login', { 
+            error: null, 
+            message: 'You have been successfully logged out.' 
+        });
+    });
+});
+
+// Add a POST method for logout (more secure than GET)
+router.post('/logout', (req, res) => {
+    // Add cache control headers
+    res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+    res.header('Pragma', 'no-cache');
+    res.header('Expires', '0');
+    
+    const userId = req.session.userId;
+    const logoutTime = new Date().toISOString();
+
+    req.session.destroy(err => {
+        if (err) {
+            console.error('Logout error:', err);
+            return res.status(500).send('Could not log out');
+        }
+        res.clearCookie('connect.sid');
+        console.log(`User ${userId} logged out at ${logoutTime}`);
+        
+        // Use a simpler approach - render the login page directly with a message
+        res.render('login', { 
+            error: null, 
+            message: 'You have been successfully logged out.' 
+        });
     });
 });
 

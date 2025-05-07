@@ -1,14 +1,22 @@
 module.exports = (req, res, next) => {
-    // Check if user exists in session
-    if (!req.session.userId || !req.session.userRole) {
+    // Add cache control headers to prevent caching
+    res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
+    res.header('Pragma', 'no-cache');
+    res.header('Expires', '0');
+    
+    // Check if user exists in request (populated from session)
+    if (!req.user) {
+        console.log('No user found in request');
         return res.redirect('/login');
     }
     
-    // Check if user is approved seller
-    if (req.session.userRole === 'seller' /*&& req.session.isApproved*/) {
+    // Check if user is a seller
+    if (req.user.role === 'seller') {
+        console.log('Seller authenticated:', req.user.email);
         return next();
     }
     
+    console.log('Not a seller:', req.user.role);
     res.status(403).render('error', { 
         message: 'Seller access required. Please ensure your account is approved.' 
     });
