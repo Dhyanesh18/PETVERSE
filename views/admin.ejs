@@ -12,16 +12,28 @@
   <!-- Font Awesome (for icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  
+  <!-- Chart.js for dashboard analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <!-- Hidden data elements for charts -->
+    <!-- <div id="chart-data" 
+         data-user-growth='<%= JSON.stringify(userGrowthData) %>'
+         data-user-distribution='<%= JSON.stringify(userDistributionData) %>'
+         data-product-categories='<%= JSON.stringify(productCategoriesData) %>'
+         data-revenue='<%= JSON.stringify(revenueData) %>'
+         style="display: none;">
+    </div> -->
     <!-- Header -->
     <header class="header" id="header">
       <nav id="navbar" class="navbar">
           <div class="nav-content">
               <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
               <div class="nav-icons">
+                  <button onclick="window.location.href='/'" class="icon-btn" title="Go to Homepage"><i class="fa fa-home"></i></button>
                   <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                  <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
+                  <button onclick="window.location.href='/logout'"class="icon-btn" title="Logout"><i class="fa fa-sign-out"></i></button>
               </div>
               <div class="search">
                   <input class="search-bar" type="text" placeholder=" Search pets, products or services">
@@ -59,10 +71,24 @@
         <div class="admin-sidebar">
             <h2>Dashboard</h2>
             <ul class="admin-menu">
-                <li class="active" data-tab="pending"><i class="fas fa-clock"></i> Pending Applications</li>
+                <li class="active" data-tab="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard Overview</li>
+                <li data-tab="pending"><i class="fas fa-clock"></i> Pending Applications</li>
                 <li data-tab="approved"><i class="fas fa-check-circle"></i> Approved</li>
                 <li data-tab="rejected"><i class="fas fa-times-circle"></i> Rejected</li>
                 <li data-tab="all"><i class="fas fa-list"></i> All Applications</li>
+            </ul>
+            
+            <h2>User Management</h2>
+            <ul class="admin-menu">
+                <li data-tab="pending-users"><i class="fas fa-user-clock"></i> Pending Sellers/Providers</li>
+                <li data-tab="all-users"><i class="fas fa-users"></i> All Users</li>
+            </ul>
+            
+            <h2>Content Management</h2>
+            <ul class="admin-menu">
+                <li data-tab="products"><i class="fas fa-box"></i> Products</li>
+                <li data-tab="services"><i class="fas fa-hands-helping"></i> Services</li>
+                <li data-tab="pets"><i class="fas fa-paw"></i> Pets</li>
             </ul>
             
             <h2>Filters</h2>
@@ -137,8 +163,97 @@
             
             <!-- Application Content Tabs -->
             <div class="tab-content">
-                <!-- Pending Applications Tab (default active) -->
-                <div class="tab-pane active" id="pending-tab">
+                <!-- Dashboard Overview Tab (default active) -->
+                <div class="tab-pane active" id="dashboard-tab">
+                    <h2 class="tab-title">Dashboard Overview</h2>
+                    
+                    <div class="admin-welcome">
+                        <h3>Welcome, <%= admin ? admin.fullName : 'Admin' %>!</h3>
+                        <p>Here's an overview of your PetVerse platform.</p>
+                    </div>
+                    
+                    <div class="dashboard-analytics">
+                        <div class="analytics-row">
+                            <div class="analytics-card">
+                                <h3>User Growth</h3>
+                                <div class="chart-container">
+                                    <canvas id="userGrowthChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="analytics-card">
+                                <h3>User Distribution</h3>
+                                <div class="chart-container">
+                                    <canvas id="userDistributionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="analytics-row">
+                            <div class="analytics-card">
+                                <h3>Product Categories</h3>
+                                <div class="chart-container">
+                                    <canvas id="productCategoriesChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="analytics-card">
+                                <h3>Monthly Revenue</h3>
+                                <div class="chart-container">
+                                    <canvas id="revenueChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-summary">
+                        <h3>Platform Summary</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <i class="fas fa-users"></i>
+                                <div class="summary-info">
+                                    <p class="summary-label">Total Users</p>
+                                    <p class="summary-value"><%= platformSummary.totalUsers %></p>
+                                </div>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-store"></i>
+                                <div class="summary-info">
+                                    <p class="summary-label">Active Sellers</p>
+                                    <p class="summary-value"><%= platformSummary.activeSellers %></p>
+                                </div>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-concierge-bell"></i>
+                                <div class="summary-info">
+                                    <p class="summary-label">Service Providers</p>
+                                    <p class="summary-value"><%= platformSummary.serviceProviders %></p>
+                                </div>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-box"></i>
+                                <div class="summary-info">
+                                    <p class="summary-label">Total Products</p>
+                                    <p class="summary-value"><%= platformSummary.totalProducts %></p>
+                                </div>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-paw"></i>
+                                <div class="summary-info">
+                                    <p class="summary-label">Pets Listed</p>
+                                    <p class="summary-value"><%= platformSummary.petsListed %></p>
+                                </div>
+                            </div>
+                            <div class="summary-item">
+                                <i class="fas fa-dollar-sign"></i>
+                                <div class="summary-info">
+                                    <p class="summary-label">Revenue (MTD)</p>
+                                    <p class="summary-value">₹<%= platformSummary.monthlyRevenue.toLocaleString() %></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pending Applications Tab -->
+                <div class="tab-pane" id="pending-tab">
                     <h2 class="tab-title">Pending Applications</h2>
                     <div class="applications-list">
                         <% pendingApplications.forEach(application => { %>
@@ -353,6 +468,359 @@
                         <% }) %>
                     </div>
                 </div>
+                
+                <!-- Pending Sellers/Providers Tab -->
+                <div class="tab-pane" id="pending-users-tab">
+                    <h2 class="tab-title">Pending Sellers & Service Providers</h2>
+                    <div class="user-list">
+                        <% if (pendingUsers && pendingUsers.length > 0) { %>
+                            <% pendingUsers.forEach(user => { %>
+                                <div class="user-card" data-id="<%= user._id %>" data-role="<%= user.role %>">
+                                    <div class="user-header">
+                                        <span class="user-role <%= user.role %>"><%= user.role === 'seller' ? 'Seller' : 'Service Provider' %></span>
+                                        <span class="user-date">Registered: <%= new Date(user.createdAt).toLocaleDateString() %></span>
+                                    </div>
+                                    <div class="user-body">
+                                        <div class="user-info">
+                                            <h3 class="user-name"><%= user.fullName %></h3>
+                                            <p class="user-email"><i class="fas fa-envelope"></i> <%= user.email %></p>
+                                            <p class="user-phone"><i class="fas fa-phone"></i> <%= user.phone %></p>
+                                            <p class="user-username"><i class="fas fa-user"></i> @<%= user.username %></p>
+                                            
+                                            <% if (user.role === 'seller') { %>
+                                                <div class="user-details">
+                                                    <p><strong>Business Name:</strong> <%= user.businessName || 'Not provided' %></p>
+                                                    <p><strong>Business Address:</strong> <%= user.businessAddress || 'Not provided' %></p>
+                                                    <p><strong>Tax ID:</strong> <%= user.taxId || 'Not provided' %></p>
+                                                    <p class="license-status">
+                                                        <% if (user.license && user.license.data) { %>
+                                                            <i class="fas fa-file-alt"></i> License Document Available
+                                                        <% } else { %>
+                                                            <i class="fas fa-exclamation-triangle"></i> No License Document
+                                                        <% } %>
+                                                    </p>
+                                                </div>
+                                            <% } else if (user.role === 'service_provider') { %>
+                                                <div class="user-details">
+                                                    <p><strong>Service Type:</strong> <%= user.serviceType || 'Not provided' %></p>
+                                                    <p><strong>Service Address:</strong> <%= user.serviceAddress || 'Not provided' %></p>
+                                                    <p class="certificate-status">
+                                                        <% if (user.certificate && user.certificate.data) { %>
+                                                            <i class="fas fa-certificate"></i> Certificate Document Available
+                                                        <% } else { %>
+                                                            <i class="fas fa-exclamation-triangle"></i> No Certificate Document
+                                                        <% } %>
+                                                    </p>
+                                                </div>
+                                            <% } %>
+                                            
+                                            <div class="user-actions">
+                                                <button class="approve-btn" onclick="approveUser('<%= user._id %>')">
+                                                    <i class="fas fa-check"></i> Approve
+                                                </button>
+                                                <button class="reject-btn" onclick="rejectUser('<%= user._id %>')">
+                                                    <i class="fas fa-times"></i> Reject
+                                                </button>
+                                                <% if ((user.role === 'seller' && user.license && user.license.data) || 
+                                                      (user.role === 'service_provider' && user.certificate && user.certificate.data)) { %>
+                                                    <button class="view-document-btn" onclick="viewUserDocument('<%= user._id %>', '<%= user.role %>')">
+                                                        <i class="fas fa-file"></i> View Document
+                                                    </button>
+                                                <% } else { %>
+                                                    <button class="view-document-btn disabled" disabled>
+                                                        <i class="fas fa-file"></i> No Document
+                                                    </button>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="empty-state">
+                                <i class="fas fa-check-circle"></i>
+                                <p>No pending sellers or service providers.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <!-- All Users Tab -->
+                <div class="tab-pane" id="all-users-tab">
+                    <h2 class="tab-title">All Users</h2>
+                    <div class="search-filter-bar">
+                        <div class="search-input">
+                            <input type="text" id="user-search" placeholder="Search users...">
+                            <button id="search-user-btn"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div class="filter-dropdown">
+                            <select id="user-role-filter">
+                                <option value="all">All Roles</option>
+                                <option value="owner">Owners</option>
+                                <option value="seller">Sellers</option>
+                                <option value="service_provider">Service Providers</option>
+                                <option value="admin">Admins</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="users-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Joined Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <% allUsers.forEach(user => { %>
+                                    <tr data-id="<%= user._id %>">
+                                        <td><%= user.fullName %></td>
+                                        <td>@<%= user.username %></td>
+                                        <td><%= user.email %></td>
+                                        <td><span class="role-badge <%= user.role %>"><%= user.role %></span></td>
+                                        <td>
+                                            <% if (['seller', 'service_provider'].includes(user.role)) { %>
+                                                <span class="status-badge <%= user.isApproved ? 'approved' : 'pending' %>">
+                                                    <%= user.isApproved ? 'Approved' : 'Pending' %>
+                                                </span>
+                                            <% } else { %>
+                                                <span class="status-badge approved">Active</span>
+                                            <% } %>
+                                        </td>
+                                        <td><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                                        <td class="action-buttons">
+                                            <button onclick="viewUserDetails('<%= user._id %>')" class="view-btn" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button onclick="editUser('<%= user._id %>')" class="edit-btn" title="Edit User">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <% if (['seller', 'service_provider'].includes(user.role) && !user.isApproved) { %>
+                                                <button onclick="approveUser('<%= user._id %>')" class="approve-btn" title="Approve User">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            <% } %>
+                                            <button onclick="deleteUser('<%= user._id %>')" class="delete-btn" title="Delete User">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="pagination">
+                        <button id="prev-page"><i class="fas fa-chevron-left"></i></button>
+                        <span id="page-info">Page 1 of 5</span>
+                        <button id="next-page"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <!-- Products Tab -->
+                <div class="tab-pane" id="products-tab">
+                    <h2 class="tab-title">Product Management</h2>
+                    <div class="search-filter-bar">
+                        <div class="search-input">
+                            <input type="text" id="product-search" placeholder="Search products...">
+                            <button id="search-product-btn"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div class="filter-dropdown">
+                            <select id="product-category-filter">
+                                <option value="all">All Categories</option>
+                                <option value="food">Pet Food</option>
+                                <option value="toys">Toys</option>
+                                <option value="accessories">Accessories</option>
+                                <option value="health">Health & Wellness</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="products-grid">
+                        <% products.forEach(product => { %>
+                            <div class="product-card" data-id="<%= product._id %>">
+                                <div class="product-image">
+                                    <img src="<%= product.image %>" alt="<%= product.name %>">
+                                </div>
+                                <div class="product-info">
+                                    <h3><%= product.name %></h3>
+                                    <p class="product-seller">by <%= product.seller.businessName %></p>
+                                    <p class="product-price">₹<%= product.price %></p>
+                                    <p class="product-stock"><%= product.stock %> in stock</p>
+                                    <div class="product-status <%= product.isApproved ? 'approved' : 'pending' %>">
+                                        <%= product.isApproved ? 'Active' : 'Pending Approval' %>
+                                    </div>
+                                    <div class="product-actions">
+                                        <button onclick="viewProduct('<%= product._id %>')" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <% if (!product.isApproved) { %>
+                                            <button onclick="approveProduct('<%= product._id %>')" title="Approve Product">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        <% } else { %>
+                                            <button onclick="deactivateProduct('<%= product._id %>')" title="Deactivate Product">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        <% } %>
+                                        <button onclick="deleteProduct('<%= product._id %>')" title="Delete Product">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                    
+                    <div class="pagination">
+                        <button id="products-prev-page"><i class="fas fa-chevron-left"></i></button>
+                        <span id="products-page-info">Page 1 of 3</span>
+                        <button id="products-next-page"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <!-- Content Management - Pets Tab -->
+                <div class="tab-pane" id="pets-tab">
+                    <h2 class="tab-title">Pet Management</h2>
+                    <div class="search-filter-bar">
+                        <div class="search-input">
+                            <input type="text" id="pet-search" placeholder="Search pets...">
+                            <button id="search-pet-btn"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div class="filter-dropdown">
+                            <select id="pet-category-filter">
+                                <option value="all">All Categories</option>
+                                <option value="Dog">Dogs</option>
+                                <option value="Cat">Cats</option>
+                                <option value="Bird">Birds</option>
+                                <option value="Fish">Fish</option>
+                                <option value="Other">Other Pets</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="pets-grid">
+                        <% if (pets && pets.length > 0) { %>
+                            <% pets.forEach(pet => { %>
+                                <div class="pet-card" data-id="<%= pet._id %>">
+                                    <div class="pet-image">
+                                        <% if (pet.images && pet.images.length > 0 && pet.images[0].data) { %>
+                                            <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" alt="<%= pet.name %>">
+                                        <% } else { %>
+                                            <div class="no-image">No Image</div>
+                                        <% } %>
+                                    </div>
+                                    <div class="pet-info">
+                                        <h3><%= pet.name %></h3>
+                                        <p class="pet-breed"><%= pet.breed %></p>
+                                        <p class="pet-category"><%= pet.category %></p>
+                                        <p class="pet-age"><%= pet.age %></p>
+                                        <p class="pet-price">₹<%= pet.price %></p>
+                                        <div class="pet-status <%= pet.available ? 'available' : 'unavailable' %>">
+                                            <%= pet.available ? 'Available' : 'Unavailable' %>
+                                        </div>
+                                        <div class="pet-actions">
+                                            <button onclick="viewPet('<%= pet._id %>')" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button onclick="<%= pet.available ? 'markPetUnavailable' : 'markPetAvailable' %>('<%= pet._id %>')" title="<%= pet.available ? 'Mark Unavailable' : 'Mark Available' %>">
+                                                <i class="fas fa-<%= pet.available ? 'ban' : 'check' %>"></i>
+                                            </button>
+                                            <button onclick="deletePet('<%= pet._id %>')" title="Delete Pet">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="empty-state">
+                                <i class="fas fa-paw"></i>
+                                <p>No pets listed yet.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="pagination">
+                        <button id="pets-prev-page"><i class="fas fa-chevron-left"></i></button>
+                        <span id="pets-page-info">Page 1 of 1</span>
+                        <button id="pets-next-page"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <!-- Content Management - Services Tab -->
+                <div class="tab-pane" id="services-tab">
+                    <h2 class="tab-title">Service Management</h2>
+                    <div class="search-filter-bar">
+                        <div class="search-input">
+                            <input type="text" id="service-search" placeholder="Search services...">
+                            <button id="search-service-btn"><i class="fas fa-search"></i></button>
+                        </div>
+                        <div class="filter-dropdown">
+                            <select id="service-type-filter">
+                                <option value="all">All Types</option>
+                                <option value="veterinarian">Veterinarian</option>
+                                <option value="groomer">Groomer</option>
+                                <option value="pet sitter">Pet Sitter</option>
+                                <option value="trainer">Trainer</option>
+                                <option value="breeder">Breeder</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="services-grid">
+                        <% if (services && services.length > 0) { %>
+                            <% services.forEach(service => { %>
+                                <div class="service-card" data-id="<%= service._id %>">
+                                    <div class="service-info">
+                                        <h3><%= service.name %></h3>
+                                        <p class="service-provider">by <%= service.provider && service.provider.fullName || 'Unknown Provider' %></p>
+                                        <p class="service-type"><%= service.provider && service.provider.serviceType || 'General Service' %></p>
+                                        <p class="service-location"><i class="fas fa-map-marker-alt"></i> <%= service.provider && service.provider.serviceAddress || 'Location not specified' %></p>
+                                        <p class="service-description"><%= service.description || 'No description available' %></p>
+                                        <div class="service-status <%= service.isApproved ? 'approved' : 'pending' %>">
+                                            <%= service.isApproved ? 'Approved' : 'Pending Approval' %>
+                                        </div>
+                                        <div class="service-actions">
+                                            <button onclick="viewService('<%= service._id %>')" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <% if (!service.isApproved) { %>
+                                                <button onclick="approveService('<%= service._id %>')" title="Approve Service">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            <% } else { %>
+                                                <button onclick="deactivateService('<%= service._id %>')" title="Deactivate Service">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                            <% } %>
+                                            <button onclick="deleteService('<%= service._id %>')" title="Delete Service">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="empty-state">
+                                <i class="fas fa-concierge-bell"></i>
+                                <p>No services listed yet.</p>
+                            </div>
+                        <% } %>
+                    </div>
+                    
+                    <div class="pagination">
+                        <button id="services-prev-page"><i class="fas fa-chevron-left"></i></button>
+                        <span id="services-page-info">Page 1 of 1</span>
+                        <button id="services-next-page"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -467,36 +935,346 @@
       const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
       const dropdownMenus = document.querySelectorAll('.dropdown-menu');
 
-// Add click event to each dropdown toggle
-        dropdownToggles.forEach((toggle, index) => {
+      // Add click event to each dropdown toggle
+      dropdownToggles.forEach((toggle, index) => {
         toggle.addEventListener('click', function(event) {
             event.stopPropagation(); // Prevent this click from triggering the document click handler
       
-      // Close all other dropdown menus first
-          dropdownMenus.forEach((menu, menuIndex) => {
-            if (menuIndex !== index) {
+            // Close all other dropdown menus first
+            dropdownMenus.forEach((menu, menuIndex) => {
+              if (menuIndex !== index) {
+                menu.classList.remove('show');
+              }
+            });
+      
+            // Toggle the current dropdown menu
+            const currentDropdownMenu = this.nextElementSibling;
+            currentDropdownMenu.classList.toggle('show');
+        });
+      });
+
+      // Close all dropdowns when clicking anywhere else on the page
+      document.addEventListener('click', function(event) {  
+        // Check if click is outside of any dropdown
+        if (!event.target.closest('.dropdown')) {
+          // Close all dropdown menus
+          dropdownMenus.forEach(menu => {
+            if (menu.classList.contains('show')) {
               menu.classList.remove('show');
             }
-        });
-      
-      // Toggle the current dropdown menu
-        const currentDropdownMenu = this.nextElementSibling;
-        currentDropdownMenu.classList.toggle('show');
+          });
+        }
       });
-    });
-
-  // Close all dropdowns when clicking anywhere else on the page
-      document.addEventListener('click', function(event) {  
-      // Check if click is outside of any dropdown
-      if (!event.target.closest('.dropdown')) {
-      // Close all dropdown menus
-      dropdownMenus.forEach(menu => {
-          if (menu.classList.contains('show')) {
-              menu.classList.remove('show');
+      
+      // Dashboard tab functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        // Tab switching
+        const tabLinks = document.querySelectorAll('.admin-menu li');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        tabLinks.forEach(link => {
+          link.addEventListener('click', function() {
+            // Remove active class from all links
+            tabLinks.forEach(l => l.classList.remove('active'));
+            
+            // Add active class to clicked link
+            this.classList.add('active');
+            
+            // Hide all tab panes
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+            
+            // Show the selected tab pane
+            const tabId = this.getAttribute('data-tab') + '-tab';
+            document.getElementById(tabId).classList.add('active');
+          });
+        });
+        
+        // Initialize charts
+        initializeCharts();
+        
+        // User approval functions
+        window.approveUser = function(userId) {
+          // Make an AJAX call to approve the user
+          fetch(`/admin/approve-user/${userId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              showSuccessMessage('User approved successfully!');
+              
+              // Remove the user card from the pending users tab
+              const userCard = document.querySelector(`.user-card[data-id="${userId}"]`);
+              if (userCard) {
+                userCard.style.display = 'none';
+              }
+              
+              // Update the counts in the dashboard
+              const pendingCount = document.getElementById('pending-count');
+              const approvedCount = document.getElementById('approved-count');
+              if (pendingCount) {
+                pendingCount.textContent = parseInt(pendingCount.textContent) - 1;
+              }
+              if (approvedCount) {
+                approvedCount.textContent = parseInt(approvedCount.textContent) + 1;
+              }
+            } else {
+              showErrorMessage(data.error || 'Failed to approve user');
+            }
+          })
+          .catch(error => {
+            console.error('Error approving user:', error);
+            showErrorMessage('Failed to approve user. Please try again.');
+          });
+        };
+        
+        window.rejectUser = function(userId) {
+          // Get rejection reason
+          const reason = prompt('Please enter a reason for rejection:');
+          if (reason === null) {
+            // User canceled the prompt
+            return;
+          }
+          
+          // Make an AJAX call to reject the user
+          fetch(`/admin/reject-user/${userId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ rejectionReason: reason })
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              showSuccessMessage('User rejected successfully!');
+              
+              // Remove the user card from the pending users tab
+              const userCard = document.querySelector(`.user-card[data-id="${userId}"]`);
+              if (userCard) {
+                userCard.style.display = 'none';
+              }
+              
+              // Update the counts in the dashboard
+              const pendingCount = document.getElementById('pending-count');
+              const rejectedCount = document.getElementById('rejected-count');
+              if (pendingCount) {
+                pendingCount.textContent = parseInt(pendingCount.textContent) - 1;
+              }
+              if (rejectedCount) {
+                rejectedCount.textContent = parseInt(rejectedCount.textContent) + 1;
+              }
+            } else {
+              showErrorMessage(data.error || 'Failed to reject user');
+            }
+          })
+          .catch(error => {
+            console.error('Error rejecting user:', error);
+            showErrorMessage('Failed to reject user. Please try again.');
+          });
+        };
+        
+        window.viewUserDocument = function(userId, role) {
+          // Open a new window/tab to view the document
+          window.open(`/admin/user-document/${userId}`, '_blank');
+        };
+      });
+      
+      function showSuccessMessage(message) {
+        const container = document.getElementById('success-message-container');
+        const messageEl = document.createElement('div');
+        messageEl.className = 'success-message';
+        messageEl.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+        container.appendChild(messageEl);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+          messageEl.classList.add('fade-out');
+          setTimeout(() => {
+            container.removeChild(messageEl);
+          }, 500);
+        }, 3000);
+      }
+      
+      function showErrorMessage(message) {
+        const container = document.getElementById('success-message-container');
+        const messageEl = document.createElement('div');
+        messageEl.className = 'error-message';
+        messageEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+        container.appendChild(messageEl);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+          messageEl.classList.add('fade-out');
+          setTimeout(() => {
+            container.removeChild(messageEl);
+          }, 500);
+        }, 3000);
+      }
+      
+      function initializeCharts() {
+        // Get data from JSON script tags
+        const userGrowthData = JSON.parse(document.getElementById('chart-user-growth').textContent);
+        const userDistributionData = JSON.parse(document.getElementById('chart-user-distribution').textContent);
+        const productCategoriesData = JSON.parse(document.getElementById('chart-product-categories').textContent);
+        const revenueData = JSON.parse(document.getElementById('chart-revenue').textContent);
+        
+        // User Growth Chart (Line chart)
+        const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+        const userGrowthChart = new Chart(userGrowthCtx, {
+          type: 'line',
+          data: {
+            labels: userGrowthData.labels,
+            datasets: [{
+              label: 'New Users',
+              data: userGrowthData.data,
+              borderColor: '#4CAF50',
+              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Number of Users'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Month'
+                }
+              }
+            }
+          }
+        });
+        
+        // User Distribution Chart (Pie chart)
+        const userDistributionCtx = document.getElementById('userDistributionChart').getContext('2d');
+        const userDistributionChart = new Chart(userDistributionCtx, {
+          type: 'pie',
+          data: {
+            labels: userDistributionData.labels,
+            datasets: [{
+              data: userDistributionData.data,
+              backgroundColor: [
+                '#2196F3',
+                '#FFC107',
+                '#9C27B0',
+                '#F44336'
+              ]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'right'
+              }
+            }
+          }
+        });
+        
+        // Product Categories Chart (Bar chart)
+        const productCategoriesCtx = document.getElementById('productCategoriesChart').getContext('2d');
+        const productCategoriesChart = new Chart(productCategoriesCtx, {
+          type: 'bar',
+          data: {
+            labels: productCategoriesData.labels,
+            datasets: [{
+              label: 'Number of Products',
+              data: productCategoriesData.data,
+              backgroundColor: '#3F51B5'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            }
+          }
+        });
+        
+        // Revenue Chart (Line chart)
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueCtx, {
+          type: 'line',
+          data: {
+            labels: revenueData.labels,
+            datasets: [{
+              label: 'Monthly Revenue',
+              data: revenueData.data,
+              borderColor: '#FF5722',
+              backgroundColor: 'rgba(255, 87, 34, 0.1)',
+              tension: 0.3,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'Revenue (₹)'
+                }
+              },
+              x: {
+                title: {
+                  display: true,
+                  text: 'Month'
+                }
+              }
+            }
           }
         });
       }
-    });
-  </script>
+    </script>
+    <!-- Script data for charts -->
+    <script type="application/json" id="chart-user-growth">
+      <%- JSON.stringify(userGrowthData || {}) %>
+    </script>
+    
+    <script type="application/json" id="chart-user-distribution">
+      <%- JSON.stringify(userDistributionData || {}) %>
+    </script>
+    
+    <script type="application/json" id="chart-product-categories">
+      <%- JSON.stringify(productCategoriesData || {}) %>
+    </script>
+    
+    <script type="application/json" id="chart-revenue">
+      <%- JSON.stringify(revenueData || {}) %>
+    </script>
 </body>
 </html>

@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product - PetVerse</title>
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            text-align: center;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 1rem;
+            top: 0.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .modal-ok-btn {
+            background: rgb(0, 180, 180);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-ok-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 8px rgba(0, 180, 180, 0.5);
+        }
+
+        .navbar{
+            background-color: #222;
+        }
+
+        .product-form-container {
+            max-width: 800px;
+            margin: 100px auto 50px;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #444;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgb(0, 180, 180);
+            box-shadow: 0 0 5px rgba(0, 180, 180, 0.3);
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 1rem;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            border-color: rgb(0, 180, 180);
+            background: rgba(0, 180, 180, 0.05);
+        }
+
+        .submit-btn {
+            background: rgb(0, 180, 180);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 180, 180, 0.5);
+        }
+
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .preview-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .current-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .current-image-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+        }
+
+        .current-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .delete-image {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header" id="header">
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="nav-icons">
+                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button onclick="window.location.href='/login'" class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/pets">Pets</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/products/petfood">Pet Food</a></li>
+                            <li><a href="/products/toys">Toys</a></li>
+                            <li><a href="/products/accessories">Accessories</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/services">Services</a></li>
+                            <li><a href="/mate">PetMate</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="product-form-container">
+        <h2 class="form-title">Edit Product</h2>
+        <form class="product-form" action="/seller/products/<%= product._id %>/edit" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label" for="name">Product Name</label>
+                <input class="form-input" type="text" id="name" name="name" value="<%= product.name %>" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-input" id="description" name="description" rows="4" required><%= product.description %></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="price">Price (₹)</label>
+                <input class="form-input" type="number" id="price" name="price" step="0.01" min="0" value="<%= product.price %>" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="discount">Discount (%)</label>
+                <input class="form-input" type="number" id="discount" name="discount" min="0" max="100" value="<%= product.discount || 0 %>">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="category">Category</label>
+                <select class="form-input" id="category" name="category" required>
+                    <option value="">Select Category</option>
+                    <option value="Pet Food" <%= product.category === 'Pet Food' ? 'selected' : '' %>>Pet Food</option>
+                    <option value="Toys" <%= product.category === 'Toys' ? 'selected' : '' %>>Toys</option>
+                    <option value="Accessories" <%= product.category === 'Accessories' ? 'selected' : '' %>>Accessories</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="brand">Brand</label>
+                <input class="form-input" type="text" id="brand" name="brand" value="<%= product.brand %>" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="stock">Stock Quantity</label>
+                <input class="form-input" type="number" id="stock" name="stock" min="0" value="<%= product.stock %>" required>
+            </div>
+
+            <% if(product.images && product.images.length > 0) { %>
+            <div class="form-group">
+                <label class="form-label">Current Images</label>
+                <div class="current-images">
+                    <% product.images.forEach((image, index) => { %>
+                    <div class="current-image-container">
+                        <img src="data:<%= image.contentType %>;base64,<%= image.data.toString('base64') %>" alt="Product image" class="current-image">
+                        <button type="button" class="delete-image" onclick="deleteImage('<%= index %>')">×</button>
+                        <input type="hidden" name="keepImages[]" id="keepImage<%= index %>" value="true">
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+            <% } %>
+
+            <div class="form-group">
+                <label class="form-label">Add New Images (Optional)</label>
+                <label class="file-input-label" for="images">
+                    Click to upload images
+                    <input type="file" id="images" name="images" multiple accept="image/*" hidden>
+                </label>
+                <div class="image-preview" id="imagePreview"></div>
+            </div>
+
+            <button type="submit" class="submit-btn">Update Product</button>
+        </form>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeSuccessModal()">&times;</span>
+            <i class="fas fa-check-circle" style="color: #10B981; font-size: 3rem; margin-bottom: 1rem;"></i>
+            <h2>Product Updated!</h2>
+            <p>Your product has been updated successfully.</p>
+            <button class="modal-ok-btn" onclick="redirectToDashboard()">OK</button>
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2023 PetVerse. All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        // Prevent back navigation after logout
+        window.onpageshow = function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        };
+
+        // Image preview for new images
+        document.getElementById('images').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const previewContainer = document.getElementById('imagePreview');
+            previewContainer.innerHTML = '';
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'preview-item';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview" class="preview-image">
+                        <span class="preview-name">${file.name}</span>
+                    `;
+                    previewContainer.appendChild(preview);
+                }
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // Delete existing image
+        function deleteImage(index) {
+            document.getElementById(`keepImage${index}`).value = "false";
+            document.querySelector(`.current-image-container:nth-child(${parseInt(index) + 1})`).style.opacity = "0.3";
+        }
+
+        // Form submission and modal handling
+        document.querySelector('.product-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if(result.success) {
+                    document.getElementById('successModal').style.display = 'block';
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to update product'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        });
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+        }
+
+        function redirectToDashboard() {
+            window.location.href = '/seller/dashboard';
+        }
+    </script>
+</body>
+</html> 

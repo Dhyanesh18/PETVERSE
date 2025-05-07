@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDots();
   updateDots();
   autoSlide();
+  updateCartCountFromServer();
 });
 
 // Scroll event for navbar
@@ -142,3 +143,20 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+// Always fetch cart count from server on page load
+async function updateCartCountFromServer() {
+    try {
+        const response = await fetch('/cart/count');
+        const data = await response.json();
+        if (data.success) {
+            const cartCount = document.getElementById('cartCount');
+            if (cartCount) {
+                cartCount.textContent = data.cartCount;
+                cartCount.style.display = data.cartCount > 0 ? 'inline-block' : 'none';
+            }
+        }
+    } catch (err) {
+        console.error('Failed to update cart count from server:', err);
+    }
+}

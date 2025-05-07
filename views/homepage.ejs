@@ -16,7 +16,7 @@
                 <div class="logo"><a href="#"><i class="fa fa-paw"></i> <%= siteName %></a></div>
                 <div class="nav-icons">
                     <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                    <button onclick="window.location.href='<%= loginUrl %>'" class="icon-btn"><i class="fa fa-user"></i></button>
+                    <button id="userButton" class="icon-btn"><i class="fa fa-user"></i></button>
                 </div>
                 <div class="search">
                     <input class="search-bar" type="text" placeholder=" Search pets, products or services">
@@ -181,5 +181,38 @@
         </div>
     </footer>
     <script src="/js/script.js"></script>
+    <script>
+        // Handle user button click based on user role
+        document.addEventListener('DOMContentLoaded', function() {
+            const userButton = document.getElementById('userButton');
+            
+            if (userButton) {
+                userButton.addEventListener('click', function() {
+                    // Check user session status
+                    fetch('/check-session')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.isLoggedIn) {
+                                if (data.isAdmin) {
+                                    // Redirect admin to admin dashboard
+                                    window.location.href = '/admin/dashboard';
+                                } else {
+                                    // Redirect non-admin to profile page
+                                    window.location.href = '/profile';
+                                }
+                            } else {
+                                // Not logged in, redirect to login page
+                                window.location.href = '<%= loginUrl %>';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error checking session:', error);
+                            // Default to login page on error
+                            window.location.href = '<%= loginUrl %>';
+                        });
+                });
+            }
+        });
+    </script>
 </body>
 </html>

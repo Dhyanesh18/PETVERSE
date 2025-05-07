@@ -7,28 +7,46 @@ module.exports = {
 
     handleLogin: async (req, res) => {
         try {
+            console.log('Login attempt for email:', req.body.email);
+            
             const user = await User.findOne({ email: req.body.email });
-            if (!user || !(await user.comparePassword(req.body.password))) {
-                return res.render('login', { error: 'Invalid credentials' });
+            
+            if (!user) {
+                console.log('No user found with email:', req.body.email);
+                return res.render('login', { error: 'Invalid email or password' });
             }
             
-            console.log('Session object before:', req.session);
+            const passwordMatch = await user.comparePassword(req.body.password);
+            if (!passwordMatch) {
+                console.log('Password mismatch for user:', req.body.email);
+                return res.render('login', { error: 'Invalid email or password' });
+            }
+            
+            console.log('Session object before login:', req.session);
     
             req.session.userId = user._id;
             req.session.userRole = user.role;
-
-            console.log('Session after setting:', req.session);
+          
+            console.log('Session after login:', req.session);
+            console.log('User authenticated successfully:', user.email, 'with role:', user.role);
             
             // Redirect based on user role
-            if (user.role === 'service_provider') {
-                return res.redirect('/service-provider/dashboard');
+            if (user.role === 'admin') {
+                res.redirect('/admin/dashboard');
+            } else if (user.role === 'seller') {
+                res.redirect('/seller/dashboard');
+            } else if (user.role === 'service_provider') {
+                res.redirect('/service-provider/dashboard');
+            } else if (user.role === 'owner') {
+                res.redirect('/owner-dashboard');
+            } else {
+                res.redirect('/home');
+
             }
-            
-            // Default redirect for other roles
-            res.redirect('/dashboard');
+
         } catch (err) {
             console.error('Login error:', err);
-            res.render('login', { error: 'Server error' });
+            res.render('login', { error: 'Server error. Please try again later.' });
         }
     }
 };

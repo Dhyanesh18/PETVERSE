@@ -1,134 +1,184 @@
 const Review = require("../models/reviews");
 const Product = require("../models/products");
 const User = require("../models/users");
-const Booking = require("../models/Booking");
 
-exports.createReview = async (req, res) => {
+// Get a user's existing review for a product
+exports.getUserReview = async (req, res) => {
     try {
-        if (!req.user) {
+        const { targetType, targetId } = req.params;
+        const userId = req.session.userId;
+        
+        if (!userId) {
             return res.status(401).json({
-                status: 'fail',
-                message: 'You must be logged in to submit a review'
+                success: false,
+                message: 'You must be logged in to access your review'
             });
         }
-
-        const { userId, rating, comment, productId, targetType, targetId } = req.body;
-
-        if (!userId || !rating || !targetType || !targetId) {
+        
+        if (!targetType || !targetId) {
             return res.status(400).json({
-                status: 'fail',
-                message: 'Missing required fields: userId, rating, targetType, targetId'
+                success: false,
+                message: 'Missing required parameters: targetType, targetId'
             });
         }
-
-        if (userId !== req.user._id.toString()) {
-            return res.status(403).json({
-                status: 'fail',
-                message: 'You can only submit reviews for yourself'
-            });
-        }
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'User not found'
-            });
-        }
-
-        if (targetType === 'Product') {
-            const product = await Product.findById(targetId);
-            if (!product) {
-                return res.status(400).json({
-                    status: 'fail',
-                    message: 'Product not found'
-                });
-            }
-        } else if (targetType === 'ServiceProvider') {
-            const provider = await User.findById(targetId);
-            if (!provider || provider.role !== 'service_provider') {
-                return res.status(400).json({
-                    status: 'fail',
-                    message: 'Service provider not found'
-                });
-            }
-
-            // Ensure user has a booking with this provider
-            const booking = await Booking.findOne({
-                user: userId,
-                provider: targetId
-            });
-            if (!booking) {
-                return res.status(403).json({
-                    status: 'fail',
-                    message: 'You must have a booking with this provider to submit a review'
-                });
-            }
-        } else {
-            return res.status(400).json({
-                status: 'fail',
-                message: 'Invalid targetType'
-            });
-        }
-
-        const newReview = await Review.create({
+        
+        const review = await Review.findOne({
             user: userId,
-            rating,
-            comment,
             targetType,
             targetId
         });
-
-        res.status(201).json({
-            status: "success",
-            data: {
-                review: newReview
-            }
+        
+        if (!review) {
+            return res.status(200).json({
+                success: true,
+                hasReview: false,
+                message: 'No review found for this user and target'
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            hasReview: true,
+            review
         });
     } catch (err) {
-        res.status(400).json({
-            status: 'fail',
-            message: err.message
+        console.error('Error fetching user review:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while fetching your review'
+        });
+    }
+};
+
+exports.createReview = async (req, res) => {
+    try {
+        const { rating, comment, targetType, targetId } = req.body;
+        
+        // Use the current user from session instead of requiring userId in the request
+        const userId = req.session.userId;
+        
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                message: 'You must be logged in to leave a review'
+            });
+        }
+        
+        if (!rating || !targetType || !targetId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: rating, targetType, targetId'
+            });
+        }
+        
+        // Validate target exists based on targetType
+        let targetExists = false;
+        
+        if (targetType === 'Product') {
+            const product = await Product.findById(targetId);
+            targetExists = !!product;
+        } else if (targetType === 'Seller') {
+            const seller = await User.findById(targetId);
+            targetExists = !!seller && seller.role === 'seller';
+        } else if (targetType === 'ServiceProvider') {
+            const provider = await User.findById(targetId);
+            targetExists = !!provider && provider.role === 'service_provider';
+        }
+        
+        if (!targetExists) {
+            return res.status(400).json({
+                success: false,
+                message: `${targetType} not found`
+            });
+        }
+        
+        // Check if user already reviewed this target
+        const existingReview = await Review.findOne({
+            user: userId,
+            targetType,
+            targetId
+        });
+        
+        let review;
+        
+        if (existingReview) {
+            // Update existing review
+            review = await Review.findByIdAndUpdate(
+                existingReview._id,
+                {
+                    rating,
+                    comment
+                },
+                { new: true }
+            );
+            
+            return res.status(200).json({
+                success: true,
+                message: 'Review updated successfully',
+                review
+            });
+        } else {
+            // Create new review
+            review = await Review.create({
+                user: userId,
+                rating,
+                comment,
+                targetType,
+                targetId
+            });
+            
+            return res.status(201).json({
+                success: true,
+                message: 'Review submitted successfully',
+                review
+            });
+        }
+    } catch (err) {
+        console.error('Error creating review:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while submitting your review'
         });
     }
 };
 
 exports.getProductReviews = async (req, res) => {
     try {
+        const productId = req.params.productId;
+        
+        if (!productId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Product ID is required'
+            });
+        }
+        
         const reviews = await Review.find({
             targetType: 'Product',
-            targetId: req.params.productId
-        }).populate('user', 'username');
-        res.status(200).json({
-            status: "success",
-            data: {
-                reviews
-            }
+            targetId: productId
+        })
+        .populate('user', 'username firstName lastName profileImage')
+        .sort({ createdAt: -1 });
+        
+        // Calculate the average rating
+        let totalRating = 0;
+        reviews.forEach(review => {
+            totalRating += review.rating;
+        });
+        
+        const avgRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0;
+        
+        return res.status(200).json({
+            success: true,
+            count: reviews.length,
+            avgRating,
+            reviews
         });
     } catch (err) {
-        res.status(400).json({
-            status: 'fail',
-            message: err.message
-        });
-    }
-};
-
-exports.getServiceProviderReviews = async (req, res) => {
-    try {
-        const reviews = await Review.find({
-            targetType: 'ServiceProvider',
-            targetId: req.params.providerId
-        }).populate('user', 'username');
-        res.status(200).json({
-            status: "success",
-            data: {
-                reviews
-            }
-        });
-    } catch (err) {
-        res.status(400).json({
-            status: 'fail',
-            message: err.message
+        console.error('Error fetching reviews:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'An error occurred while fetching reviews'
         });
     }
 };

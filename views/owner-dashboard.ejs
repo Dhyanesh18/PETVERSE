@@ -814,6 +814,257 @@ transform: scale(1.2);
                 margin: 0 1rem;
             }
         }
+
+        .service-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--secondary);
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 1.2rem;
+            margin-right: var(--spacing-md);
+        }
+
+        .empty-state {
+            padding: var(--spacing-xl);
+            text-align: center;
+            background-color: rgba(243, 244, 246, 0.5);
+            border-radius: var(--radius-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--text-tertiary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .empty-state p {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .status-badge.confirmed {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        /* Service Appointment Styles */
+        .service-section {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-section::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 150px;
+            height: 150px;
+            background-color: rgba(16, 185, 129, 0.05);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .service-icon {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--secondary), #34D399);
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 1.2rem;
+            margin-right: var(--spacing-md);
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .order-product:hover .service-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .empty-state {
+            padding: var(--spacing-xl) var(--spacing-xl) calc(var(--spacing-xl) * 1.5);
+            text-align: center;
+            background: linear-gradient(135deg, rgba(243, 244, 246, 0.5), rgba(249, 250, 251, 0.8));
+            border-radius: var(--radius-lg);
+            margin: var(--spacing-lg) auto;
+            max-width: 500px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(229, 231, 235, 0.7);
+        }
+
+        .empty-state::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 100px;
+            height: 100px;
+            background-color: rgba(16, 185, 129, 0.05);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .empty-state i {
+            font-size: 4.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: var(--spacing-md);
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .empty-state p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-lg);
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .empty-state .btn.btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 12px 24px;
+            font-weight: 600;
+            border-radius: 50px;
+            box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .empty-state .btn.btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+        }
+
+        .empty-state .btn.btn-primary i {
+            font-size: 1.1rem;
+            background: none;
+            -webkit-background-clip: unset;
+            color: white;
+            animation: none;
+            margin-bottom: 0;
+        }
+
+        .status-badge.confirmed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(52, 211, 153, 0.2));
+            color: var(--success);
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 5px rgba(16, 185, 129, 0.1);
+        }
+
+        .service-appointment-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .service-appointment-table th {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(52, 211, 153, 0.1));
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid rgba(16, 185, 129, 0.1);
+            position: relative;
+        }
+
+        .service-appointment-table th:first-child {
+            border-top-left-radius: var(--radius-md);
+        }
+
+        .service-appointment-table th:last-child {
+            border-top-right-radius: var(--radius-md);
+        }
+
+        .service-appointment-table td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .service-appointment-table tr:hover td {
+            background-color: rgba(16, 185, 129, 0.02);
+            transform: translateX(4px);
+        }
+
+        .service-appointment-table tr:last-child td:first-child {
+            border-bottom-left-radius: var(--radius-md);
+        }
+
+        .service-appointment-table tr:last-child td:last-child {
+            border-bottom-right-radius: var(--radius-md);
+        }
+
+        .date-badge, .time-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .date-badge {
+            background-color: rgba(79, 70, 229, 0.08);
+            color: #4F46E5;
+        }
+
+        .time-badge {
+            background-color: rgba(245, 158, 11, 0.08);
+            color: #F59E0B;
+        }
+
+        .date-badge i, .time-badge i {
+            font-size: 0.9rem;
+        }
+
+        .service-appointment-table tr:hover .date-badge {
+            background-color: rgba(79, 70, 229, 0.12);
+        }
+
+        .service-appointment-table tr:hover .time-badge {
+            background-color: rgba(245, 158, 11, 0.12);
+        }
     </style>
 </head>
 
@@ -822,10 +1073,10 @@ transform: scale(1.2);
     <header class="header" id="header">
         <nav id="navbar" class="navbar">
             <div class="nav-content">
-                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="logo"><a href="/home"><i class="fa fa-paw"></i> PetVerse</a></div>
                 <div class="nav-icons">
                     <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                    <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
+                    <button onclick="window.location.href='/owner-dashboard'" class="icon-btn"><i class="fa fa-user"></i></button>
                 </div>
                 <div class="search">
                     <input class="search-bar" type="text" placeholder=" Search pets, products or services">
@@ -835,24 +1086,20 @@ transform: scale(1.2);
                     <i class="fa fa-bars"></i>
                 </button>
                 <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/products/petfood">Pet Food</a></li>
-                            <li><a href="/products/toys">Toys</a></li>
-                            <li><a href="/products/accessories">Accessories</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/services">Services</a></li>
-                            <li><a href="/mate">PetMate</a></li>
-                        </ul>
-                    </li>
+                    <% navLinks.forEach(function(link) { %>
+                        <% if (link.dropdown) { %>
+                            <li class="dropdown">
+                                <a href="<%= link.url %>" class="dropdown-toggle"><%= link.name %> <i class="fa fa-angle-down"></i></a>
+                                <ul class="dropdown-menu">
+                                    <% link.dropdownItems.forEach(function(item) { %>
+                                        <li><a href="<%= item.url %>"><%= item.name %></a></li>
+                                    <% }); %>
+                                </ul>
+                            </li>
+                        <% } else { %>
+                            <li><a href="<%= link.url %>"><%= link.name %></a></li>
+                        <% } %>
+                    <% }); %>
                 </ul>
             </div>
         </nav>
@@ -866,10 +1113,12 @@ transform: scale(1.2);
             </h1>
             <div class="user-info">
                 <span class="user-name">Welcome, <%= user.username %></span>
-                <a href="/" class="nav-btn">
-                    <i class="fas fa-home"></i>
-                    Back to Home
-                </a>
+                <form action="/logout" method="POST" style="display: inline;">
+                    <button type="submit" class="nav-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </form>
             </div>
         </header>
 
@@ -1042,56 +1291,84 @@ transform: scale(1.2);
                     <div class="empty-state">
                         <i class="fas fa-shopping-bag"></i>
                         <p>No orders found. Start shopping!</p>
-                        <a href="/" class="btn btn-primary">
+                        <a href="/products" class="btn btn-primary">
                             <i class="fas fa-shopping-cart"></i> Shop Now
                         </a>
                     </div>
                     <% } %>
         </section>
 
-        <section class="section">
+        <section class="section service-section">
             <div class="section-header">
                 <h2 class="section-title">
-                    <i class="fas fa-star"></i>
-                    Featured Products
+                    <i class="fas fa-calendar-check"></i>
+                    Service Appointments
                 </h2>
             </div>
 
-            <div class="products-grid">
-                <% products.slice(0, 4).forEach(product=> { %>
-                    <div class="product-card">
-                        <div class="product-image-wrapper">
-                            <img src="/images/dash/<%= product.image_url %>" alt="<%= product.title %>">
-                        </div>
-                        <div class="product-details">
-                            <div class="product-info">
-                                <span class="product-category">
-                                    <%= product.category %>
-                                </span>
-                                <h3 class="product-title">
-                                    <%= product.Breed || product.title %>
-                                </h3>
-                                <div class="product-price">
-                                    <span class="current-price">₹<%= product.price %></span>
-                                    <% if (product.dis && product.dis !=='0%' ) { %>
-                                        <span class="original-price">
-                                            <%= product.dis %> OFF
-                                        </span>
-                                        <% } %>
-                                </div>
-                            </div>
-                            <div class="product-actions">
-                                <button onclick="addToCart('<%= product.id %>')" class="btn btn-primary">
-                                    <i class="fas fa-shopping-cart"></i> Cart
-                                </button>
-                                <a href="/buy/<%= product.id %>" class="btn btn-secondary">
-                                    <i class="fas fa-info-circle"></i> Details
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <% }); %>
-            </div>
+            <% if (bookings && bookings.length > 0) { %>
+                <table class="service-appointment-table">
+                    <thead>
+                        <tr>
+                            <th>Service ID</th>
+                            <th>Service Name</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% bookings.forEach(booking => { %>
+                            <tr>
+                                <td>#<%= booking.id.toString().substring(0, 8) %>...</td>
+                                <td>
+                                    <div class="order-product">
+                                        <div class="service-icon">
+                                            <i class="fas fa-<%= booking.serviceType === 'Grooming' ? 'cut' : 
+                                                               booking.serviceType === 'Veterinary' ? 'stethoscope' : 
+                                                               booking.serviceType === 'Training' ? 'dumbbell' : 'paw' %>"></i>
+                                        </div>
+                                        <div class="product-info">
+                                            <span class="product-name">
+                                                <%= booking.serviceName %>
+                                            </span>
+                                            <span class="product-meta">
+                                                Type: <%= booking.serviceType %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="date-badge">
+                                        <i class="far fa-calendar-alt"></i>
+                                        <%= booking.date %>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-badge">
+                                        <i class="far fa-clock"></i>
+                                        <%= booking.time %>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge <%= booking.status.toLowerCase() %>">
+                                        <i class="fas fa-check-circle"></i>
+                                        <%= booking.status %>
+                                    </span>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="empty-state">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>No appointments scheduled yet. Book a service for your pet today!</p>
+                    <a href="/services" class="btn btn-primary">
+                        <i class="fas fa-concierge-bell"></i> Browse Services
+                    </a>
+                </div>
+            <% } %>
         </section>
     </div>
     <footer id="footer">
@@ -1103,11 +1380,11 @@ transform: scale(1.2);
             <div class="footer-links">
                 <h3>Quick Links</h3>
                 <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Shop</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Events</a></li>
-                    <li><a href="#">Contact Us</a></li>
+                    <li><a href="/about">About Us</a></li>
+                    <li><a href="/products">Shop</a></li>
+                    <li><a href="/services">Services</a></li>
+                    <li><a href="/pets">Pets</a></li>
+                    <li><a href="/home">Home</a></li>
                 </ul>
             </div>
             <div class="footer-social">
@@ -1121,7 +1398,6 @@ transform: scale(1.2);
             <p>&copy; 2025 PetVerse. All Rights Reversed</p>
         </div>
     </footer>
-    <script src="/js/cart.js"></script>
     <script>
         // Update cart count on page load
         document.addEventListener('DOMContentLoaded', function () {
@@ -1136,44 +1412,6 @@ transform: scale(1.2);
                 cartCount.textContent = totalItems;
                 cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
             }
-        }
-
-        function addToCart(productId) {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            let existingItem = cart.find(item => Number(item.id) === Number(productId));
-
-            if (existingItem) {
-                existingItem.quantity += 1;
-            } else {
-                cart.push({ id: Number(productId), quantity: 1 });
-            }
-
-            localStorage.setItem('cart', JSON.stringify(cart));
-            updateCartCount();
-
-            // Show notification
-            const notification = document.createElement('div');
-            notification.style.position = 'fixed';
-            notification.style.bottom = '20px';
-            notification.style.right = '20px';
-            notification.style.backgroundColor = 'var(--success)';
-            notification.style.color = 'white';
-            notification.style.padding = '1rem';
-            notification.style.borderRadius = 'var(--radius-md)';
-            notification.style.boxShadow = 'var(--shadow-lg)';
-            notification.style.animation = 'slideIn 0.3s ease-out';
-            notification.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <i class="fas fa-check-circle"></i>
-                    Product added to cart successfully!
-                </div>
-            `;
-
-            document.body.appendChild(notification);
-
-            setTimeout(() => {
-                notification.remove();
-            }, 3000);
         }
     </script>
     <script>
