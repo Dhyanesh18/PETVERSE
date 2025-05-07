@@ -6,7 +6,25 @@
   <link rel="stylesheet" href="/css/services.css">
   <link rel="stylesheet" href="/css/booking.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    .star-rating {
+      display: inline-block;
+      font-size: 24px;
+    }
+    .star {
+      cursor: pointer;
+    }
+    .star i {
+      color: #ddd;
+    }
+    .star.selected i {
+      color: gold;
+      font-weight: 900; /* Ensure filled star */
+    }
+    .star.hover i {
+      color: gold;
+    }
+  </style>
 </head>
 <body>
   <header class="header" id="header">
@@ -65,16 +83,41 @@
           <h2>Booking Confirmed!</h2>
           <p>Thank you, <strong><%= booking.name %></strong>!</p>
           <p>Your appointment for <strong><%= service.serviceType %></strong> is confirmed on <strong><%= booking.date %></strong> at <strong><%= booking.slot %></strong>.</p>
+          
+          <% if (reviewSubmitted) { %>
+            <p style="color: green;">Review submitted successfully!</p>
+          <% } else { %>
+            <h3>Leave a Review</h3>
+            <form id="reviewForm" class="review-form">
+              <input type="hidden" name="userId" value="<%= user._id %>">
+              <input type="hidden" name="targetType" value="ServiceProvider">
+              <input type="hidden" name="targetId" value="<%= service._id %>">
+              <label for="rating">Rating:</label>
+              <div class="star-rating">
+                <span class="star" data-value="1"><i class="far fa-star"></i></span>
+                <span class="star" data-value="2"><i class="far fa-star"></i></span>
+                <span class="star" data-value="3"><i class="far fa-star"></i></span>
+                <span class="star" data-value="4"><i class="far fa-star"></i></span>
+                <span class="star" data-value="5"><i class="far fa-star"></i></span>
+              </div>
+              <input type="hidden" id="rating" name="rating" value="0">
+              <br>
+              <label for="comment">Comment (optional):</label>
+              <textarea id="comment" name="comment" maxlength="200"></textarea>
+              <br>
+              <button type="submit" class="submit-review-btn">Submit Review</button>
+            </form>
+          <% } %>
         <% } else { %>
           <h2>Book Appointment</h2>
-          <form action="/booking" method="POST" class="booking-form">
+          <form action="/booking/<%= service._id %>" method="POST" class="booking-form" id="bookingForm">
             <input type="hidden" name="serviceId" value="<%= service._id %>">
             <label for="name">Full Name:</label>
-            <input type="text" id="name" name="name" required>
+            <input type="text" id="name" name="name" pattern="[A-Za-z\s]+" title="Name should only contain letters and spaces" required>
             <label for="petName">Pet Name:</label>
             <input type="text" id="petName" name="petName" required>
             <label for="email">Email Address:</label>
-            <input type="email" id="email" name="email" required>
+            <input type="email" id="email" name="email" pattern="[a-zA-Z0-9._%+-]+@(gmail\.com|petverse\.com)" title="Email must be @gmail.com or @petverse.com" required>
             <label for="date">Preferred Date:</label>
             <input type="date" id="datePicker" name="date" required>
             <label for="slotSelect">Available Time Slot:</label>
@@ -112,14 +155,14 @@
           </div>
       </div>
       <div class="footer-bottom">
-          <p>© 2025 PetVerse. All Rights Reversed</p>
+          <p>© 2025 PetVerse. All Rights Reserved</p>
       </div>
   </footer>
 
   <script>
     const hamburger = document.getElementById('hamburger');
     const navLinks = document.querySelector('.nav-links');
-    const navbar  = document.getElementById('navbar');
+    const navbar = document.getElementById('navbar');
 
     hamburger.addEventListener('click', () => {
       navLinks.classList.toggle('active');
@@ -128,7 +171,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-      const dropdownMenus   = document.querySelectorAll('.dropdown-menu');
+      const dropdownMenus = document.querySelectorAll('.dropdown-menu');
 
       dropdownToggles.forEach(toggle => {
         toggle.addEventListener('click', e => {
@@ -158,26 +201,119 @@
         if (window.scrollY > 50) navbar.classList.add('scrolled');
         else if (!navLinks.classList.contains('active')) navbar.classList.remove('scrolled');
       });
-    });
 
-    document.getElementById('datePicker').addEventListener('change', async function () {
-      const date      = this.value;
-      const serviceId = "<%= service._id %>";
-      if (!date) return;
+      // Slot fetching
+      const datePicker = document.getElementById('datePicker');
+      if (datePicker) {
+        datePicker.addEventListener('change', async function () {
+          const date = this.value;
+          const serviceId = "<%= service._id %>";
+          if (!date) return;
 
-      try {
-        const res = await fetch(`/booking/available/slots?serviceId=${serviceId}&date=${date}`);
-        const { availableSlots } = await res.json();
-        const slotSelect = document.getElementById('slotSelect');
-        slotSelect.innerHTML = '<option value="">-- Select a slot --</option>';
-        availableSlots.forEach(slot => {
-          const opt = document.createElement('option');
-          opt.value = slot;
-          opt.textContent = slot;
-          slotSelect.appendChild(opt);
+          try {
+            const res = await fetch(`/booking/available/slots?serviceId=${serviceId}&date=${date}`);
+            const { availableSlots } = await res.json();
+            const slotSelect = document.getElementById('slotSelect');
+            slotSelect.innerHTML = '<option value="">-- Select a slot --</option>';
+            availableSlots.forEach(slot => {
+              const opt = document.createElement('option');
+              opt.value = slot;
+              opt.textContent = slot;
+              slotSelect.appendChild(opt);
+            });
+          } catch (err) {
+            console.error('Could not load slots:', err);
+            alert('Error loading available slots');
+          }
         });
-      } catch (err) {
-        console.error('Could not load slots:', err);
+      }
+
+      // Star rating system
+      const stars = document.querySelectorAll('.star');
+      stars.forEach(star => {
+        star.addEventListener('click', function() {
+          const value = parseInt(this.getAttribute('data-value'));
+          document.getElementById('rating').value = value;
+          stars.forEach(s => {
+            const sValue = parseInt(s.getAttribute('data-value'));
+            if (sValue <= value) {
+              s.classList.add('selected');
+              s.innerHTML = '<i class="fas fa-star"></i>'; // Filled star
+            } else {
+              s.classList.remove('selected');
+              s.innerHTML = '<i class="far fa-star"></i>'; // Empty star
+            }
+          });
+        });
+        star.addEventListener('mouseover', function() {
+          const value = parseInt(this.getAttribute('data-value'));
+          stars.forEach(s => {
+            if (parseInt(s.getAttribute('data-value')) <= value) {
+              s.classList.add('hover');
+            } else {
+              s.classList.remove('hover');
+            }
+          });
+        });
+        star.addEventListener('mouseout', function() {
+          stars.forEach(s => s.classList.remove('hover'));
+        });
+      });
+
+      // Review form submission
+      const reviewForm = document.getElementById('reviewForm');
+      if (reviewForm) {
+        reviewForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          const formData = new FormData(this);
+          const data = Object.fromEntries(formData);
+
+          if (!data.rating || data.rating < 1 || data.rating > 5) {
+            alert('Please select a rating between 1 and 5');
+            return;
+          }
+
+          try {
+            const res = await fetch('/reviews', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (result.status === 'success') {
+              window.location.href = '/services'; // Redirect to services page
+            } else {
+              console.error('Review submission failed:', result.message);
+              alert(result.message || 'Error submitting review');
+            }
+          } catch (err) {
+            console.error('Review submission error:', err);
+            alert('Error submitting review. Please check your connection or try again later.');
+          }
+        });
+      }
+
+      // Booking form validation
+      const bookingForm = document.getElementById('bookingForm');
+      if (bookingForm) {
+        bookingForm.addEventListener('submit', function (e) {
+          const nameInput = document.getElementById('name').value;
+          const emailInput = document.getElementById('email').value;
+          const nameRegex = /^[A-Za-z\s]+$/;
+          const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail\.com|petverse\.com)$/;
+
+          if (!nameRegex.test(nameInput)) {
+            e.preventDefault();
+            alert('Name should only contain letters and spaces');
+            return;
+          }
+
+          if (!emailRegex.test(emailInput)) {
+            e.preventDefault();
+            alert('enter a correct email id');
+            return;
+          }
+        });
       }
     });
   </script>

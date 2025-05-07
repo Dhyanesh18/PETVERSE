@@ -1,8 +1,9 @@
 const Review = require("../models/reviews");
 const Product = require("../models/products");
 const User = require("../models/users");
+const Booking = require("../models/Booking");
 
-// Get a user's existing review for a product
+// Get a user's existing review for a product (from main)
 exports.getUserReview = async (req, res) => {
     try {
         const { targetType, targetId } = req.params;
@@ -50,98 +51,107 @@ exports.getUserReview = async (req, res) => {
     }
 };
 
+// Combined createReview with validation from both branches
 exports.createReview = async (req, res) => {
     try {
         const { rating, comment, targetType, targetId } = req.body;
-        
-        // Use the current user from session instead of requiring userId in the request
         const userId = req.session.userId;
-        
+
         if (!userId) {
             return res.status(401).json({
                 success: false,
                 message: 'You must be logged in to leave a review'
             });
         }
-        
+
         if (!rating || !targetType || !targetId) {
             return res.status(400).json({
                 success: false,
                 message: 'Missing required fields: rating, targetType, targetId'
             });
         }
-        
-        // Validate target exists based on targetType
+
+        // Validate target existence
         let targetExists = false;
-        
         if (targetType === 'Product') {
-            const product = await Product.findById(targetId);
-            targetExists = !!product;
+            targetExists = await Product.exists({ _id: targetId });
         } else if (targetType === 'Seller') {
-            const seller = await User.findById(targetId);
-            targetExists = !!seller && seller.role === 'seller';
+            const seller = await User.findOne({ _id: targetId, role: 'seller' });
+            targetExists = !!seller;
         } else if (targetType === 'ServiceProvider') {
-            const provider = await User.findById(targetId);
-            targetExists = !!provider && provider.role === 'service_provider';
+            const provider = await User.findOne({ _id: targetId, role: 'service_provider' });
+            targetExists = !!provider;
+            
+            // Add booking validation from feature branch
+            if (targetExists) {
+                const hasBooking = await Booking.exists({
+                    user: userId,
+                    provider: targetId
+                });
+                
+                if (!hasBooking) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'You must have a booking with this provider to submit a review'
+                    });
+                }
+            }
         }
-        
+
         if (!targetExists) {
             return res.status(400).json({
                 success: false,
                 message: `${targetType} not found`
             });
         }
-        
-        // Check if user already reviewed this target
+
+        // Check for existing review
         const existingReview = await Review.findOne({
             user: userId,
             targetType,
             targetId
         });
-        
+
         let review;
-        
         if (existingReview) {
             // Update existing review
             review = await Review.findByIdAndUpdate(
                 existingReview._id,
-                {
-                    rating,
-                    comment
-                },
+                { rating, comment },
                 { new: true }
             );
-            
             return res.status(200).json({
                 success: true,
                 message: 'Review updated successfully',
                 review
             });
-        } else {
-            // Create new review
-            review = await Review.create({
-                user: userId,
-                rating,
-                comment,
-                targetType,
-                targetId
-            });
-            
-            return res.status(201).json({
-                success: true,
-                message: 'Review submitted successfully',
-                review
-            });
         }
+
+        // Create new review
+        review = await Review.create({
+            user: userId,
+            rating,
+            comment,
+            targetType,
+            targetId
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Review submitted successfully',
+            review
+        });
+
     } catch (err) {
         console.error('Error creating review:', err);
-        return res.status(500).json({
+        res.status(500).json({
             success: false,
             message: 'An error occurred while submitting your review'
         });
     }
 };
 
+// Combined getProductReviews with average rating calculation
 exports.getProductReviews = async (req, res) => {
     try {
         const productId = req.params.productId;
@@ -160,15 +170,12 @@ exports.getProductReviews = async (req, res) => {
         .populate('user', 'username firstName lastName profileImage')
         .sort({ createdAt: -1 });
         
-        // Calculate the average rating
-        let totalRating = 0;
-        reviews.forEach(review => {
-            totalRating += review.rating;
-        });
-        
-        const avgRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0;
-        
-        return res.status(200).json({
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        const avgRating = reviews.length > 0 
+            ? (totalRating / reviews.length).toFixed(1)
+            : 0;
+
+        res.status(200).json({
             success: true,
             count: reviews.length,
             avgRating,
@@ -176,7 +183,37 @@ exports.getProductReviews = async (req, res) => {
         });
     } catch (err) {
         console.error('Error fetching reviews:', err);
-        return res.status(500).json({
+        res.status(500).json({
+            success: false,
+            message: 'An error occurred while fetching reviews'
+        });
+    }
+};
+
+// Service provider reviews from feature branch
+exports.getServiceProviderReviews = async (req, res) => {
+    try {
+        const reviews = await Review.find({
+            targetType: 'ServiceProvider',
+            targetId: req.params.providerId
+        })
+        .populate('user', 'username firstName lastName profileImage')
+        .sort({ createdAt: -1 });
+
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        const avgRating = reviews.length > 0 
+            ? (totalRating / reviews.length).toFixed(1)
+            : 0;
+
+        res.status(200).json({
+            success: true,
+            count: reviews.length,
+            avgRating,
+            reviews
+        });
+    } catch (err) {
+        console.error('Error fetching service provider reviews:', err);
+        res.status(500).json({
             success: false,
             message: 'An error occurred while fetching reviews'
         });
