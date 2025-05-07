@@ -17,3 +17,12 @@ module.exports.isAuthenticated = (req, res, next) => {
     console.log('No authenticated user found in request');
     res.redirect('/login');
   };
+
+module.exports.isServiceProvider = (req, res, next) => {
+  if (req.user && req.user.role === 'service_provider') {
+    return next();
+  }
+  res.status(403).render('error', { 
+    message: 'Service Provider access required.' 
+  });
+};

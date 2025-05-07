@@ -26,7 +26,7 @@ module.exports = {
     
             req.session.userId = user._id;
             req.session.userRole = user.role;
-
+          
             console.log('Session after login:', req.session);
             console.log('User authenticated successfully:', user.email, 'with role:', user.role);
             
@@ -36,13 +36,14 @@ module.exports = {
             } else if (user.role === 'seller') {
                 res.redirect('/seller/dashboard');
             } else if (user.role === 'service_provider') {
-                res.redirect('/service-dashboard');
+                res.redirect('/service-provider/dashboard');
             } else if (user.role === 'owner') {
                 res.redirect('/owner-dashboard');
             } else {
                 res.redirect('/home');
 
             }
+
         } catch (err) {
             console.error('Login error:', err);
             res.render('login', { error: 'Server error. Please try again later.' });
