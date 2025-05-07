@@ -71,7 +71,7 @@ app.use('/admin', adminRoutes);
 // Service routes
 app.use('/cart', cartRoutes);
 app.use('/booking', bookingRoutes);
-app.use('/reviews', reviewRoutes);
+app.use('/', reviewRoutes);
 
 app.get('/', (req, res) => {
   res.render('login', { error: null });
