@@ -54,31 +54,17 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
         ]);
 
         // Format products for display
-        const formattedProducts = products.map(product => {
-            // Debug log for image data
-            console.log(`Product: ${product.name}, Has images: ${product.images && product.images.length > 0}`);
-            if (product.images && product.images.length > 0) {
-                console.log(`Image content type: ${product.images[0].contentType}`);
-                console.log(`Image data exists: ${!!product.images[0].data}`);
-                // Log a small sample of the base64 data
-                const base64Sample = product.images[0].data ? 
-                    product.images[0].data.toString('base64').substring(0, 30) + '...' : 
-                    'No data';
-                console.log(`Base64 sample: ${base64Sample}`);
-            }
-            
-            return {
-                _id: product._id,
-                title: product.name,
-                price: product.price,
-                stock: product.stock,
-                status: product.stock > 0 ? 'active' : 'inactive',
-                image_url: product.images && product.images.length > 0 ? 
-                    `/product/image/${product._id}/0` : 
-                    '/images/default-product.jpg',
-                dis: product.discount ? `${product.discount}%` : '0%'
-            };
-        });
+        const formattedProducts = products.map(product => ({
+            _id: product._id,
+            title: product.name,
+            price: product.price,
+            stock: product.stock,
+            status: product.stock > 0 ? 'active' : 'inactive',
+            image_url: product.images && product.images.length > 0 ? 
+                `data:${product.images[0].contentType};base64,${product.images[0].data.toString('base64')}` : 
+                'default-product.jpg',
+            dis: product.discount ? `${product.discount}%` : '0%'
+        }));
 
         // Get recent orders for display
         const sellerOrders = await Order.find({ seller: seller._id })

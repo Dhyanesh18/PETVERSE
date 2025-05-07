@@ -786,8 +786,7 @@
                         <% products.forEach(product => { %>
                             <div class="product-card">
                                 <div class="product-image-container">
-                                    <img src="<%= product.image_url %>" alt="<%= product.title %>" class="product-image" 
-                                         onerror="this.onerror=null; this.src='/images/default-product.jpg'; console.error('Image failed to load for <%= product.title %>');">
+                                    <img src="<%= product.image_url %>" alt="<%= product.title %>" class="product-image">
                                     <% if(product.dis && product.dis !== '0%') { %>
                                         <span class="discount-tag"><%= product.dis %> OFF</span>
                                     <% } %>

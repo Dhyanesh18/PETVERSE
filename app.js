@@ -28,10 +28,25 @@ app.use(async (req, res, next) => {
   if (req.session.userId) {
     try {
       const User = require('./models/users');
+      console.log('Attempting to load user with ID:', req.session.userId);
       req.user = await User.findById(req.session.userId);
+      
+      if (req.user) {
+        console.log('User loaded successfully:', req.user.email, 'Role:', req.user.role);
+      } else {
+        console.log('No user found with ID:', req.session.userId);
+        // Clear invalid session data
+        req.session.userId = null;
+        req.session.userRole = null;
+      }
     } catch (err) {
       console.error('User loading error:', err);
+      // Clear session on error
+      req.session.userId = null;
+      req.session.userRole = null;
     }
+  } else {
+    console.log('No user ID in session, skipping user loader');
   }
   next();
 });
