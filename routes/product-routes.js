@@ -74,7 +74,7 @@ router.get('/products/:category', async (req, res) => {
     }
 });
 
-router.get("products/:id", productController.getProduct);
+router.get("/products/:id", productController.getProduct);
 
 router.get('/about', (req,res)=>{
     res.render('about', {

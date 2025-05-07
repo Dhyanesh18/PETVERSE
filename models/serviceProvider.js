@@ -35,6 +35,15 @@ const serviceProviderSchema = new mongoose.Schema({
         type: Number,
         default: 0
     }
-}, { discriminatorKey: 'role' });
+});
 
-module.exports = User.discriminator('service_provider', serviceProviderSchema);
+// From main branch - ensures role is automatically set
+serviceProviderSchema.pre('save', function(next) {
+    this.role = 'service_provider';
+    next();
+});
+
+// From feature/frontend-update - explicit discriminator setup
+module.exports = User.discriminator('service_provider', serviceProviderSchema, {
+    discriminatorKey: 'role'
+});

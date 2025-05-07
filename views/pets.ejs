@@ -9,45 +9,7 @@
     <link rel="stylesheet" href="/css/products.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header" id="header">
-        <nav id="navbar" class="navbar">
-            <div class="nav-content">
-                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
-                <div class="nav-icons">
-                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                    <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
-                </div>
-                <div class="search">
-                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/products/petfood">Pet Food</a></li>
-                            <li><a href="/products/toys">Toys</a></li>
-                            <li><a href="/products/accessories">Accessories</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/services">Services</a></li>
-                            <li><a href="/mate">PetMate</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
 
     <!-- Main Content -->
     <div class="main-container">
@@ -79,22 +41,45 @@
                 </div>
             </div>
             
-            <!-- Dynamic Filters based on category type -->
-            <% if (dynamicFilters && dynamicFilters.length > 0) { %>
-                <% dynamicFilters.forEach(section => { %>
-                    <div class="filter-section">
-                        <h3><%= section.title %></h3>
-                        <div class="filter-options">
-                            <% section.options.forEach(option => { %>
-                                <div class="filter-option">
-                                    <input type="checkbox" id="<%= option.id %>" name="<%= section.name %>" value="<%= option.value %>">
-                                    <label for="<%= option.id %>"><%= option.label %></label>
-                                </div>
-                            <% }); %>
-                        </div>
-                    </div>
-                <% }); %>
-            <% } %>
+            <!-- Breed Filter -->
+            <div class="filter-section">
+              <h3>Breed</h3>
+              <div class="filter-options">
+                <div class="filter-option">
+                  <input type="checkbox" id="german-shepherd" name="breed" value="german-shepherd">
+                  <label for="german-shepherd">German Shepherd</label>
+                </div>
+                <div class="filter-option">
+                  <input type="checkbox" id="persian" name="breed" value="persian">
+                  <label for="persian">Persian</label>
+                </div>
+                <div class="filter-option">
+                  <input type="checkbox" id="siamese" name="breed" value="siamese">
+                  <label for="siamese">Siamese</label>
+                </div>
+                <!-- Add more breeds as needed -->
+              </div>
+            </div>
+
+            <!-- Age Filter -->
+            <div class="filter-section">
+              <h3>Age</h3>
+              <div class="filter-options">
+                <div class="filter-option">
+                  <input type="checkbox" id="puppy" name="age" value="puppy">
+                  <label for="puppy">Puppy/Kitten</label>
+                </div>
+                <div class="filter-option">
+                  <input type="checkbox" id="young" name="age" value="young">
+                  <label for="young">Young</label>
+                </div>
+                <div class="filter-option">
+                  <input type="checkbox" id="adult" name="age" value="adult">
+                  <label for="adult">Adult</label>
+                </div>
+                <!-- Add more ages as needed -->
+              </div>
+            </div>
             
             <button class="clear-filters">Clear All Filters</button>
         </div>
@@ -115,9 +100,19 @@
             <!-- Products Grid -->
             <div class="products-grid">
                 <% pets.forEach(pet => { %>
-                    <div class="product-card">
-                        <div class="product-image">
-                            <img src="<%= pet.image %>" alt="<%= pet.name %>">
+                    <div class="product-card"
+                         data-type="pet"
+                         data-category="<%= pet.category || '' %>"
+                         data-breed="<%= pet.breed || '' %>"
+                         data-age="<%= pet.age || '' %>"
+                         data-price="<%= pet.price %>">
+                         <div class="product-image">
+                            <% if (pet.images && pet.images.length > 0) { %>
+                                <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
+                                     alt="<%= pet.name %>">
+                            <% } else { %>
+                                <img src="/images/default-pet.jpg" alt="No image available">
+                            <% } %>
                         </div>
                         <div class="product-info">
                             <h3 class="product-name"><%= pet.name %></h3>
@@ -157,33 +152,7 @@
     </div>
 
     <!-- Footer -->
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-logo">
-                <h2>PetVerse</h2>
-                <p>Your one-stop destination for all pet needs</p>
-            </div>
-            <div class="footer-links">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Shop</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Events</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
-            </div>
-            <div class="footer-social">
-                <h3>Follow Us</h3>
-                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
-                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
-                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 PetVerse. All Rights Reserved</p>
-        </div>
-    </footer>
+    <%- include('partials/footer') %>
 
     <script>
         // Filter functionality
@@ -195,7 +164,8 @@
             document.getElementById('max-price').value = '';
         });
     </script>
-    <script>
+       <script src="/js/script.js"></script>
+       <script>
         // Get all dropdown toggles and menus
         const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
         const dropdownMenus = document.querySelectorAll('.dropdown-menu');
@@ -230,6 +200,63 @@
                 });
             }
         });
+    </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function filterCards() {
+            // Get selected categories
+            const selectedCategories = Array.from(document.querySelectorAll('input[name="category"]:checked')).map(cb => cb.value.toLowerCase());
+            // Get price range
+            const minPrice = parseFloat(document.getElementById('min-price').value) || 0;
+            const maxPrice = parseFloat(document.getElementById('max-price').value) || Infinity;
+            // Get selected breeds (for pets)
+            const selectedBreeds = Array.from(document.querySelectorAll('input[name="breed"]:checked')).map(cb => cb.value.toLowerCase());
+            // Get selected ages (for pets)
+            const selectedAges = Array.from(document.querySelectorAll('input[name="age"]:checked')).map(cb => cb.value.toLowerCase());
+
+            document.querySelectorAll('.product-card').forEach(card => {
+                const type = card.getAttribute('data-type');
+                const category = (card.getAttribute('data-category') || '').toLowerCase();
+                const price = parseFloat(card.getAttribute('data-price')) || 0;
+                let show = true;
+
+                // Category filter
+                if (selectedCategories.length && !selectedCategories.includes(category)) show = false;
+                // Price filter
+                if (price < minPrice || price > maxPrice) show = false;
+
+                if (type === 'pet') {
+                    // Breed filter
+                    const breed = (card.getAttribute('data-breed') || '').toLowerCase();
+                    if (selectedBreeds.length && !selectedBreeds.includes(breed)) show = false;
+                    // Age filter
+                    const age = (card.getAttribute('data-age') || '').toLowerCase();
+                    if (selectedAges.length && !selectedAges.includes(age)) show = false;
+                }
+
+                card.style.display = show ? '' : 'none';
+            });
+        }
+
+        // Attach event listeners
+        document.querySelectorAll('input[name="category"], input[name="breed"], input[name="age"]').forEach(cb => {
+            cb.addEventListener('change', filterCards);
+        });
+        document.getElementById('min-price').addEventListener('input', filterCards);
+        document.getElementById('max-price').addEventListener('input', filterCards);
+        document.getElementById('apply-price').addEventListener('click', filterCards);
+
+        // Clear filters
+        document.querySelector('.clear-filters').addEventListener('click', function() {
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('min-price').value = '';
+            document.getElementById('max-price').value = '';
+            filterCards();
+        });
+    });
     </script>
 </body>
 </html>

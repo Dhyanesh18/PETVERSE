@@ -46,15 +46,25 @@ const imageRoutes = require('./routes/image-routes');
 const productRoutes = require('./routes/product-routes');
 const bookingRoutes = require('./routes/booking');
 const reviewRoutes = require('./routes/review-routes');
-const servicesRoutes = require('./routes/services-routes');
+const servicesRoutes = require('./routes/services-routes'); 
+const userRoutes = require('./routes/user-routes');
+const cartRoutes = require('./routes/cart'); 
+const petRoutes = require('./routes/pet-routes'); 
+const mateRoutes = require('./routes/mate-routes'); 
 
-app.use('/', reviewRoutes);
+
+app.use('/pets', mateRoutes); 
+app.use('/seller', petRoutes);
+app.use('/', userRoutes); 
 app.use('/seller', productRoutes);
 app.use('/', imageRoutes);
 app.use('/', authRoutes);
 app.use('/admin', adminRoutes);
+app.use('/api/cart', cartRoutes); 
 app.use('/booking', bookingRoutes);
+app.use('/api', reviewRoutes); 
 app.use('/services', servicesRoutes);
+
 
 app.get('/', (req, res) => {
   res.render('login', { error: null });
