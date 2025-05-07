@@ -105,7 +105,8 @@
                          data-category="<%= pet.category || '' %>"
                          data-breed="<%= pet.breed || '' %>"
                          data-age="<%= pet.age || '' %>"
-                         data-price="<%= pet.price %>">
+                         data-price="<%= pet.price %>"
+                         onclick="window.location.href='/seller/detail/<%= pet._id %>'">
                          <div class="product-image">
                             <% if (pet.images && pet.images.length > 0) { %>
                                 <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
@@ -130,7 +131,7 @@
                             </div>
                             <br/>
                             <div class="product-action">
-                                <button onclick="window.location.href='/pets/detail/<%= pet.id %>'" class="add-to-cart">View Details</button>
+                                <button onclick="window.location.href='/seller/detail/<%= pet._id %>'" class="add-to-cart">View Details</button>
                                 <button class="wishlist-btn"><i class="far fa-heart"></i></button>
                             </div>
                         </div>
@@ -164,8 +165,18 @@
             document.getElementById('max-price').value = '';
         });
     </script>
-       <script src="/js/script.js"></script>
-       <script>
+    <script src="/js/script.js"></script>
+    <style>
+        .product-card {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+    <script>
         // Get all dropdown toggles and menus
         const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
         const dropdownMenus = document.querySelectorAll('.dropdown-menu');
@@ -201,7 +212,7 @@
             }
         });
     </script>
-
+    
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         function filterCards() {

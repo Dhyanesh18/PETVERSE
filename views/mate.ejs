@@ -156,64 +156,30 @@
             </div>
 
             <!-- Pets Grid -->
-            <!-- Pets Grid with Debug -->
-<div class="pets-grid">
-    <!-- DEBUG INFO -->
-    <div style="background-color: #f8f9fa; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
-        <h3>Debug Information</h3>
-        <p>Number of pets in array: <%= pets ? pets.length : 'undefined' %></p>
-        <p>Array type: <%= Array.isArray(pets) ? 'Valid Array' : 'Not an Array' %></p>
-        
-        <% if (pets && pets.length > 0) { %>
-            <p>First pet info:</p>
-            <ul>
-                <li>ID: <%= pets[0]._id %></li>
-                <li>Name: <%= pets[0].name %></li>
-                <li>Type: <%= pets[0].petType %></li>
-                <li>Has images: <%= pets[0].images && pets[0].images.length ? 'Yes' : 'No' %></li>
-            </ul>
-        <% } else { %>
-            <p>No pet objects available to display</p>
-        <% } %>
-    </div>
-    
-    <!-- Regular display section -->
-    <div>
-        <% if (!pets || pets.length === 0) { %>
-            <p>No pets found in the database.</p>
-        <% } else { %>
-            <% pets.forEach((pet, index) => { %>
-                <div class="pet-card">
-                    <div class="pet-image">
-                        <% if (pet.images && pet.images.length > 0) { %>
-                            <img src="/mate/image/<%= pet._id %>/0" alt="<%= pet.name %>">
-                        <% } else { %>
-                            <img src="/images/default-pet.jpg" alt="No image available">
-                        <% } %>
-                        <div class="pet-badge <%= pet.gender === 'male' ? 'male' : 'female' %>">
-                            <i class="fas <%= pet.gender === 'male' ? 'fa-mars' : 'fa-venus' %>"></i>
+            <div class="pets-grid">
+                <% pets.forEach(pet => { %>
+                    <div class="pet-card">
+                        <div class="pet-image">
+                            <img src="<%= pet.image %>" alt="<%= pet.name %>">
+                            <div class="pet-badge <%= pet.gender === 'male' ? 'male' : 'female' %>">
+                                <i class="fas <%= pet.gender === 'male' ? 'fa-mars' : 'fa-venus' %>"></i>
+                            </div>
+                        </div>
+                        <div class="pet-info">
+                            <h3 class="pet-name"><%= pet.name %></h3>
+                            <div class="pet-details">
+                                <p><i class="fas fa-paw"></i> <strong>Breed:</strong> <%= pet.breed %></p>
+                                <p><i class="fas fa-birthday-cake"></i> <strong>Age:</strong> <%= pet.age %></p>
+                                <p><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> <%= pet.district %>, <%= pet.state %></p>
+                                <p><i class="fas fa-phone"></i> <strong>Contact:</strong> <%= pet.contact %></p>
+                                <% if (pet.description) { %>
+                                    <p class="pet-description"><i class="fas fa-info-circle"></i> <%= pet.description %></p>
+                                <% } %>
+                            </div>
                         </div>
                     </div>
-                    <div class="pet-info">
-                        <h3 class="pet-name"><%= pet.name %></h3>
-                        <div class="pet-details">
-                            <p><strong>Type:</strong> <%= pet.petType ? pet.petType.toUpperCase() : 'Not specified' %></p>
-                            <p><strong>Breed:</strong> <%= pet.breed || 'Unknown breed' %></p>
-                            <p><strong>Age:</strong> 
-                                <%= pet.age && pet.age.value ? pet.age.value : 'Unknown' %> 
-                                <%= pet.age && pet.age.unit ? pet.age.unit : '' %>
-                            </p>
-                            <p><strong>Location:</strong> 
-                                <%= pet.location && pet.location.district ? pet.location.district : 'Unknown district' %>, 
-                                <%= pet.location && pet.location.state ? pet.location.state : 'Unknown state' %>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            <% }); %>
-        <% } %>
-    </div>
-</div>
+                <% }); %>
+            </div>
 
             <!-- Pagination -->
             <div class="pagination">
@@ -259,22 +225,13 @@
                 
                 <div class="form-group">
                     <label for="pet-age">Age <span class="required">*</span></label>
-                    <div class="age-input-group">
-                        <input type="number" 
-                               id="pet-age-value" 
-                               name="ageValue" 
-                               min="0" 
-                               step="0.5" 
-                               required
-                               class="form-input">
-                        <select id="pet-age-unit" 
-                                name="ageUnit" 
-                                required
-                                class="form-input">
-                            <option value="months">Months</option>
-                            <option value="years">Years</option>
-                        </select>
-                    </div>
+                    <select id="pet-age" name="ageRange" required>
+                        <option value="">Select Age Range</option>
+                        <option value="puppy">Less than 1 year</option>
+                        <option value="young">1-3 years</option>
+                        <option value="adult">4-7 years</option>
+                        <option value="senior">8+ years</option>
+                    </select>
                 </div>
                 
                 <div class="form-group">

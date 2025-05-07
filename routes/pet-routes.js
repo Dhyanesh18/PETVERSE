@@ -65,7 +65,14 @@ router.get('/pets/:category', async (req, res) => {
         res.render('pets', {
             categoryTitle: categoryTitle,
             category: category,
-            pets: pets
+            pets: pets,
+            categoryFilters: [
+                { id: 'dogs', value: 'dogs', label: 'Dogs' },
+                { id: 'cats', value: 'cats', label: 'Cats' },
+                { id: 'birds', value: 'birds', label: 'Birds' },
+                { id: 'fish', value: 'fish', label: 'Fish' },
+                { id: 'other', value: 'other', label: 'Other' }
+            ]
         });
     } catch (err) {
         res.status(500).render('error', { message: 'Error loading pets' });
@@ -74,6 +81,9 @@ router.get('/pets/:category', async (req, res) => {
 
 // Get single pet
 router.get("/pets/:id", petController.getPetById);
+
+// Add a specific route for pet details that's easier to access directly
+router.get("/detail/:id", petController.getPetById);
 
 // Image route
 router.get('/pet/image/:petId/:index', petController.getPetImage);

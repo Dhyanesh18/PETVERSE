@@ -18,7 +18,13 @@ module.exports = {
             req.session.userRole = user.role;
 
             console.log('Session after setting:', req.session);
-            res.redirect('/home');
+            
+            // Redirect based on user role
+            if (user.role === 'admin') {
+                return res.redirect('/admin/dashboard');
+            } else {
+                return res.redirect('/home');
+            }
         } catch (err) {
             console.error('Login error:', err);
             res.render('login', { error: 'Server error' });
