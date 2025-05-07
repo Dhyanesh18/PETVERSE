@@ -1,15 +1,10 @@
-<!-- views/services.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title><%= pageTitle %></title>
-
-  <!-- Link to your CSS -->
   <link rel="stylesheet" href="/css/services.css">
-  
-  <!-- Font Awesome (optional, for icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
@@ -59,8 +54,6 @@
       <!-- Filters Sidebar -->
       <div class="filters-sidebar">
         <h2>Filters</h2>
-        
-        <!-- Category Filter -->
         <div class="filter-section">
           <h3>Category</h3>
           <div class="filter-options">
@@ -76,10 +69,16 @@
               <input type="checkbox" class="filter-checkbox" name="category" value="Dog Training" id="training">
               <label for="training">Dog Training</label>
             </div>
+            <div class="filter-option">
+              <input type="checkbox" class="filter-checkbox" name="category" value="Pet Sitting" id="sitting">
+              <label for="sitting">Pet Sitting</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" class="filter-checkbox" name="category" value="Breeding Services" id="breeding">
+              <label for="breeding">Breeding Services</label>
+            </div>
           </div>
         </div>
-
-        <!-- Price Filter -->
         <div class="filter-section">
           <h3>Price Range</h3>
           <div class="price-filter">
@@ -89,8 +88,6 @@
             <button id="apply-price" onclick="applyPriceFilter()">Apply</button>
           </div>
         </div>
-
-        <!-- Rating Filter -->
         <div class="filter-section">
           <h3>Rating</h3>
           <div class="filter-options">
@@ -108,7 +105,6 @@
             </div>
           </div>
         </div>
-
         <button class="clear-filters" onclick="clearAllFilters()">Clear All Filters</button>
       </div>
 
@@ -116,16 +112,15 @@
       <div class="services-content">
         <h1 style="color: black;" class="page-title"><%= pageTitle %></h1>
         <div class="services-container">
-          <!-- Loop through services array from app.js -->
           <% services.forEach(service => { %>
             <div 
               class="service-card" 
               data-category="<%= service.category %>" 
-              data-price="<%= service.price %>" 
-              data-rating="<%= service.rating %>"
+              data-price="<%= service.price || 0 %>" 
+              data-rating="<%= service.rating || 0 %>"
             >
               <div class="service-image">
-                <img src="<%= service.image %>" alt="<%= service.name %>">
+                <img src="<%= service.image || '/images/default-provider.jpg' %>" alt="<%= service.name %>">
               </div>
               <div class="service-info">
                 <h2 class="service-name"><%= service.name %></h2>
@@ -134,11 +129,9 @@
                   <i class="fa fa-map-marker-alt"></i> 
                   <%= service.location %>
                 </p>
-                <p class="service-description"><%= service.description %></p>
-                
+                <p class="service-description"><%= service.description || 'No description available' %></p>
                 <div class="service-details">
                   <div class="service-rating">
-                    <!-- Generate star icons based on rating -->
                     <% for (let i = 1; i <= 5; i++) { %>
                       <% if (i <= service.rating) { %>
                         <i class="fas fa-star"></i>
@@ -150,18 +143,13 @@
                     <% } %>
                     <span>(<%= service.reviewCount %> reviews)</span>
                   </div>
-
-                  <!-- Price Logic:
-                       - If category is Veterinary Doctor or Dog Training => "₹500 per session"
-                       - Else => numeric price from data -->
-                  <% if (service.category === 'Veterinary Doctor' || service.category === 'Dog Training') { %>
-                    <div class="service-price">Price: ₹500(Basic checkup)</div>
-                  <% } else { %>
+                  <% if (service.price && service.price > 0) { %>
                     <div class="service-price">Price: ₹<%= service.price %></div>
+                  <% } else { %>
+                    <div class="service-price">Price: Contact for details</div>
                   <% } %>
                 </div>
-
-                <button class="service-btn" onclick="bookService('<%= service.id %>')">
+                <button class="service-btn" onclick="window.location.href='/booking/<%= service.id %>'">
                   Book Appointment
                 </button>
               </div>
@@ -196,7 +184,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+            <p>© 2025 PetVerse. All Rights Reserved</p>
         </div>
     </footer>
 
