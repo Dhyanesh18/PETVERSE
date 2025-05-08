@@ -18,7 +18,7 @@ const getDashboard = async (req, res) => {
 
         // Fetch future bookings - directly using provider field
         const futureBookings = await Booking.find({
-            provider: serviceProviderId,
+            service: serviceProviderId,
             date: { $gt: todayFormatted }
         }).populate({
             path: 'user',
@@ -27,7 +27,7 @@ const getDashboard = async (req, res) => {
 
         // Fetch past bookings - directly using provider field
         const pastBookings = await Booking.find({
-            provider: serviceProviderId,
+            service: serviceProviderId,
             date: { $lte: todayFormatted }
         }).populate({
             path: 'user',

@@ -13,18 +13,21 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
-<body>
+<body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>">
     <!-- Header -->
-    <header class="header" id="header">
+    <header class="header">
         <nav id="navbar" class="navbar">
             <div class="nav-content">
                 <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
                 <div class="nav-icons">
-                    <button class="icon-btn" onclick="window.location.href='/cart'"><i class="fa fa-shopping-cart"></i></button>
-                    <button class="icon-btn" onclick="window.location.href='/login'"><i class="fa fa-user"></i></button>
+                    <a href="/cart" class="icon-btn cart-icon" id="cartIcon">
+                        <i class="fa fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount" style="display: none;">0</span>
+                    </a>
+                    <a href="/login" class="icon-btn"><i class="fa fa-user"></i></a>
                 </div>
                 <div class="search">
-                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <input class="search-bar" type="text" placeholder="Search pets, products or services">
                     <button class="search-btn"><i class="fa fa-search"></i></button>
                 </div>
                 <button class="hamburger" id="hamburger">
@@ -86,7 +89,7 @@
             <input type="number" id="min-price" placeholder="Min" min="0">
             <span>to</span>
             <input type="number" id="max-price" placeholder="Max" min="0">
-            <button id="apply-price" onclick="applyPriceFilter()">Apply</button>
+            <button id="apply-price">Apply</button>
           </div>
         </div>
 
@@ -109,7 +112,7 @@
           </div>
         </div>
 
-        <button class="clear-filters" onclick="clearAllFilters()">Clear All Filters</button>
+        <button class="clear-filters">Clear All Filters</button>
       </div>
 
       <!-- Services Content -->
@@ -120,50 +123,76 @@
           <% services.forEach(service => { %>
             <div 
               class="service-card" 
-              data-category="<%= service.category %>" 
+              data-category="<%= service.serviceType %>" 
               data-price="<%= service.price %>" 
-              data-rating="<%= service.rating %>"
+              data-rating="<%= service.avgRating || 0 %>"
             >
               <div class="service-image">
-                <img src="<%= service.image %>" alt="<%= service.name %>">
+                <%
+  let imagePath = '/images/services/service2.jpg'; // fallback image
+  switch (service.serviceType.toLowerCase()) {
+    case 'veterinarian':
+      imagePath = '/images/services/service1.jpg';
+      break;
+    case 'groomer':
+      imagePath = '/images/services/service7.jpg';
+      break;
+    case 'pet sitter':
+      imagePath = '/images/services/service11.jpg';
+      break;
+    case 'trainer':
+      imagePath = '/images/services/service6.jpg';
+      break;
+    case 'breeder':
+      imagePath = '/images/services/service12.jpg';
+      break;
+  }
+%>
+<img src="<%= imagePath %>" alt="<%= service.name %>">
+
               </div>
               <div class="service-info">
-                <h2 class="service-name"><%= service.name %></h2>
-                <p class="service-category"><%= service.category %></p>
-                <p class="service-location">
-                  <i class="fa fa-map-marker-alt"></i> 
-                  <%= service.location %>
-                </p>
-                <p class="service-description"><%= service.description %></p>
-                
-                <div class="service-details">
-                  <div class="service-rating">
-                    <!-- Generate star icons based on rating -->
-                    <% for (let i = 1; i <= 5; i++) { %>
-                      <% if (i <= service.rating) { %>
-                        <i class="fas fa-star"></i>
-                      <% } else if (i - 0.5 <= service.rating) { %>
-                        <i class="fas fa-star-half-alt"></i>
-                      <% } else { %>
-                        <i class="far fa-star"></i>
-                      <% } %>
-                    <% } %>
-                    <span>(<%= service.reviewCount %> reviews)</span>
-                  </div>
-
-                  <!-- Price Logic:
-                       - If category is Veterinary Doctor or Dog Training => "₹500 per session"
-                       - Else => numeric price from data -->
-                  <% if (service.category === 'Veterinary Doctor' || service.category === 'Dog Training') { %>
-                    <div class="service-price">Price: ₹500(Basic checkup)</div>
-                  <% } else { %>
-                    <div class="service-price">Price: ₹<%= service.price %></div>
-                  <% } %>
+                <h2 class="service-name"><%= service.fullName %></h2>
+                <div class="service-meta">
+                  <p class="service-category"><%= service.serviceType%></p>
                 </div>
+                
+                <p class="service-location">
+                  <%= service.serviceAddress %>
+                </p>
+                
+                <p class="service-contact">
+                  <i class="fa fa-phone"></i> <%= service.phone %> 
+                  <span class="service-email"><i class="fa fa-envelope"></i> <%= service.email %></span>
+                </p>
+                
+                
+                
+                <!-- Top Reviews Section -->
+                <% if (service.topReviews && service.topReviews.length > 0) { %>
+                  <div class="top-reviews">
+                    <h4>Recent Reviews</h4>
+                    <% service.topReviews.forEach(review => { %>
+                      <div class="review-preview">
+                        <div class="review-stars">
+                          <% for (let i = 1; i <= 5; i++) { %>
+                            <i class="fas fa-star <%= i <= review.rating ? 'filled' : '' %>"></i>
+                          <% } %>
+                        </div>
+                        <p class="review-text"><%= review.comment ? `"${review.comment.substring(0, 80)}${review.comment.length > 80 ? '...' : ''}"` : 'No comment provided' %></p>
+                      </div>
+                    <% }) %>
+                  </div>
+                <% } %>
 
-                <button class="service-btn" onclick="bookService('<%= service.id %>')">
-                  Book Appointment
-                </button>
+                <div class="service-buttons">
+                  <button class="service-btn" onclick="bookService('<%= service.id %>')">
+                    Book Appointment
+                  </button>
+                  <a href="/services/<%= service.id %>" class="service-btn details-btn">
+                    View Details
+                  </a>
+                </div>
               </div>
             </div>
           <% }) %>
@@ -202,101 +231,5 @@
 
     <!-- JS -->
     <script src="/js/Services.js"></script>
-
-    <!-- Optional: Toggle hamburger menu (for mobile) -->
-    <script>
-      const hamburger = document.getElementById('hamburger');
-      const navLinks = document.querySelector('.nav-links');
-      hamburger.addEventListener('click', () => {
-        navLinks.classList.toggle('active');
-      });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-    // Dropdown menu functionality
-    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-    const dropdownMenus = document.querySelectorAll('.dropdown-menu');
-    
-    // Hamburger menu functionality
-    const hamburger = document.querySelector('.hamburger');
-    const navLinks = document.querySelector('.nav-links');
-    const navbar = document.getElementById('navbar');
-    
-    // Toggle hamburger menu when clicked
-    if (hamburger && navLinks) {
-        hamburger.addEventListener('click', function() {
-            navLinks.classList.toggle('active');
-            navbar.classList.add('scrolled');
-        });
-    }
-    
-    // Add click event to each dropdown toggle
-    dropdownToggles.forEach(toggle => {
-        toggle.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Get the current dropdown menu
-            const currentDropdownMenu = this.nextElementSibling;
-            
-            // Close all other dropdown menus
-            dropdownMenus.forEach(menu => {
-                if (menu !== currentDropdownMenu) {
-                    menu.classList.remove('show');
-                }
-            });
-            
-            // Toggle the current dropdown menu
-            currentDropdownMenu.classList.toggle('show');
-            
-            // Add scrolled class to navbar
-            if (navbar) {
-                navbar.classList.add('scrolled');
-            }
-        });
-    });
-    
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
-        let clickedInsideDropdown = false;
-        
-        // Check if click was inside any dropdown toggle or menu
-        dropdownToggles.forEach(toggle => {
-            const dropdownMenu = toggle.nextElementSibling;
-            if (toggle.contains(e.target) || (dropdownMenu && dropdownMenu.contains(e.target))) {
-                clickedInsideDropdown = true;
-            }
-        });
-        
-        // If clicked outside dropdowns, close all of them
-        if (!clickedInsideDropdown) {
-            dropdownMenus.forEach(menu => {
-                menu.classList.remove('show');
-            });
-            
-            // Remove scrolled class if appropriate
-            if (navbar && window.scrollY <= 50 && (!navLinks || !navLinks.classList.contains('active'))) {
-                navbar.classList.remove('scrolled');
-            }
-        }
-    });
-    
-    // Scroll event for navbar
-    document.addEventListener('scroll', () => {
-        if (navbar) {
-            const scrollPosition = window.scrollY;
-            const threshold = 50;
-
-            if (scrollPosition > threshold) {
-                navbar.classList.add('scrolled');
-            } else {
-                // Only remove scrolled class if hamburger menu is not active
-                if (!navLinks || !navLinks.classList.contains('active')) {
-                    navbar.classList.remove('scrolled');
-                }
-            }
-        }
-    });
-});
-    </script>
 </body>
 </html>
