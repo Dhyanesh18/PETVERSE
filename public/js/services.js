@@ -106,6 +106,75 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
+  // Submit service review
+  const reviewForm = document.getElementById('service-review-form');
+  if (reviewForm) {
+    reviewForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Check if user is logged in
+      const isLoggedIn = document.body.getAttribute('data-user-logged-in') === 'true';
+      if (!isLoggedIn) {
+        alert('You must be logged in to submit a review');
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+      
+      const providerId = this.getAttribute('data-provider-id');
+      const rating = document.getElementById('rating-value').value;
+      const comment = document.getElementById('review-comment').value;
+      
+      if (!rating) {
+        alert('Please select a star rating');
+        return;
+      }
+      
+      // Send review to server
+      fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          rating: Number(rating),
+          comment: comment,
+          targetType: 'ServiceProvider',
+          targetId: providerId
+        }),
+        credentials: 'same-origin' // Include cookies for authentication
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Server returned status: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          // Hide modal
+          document.getElementById('review-modal').style.display = 'none';
+          
+          // Show success message
+          alert('Review submitted successfully!');
+          
+          // Reload the page to show the new review
+          window.location.reload();
+        } else {
+          alert(data.message || 'Error submitting review');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        if (error.message && error.message.includes('401')) {
+          alert('You need to be logged in to submit a review');
+          window.location.href = '/login';
+        } else {
+          alert('An error occurred while submitting your review. Please try again later.');
+        }
+      });
+    });
+  }
+  
   // ============= SERVICES FILTERING FUNCTIONALITY =============
   
   // Get all service cards
@@ -160,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Loop through all service cards and check if they match the filters
     serviceCards.forEach(card => {
-      const category = card.dataset.category;
+      const category = card.dataset.category.toLowerCase();
       const rating = parseFloat(card.dataset.rating) || 0;
       const price = parseFloat(card.dataset.price) || 0;
       

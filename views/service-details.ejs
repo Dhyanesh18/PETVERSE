@@ -312,7 +312,11 @@ break;
       <div class="reviews-section">
         <div class="reviews-header">
           <h2>Client Reviews</h2>
-          <button class="book-button" id="writeReviewBtn">Write a Review</button>
+          <% if (locals.user) { %>
+            <button class="book-button" id="writeReviewBtn">Write a Review</button>
+          <% } else { %>
+            <a href="/login?redirect=<%= encodeURIComponent('/services/' + service.id) %>" class="book-button">Login to Review</a>
+          <% } %>
         </div>
         
         <% if (service.reviews && service.reviews.length > 0) { %>
@@ -345,25 +349,22 @@ break;
       <div class="modal-content">
         <span class="close-modal">&times;</span>
         <h2>Write a Review</h2>
-        <form id="review-form" action="/review/create" method="POST">
-          <input type="hidden" id="review-provider-id" name="targetId" value="<%= service.id %>">
-          <input type="hidden" name="targetType" value="ServiceProvider">
-          
+        <form id="service-review-form" data-provider-id="<%= service.id %>">
           <div class="form-group">
             <label>Rating</label>
             <div class="rating-select">
-              <i class="far fa-star" data-rating="1"></i>
-              <i class="far fa-star" data-rating="2"></i>
-              <i class="far fa-star" data-rating="3"></i>
-              <i class="far fa-star" data-rating="4"></i>
-              <i class="far fa-star" data-rating="5"></i>
-              <input type="hidden" name="rating" id="rating-value" required>
+              <i class="<%= userReview && userReview.rating >= 1 ? 'fas' : 'far' %> fa-star" data-rating="1"></i>
+              <i class="<%= userReview && userReview.rating >= 2 ? 'fas' : 'far' %> fa-star" data-rating="2"></i>
+              <i class="<%= userReview && userReview.rating >= 3 ? 'fas' : 'far' %> fa-star" data-rating="3"></i>
+              <i class="<%= userReview && userReview.rating >= 4 ? 'fas' : 'far' %> fa-star" data-rating="4"></i>
+              <i class="<%= userReview && userReview.rating >= 5 ? 'fas' : 'far' %> fa-star" data-rating="5"></i>
+              <input type="hidden" id="rating-value" value="<%= userReview ? userReview.rating : '' %>" required>
             </div>
           </div>
           
           <div class="form-group">
             <label for="review-comment">Your Review</label>
-            <textarea id="review-comment" name="comment" rows="4" required></textarea>
+            <textarea id="review-comment" rows="4" required><%= userReview ? userReview.comment : '' %></textarea>
           </div>
           
           <button type="submit" class="book-button">Submit Review</button>

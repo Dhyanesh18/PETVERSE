@@ -111,7 +111,7 @@ exports.getServiceDetails = async (req, res) => {
     const reviews = await Review.find({ 
       targetType: 'ServiceProvider', 
       targetId: providerId 
-    }).populate('user', 'fullName');
+    }).populate('user', 'fullName username');
     
     const reviewCount = reviews.length;
     const avgRating = reviewCount > 0 
@@ -147,17 +147,28 @@ exports.getServiceDetails = async (req, res) => {
       description: provider.description || 'Professional pet services provider.',
       email: provider.email,
       phone: provider.phone || 'Contact via email',
-      rating: avgRating,
+      rating: parseFloat(avgRating.toFixed(1)),
       reviewCount: reviewCount,
       price: price,
       image: provider.image ? `/images/provider/${provider._id}` : '/images/default-provider.jpg',
       reviews: reviews
     };
     
+    // Check if user has already reviewed this service
+    let userReview = null;
+    if (req.user && req.user._id) {
+      userReview = await Review.findOne({
+        user: req.user._id,
+        targetType: 'ServiceProvider',
+        targetId: providerId
+      });
+    }
+    
     res.render('service-details', { 
       pageTitle: `${serviceDetails.name} - ${serviceDetails.category}`,
       service: serviceDetails,
-      user: req.user
+      user: req.user,
+      userReview: userReview
     });
   } catch (err) {
     console.error('Error fetching service details:', err);

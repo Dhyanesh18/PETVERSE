@@ -68,16 +68,32 @@
           <h3>Category</h3>
           <div class="filter-options">
             <div class="filter-option">
-              <input type="checkbox" class="filter-checkbox" name="category" value="Veterinary Doctor" id="vet">
+              <input type="checkbox" class="filter-checkbox" name="category" value="veterinarian" id="vet">
               <label for="vet">Veterinary Doctor</label>
             </div>
             <div class="filter-option">
-              <input type="checkbox" class="filter-checkbox" name="category" value="Pet Grooming" id="grooming">
+              <input type="checkbox" class="filter-checkbox" name="category" value="groomer" id="grooming">
               <label for="grooming">Pet Grooming</label>
             </div>
             <div class="filter-option">
-              <input type="checkbox" class="filter-checkbox" name="category" value="Dog Training" id="training">
+              <input type="checkbox" class="filter-checkbox" name="category" value="trainer" id="training">
               <label for="training">Dog Training</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" class="filter-checkbox" name="category" value="pet sitter" id="pet-sitting">
+              <label for="pet-sitting">Pet Sitting</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" class="filter-checkbox" name="category" value="breeder" id="breeding">
+              <label for="breeding">Breeding Services</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" class="filter-checkbox" name="category" value="walking" id="walking">
+              <label for="walking">Dog Walking</label>
+            </div>
+            <div class="filter-option">
+              <input type="checkbox" class="filter-checkbox" name="category" value="sitting" id="sitting">
+              <label for="sitting">Pet Sitting</label>
             </div>
           </div>
         </div>
@@ -123,9 +139,9 @@
           <% services.forEach(service => { %>
             <div 
               class="service-card" 
-              data-category="<%= service.serviceType %>" 
+              data-category="<%= service.serviceType.toLowerCase() %>" 
               data-price="<%= service.price %>" 
-              data-rating="<%= service.avgRating || 0 %>"
+              data-rating="<%= service.rating || 0 %>"
             >
               <div class="service-image">
                 <%
