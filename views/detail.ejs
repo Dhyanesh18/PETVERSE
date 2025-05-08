@@ -7,6 +7,27 @@
   <link rel="stylesheet" href="/css/detail.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    /* Cart count style */
+    .cart-icon {
+        position: relative;
+    }
+    .cart-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: #ff6b6b;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+  </style>
 </head>
 <body>
   <!-- Header space -->
@@ -15,7 +36,10 @@
         <div class="nav-content">
             <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
             <div class="nav-icons">
-                <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                <button onclick="window.location.href='/cart'" class="icon-btn cart-icon">
+                    <i class="fa fa-shopping-cart"></i>
+                    <span class="cart-count" id="cartCount" style="display: none;">0</span>
+                </button>
                 <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
             </div>
             <div class="search">
@@ -126,7 +150,8 @@
         </div>
 
         <div class="actions flex flex-col md:flex-row gap-4 mt-6">
-          <button class="add-to-cart bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded flex-1 flex items-center justify-center">
+          <button class="add-to-cart bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded flex-1 flex items-center justify-center" 
+                  data-product-id="<%= typeof product._id !== 'undefined' ? product._id : (typeof req !== 'undefined' && req.params ? req.params.id : '') %>">
             <i class="fas fa-shopping-cart mr-2"></i> Add to Cart
           </button>
           <button class="wishlist-btn px-4 py-3 rounded">
@@ -312,5 +337,120 @@
         }
     });
 </script>
+    <script src="/js/script.js"></script>
+    <script src="/js/cart-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize cart count
+            if (typeof cartManager !== 'undefined') {
+                cartManager.initializeCart();
+            } else {
+                // Fallback if cart-manager.js is not loaded
+                fetch('/cart/count')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const cartCount = document.getElementById('cartCount');
+                            if (cartCount) {
+                                cartCount.textContent = data.cartCount;
+                                cartCount.style.display = data.cartCount > 0 ? 'inline-block' : 'none';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching cart count:', error));
+            }
+
+            
+            // Add to cart functionality
+            const addToCartButton = document.querySelector('.add-to-cart');
+            if (addToCartButton) {
+                // Debug: Log the product ID
+                console.log('Product ID from data attribute:', addToCartButton.getAttribute('data-product-id'));
+                
+                // Get URL path segments
+                const pathSegments = window.location.pathname.split('/');
+                // The ID is usually the last segment in the URL path
+                const pathId = pathSegments[pathSegments.length - 1];
+                console.log('Product ID from URL:', pathId);
+                
+                // If data attribute is empty, use the ID from URL
+                if (!addToCartButton.getAttribute('data-product-id') && pathId) {
+                    addToCartButton.setAttribute('data-product-id', pathId);
+                    console.log('Set product ID from URL:', pathId);
+                }
+                
+                addToCartButton.addEventListener('click', async function() {
+                    try {
+                        let productId = this.getAttribute('data-product-id');
+                        
+                        // If still no product ID, try to get it from URL
+                        if (!productId) {
+                            productId = pathId;
+                            console.log('Using product ID from URL as fallback:', productId);
+                        }
+                        
+                        if (!productId) {
+                            throw new Error('Product ID not found');
+                        }
+                        
+                        // Show loading state
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Adding...';
+                        this.disabled = true;
+                        
+                        // Determine if this is a pet or product
+                        const isPet = <%= product.isPet ? 'true' : 'false' %>;
+                        const itemType = isPet ? 'Pet' : 'Product';
+                        console.log('Item type:', itemType);
+                        
+                        // Add to cart with item type
+                        const response = await fetch('/cart/add', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 
+                                productId, 
+                                quantity: 1,
+                                itemType: itemType
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Update cart count
+                            const cartCount = document.getElementById('cartCount');
+                            if (cartCount) {
+                                cartCount.textContent = result.cartCount;
+                                cartCount.style.display = result.cartCount > 0 ? 'inline-block' : 'none';
+                            }
+                            
+                            // Show success
+                            this.innerHTML = '<i class="fas fa-check mr-2"></i> Added to Cart';
+                        } else {
+                            throw new Error(result.message || 'Failed to add item to cart');
+                        }
+                        
+                        // Reset button after delay
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        }, 2000);
+                    } catch (error) {
+                        console.error('Failed to add to cart:', error);
+                        this.innerHTML = '<i class="fas fa-times mr-2"></i> Failed to Add';
+                        
+                        // Reset button after delay
+                        setTimeout(() => {
+                            this.innerHTML = '<i class="fas fa-shopping-cart mr-2"></i> Add to Cart';
+                            this.disabled = false;
+                        }, 2000);
+                    }
+                });
+            }
+
+        });
+    </script>
 </body>
 </html>

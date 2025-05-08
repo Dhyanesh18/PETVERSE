@@ -61,7 +61,7 @@ const imageRoutes = require('./routes/image-routes');
 const productRoutes = require('./routes/product-routes');
 const bookingRoutes = require('./routes/booking');
 const reviewRoutes = require('./routes/review-routes');
-const servicesRoutes = require('./routes/services-routes');
+// const servicesRoutes = require('./routes/services-routes');
 const serviceProviderRoutes = require('./routes/service-provider-routes');
 
 const userRoutes = require('./routes/user-routes');
@@ -89,12 +89,18 @@ app.use('/admin', adminRoutes);
 // Service routes
 app.use('/cart', cartRoutes);
 app.use('/booking', bookingRoutes);
-app.use('/services', servicesRoutes);
+// app.use('/services', servicesRoutes);
 app.use('/service-provider', serviceProviderRoutes);
 app.use('/', reviewRoutes);
 
 app.get('/', (req, res) => {
-  res.render('login', { error: null });
+  if (req.session.userId) {
+    // If user is logged in, redirect to home page
+    res.redirect('/home');
+  } else {
+    // If no user is logged in, show login page
+    res.render('login', { error: null });
+  }
 });
 
 const port = process.env.PORT || 8080;

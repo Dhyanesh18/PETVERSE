@@ -7,6 +7,27 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="/css/products.css">
+    <style>
+        /* Cart count style */
+        .cart-icon {
+            position: relative;
+        }
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ff6b6b;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
     <%- include('partials/header') %>
@@ -166,6 +187,29 @@
         });
     </script>
     <script src="/js/script.js"></script>
+    <script src="/js/cart-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize cart count
+            if (typeof cartManager !== 'undefined') {
+                cartManager.initializeCart();
+            } else {
+                // Fallback if cart-manager.js is not loaded
+                fetch('/cart/count')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const cartCount = document.getElementById('cartCount');
+                            if (cartCount) {
+                                cartCount.textContent = data.cartCount;
+                                cartCount.style.display = data.cartCount > 0 ? 'inline-block' : 'none';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching cart count:', error));
+            }
+        });
+    </script>
     <style>
         .product-card {
             cursor: pointer;
@@ -226,14 +270,36 @@
             // Get selected ages (for pets)
             const selectedAges = Array.from(document.querySelectorAll('input[name="age"]:checked')).map(cb => cb.value.toLowerCase());
 
+            console.log("Selected categories:", selectedCategories);
+
             document.querySelectorAll('.product-card').forEach(card => {
                 const type = card.getAttribute('data-type');
-                const category = (card.getAttribute('data-category') || '').toLowerCase();
+                // Map the category to match the filter value format
+                let category = (card.getAttribute('data-category') || '').toLowerCase();
+                
+                // Convert category names to match the filter values
+                const categoryMapping = {
+                    'dog': 'dogs',
+                    'cat': 'cats',
+                    'bird': 'birds',
+                    'fish': 'fish',
+                    'other': 'other'
+                };
+                
+                // Convert the displayed category to the filter value
+                category = categoryMapping[category] || category;
+                
+                console.log("Card category:", category);
+                
                 const price = parseFloat(card.getAttribute('data-price')) || 0;
                 let show = true;
 
                 // Category filter
-                if (selectedCategories.length && !selectedCategories.includes(category)) show = false;
+                if (selectedCategories.length && !selectedCategories.includes(category)) {
+                    console.log("Category filtered out:", category);
+                    show = false;
+                }
+                
                 // Price filter
                 if (price < minPrice || price > maxPrice) show = false;
 

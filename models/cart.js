@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
 
+// Load models to ensure Mongoose knows about them
+require('./products');
+require('./pets');
+
 const cartSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -9,8 +13,14 @@ const cartSchema = new mongoose.Schema({
     items: [{
         productId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'Product',
-            required: true
+            required: true,
+            refPath: 'items.itemType'
+        },
+        itemType: {
+            type: String,
+            required: true,
+            enum: ['Product', 'Pet'],
+            default: 'Product'
         },
         quantity: {
             type: Number,
