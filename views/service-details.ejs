@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><%= pageTitle %></title>
+
+  <!-- Link to CSS -->
+  <link rel="stylesheet" href="/css/services.css">
+  <link rel="stylesheet" href="/css/service-details.css">
+  
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  
+  <style>
+    .service-detail-container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .service-header {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 30px;
+      gap: 30px;
+    }
+    
+    .service-image {
+      width: 300px;
+      height: 300px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .service-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .service-info {
+      flex: 1;
+    }
+    
+    .service-name {
+      font-size: 2.5rem;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    .service-category {
+      display: inline-block;
+      background-color: #4CAF50;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 1rem;
+      margin-bottom: 15px;
+    }
+    
+    .service-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .meta-item i {
+      color: #4CAF50;
+    }
+    
+    .service-description {
+      margin: 20px 0;
+      line-height: 1.6;
+      color: #555;
+    }
+    
+    .pricing {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .pricing h3 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .price-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .booking-section {
+      margin-top: 30px;
+      text-align: center;
+    }
+    
+    .book-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .book-button:hover {
+      background-color: #388e3c;
+    }
+    
+    .reviews-section {
+      margin-top: 40px;
+    }
+    
+    .reviews-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .review-card {
+      padding: 15px;
+      border-radius: 8px;
+      background-color: #f8f9fa;
+      margin-bottom: 15px;
+    }
+    
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    
+    .review-author {
+      font-weight: bold;
+    }
+    
+    .star-rating {
+      color: #ffc107;
+    }
+  </style>
+</head>
+<body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>">
+    <!-- Header -->
+    <header class="header">
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="nav-icons">
+                    <a href="/cart" class="icon-btn cart-icon" id="cartIcon">
+                        <i class="fa fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount" style="display: none;">0</span>
+                    </a>
+                    <a href="/login" class="icon-btn"><i class="fa fa-user"></i></a>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder="Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/pets">Pets</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/products/petfood">Pet Food</a></li>
+                            <li><a href="/products/toys">Toys</a></li>
+                            <li><a href="/products/accessories">Accessories</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/services">Services</a></li>
+                            <li><a href="/mate">PetMate</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Service Details Content -->
+    <div class="service-detail-container">
+      <!-- Service Header with Image and Basic Info -->
+      <div class="service-header">
+        <div class="service-image">
+          <%
+let imagePath = '/images/services/service2.jpg'; // fallback image
+switch (service.category.toLowerCase()) {
+case 'veterinarian':
+imagePath = '/images/services/service1.jpg';
+break;
+case 'groomer':
+imagePath = '/images/services/service7.jpg';
+break;
+case 'pet sitter':
+imagePath = '/images/services/service11.jpg';
+break;
+case 'trainer':
+imagePath = '/images/services/service6.jpg';
+break;
+case 'breeder':
+imagePath = '/images/services/service12.jpg';
+break;
+}
+%>
+<img src="<%= imagePath %>" alt="<%= service.name %>">
+
+        </div>
+        
+        <div class="service-info">
+          <h1 class="service-name"><%= service.name %></h1>
+          <span class="service-category"><%= service.category %></span>
+          
+          <div class="service-meta">
+            <div class="meta-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span><%= service.location %></span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-clock"></i>
+              <span>Mon-Sat, 9:00 AM - 6:00 PM</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-star"></i>
+              <span><%= service.rating || 0 %> (<%= service.reviewCount || 0 %> Reviews)</span>
+            </div>
+          </div>
+          
+          <p class="service-description"><%= service.description %></p>
+        </div>
+      </div>
+      
+      <!-- Pricing Section -->
+      <div class="pricing">
+        <h3>Services & Pricing</h3>
+        <% if (service.category === 'Veterinary Doctor') { %>
+          <div class="price-item">
+            <span>Basic Checkup</span>
+            <span>₹500</span>
+          </div>
+          <div class="price-item">
+            <span>Vaccination</span>
+            <span>₹800 - ₹1,500</span>
+          </div>
+          <div class="price-item">
+            <span>Surgery Consultation</span>
+            <span>₹1,000</span>
+          </div>
+        <% } else if (service.category === 'Pet Grooming') { %>
+          <div class="price-item">
+            <span>Basic Bath & Brush</span>
+            <span>₹<%= service.price || 800 %></span>
+          </div>
+          <div class="price-item">
+            <span>Full Grooming (Bath, haircut, nails, ears)</span>
+            <span>₹<%= (service.price * 1.5) || 1200 %></span>
+          </div>
+          <div class="price-item">
+            <span>Specialized Treatments</span>
+            <span>₹<%= (service.price * 2) || 1500 %>+</span>
+          </div>
+        <% } else if (service.category === 'Dog Training') { %>
+          <div class="price-item">
+            <span>Basic Obedience Training</span>
+            <span>₹500 per session</span>
+          </div>
+          <div class="price-item">
+            <span>6-Week Package</span>
+            <span>₹2,500</span>
+          </div>
+          <div class="price-item">
+            <span>Advanced Training</span>
+            <span>₹4,000</span>
+          </div>
+        <% } else { %>
+          <div class="price-item">
+            <span>Standard Service</span>
+            <span>₹<%= service.price || 500 %></span>
+          </div>
+        <% } %>
+      </div>
+      
+      <!-- Booking Section -->
+      <div class="booking-section">
+        <a href="/booking/<%= service.id %>" class="book-button">Book Now</a>
+      </div>
+      
+      <div class="reviews-section">
+        <div class="reviews-header">
+          <h2>Client Reviews</h2>
+          <% if (locals.user) { %>
+            <button class="book-button" id="writeReviewBtn">Write a Review</button>
+          <% } else { %>
+            <a href="/login?redirect=<%= encodeURIComponent('/services/' + service.id) %>" class="book-button">Login to Review</a>
+          <% } %>
+        </div>
+        
+        <% if (service.reviews && service.reviews.length > 0) { %>
+          <% service.reviews.forEach(review => { %>
+            <div class="review-card">
+              <div class="review-header">
+                <div class="review-author"><%= review.user ? review.user.fullName : 'Anonymous' %></div>
+                <div class="star-rating">
+                  <% for (let i = 1; i <= 5; i++) { %>
+                    <% if (i <= review.rating) { %>
+                      <i class="fas fa-star"></i>
+                    <% } else { %>
+                      <i class="far fa-star"></i>
+                    <% } %>
+                  <% } %>
+                </div>
+              </div>
+              <p><%= review.comment %></p>
+              <small><%= new Date(review.createdAt).toLocaleDateString() %></small>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <p>No reviews yet. Be the first to review this service!</p>
+        <% } %>
+      </div>
+    </div>
+    
+    <!-- Review Form Modal -->
+    <div id="review-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Write a Review</h2>
+        <form id="service-review-form" data-provider-id="<%= service.id %>">
+          <div class="form-group">
+            <label>Rating</label>
+            <div class="rating-select">
+              <i class="<%= userReview && userReview.rating >= 1 ? 'fas' : 'far' %> fa-star" data-rating="1"></i>
+              <i class="<%= userReview && userReview.rating >= 2 ? 'fas' : 'far' %> fa-star" data-rating="2"></i>
+              <i class="<%= userReview && userReview.rating >= 3 ? 'fas' : 'far' %> fa-star" data-rating="3"></i>
+              <i class="<%= userReview && userReview.rating >= 4 ? 'fas' : 'far' %> fa-star" data-rating="4"></i>
+              <i class="<%= userReview && userReview.rating >= 5 ? 'fas' : 'far' %> fa-star" data-rating="5"></i>
+              <input type="hidden" id="rating-value" value="<%= userReview ? userReview.rating : '' %>" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="review-comment">Your Review</label>
+            <textarea id="review-comment" rows="4" required><%= userReview ? userReview.comment : '' %></textarea>
+          </div>
+          
+          <button type="submit" class="book-button">Submit Review</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+        </div>
+    </footer>
+
+    <!-- Include Services.js for navbar functionality -->
+    <script src="/js/Services.js"></script>
+</body>
+</html> 

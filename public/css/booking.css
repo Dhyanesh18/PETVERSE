@@ -9,101 +9,239 @@
 
 /* Container that holds both info (left) and form/confirmation (right) */
 .booking-container {
-    max-width: 1000px; /* Adjust as desired for page width */
-    margin: 80px auto;
+    max-width: 1000px;
+    margin: 100px auto 50px;
     padding: 0 20px;
-  }
-  
-  /* The flex wrapper for side-by-side layout */
-  .booking-wrapper {
+}
+
+/* The flex wrapper for side-by-side layout */
+.booking-wrapper {
     display: flex;
     gap: 30px;
     background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
     width: 100%;
     padding: 30px;
-  }
-  
-  /* Left side info about the service */
-  .booking-info {
-    flex: 1; /* Takes half the space (adjust as you like) */
-  }
-  
-  .booking-info h1 {
+}
+
+/* Left side info about the service */
+.booking-info {
+    flex: 1;
+    padding-right: 20px;
+}
+
+.booking-info h1 {
     margin-bottom: 10px;
-    color: teal;
-    font-size: 1.5rem;
-  }
-  
-  .booking-info p {
-    margin-bottom: 8px;
-    line-height: 1.4;
-  }
-  
-  /* Right side container for form or confirmation */
-  .booking-form-container {
-    flex: 1; /* Takes half the space (adjust as you like) */
-  }
-  
-  .booking-form-container h2 {
+    color: #333;
+    font-size: 1.8rem;
+}
+
+.service-category {
+    display: inline-block;
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
     margin-bottom: 15px;
-    color: teal;
-    font-size: 1.4rem;
-  }
-  
-  /* The booking form itself */
-  .booking-form {
+}
+
+.booking-info p {
+    margin-bottom: 12px;
+    line-height: 1.6;
+    color: #555;
+}
+
+.availability-info, .booking-instructions {
+    margin-top: 25px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border-left: 4px solid #4CAF50;
+}
+
+.availability-info h3, .booking-instructions h3 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.booking-instructions ul {
+    padding-left: 20px;
+    margin-bottom: 12px;
+}
+
+.booking-instructions li {
+    margin-bottom: 8px;
+}
+
+/* Right side container for form or confirmation */
+.booking-form-container {
+    flex: 1;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.booking-form-container h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+/* The booking form itself */
+.booking-form {
     display: flex;
     flex-direction: column;
     gap: 15px;
-  }
-  
-  .booking-form label {
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
     font-weight: 500;
     color: #333;
-  }
-  
-  .booking-form input {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  .book-now-btn {
-    background-color: teal;
+    margin-bottom: 5px;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.form-group input:focus, 
+.form-group select:focus, 
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+.book-now-btn {
+    background-color: #4CAF50;
     color: #fff;
-    padding: 10px 15px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     font-size: 1rem;
+    font-weight: 500;
     cursor: pointer;
-    align-self: flex-start;
-    transition: background-color 0.3s;
-  }
-  
-  .book-now-btn:hover {
-    background-color: #0bb;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-  }
-  
-  /* Confirmation link back to services */
-  .back-link {
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.book-now-btn:hover {
+    background-color: #388e3c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* No slots message */
+.no-slots {
+    color: #f44336;
+    margin-top: 5px;
+    font-size: 0.9rem;
+}
+
+/* Error message */
+.error-message {
+    padding: 12px;
+    background-color: #ffebee;
+    border-left: 4px solid #f44336;
+    color: #c62828;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+/* Confirmation message styling */
+.confirmation-message {
+    text-align: center;
+    padding: 20px;
+    background-color: #e8f5e9;
+    border-radius: 8px;
+    border: 1px solid #c8e6c9;
+}
+
+.confirmation-details {
+    margin-top: 20px;
+}
+
+.booking-details {
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.booking-details p {
+    margin-bottom: 10px;
+}
+
+.booking-details i {
+    color: #4CAF50;
+    margin-right: 10px;
+}
+
+/* Confirmation link back to services */
+.back-link {
     display: inline-block;
-    margin-top: 15px;
-    color: teal;
+    margin-top: 20px;
+    color: #4CAF50;
     text-decoration: none;
     font-weight: 500;
-  }
-  .back-link:hover {
-    color: #0bb;
-  }
-  
-  /* Responsive adjustments for smaller screens */
-  @media screen and (max-width: 800px) {
+    padding: 8px 16px;
+    border: 1px solid #4CAF50;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.back-link:hover {
+    background-color: #4CAF50;
+    color: white;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
     .booking-wrapper {
-      flex-direction: column;
-      padding: 20px;
+        flex-direction: column;
+        padding: 20px;
     }
-  }
+    
+    .booking-info {
+        padding-right: 0;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .booking-form-container {
+        padding: 15px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .booking-container {
+        margin: 80px auto 30px;
+        padding: 0 10px;
+    }
+    
+    .booking-wrapper {
+        padding: 15px;
+    }
+    
+    .booking-form-container h2 {
+        font-size: 1.3rem;
+    }
+}
   

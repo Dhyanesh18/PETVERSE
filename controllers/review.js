@@ -70,6 +70,15 @@ exports.createReview = async (req, res) => {
                 message: 'Missing required fields: rating, targetType, targetId'
             });
         }
+
+        // Log the request data for debugging
+        console.log('Creating review with data:', {
+            userId,
+            rating,
+            comment,
+            targetType,
+            targetId
+        });
         
         // Validate target exists based on targetType
         let targetExists = false;
@@ -83,6 +92,10 @@ exports.createReview = async (req, res) => {
         } else if (targetType === 'ServiceProvider') {
             const provider = await User.findById(targetId);
             targetExists = !!provider && provider.role === 'service_provider';
+            
+            if (!targetExists) {
+                console.log(`Provider not found or not a service provider: ${targetId}`);
+            }
         }
         
         if (!targetExists) {
@@ -103,6 +116,7 @@ exports.createReview = async (req, res) => {
         
         if (existingReview) {
             // Update existing review
+            console.log(`Updating existing review ${existingReview._id}`);
             review = await Review.findByIdAndUpdate(
                 existingReview._id,
                 {
@@ -119,6 +133,7 @@ exports.createReview = async (req, res) => {
             });
         } else {
             // Create new review
+            console.log('Creating new review');
             review = await Review.create({
                 user: userId,
                 rating,

@@ -5,7 +5,7 @@ const { isAuthenticated } = require('../middleware/auth');
 // Import Mongoose Models
 const Pet = require('../models/pets');
 const Product = require('../models/products');
-const Service = require('../models/Service');
+const Service = require('../models/serviceProvider');
 const Cart = require('../models/cart');
 const Review = require('../models/reviews');
 const User = require('../models/users');
