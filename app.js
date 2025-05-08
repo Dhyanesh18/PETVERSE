@@ -77,7 +77,7 @@ app.use('/', imageRoutes);
 
 // Pet related routes
 app.use('/pets', mateRoutes);
-app.use('/pets', petRoutes);
+app.use('/seller', petRoutes);
 
 // Seller related routes
 app.use('/seller', sellerRoutes);
