@@ -9,7 +9,21 @@ const upload = multer({
 
 
 // Login routes ----------------------------------------
-router.get('/login', loginController.showLoginForm);
+router.get('/login',(req, res, next)=>{
+    if(req.session.userId){
+        switch(req.user.role){
+            case 'owner':
+                return res.redirect('/owner-dashboard');
+            case 'seller':
+                return res.redirect('/seller/dashboard');
+            case 'service_provider':
+                return res.redirect('/service-provider/dashboard');
+            default:
+                return res.redirect('/admin/dashboard');
+            }
+        }
+        next();
+    }, loginController.showLoginForm);
 router.post('/login', loginController.handleLogin);
 // Add a session check route to determine user type for UI customization
 router.get('/check-session', (req, res) => {
