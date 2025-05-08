@@ -270,14 +270,36 @@
             // Get selected ages (for pets)
             const selectedAges = Array.from(document.querySelectorAll('input[name="age"]:checked')).map(cb => cb.value.toLowerCase());
 
+            console.log("Selected categories:", selectedCategories);
+
             document.querySelectorAll('.product-card').forEach(card => {
                 const type = card.getAttribute('data-type');
-                const category = (card.getAttribute('data-category') || '').toLowerCase();
+                // Map the category to match the filter value format
+                let category = (card.getAttribute('data-category') || '').toLowerCase();
+                
+                // Convert category names to match the filter values
+                const categoryMapping = {
+                    'dog': 'dogs',
+                    'cat': 'cats',
+                    'bird': 'birds',
+                    'fish': 'fish',
+                    'other': 'other'
+                };
+                
+                // Convert the displayed category to the filter value
+                category = categoryMapping[category] || category;
+                
+                console.log("Card category:", category);
+                
                 const price = parseFloat(card.getAttribute('data-price')) || 0;
                 let show = true;
 
                 // Category filter
-                if (selectedCategories.length && !selectedCategories.includes(category)) show = false;
+                if (selectedCategories.length && !selectedCategories.includes(category)) {
+                    console.log("Category filtered out:", category);
+                    show = false;
+                }
+                
                 // Price filter
                 if (price < minPrice || price > maxPrice) show = false;
 

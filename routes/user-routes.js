@@ -433,11 +433,15 @@ router.get('/about', isAuthenticated, async (req, res) => { // Made async for fu
     }
 });
 
-// Cart route
+// Cart page route
 router.get('/cart', isAuthenticated, async (req, res) => {
     try {
-        const cart = await Cart.findOne({ userId: req.session.userId })
-            .populate('items.productId');
+        // Find user's cart and populate product details
+        let cart = await Cart.findOne({ userId: req.session.userId })
+            .populate({
+                path: 'items.productId',
+                refPath: 'items.itemType'
+            });
 
         // If no cart exists, create one
         if (!cart) {
@@ -457,13 +461,48 @@ router.get('/cart', isAuthenticated, async (req, res) => {
         // Transform cart items into products array and clean up invalid items
         cart.items = cart.items.filter(item => item.productId); // Remove invalid items from cart
         await cart.save(); // Save the cleaned cart
-        const products = cart.items.map(item => ({
-            id: item.productId._id,
-            title: item.productId.name,
-            price: item.productId.price,
-            image_url: item.productId.image_url,
-            quantity: item.quantity
-        }));
+        
+        // Map products for the view
+        const products = cart.items.map(item => {
+            // Get common properties for both product types
+            let product = {
+                id: item.productId._id,
+                title: item.productId.name,
+                price: item.productId.price,
+                quantity: item.quantity,
+                itemType: item.itemType
+            };
+            
+            // Handle images based on item type
+            if (item.itemType === 'Pet') {
+                // Handle pet images
+                product.image = item.productId.images && item.productId.images.length > 0 ? 
+                    {
+                        contentType: item.productId.images[0].contentType,
+                        data: item.productId.images[0].data
+                    } : null;
+                
+                // Add pet-specific properties
+                product.breed = item.productId.breed;
+                product.age = item.productId.age;
+                product.gender = item.productId.gender;
+                product.category = item.productId.category;
+            } else {
+                // Handle product images
+                product.image = item.productId.images && item.productId.images.length > 0 ? 
+                    {
+                        contentType: item.productId.images[0].contentType,
+                        data: item.productId.images[0].data
+                    } : null;
+                
+                // Add product-specific properties
+                product.brand = item.productId.brand;
+                product.discount = item.productId.discount || 0;
+                product.stock = item.productId.stock;
+            }
+            
+            return product;
+        });
 
         res.render('cart', {
             navLinks: navLinksData,
@@ -473,7 +512,7 @@ router.get('/cart', isAuthenticated, async (req, res) => {
         });
     } catch (err) {
         console.error('Error fetching cart:', err);
-        res.status(500).render('error', { message: 'Error loading cart' });
+        res.status(500).render('error', { message: 'Error loading cart: ' + err.message });
     }
 });
 
@@ -499,7 +538,7 @@ router.get('/cart/count', isAuthenticated, async (req, res) => {
 // Add to cart
 router.post('/cart/add', isAuthenticated, async (req, res) => {
     try {
-        const { productId, quantity } = req.body;
+        const { productId, quantity, itemType } = req.body;
         
         if (!productId || !quantity) {
             return res.status(400).json({
@@ -507,6 +546,10 @@ router.post('/cart/add', isAuthenticated, async (req, res) => {
                 error: 'Product ID and quantity are required'
             });
         }
+
+        // Default to Product type if not specified
+        const type = itemType || 'Product';
+        console.log(`Adding item to cart (user-routes): ${productId}, type: ${type}, quantity: ${quantity}`);
 
         let cart = await Cart.findOne({ userId: req.session.userId });
         
@@ -526,7 +569,8 @@ router.post('/cart/add', isAuthenticated, async (req, res) => {
         } else {
             cart.items.push({
                 productId,
-                quantity
+                quantity,
+                itemType: type
             });
         }
 
@@ -540,7 +584,7 @@ router.post('/cart/add', isAuthenticated, async (req, res) => {
         console.error('Error adding to cart:', err);
         res.status(500).json({
             success: false,
-            error: 'Server error while adding to cart'
+            error: 'Server error while adding to cart: ' + err.message
         });
     }
 });
@@ -575,7 +619,7 @@ router.post('/cart/remove', isAuthenticated, async (req, res) => {
 // Update cart quantity route
 router.post('/cart/update', isAuthenticated, async (req, res) => {
     try {
-        const { productId, quantity } = req.body;
+        const { productId, quantity, itemType } = req.body;
         
         const cart = await Cart.findOne({ userId: req.session.userId });
         if (!cart) {
@@ -588,6 +632,10 @@ router.post('/cart/update', isAuthenticated, async (req, res) => {
         
         if (item) {
             item.quantity = parseInt(quantity);
+            // Update itemType if provided
+            if (itemType) {
+                item.itemType = itemType;
+            }
             await cart.save();
             
             // Update cart count in session
@@ -600,7 +648,7 @@ router.post('/cart/update', isAuthenticated, async (req, res) => {
         }
     } catch (err) {
         console.error('Error updating cart:', err);
-        res.status(500).json({ success: false, error: 'Error updating cart' });
+        res.status(500).json({ success: false, error: 'Error updating cart: ' + err.message });
     }
 });
 

@@ -94,7 +94,13 @@ app.use('/service-provider', serviceProviderRoutes);
 app.use('/', reviewRoutes);
 
 app.get('/', (req, res) => {
-  res.render('login', { error: null });
+  if (req.session.userId) {
+    // If user is logged in, redirect to home page
+    res.redirect('/home');
+  } else {
+    // If no user is logged in, show login page
+    res.render('login', { error: null });
+  }
 });
 
 const port = process.env.PORT || 8080;
