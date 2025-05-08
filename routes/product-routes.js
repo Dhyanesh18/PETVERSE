@@ -11,6 +11,7 @@ const upload = multer({
     }
 });
 const productController = require('../controllers/products');
+const Pet = require('../models/pets');
 
 // Add product page
 router.get('/products/add', sellerAuth, (req, res) => {
@@ -86,20 +87,22 @@ router.get('/about', (req,res)=>{
 });
 
 // Product edit page
-router.get('/products/:id/edit', sellerAuth, async (req, res) => {
+
+
+router.get('/pets/:id/edit', sellerAuth, async (req, res) => {
     try {
-        const product = await Product.findOne({ 
+        const pet = await Pet.findOne({ 
             _id: req.params.id,
             seller: req.user._id
         });
 
-        if (!product) {
+        if (!pet) {
             return res.status(404).render('error', { 
                 message: 'Product not found or you do not have permission to edit it'
             });
         }
 
-        res.render('edit-product', { product });
+        res.render('edit-product', { pet });
     } catch (err) {
         console.error('Error loading product for edit:', err);
         res.status(500).render('error', { message: 'Error loading product' });
@@ -170,6 +173,8 @@ router.post('/products/:id/edit', sellerAuth, upload.array('images'), async (req
         });
     }
 });
+
+
 
 // Product toggle active status
 router.post('/products/:id/toggle', sellerAuth, async (req, res) => {
