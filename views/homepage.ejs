@@ -8,6 +8,27 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <title><%= title %></title>
     <link rel="icon" href="<%= iconPath %>">
+    <style>
+        /* Cart count style */
+        .cart-icon {
+            position: relative;
+        }
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ff6b6b;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
     <header class="header" id="header">
@@ -15,7 +36,10 @@
             <div class="nav-content">
                 <div class="logo"><a href="#"><i class="fa fa-paw"></i> <%= siteName %></a></div>
                 <div class="nav-icons">
-                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button onclick="window.location.href='/cart'" class="icon-btn cart-icon" id="cartIcon">
+                        <i class="fa fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount" style="display: none;">0</span>
+                    </button>
                     <button id="userButton" class="icon-btn"><i class="fa fa-user"></i></button>
                 </div>
                 <div class="search">
@@ -181,9 +205,29 @@
         </div>
     </footer>
     <script src="/js/script.js"></script>
+    <script src="/js/cart-manager.js"></script>
     <script>
         // Handle user button click based on user role
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize cart count
+            if (typeof cartManager !== 'undefined') {
+                cartManager.initializeCart();
+            } else {
+                // Fallback if cart-manager.js is not loaded
+                fetch('/cart/count')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const cartCount = document.getElementById('cartCount');
+                            if (cartCount) {
+                                cartCount.textContent = data.cartCount;
+                                cartCount.style.display = data.cartCount > 0 ? 'inline-block' : 'none';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching cart count:', error));
+            }
+            
             const userButton = document.getElementById('userButton');
             
             if (userButton) {

@@ -7,11 +7,34 @@
   <title><%= pageTitle %></title>
 
   <!-- Link to your CSS -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/services.css">
   
   <!-- Font Awesome (optional, for icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+      /* Cart count style */
+      .cart-icon {
+          position: relative;
+      }
+      .cart-count {
+          position: absolute;
+          top: -5px;
+          right: -5px;
+          background-color: #ff6b6b;
+          color: white;
+          font-size: 12px;
+          font-weight: bold;
+          border-radius: 50%;
+          width: 18px;
+          height: 18px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+      }
+  </style>
 </head>
 <body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>">
     <!-- Header -->
@@ -20,11 +43,13 @@
             <div class="nav-content">
                 <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
                 <div class="nav-icons">
-                    <a href="/cart" class="icon-btn cart-icon" id="cartIcon">
+
+                    <button class="icon-btn cart-icon" id="cartIcon" onclick="window.location.href='/cart'">
                         <i class="fa fa-shopping-cart"></i>
                         <span class="cart-count" id="cartCount" style="display: none;">0</span>
-                    </a>
-                    <a href="/login" class="icon-btn"><i class="fa fa-user"></i></a>
+                    </button>
+                    <button class="icon-btn" onclick="window.location.href='/login'"><i class="fa fa-user"></i></button>
+
                 </div>
                 <div class="search">
                     <input class="search-bar" type="text" placeholder="Search pets, products or services">
@@ -244,6 +269,31 @@
             <p>&copy; 2025 PetVerse. All Rights Reversed</p>
         </div>
     </footer>
+
+    <script src="/js/script.js"></script>
+    <script src="/js/cart-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize cart count
+            if (typeof cartManager !== 'undefined') {
+                cartManager.initializeCart();
+            } else {
+                // Fallback if cart-manager.js is not loaded
+                fetch('/cart/count')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const cartCount = document.getElementById('cartCount');
+                            if (cartCount) {
+                                cartCount.textContent = data.cartCount;
+                                cartCount.style.display = data.cartCount > 0 ? 'inline-block' : 'none';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching cart count:', error));
+            }
+        });
+    </script>
 
     <!-- JS -->
     <script src="/js/Services.js"></script>

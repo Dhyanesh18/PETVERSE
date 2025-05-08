@@ -4,9 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PetVerse - Find a Mate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="/css/mate.css">
+    <style>
+        /* Cart count style */
+        .cart-icon {
+            position: relative;
+        }
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ff6b6b;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
     <header class="header" id="header">
@@ -14,7 +36,10 @@
             <div class="nav-content">
                 <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
                 <div class="nav-icons">
-                    <button onclick="window.location.href='/cart'"class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button onclick="window.location.href='/cart'" class="icon-btn cart-icon" id="cartIcon">
+                        <i class="fa fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount" style="display: none;">0</span>
+                    </button>
                     <button onclick="window.location.href='/login'" class="icon-btn"><i class="fa fa-user"></i></button>
                 </div>
                 <div class="search">
@@ -340,123 +365,143 @@
         </div>
       </footer>
 
+    <script src="/js/script.js"></script>
+    <script src="/js/cart-manager.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-    // Dropdown menu functionality
-    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-    
-    dropdownToggles.forEach(toggle => {
-        toggle.addEventListener('click', function(e) {
-            e.preventDefault();
+            // Initialize cart count
+            if (typeof cartManager !== 'undefined') {
+                cartManager.initializeCart();
+            } else {
+                // Fallback if cart-manager.js is not loaded
+                fetch('/cart/count')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const cartCount = document.getElementById('cartCount');
+                            if (cartCount) {
+                                cartCount.textContent = data.cartCount;
+                                cartCount.style.display = data.cartCount > 0 ? 'inline-block' : 'none';
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching cart count:', error));
+            }
             
-            // Get the current dropdown menu
-            const currentDropdownMenu = this.nextElementSibling;
+            // Dropdown menu functionality
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
             
-            // Close all other dropdown menus
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                if (menu !== currentDropdownMenu) {
-                    menu.classList.remove('show');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Get the current dropdown menu
+                    const currentDropdownMenu = this.nextElementSibling;
+                    
+                    // Close all other dropdown menus
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        if (menu !== currentDropdownMenu) {
+                            menu.classList.remove('show');
+                        }
+                    });
+                    
+                    // Toggle the current dropdown menu
+                    currentDropdownMenu.classList.toggle('show');
+                });
+            });
+            
+            // Close dropdown menus when clicking outside
+            document.addEventListener('click', function(e) {
+                let clickedInsideDropdown = false;
+                
+                // Check if click was inside any dropdown toggle or menu
+                dropdownToggles.forEach(toggle => {
+                    const dropdownMenu = toggle.nextElementSibling;
+                    if (toggle.contains(e.target) || (dropdownMenu && dropdownMenu.contains(e.target))) {
+                        clickedInsideDropdown = true;
+                    }
+                });
+                
+                // If clicked outside dropdowns, close all of them
+                if (!clickedInsideDropdown) {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
                 }
             });
-            
-            // Toggle the current dropdown menu
-            currentDropdownMenu.classList.toggle('show');
-        });
-    });
-    
-    // Close dropdown menus when clicking outside
-    document.addEventListener('click', function(e) {
-        let clickedInsideDropdown = false;
-        
-        // Check if click was inside any dropdown toggle or menu
-        dropdownToggles.forEach(toggle => {
-            const dropdownMenu = toggle.nextElementSibling;
-            if (toggle.contains(e.target) || (dropdownMenu && dropdownMenu.contains(e.target))) {
-                clickedInsideDropdown = true;
+
+            // Filter functionality
+            const clearFiltersBtn = document.getElementById('clear-filters');
+            if (clearFiltersBtn) {
+                clearFiltersBtn.addEventListener('click', function() {
+                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    const stateFilter = document.getElementById('state-filter');
+                    const districtFilter = document.getElementById('district-filter');
+                    if (stateFilter) stateFilter.value = '';
+                    if (districtFilter) districtFilter.value = '';
+                });
             }
-        });
-        
-        // If clicked outside dropdowns, close all of them
-        if (!clickedInsideDropdown) {
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.classList.remove('show');
+
+            // Contact button functionality
+            document.querySelectorAll('.contact-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const petCard = this.closest('.pet-card');
+                    const petName = petCard.querySelector('.pet-name').textContent;
+                    const contactInfo = petCard.querySelector('.pet-details p:nth-child(4)').textContent;
+                    alert(`Contact the owner of ${petName} at ${contactInfo.split(':')[1].trim()}`);
+                });
             });
-        }
-    });
 
-    // Filter functionality
-    const clearFiltersBtn = document.getElementById('clear-filters');
-    if (clearFiltersBtn) {
-        clearFiltersBtn.addEventListener('click', function() {
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            const stateFilter = document.getElementById('state-filter');
-            const districtFilter = document.getElementById('district-filter');
-            if (stateFilter) stateFilter.value = '';
-            if (districtFilter) districtFilter.value = '';
-        });
-    }
-
-    // Contact button functionality
-    document.querySelectorAll('.contact-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const petCard = this.closest('.pet-card');
-            const petName = petCard.querySelector('.pet-name').textContent;
-            const contactInfo = petCard.querySelector('.pet-details p:nth-child(4)').textContent;
-            alert(`Contact the owner of ${petName} at ${contactInfo.split(':')[1].trim()}`);
-        });
-    });
-
-    // Check if the form exists on the page
-    const mateForm = document.querySelector('.mate-submission-form');
-    if (mateForm) {
-        // File upload functionality
-        const fileInput = document.getElementById('pet-image');
-        const fileInfo = document.querySelector('.file-info');
-        
-        if (fileInput && fileInfo) {
-            fileInput.addEventListener('change', function() {
-                if (fileInput.files.length > 0) {
-                    fileInfo.textContent = `${fileInput.files.length} file(s) selected`;
-                } else {
-                    fileInfo.textContent = 'No files chosen (Max 4 images)';
+            // Check if the form exists on the page
+            const mateForm = document.querySelector('.mate-submission-form');
+            if (mateForm) {
+                // File upload functionality
+                const fileInput = document.getElementById('pet-image');
+                const fileInfo = document.querySelector('.file-info');
+                
+                if (fileInput && fileInfo) {
+                    fileInput.addEventListener('change', function() {
+                        if (fileInput.files.length > 0) {
+                            fileInfo.textContent = `${fileInput.files.length} file(s) selected`;
+                        } else {
+                            fileInfo.textContent = 'No files chosen (Max 4 images)';
+                        }
+                    });
                 }
-            });
-        }
-        
-        // Form validation
-        mateForm.addEventListener('submit', function(event) {
-            // Basic validation example
-            const fileInput = document.getElementById('pet-image');
-            if (fileInput && fileInput.files.length > 4) {
-                event.preventDefault();
-                alert('Please select a maximum of 4 images');
+                
+                // Form validation
+                mateForm.addEventListener('submit', function(event) {
+                    // Basic validation example
+                    const fileInput = document.getElementById('pet-image');
+                    if (fileInput && fileInput.files.length > 4) {
+                        event.preventDefault();
+                        alert('Please select a maximum of 4 images');
+                    }
+                });
+                
+                // Optional: State-district relationship
+                const stateSelect = document.getElementById('state');
+                const districtInput = document.getElementById('district');
+                
+                if (stateSelect && districtInput) {
+                    stateSelect.addEventListener('change', function() {
+                        districtInput.placeholder = `Enter district in ${stateSelect.options[stateSelect.selectedIndex].text}`;
+                    });
+                }
+            }
+            
+            // Hamburger menu functionality
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+            
+            if (hamburger && navLinks) {
+                hamburger.addEventListener('click', function() {
+                    navLinks.classList.toggle('active');
+                });
             }
         });
-        
-        // Optional: State-district relationship
-        const stateSelect = document.getElementById('state');
-        const districtInput = document.getElementById('district');
-        
-        if (stateSelect && districtInput) {
-            stateSelect.addEventListener('change', function() {
-                districtInput.placeholder = `Enter district in ${stateSelect.options[stateSelect.selectedIndex].text}`;
-            });
-        }
-    }
-    
-    // Hamburger menu functionality
-    const hamburger = document.querySelector('.hamburger');
-    const navLinks = document.querySelector('.nav-links');
-    
-    if (hamburger && navLinks) {
-        hamburger.addEventListener('click', function() {
-            navLinks.classList.toggle('active');
-        });
-    }
-});
-</script>
     </script>
 </body>
 </html>
