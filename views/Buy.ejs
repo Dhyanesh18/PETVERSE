@@ -9,6 +9,191 @@
     <link rel="stylesheet" href="/css/products.css">
     <link rel="stylesheet" href="/css/Buy.css">
     <script src="/js/cart.js"></script>
+    <style>
+        .similar-products-section {
+    padding: 2rem 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.products-slider {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.products-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 1rem 0;
+    width: 100%;
+}
+
+/* Product Card Styles */
+.container {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.card-head {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.card-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.card:hover .card-logo {
+    transform: scale(1.05);
+}
+
+.card-body {
+    padding: 1rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.product-desc {
+    margin-bottom: 0.5rem;
+}
+
+.product-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.badge {
+    display: inline-block;
+    background: #4a90e2;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.product-rating {
+    color: #ffc107;
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+}
+
+.product-properties {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.product-price {
+    background: #4a90e2;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.product-price:hover {
+    background: #357abd;
+}
+
+.discount-text {
+    color: #28a745;
+    font-weight: 600;
+}
+
+/* Slider Navigation Buttons */
+.slider-nav {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.slider-nav:hover {
+    border-color: #4a90e2;
+    background: #4a90e2;
+    color: white;
+}
+
+.prev {
+    left: -20px;
+}
+
+.next {
+    right: -20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .products-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .card-head {
+        height: 150px;
+    }
+    
+    .slider-nav {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+@media (max-width: 480px) {
+    .products-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .card-head {
+        height: 200px;
+    }
+}
+    </style>
 </head>
 
 <body>
@@ -26,16 +211,17 @@
     <section style="font-size: 1.5rem; margin-top: 60px; display: flex; gap: 50px; justify-content: center;">
         <div class="slider-container">
             <div class="vertical-thumbnails">
-                <% if (product.images && product.images.length > 0) { %>
-                    <% product.images.forEach((image, index) => { %>
-                        <img src="data:<%= image.contentType %>;base64,<%= image.data.toString('base64') %>"
-                             class="thumbnail<%= index === 0 ? ' active' : '' %>"
-                             data-index="<%= index %>"
-                             alt="<%= product.name %> - Image <%= index + 1 %>">
-                    <% }); %>
-                <% } else { %>
-                    <img src="/images/default-product.jpg" class="thumbnail active" alt="<%= product.name %>">
-                <% } %>
+                <div class="card-head">
+    <% if (product.images && product.images.length > 0) { %>
+        <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" 
+             alt="<%= product.title || product.name %>" 
+             class="card-logo">
+    <% } else { %>
+        <img src="/images/default-product.jpg" 
+             alt="<%= product.title || product.name %>" 
+             class="card-logo">
+    <% } %>
+</div>
             </div>
             <div id="mainImage" class="main-image" style="cursor: pointer;">
                 <% if (product.images && product.images.length > 0) { %>

@@ -30,18 +30,17 @@ const sellerSchema = new mongoose.Schema({
     }
 });
 
-// Add pre-save hook to enforce role
+
 sellerSchema.pre('save', function(next) {
     this.role = 'seller';
     next();
 });
 
-// Create discriminator with explicit key
 const Seller = User.discriminator('seller', sellerSchema, {
     discriminatorKey: 'role'
 });
 
-// Keep existing methods
+
 sellerSchema.methods.getBusinessInfo = function() {
     return `${this.businessName} - ${this.businessAddress}`;
 };

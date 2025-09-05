@@ -28,13 +28,9 @@ app.use(async (req, res, next) => {
   if (req.session.userId) {
     try {
       const User = require('./models/users');
-      console.log('Attempting to load user with ID:', req.session.userId);
       req.user = await User.findById(req.session.userId);
       
-      if (req.user) {
-        console.log('User loaded successfully:', req.user.email, 'Role:', req.user.role);
-      } else {
-        console.log('No user found with ID:', req.session.userId);
+      if (!req.user) {
         // Clear invalid session data
         req.session.userId = null;
         req.session.userRole = null;
@@ -45,9 +41,7 @@ app.use(async (req, res, next) => {
       req.session.userId = null;
       req.session.userRole = null;
     }
-  } else {
-    console.log('No user ID in session, skipping user loader');
-  }
+  } 
   next();
 });
 
@@ -61,7 +55,6 @@ const imageRoutes = require('./routes/image-routes');
 const productRoutes = require('./routes/product-routes');
 const bookingRoutes = require('./routes/booking');
 const reviewRoutes = require('./routes/review-routes');
-// const servicesRoutes = require('./routes/services-routes');
 const serviceProviderRoutes = require('./routes/service-provider-routes');
 
 const userRoutes = require('./routes/user-routes');
@@ -69,6 +62,8 @@ const cartRoutes = require('./routes/cart');
 const petRoutes = require('./routes/pet-routes');
 const mateRoutes = require('./routes/mate-routes');
 const sellerRoutes = require('./routes/seller');
+const serviceRoutes = require('./routes/services-routes');
+const paymentRoutes = require('./routes/payment');
 
 // Main routes
 app.use('/', userRoutes);
@@ -89,9 +84,10 @@ app.use('/admin', adminRoutes);
 // Service routes
 app.use('/cart', cartRoutes);
 app.use('/booking', bookingRoutes);
-// app.use('/services', servicesRoutes);
+app.use('/services',serviceRoutes);
 app.use('/service-provider', serviceProviderRoutes);
 app.use('/', reviewRoutes);
+app.use('/',paymentRoutes);
 
 app.get('/', (req, res) => {
   if (req.session.userId) {

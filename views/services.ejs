@@ -38,49 +38,7 @@
 </head>
 <body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>">
     <!-- Header -->
-    <header class="header">
-        <nav id="navbar" class="navbar">
-            <div class="nav-content">
-                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
-                <div class="nav-icons">
-
-                    <button class="icon-btn cart-icon" id="cartIcon" onclick="window.location.href='/cart'">
-                        <i class="fa fa-shopping-cart"></i>
-                        <span class="cart-count" id="cartCount" style="display: none;">0</span>
-                    </button>
-                    <button class="icon-btn" onclick="window.location.href='/login'"><i class="fa fa-user"></i></button>
-
-                </div>
-                <div class="search">
-                    <input class="search-bar" type="text" placeholder="Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/products/petfood">Pet Food</a></li>
-                            <li><a href="/products/toys">Toys</a></li>
-                            <li><a href="/products/accessories">Accessories</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/services">Services</a></li>
-                            <li><a href="/mate">PetMate</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
 
     <!-- Main container: sidebar + services content -->
     <div class="main-container">

@@ -6,6 +6,7 @@ const Product = require('../models/products');
 const Review = require('../models/reviews');
 const { isAuthenticated } = require('../middleware/auth');
 const sellerAuth = require('../middleware/sellerAuth');
+const Pet = require('../models/pets');
 
 // Dashboard view
 router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
@@ -29,6 +30,8 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
         const products = await Product.find({ seller: seller._id });
         console.log(`Found ${products.length} products for seller`);
 
+        const pets = await Pet.find({addedBy: seller._id});
+        console.log(`Found ${pets.length} pets for seller`);
         // Get recent orders
         const recentOrders = await Order.find({ seller: seller._id })
             .sort({ createdAt: -1 })
@@ -160,6 +163,7 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
                 }
             },
             products: formattedProducts,
+            pets: pets,
             sellerOrders: formattedOrders,
             reviews: formattedReviews,
             totalSales: totalSales,

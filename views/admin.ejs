@@ -2,69 +2,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PetVerse Admin Panel</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>PetVerse Admin Panel</title>
 
-  <!-- Link to CSS -->
-  <link rel="stylesheet" href="/css/admin.css">
-  
-  <!-- Font Awesome (for icons) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  
-  <!-- Chart.js for dashboard analytics -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Link to CSS -->
+    <link rel="stylesheet" href="/css/admin.css">
+    
+    <!-- Font Awesome (for icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+    <!-- Chart.js for dashboard analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <!-- Hidden data elements for charts -->
     <!-- <div id="chart-data" 
-         data-user-growth='<%= JSON.stringify(userGrowthData) %>'
-         data-user-distribution='<%= JSON.stringify(userDistributionData) %>'
-         data-product-categories='<%= JSON.stringify(productCategoriesData) %>'
-         data-revenue='<%= JSON.stringify(revenueData) %>'
-         style="display: none;">
+        data-user-growth='<%= JSON.stringify(userGrowthData) %>'
+        data-user-distribution='<%= JSON.stringify(userDistributionData) %>'
+        data-product-categories='<%= JSON.stringify(productCategoriesData) %>'
+        data-revenue='<%= JSON.stringify(revenueData) %>'
+        style="display: none;">
     </div> -->
     <!-- Header -->
     <header class="header" id="header">
-      <nav id="navbar" class="navbar">
-          <div class="nav-content">
-              <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
-              <div class="nav-icons">
-                  <button onclick="window.location.href='/'" class="icon-btn" title="Go to Homepage"><i class="fa fa-home"></i></button>
-                  <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                  <button onclick="window.location.href='/logout'"class="icon-btn" title="Logout"><i class="fa fa-sign-out"></i></button>
-              </div>
-              <div class="search">
-                  <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                  <button class="search-btn"><i class="fa fa-search"></i></button>
-              </div>
-              <button class="hamburger" id="hamburger">
-                  <i class="fa fa-bars"></i>
-              </button>
-              <ul class="nav-links">
-                  <li><a href="/">Home</a></li>
-                  <li><a href="/about">About</a></li>
-                  <li><a href="/pets">Pets</a></li>
-                  <li class="dropdown">
-                      <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                      <ul class="dropdown-menu">
-                          <li><a href="/products/petfood">Pet Food</a></li>
-                          <li><a href="/products/toys">Toys</a></li>
-                          <li><a href="/products/accessories">Accessories</a></li>
-                      </ul>
-                  </li>
-                  <li class="dropdown">
-                      <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                      <ul class="dropdown-menu">
-                          <li><a href="/services">Services</a></li>
-                          <li><a href="/mate">PetMate</a></li>
-                      </ul>
-                  </li>
-              </ul>
-          </div>
-      </nav>
-  </header>
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="nav-icons">
+                    <button onclick="window.location.href='/'" class="icon-btn" title="Go to Homepage"><i class="fa fa-home"></i></button>
+                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button onclick="window.location.href='/logout'"class="icon-btn" title="Logout"><i class="fa fa-sign-out"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/pets">Pets</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/products/petfood">Pet Food</a></li>
+                            <li><a href="/products/toys">Toys</a></li>
+                            <li><a href="/products/accessories">Accessories</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/services">Services</a></li>
+                            <li><a href="/mate">PetMate</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
     <!-- Main Admin content -->
     <div class="main-container">
         <!-- Sidebar -->
@@ -156,7 +156,7 @@
                     <i class="fas fa-list stat-icon total-icon"></i>
                     <div class="stat-info">
                         <h3>Total</h3>
-                        <p class="stat-number" id="total-count">64</p>
+                        <p class="stat-number" id="total-count">13</p>
                     </div>
                 </div>
             </div>
@@ -932,48 +932,48 @@
     <script src="/js/admin.js"></script>
     <script>
       // Get all dropdown toggles and menus
-      const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-      const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
 
       // Add click event to each dropdown toggle
-      dropdownToggles.forEach((toggle, index) => {
+        dropdownToggles.forEach((toggle, index) => {
         toggle.addEventListener('click', function(event) {
             event.stopPropagation(); // Prevent this click from triggering the document click handler
-      
+            
             // Close all other dropdown menus first
             dropdownMenus.forEach((menu, menuIndex) => {
-              if (menuIndex !== index) {
+                if (menuIndex !== index) {
                 menu.classList.remove('show');
-              }
+                }
             });
-      
+            
             // Toggle the current dropdown menu
             const currentDropdownMenu = this.nextElementSibling;
             currentDropdownMenu.classList.toggle('show');
         });
-      });
+        });
 
       // Close all dropdowns when clicking anywhere else on the page
-      document.addEventListener('click', function(event) {  
+        document.addEventListener('click', function(event) {  
         // Check if click is outside of any dropdown
         if (!event.target.closest('.dropdown')) {
           // Close all dropdown menus
-          dropdownMenus.forEach(menu => {
+            dropdownMenus.forEach(menu => {
             if (menu.classList.contains('show')) {
-              menu.classList.remove('show');
+                menu.classList.remove('show');
             }
-          });
+            });
         }
-      });
-      
+        });
+        
       // Dashboard tab functionality
-      document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
         // Tab switching
         const tabLinks = document.querySelectorAll('.admin-menu li');
         const tabPanes = document.querySelectorAll('.tab-pane');
         
         tabLinks.forEach(link => {
-          link.addEventListener('click', function() {
+            link.addEventListener('click', function() {
             // Remove active class from all links
             tabLinks.forEach(l => l.classList.remove('active'));
             
@@ -986,100 +986,100 @@
             // Show the selected tab pane
             const tabId = this.getAttribute('data-tab') + '-tab';
             document.getElementById(tabId).classList.add('active');
-          });
+            });
         });
         
         // Initialize charts
         initializeCharts();
-        
+
         // User approval functions
         window.approveUser = function(userId) {
           // Make an AJAX call to approve the user
-          fetch(`/admin/approve-user/${userId}`, {
+            fetch(`/admin/approve-user/${userId}`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+                'Content-Type': 'application/json'
             }
-          })
-          .then(response => response.json())
-          .then(data => {
+            })
+            .then(response => response.json())
+            .then(data => {
             if (data.success) {
-              showSuccessMessage('User approved successfully!');
-              
+                showSuccessMessage('User approved successfully!');
+                
               // Remove the user card from the pending users tab
-              const userCard = document.querySelector(`.user-card[data-id="${userId}"]`);
-              if (userCard) {
+                const userCard = document.querySelector(`.user-card[data-id="${userId}"]`);
+                if (userCard) {
                 userCard.style.display = 'none';
-              }
-              
+                }
+                
               // Update the counts in the dashboard
-              const pendingCount = document.getElementById('pending-count');
-              const approvedCount = document.getElementById('approved-count');
-              if (pendingCount) {
-                pendingCount.textContent = parseInt(pendingCount.textContent) - 1;
-              }
-              if (approvedCount) {
+                const pendingCount = document.getElementById('pending-count');
+                const approvedCount = document.getElementById('approved-count');
+                if (pendingCount) {
+                    pendingCount.textContent = parseInt(pendingCount.textContent) - 1;
+                }
+                if (approvedCount) {
                 approvedCount.textContent = parseInt(approvedCount.textContent) + 1;
-              }
+                }
             } else {
-              showErrorMessage(data.error || 'Failed to approve user');
+                showErrorMessage(data.error || 'Failed to approve user');
             }
-          })
-          .catch(error => {
+            })
+            .catch(error => {
             console.error('Error approving user:', error);
             showErrorMessage('Failed to approve user. Please try again.');
-          });
+            });
         };
         
         window.rejectUser = function(userId) {
           // Get rejection reason
-          const reason = prompt('Please enter a reason for rejection:');
-          if (reason === null) {
+            const reason = prompt('Please enter a reason for rejection:');
+            if (reason === null) {
             // User canceled the prompt
             return;
-          }
-          
+            }
+            
           // Make an AJAX call to reject the user
-          fetch(`/admin/reject-user/${userId}`, {
+            fetch(`/admin/reject-user/${userId}`, {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ rejectionReason: reason })
-          })
-          .then(response => response.json())
-          .then(data => {
+            })
+            .then(response => response.json())
+            .then(data => {
             if (data.success) {
-              showSuccessMessage('User rejected successfully!');
-              
+                showSuccessMessage('User rejected successfully!');
+                
               // Remove the user card from the pending users tab
-              const userCard = document.querySelector(`.user-card[data-id="${userId}"]`);
-              if (userCard) {
+                const userCard = document.querySelector(`.user-card[data-id="${userId}"]`);
+                if (userCard) {
                 userCard.style.display = 'none';
-              }
-              
+                }
+                
               // Update the counts in the dashboard
-              const pendingCount = document.getElementById('pending-count');
-              const rejectedCount = document.getElementById('rejected-count');
-              if (pendingCount) {
+                const pendingCount = document.getElementById('pending-count');
+                const rejectedCount = document.getElementById('rejected-count');
+                if (pendingCount) {
                 pendingCount.textContent = parseInt(pendingCount.textContent) - 1;
-              }
-              if (rejectedCount) {
+                }
+                if (rejectedCount) {
                 rejectedCount.textContent = parseInt(rejectedCount.textContent) + 1;
-              }
+                }
             } else {
-              showErrorMessage(data.error || 'Failed to reject user');
+                showErrorMessage(data.error || 'Failed to reject user');
             }
-          })
-          .catch(error => {
+            })
+            .catch(error => {
             console.error('Error rejecting user:', error);
             showErrorMessage('Failed to reject user. Please try again.');
-          });
+            });
         };
         
         window.viewUserDocument = function(userId, role) {
           // Open a new window/tab to view the document
-          window.open(`/admin/user-document/${userId}`, '_blank');
+            window.open(`/admin/user-document/${userId}`, '_blank');
         };
       });
       
