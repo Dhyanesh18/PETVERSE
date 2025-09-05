@@ -515,6 +515,66 @@
             border-color: var(--primary);
         }
 
+        product-image-container {
+    position: relative;
+    padding-top: 60%; /* Reduced from 75% */
+    background: #f8f9fa;
+    max-height: 200px; /* Added max-height constraint */
+    overflow: hidden;
+}
+
+/* Make images fit better in the container */
+.product-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Compact product info section */
+.product-info {
+    padding: 0.75rem; /* Reduced from 1rem */
+}
+
+/* Adjust price and stock layout */
+.price-stock {
+    margin-bottom: 0.25rem; /* Reduced from 0.5rem */
+}
+
+/* Make product title more compact */
+.product-title {
+    font-size: 0.8125rem; /* Slightly smaller */
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+}
+
+/* Compact action buttons */
+.product-actions {
+    padding-top: 0.25rem;
+}
+
+/* For pet cards specifically */
+.product-card .product-image-container {
+    padding-top: 70%; /* Slightly taller aspect ratio for pets */
+}
+
+/* Pet details section */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .product-image-container {
+        padding-top: 70%; /* Slightly taller on mobile */
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* More compact grid */
+        gap: 1rem; /* Smaller gap between items */
+    }
+}
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .dashboard-stats {
@@ -692,6 +752,38 @@
             animation: fadeIn 0.2s ease forwards;
         }
 
+        .product-image-container img{
+            box-shadow: none;
+        }
+        .product-image-container {
+            border-radius: 10px;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        
+        .pet-card {
+            height: 360px;
+        }
+
+        .pet-title {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: black;
+        }
+
+        .pet-details{
+            display: flex;
+            gap: 120px;
+            margin-bottom: 0;
+        }
+
+        .pet-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.5rem;
+        }
+
         @keyframes fadeIn {
             to {
                 opacity: 1;
@@ -721,7 +813,7 @@
 </head>
 <body>
     <!-- Main Navigation Header -->
-   
+    <%- include('partials/header') %>
 
     <div class="dashboard-container">
         <header class="dashboard-header">
@@ -811,6 +903,58 @@
                                         <button class="btn btn-icon btn-deactivate" data-tooltip="<%= product.status === 'active' ? 'Deactivate' : 'Activate' %>" onclick="toggleProductStatus('<%= product._id %>')">
                                             <i class="fas fa-power-off"></i>
                                         </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>No products found. Add your first product!</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-box"></i> Pet Management</h2>
+                    <a href="/seller/pets/add" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Pet
+                    </a>
+                </div>
+                
+                <div class="products-grid">
+                    <% if(pets && pets.length > 0) { %>
+                        <% pets.forEach(pet => { %>
+                            <div class="pet-card product-card">
+                                <div class="product-image-container">
+                                        <% if (pet.images && pet.images.length > 0) { %>
+                                        <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
+                                        alt="<%= pet.name %>" class="product-image">
+                    <% } else { %>
+                        <img src="/images/default-pet.jpg" alt="No image available" class="product-image">
+                    <% } %>
+                                </div>
+                                <div class="pet-info product-info">
+                                    <div class="pet-details product-details">
+                                        <div class="price-stock">
+                                            <span class="price">₹<%= pet.price %></span>
+                                        </div>
+                                        <div class="pet-dtls">
+                                            <div class="pet-title product-title"><%= pet.name %></div>
+                                            
+                                        </div>
+                                    </div>
+                                    <div class="pet-actions product-actions">
+                                        <div>
+                                            <div class="product-title"><%= pet.category %></div>
+                                            <div class="product-title"><%= pet.breed %></div>
+                                        </div>
+                                        <button class="btn btn-icon btn-edit" data-tooltip="Edit Product" onclick="editProduct('<%= pet._id %>')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        
                                     </div>
                                 </div>
                             </div>

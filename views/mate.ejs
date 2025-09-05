@@ -28,6 +28,24 @@
             justify-content: center;
             align-items: center;
         }
+        .filter-btns {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 10px;
+        }
+        #clrfltr{
+            background-color: #ff4c4c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #clrfltr:hover {
+            background-color: #f98787;
+        }
     </style>
 </head>
 <body>
@@ -76,7 +94,7 @@
     <!-- Main Content -->
     <div class="main-container">
         <!-- Filters Sidebar -->
-        <div class="filters-sidebar">
+         <div class="filters-sidebar">
             <h2>Find the Perfect Match</h2>
             
             <!-- Pet Type Filter -->
@@ -85,7 +103,8 @@
                 <div class="filter-options">
                     <% petTypes.forEach(type => { %>
                         <div class="filter-option">
-                            <input type="checkbox" id="type-<%= type.value %>" name="petType" value="<%= type.value %>">
+                            <input type="checkbox" id="type-<%= type.value %>" name="petType" value="<%= type.value %>"
+                                <%= (selectedFilters.petType || []).includes(type.value) ? 'checked' : '' %>>
                             <label for="type-<%= type.value %>"><%= type.label %></label>
                         </div>
                     <% }); %>
@@ -97,11 +116,13 @@
                 <h3>Gender</h3>
                 <div class="filter-options">
                     <div class="filter-option">
-                        <input type="checkbox" id="gender-male" name="gender" value="male">
+                        <input type="checkbox" id="gender-male" name="gender" value="male"
+                            <%= (selectedFilters.gender || []).includes('male') ? 'checked' : '' %>>
                         <label for="gender-male">Male</label>
                     </div>
                     <div class="filter-option">
-                        <input type="checkbox" id="gender-female" name="gender" value="female">
+                        <input type="checkbox" id="gender-female" name="gender" value="female"
+                            <%= (selectedFilters.gender || []).includes('female') ? 'checked' : '' %>>
                         <label for="gender-female">Female</label>
                     </div>
                 </div>
@@ -113,7 +134,8 @@
                 <div class="filter-options">
                     <% breeds.forEach(breed => { %>
                         <div class="filter-option">
-                            <input type="checkbox" id="breed-<%= breed.value %>" name="breed" value="<%= breed.value %>">
+                            <input type="checkbox" id="breed-<%= breed.value %>" name="breed" value="<%= breed.value %>"
+                                <%= (selectedFilters.breed || []).includes(breed.value) ? 'checked' : '' %>>
                             <label for="breed-<%= breed.value %>"><%= breed.label %></label>
                         </div>
                     <% }); %>
@@ -125,21 +147,11 @@
                 <h3>Age</h3>
                 <div class="filter-options">
                     <div class="filter-option">
-                        <input type="checkbox" id="age-puppy" name="age" value="puppy">
+                        <input type="checkbox" id="age-puppy" name="age" value="puppy"
+                            <%= (selectedFilters.age || []).includes('puppy') ? 'checked' : '' %>>
                         <label for="age-puppy">Less than 1 year</label>
                     </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="age-young" name="age" value="young">
-                        <label for="age-young">1-3 years</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="age-adult" name="age" value="adult">
-                        <label for="age-adult">4-7 years</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="checkbox" id="age-senior" name="age" value="senior">
-                        <label for="age-senior">8+ years</label>
-                    </div>
+                    <!-- ... other age options ... -->
                 </div>
             </div>
             
@@ -150,7 +162,10 @@
                     <select id="state-filter" name="state">
                         <option value="">Select State</option>
                         <% states.forEach(state => { %>
-                            <option value="<%= state.value %>"><%= state.label %></option>
+                            <option value="<%= state.value %>"
+                                <%= state.value === selectedFilters.state ? 'selected' : '' %>>
+                                <%= state.label %>
+                            </option>
                         <% }); %>
                     </select>
                 </div>
@@ -160,13 +175,21 @@
             <div class="filter-section">
                 <h3>District</h3>
                 <div class="filter-options">
-                    <input type="text" id="district-filter" name="district" placeholder="Enter district name">
+                    <input type="text" id="district-filter" name="district" 
+                        placeholder="Enter district name" value="<%= selectedFilters.district || '' %>">
                 </div>
             </div>
             
-            <button id="apply-filters" class="filter-btn">Apply Filters</button>
-            <button id="clear-filters" class="filter-btn clear-btn">Clear All Filters</button>
+            <form id="filter-form" method="GET" action="/mate">
+                <!-- All filter inputs will be added here via JavaScript -->
+            </form>
+            <div class="filter-btns">
+                <button type="submit" form="filter-form" class="filter-btn">Apply Filters</button>
+            <a id="clrfltr" href="/mate" class="filter-btn clear-btn">Clear All Filters</a>
+            </div>
+            
         </div>
+
 
         <!-- Pets Display Area -->
         <div class="pets-container">
@@ -185,7 +208,12 @@
                 <% pets.forEach(pet => { %>
                     <div class="pet-card">
                         <div class="pet-image">
-                            <img src="<%= pet.image %>" alt="<%= pet.name %>">
+                            <% if(pet.images && pet.images.length > 0) { %>
+                                <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
+                                     alt="<%= pet.name %>">
+                            <% } else { %>
+                                <img src="/images/default-pet.jpg" alt="Default pet image">
+                            <% } %>
                             <div class="pet-badge <%= pet.gender === 'male' ? 'male' : 'female' %>">
                                 <i class="fas <%= pet.gender === 'male' ? 'fa-mars' : 'fa-venus' %>"></i>
                             </div>
@@ -194,9 +222,14 @@
                             <h3 class="pet-name"><%= pet.name %></h3>
                             <div class="pet-details">
                                 <p><i class="fas fa-paw"></i> <strong>Breed:</strong> <%= pet.breed %></p>
-                                <p><i class="fas fa-birthday-cake"></i> <strong>Age:</strong> <%= pet.age %></p>
-                                <p><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> <%= pet.district %>, <%= pet.state %></p>
-                                <p><i class="fas fa-phone"></i> <strong>Contact:</strong> <%= pet.contact %></p>
+                                <p><i class="fas fa-birthday-cake"></i> <strong>Age:</strong> 
+                                    <%= pet.age.value %> <%= pet.age.unit %></p>
+                                <p><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> 
+                                    <%= pet.location.district %>, <%= pet.location.state %></p>
+                                <p><i class="fas fa-phone"></i> <strong>Contact:</strong> 
+                                    <%= pet.contact.phone %></p>
+                                <p><i class="fas fa-envelope"></i> <strong>Email:</strong> 
+                                    <%= pet.contact.email %></p>
                                 <% if (pet.description) { %>
                                     <p class="pet-description"><i class="fas fa-info-circle"></i> <%= pet.description %></p>
                                 <% } %>
@@ -207,15 +240,21 @@
             </div>
 
             <!-- Pagination -->
-            <div class="pagination">
-                <button><i class="fas fa-chevron-left"></i></button>
-                <button class="active">1</button>
-                <button>2</button>
-                <button>3</button>
-                <button>...</button>
-                <button>10</button>
-                <button><i class="fas fa-chevron-right"></i></button>
-            </div>
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                        <a href="?page=<%= currentPage - 1 %>"><i class="fas fa-chevron-left"></i></a>
+                    <% } %>
+                    
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <a href="?page=<%= i %>" class="<%= currentPage === i ? 'active' : '' %>"><%= i %></a>
+                    <% } %>
+                    
+                    <% if (currentPage < totalPages) { %>
+                        <a href="?page=<%= currentPage + 1 %>"><i class="fas fa-chevron-right"></i></a>
+                    <% } %>
+                </div>
+            <% } %>
         </div>
     </div>
 
@@ -368,8 +407,66 @@
     <script src="/js/script.js"></script>
     <script src="/js/cart-manager.js"></script>
     <script>
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize cart count
+
+            const filterForm = document.getElementById('filter-form');
+            const filterParams = new URLSearchParams(window.location.search);
+            
+            // Add existing query parameters as hidden inputs
+            filterParams.forEach((value, key) => {
+                if (Array.isArray(value)) {
+                    value.forEach(val => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = val;
+                        filterForm.appendChild(input);
+                    });
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = value;
+                    filterForm.appendChild(input);
+                }
+            });
+
+            // Handle checkbox changes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const inputs = filterForm.querySelectorAll(`input[name="${this.name}"]`);
+                    inputs.forEach(input => input.remove());
+                    
+                    const checked = document.querySelectorAll(`input[name="${this.name}"]:checked`);
+                    checked.forEach(item => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = this.name;
+                        input.value = item.value;
+                        filterForm.appendChild(input);
+                    });
+                });
+            });
+
+            // Handle select and text inputs
+            ['select', 'input[type="text"]'].forEach(selector => {
+                document.querySelectorAll(selector).forEach(element => {
+                    element.addEventListener('change', function() {
+                        const existing = filterForm.querySelector(`input[name="${this.name}"]`);
+                        if (existing) existing.remove();
+                        
+                        if (this.value) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = this.name;
+                            input.value = this.value;
+                            filterForm.appendChild(input);
+                        }
+                    });
+                });
+            });
             if (typeof cartManager !== 'undefined') {
                 cartManager.initializeCart();
             } else {

@@ -279,6 +279,17 @@
                                 <div style="font-size: 0.9rem; color: #6b7280;">Pay when you receive your order</div>
                             </div>
                         </div>
+
+                        <div class="payment-method" onclick="selectPaymentMethod(this, 'wallet')">
+                            <input type="radio" name="payment-method" id="wallet">
+                            <i class="fa fa-wallet payment-method-icon" style="color: #10b981;"></i>
+                            <div>
+                                <div style="font-weight: 500;">PetVerse Wallet</div>
+                                <!-- Add this in your payment summary section -->
+<div hidden id="walletBalance"><%= wallet.balance %></div>
+                            </div>
+                        </div>
+
                     </div>
 
                     <div class="checkout-navigation">
@@ -351,30 +362,116 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Load cart items from localStorage
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            updateCartCount();
-            populateOrderSummary(cart);
+        // Load cart totals from localStorage
+        const cartTotals = JSON.parse(localStorage.getItem('cartTotals')) || {
+            subtotal: 0,
+            shipping: 0,
+            tax: 0,
+            total: 0
+        };
 
-            // Load shipping info from localStorage for continuity
-            loadShippingInfo();
 
-            // Event listeners for navigation buttons
-            document.getElementById('backToShippingBtn').addEventListener('click', function() {
-                window.location.href = '/checkout';
-            });
 
-            document.getElementById('toReviewBtn').addEventListener('click', function() {
-                if (validatePaymentInfo()) {
-                    // Save payment info to localStorage
-                    savePaymentInfo();
-                    window.location.href = '/checkout/review';
+        // Update order summary with actual values
+        document.getElementById('subtotal').textContent = `₹${cartTotals.subtotal.toFixed(2)}`;
+        document.getElementById('shipping').textContent = cartTotals.shipping === 0 ? 
+            'Free' : `₹${cartTotals.shipping.toFixed(2)}`;
+        document.getElementById('tax').textContent = `₹${cartTotals.tax.toFixed(2)}`;
+        document.getElementById('total').textContent = `₹${cartTotals.total.toFixed(2)}`;
+
+
+
+        // Update payment validation
+        function validatePaymentInfo() {
+            const paymentMethod = document.querySelector('input[name="payment-method"]:checked').id;
+            
+            if (paymentMethod === 'wallet') {
+                if (walletBalance < cartTotals.total) {
+                    alert('Insufficient wallet balance');
+                    return false;
                 }
-            });
+                return true;
+            }
+            
+            // Existing validation for other methods
+            // ...
+        }
 
-            // Initialize the first payment method as selected
-            selectPaymentMethod(document.querySelector('.payment-method'), 'credit-card');
+        // Update payment method selection
+        function selectPaymentMethod(element, method) {
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            document.getElementById(method).checked = true;
+
+            // Update wallet balance color dynamically
+            if (method === 'wallet') {
+                walletBalanceElement.style.color = walletBalance >= cartTotals.total ? 
+                    '#10b981' : 
+                    '#e53e3e';
+            }
+        }
+    });
+
+    document.getElementById('toReviewBtn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    
+    try {
+        // 1. Validate payment method
+        const paymentMethod = document.querySelector('input[name="payment-method"]:checked');
+        if (!paymentMethod) {
+            alert('Please select a payment method');
+            return;
+        }
+
+        // 2. Get fresh cart totals
+        const cartRes = await fetch('/cart');
+        const cart = await cartRes.json();
+        
+        // 3. Handle wallet balance check
+        if (paymentMethod.id === 'wallet') {
+            const walletRes = await fetch('/payment/wallet');
+            const walletData = await walletRes.json();
+            
+            if (walletData.balance < cart.total) {
+                alert('Insufficient wallet balance');
+                return;
+            }
+        }
+
+        // 4. Process payment
+        const response = await fetch('/payment/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                paymentMethod: paymentMethod.id,
+                shippingAddress: JSON.parse(localStorage.getItem('shippingInfo'))
+            })
         });
+
+        const result = await response.json();
+
+        // 5. Handle response
+        if (result.success) {
+            // Clear local storage
+            localStorage.removeItem('cart');
+            localStorage.removeItem('shippingInfo');
+            
+            // Redirect with order details
+            window.location.href = `/payment/order-confirmation?orderId=${result.orderId}&orderNumber=${result.orderNumber}`;
+        } else {
+            alert(`Payment failed: ${result.message}`);
+        }
+
+    } catch (error) {
+        console.error('Payment error:', error);
+        alert('Payment processing failed. Please try again.');
+    }
+});
 
         function updateCartCount() {
             let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -467,54 +564,21 @@
         }
 
         function validatePaymentInfo() {
-            const paymentMethod = document.querySelector('input[name="payment-method"]:checked').id;
-
-            if (paymentMethod === 'credit-card') {
-                const cardName = document.getElementById('cardName').value;
-                const cardNumber = document.getElementById('cardNumber').value;
-                const expiryDate = document.getElementById('expiryDate').value;
-                const cvv = document.getElementById('cvv').value;
-
-                if (!cardName || !cardNumber || !expiryDate || !cvv) {
-                    alert('Please fill in all card details');
-                    return false;
-                }
-
-                // Basic card number validation
-                if (cardNumber.replace(/\s/g, '').length !== 16) {
-                    alert('Please enter a valid 16-digit card number');
-                    return false;
-                }
-
-                // Basic expiry date validation (MM/YY format)
-                const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
-                if (!expiryRegex.test(expiryDate)) {
-                    alert('Please enter a valid expiry date in MM/YY format');
-                    return false;
-                }
-
-                // Basic CVV validation
-                if (cvv.length !== 3) {
-                    alert('Please enter a valid 3-digit CVV');
-                    return false;
-                }
-            } else if (paymentMethod === 'upi') {
-                const upiId = document.getElementById('upiId').value;
-                if (!upiId) {
-                    alert('Please enter your UPI ID');
-                    return false;
-                }
-
-                // Basic UPI ID validation
-                const upiRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9]+$/;
-                if (!upiRegex.test(upiId)) {
-                    alert('Please enter a valid UPI ID (e.g., yourname@upi)');
-                    return false;
-                }
-            }
-
-            return true;
+    const paymentMethod = document.querySelector('input[name="payment-method"]:checked').id;
+    
+    // For wallet payments
+    if (paymentMethod === 'wallet') {
+        const walletBalance = parseFloat(document.getElementById('walletBalance').textContent);
+        const totalAmount = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
+        
+        if (walletBalance < totalAmount) {
+            alert('Insufficient wallet balance');
+            return false;
         }
+    }
+    
+    return true;
+}
 
         function selectPaymentMethod(element, method) {
             // Remove selected class from all payment methods

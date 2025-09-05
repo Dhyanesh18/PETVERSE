@@ -28,6 +28,25 @@
             justify-content: center;
             align-items: center;
         }
+
+        .pet-card ,.product-card{
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+            height: 100%; /* Ensure consistent height */
+        }
+
+        .pet-card img ,.product-card img{
+        width: 100%;
+        height: 250px; /* Fixed height */
+        object-fit: cover; /* Maintain aspect ratio */
+        border-bottom: 1px solid #ddd;
+        }
+
+        .pet-card .price , .product-card .price{
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -76,7 +95,6 @@
         </div>
     </section>
     <section id="slideshow">
-        <h1 class="section-title"><%= slideshowTitle %></h1>
         <div class="slideshow-container">
             <% slides.forEach(function(slide, index) { %>
                 <div class="slide fade">
@@ -110,13 +128,20 @@
         <div class="feature-pets-content">
             <h1 class="section-title"><%= featuredPetsTitle %></h1>
             <div class="pet-grid">
-                <% featuredPets.forEach(function(pet) { %>
-                    <div class="feature-pets-card">
-                        <img src="<%= pet.image %>" alt="<%= pet.name.toLowerCase() %>">
-                        <h2 class="card-text"><%= pet.name %></h2>
-                        <p>Age: <%= pet.age %></p>
+                <% featuredPets.forEach(pet => { %>
+                    <div class="pet-card">
+                        <% 
+                            if (pet.images && pet.images.length > 0)
+                            {%>
+                                    <img src="data:<%=pet.images[0].contentType%>;base64,<%=pet.images[0].data.toString('base64')%>" alt="<%=pet.name%>" class="pet-image">
+                            <%}
+                            else 
+                            {%>
+                                <p>No images available</p>    
+                            <%}
+                        %>
                         <p class="price"><strong>₹ <%= pet.price %></strong></p>
-                        <button class="card-button" onclick="window.location.href='/pets'"><%= detailsButtonText %></button>
+                        <button class="card-button" onclick="window.location.href='/pets'">Buy Now</button>
                     </div>
                 <% }); %>
             </div>
@@ -124,26 +149,30 @@
     </section>
     <hr>
     <section class="feature-prod">
-        <div class="feature-pets-content">
-            <h1 class="section-title"><%= featuredProductsTitle %></h1>
-            <div class="pet-grid">
-                <% featuredProducts.forEach(function(product) { %>
-                    <div class="feature-pdts-card">
-                        <img src="<%= product.image %>" alt="<%= product.name.toLowerCase() %>">
-                        <h2 class="card-text"><%= product.name %></h2>
-                        <div class="star-rating">
-                            <%- product.rating %>
+        <div class="feature-pdts-content">
+            <h1 class="section-title"><%=featuredProductsTitle%></h1>
+            <div class="product-grid">
+                <%featuredProducts.forEach(product=> {%>
+                        <div class="product-card">
+                            <%
+                            if (product.images && product.images.length > 0){%>
+                                <img src="data:<%=product.images[0].contentType%>;base64,<%=product.images[0].data.toString('base64')%>" alt="<%=product.name%>" class="product-image">    
+                            <%}
+                            else {%>
+                                <p>No images available</p>    
+                            <%}
+                            %>
+                            <p class="price"><strong>₹ <%=product.price%></strong></p>
+                            <button class="card-button" onclick="window.location.href='/products'">Buy Now</button>
                         </div>
-                        <p class="price"><strong>₹ <%= product.price %></strong></p>
-                        <button class="card-button" onclick="window.location.href='/products/toys'"><%= buyButtonText %></button>
-                    </div>
-                <% }); %>
+                    <%})
+                %>
             </div>
         </div>
     </section>
     <section id="about" class="about">
         <div class="container">
-            <h2 class="section-title"><%= aboutTitle %></h2>
+            <h2 class="section-title">About Petverse</h2>
             <% aboutText.forEach(function(paragraph) { %>
                 <p class="about-text"><%- paragraph %></p>
             <% }); %>
@@ -171,26 +200,26 @@
     </section>
     
     <section class="call-to-action">
-        <h2><%= ctaTitle %></h2>
-        <p><%= ctaSubtitle %></p>
+        <h2>Ready to Find Your Perfect Pet?</h2>
+        <p>Join our community of pet lovers today</p>
         <div class="cta-buttons">
-            <% ctaButtons.forEach(function(button) { %>
-                <button id="<%= button.id %>" class="cta-btn"><%= button.text %></button>
-            <% }); %>
+                <button id="adopt" onclick="window.location.href='/pets'" class="cta-btn">Adopt a Pet</button>
+                <button id="shop" onclick="window.location.href='/products'" class="cta-btn">Shop Products</button>
         </div>
     </section>
     <footer id="footer">
         <div class="footer-container">
             <div class="footer-logo">
-                <h2><%= siteName %></h2>
-                <p><%= footerTagline %></p>
+                <h2>PetVerse</h2>
+                <p>Your Pet Care Companion</p>
             </div>
             <div class="footer-links">
-                <h3><%= quickLinksTitle %></h3>
+                <h3>Quick Links</h3>
                 <ul>
-                    <% footerLinks.forEach(function(link) { %>
-                        <li><a href="<%= link.url %>"><%= link.name %></a></li>
-                    <% }); %>
+                    <li><a href="/home">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/contact">Contact</a></li>
+                    <li><a href="/privacy">Privacy Policy</a></li>
                 </ul>
             </div>
             <div class="footer-social">

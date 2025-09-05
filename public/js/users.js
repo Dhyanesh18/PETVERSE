@@ -45,8 +45,10 @@ const userSchema = new mongoose.Schema({
         }
     }
 }, { 
-    timestamps: true 
+    timestamps: true
 });
+
+userSchema.index({email:1}, {unique: true});
 
 // Password hashing
 userSchema.pre('save', async function(next) {
