@@ -128,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function validateFullName() {
         clearErrors(fullNameInput);
         const fullNameGroup = fullNameInput.closest('.input-group');
+        const nameValue = fullNameInput.value.trim();
 
         if (!fullNameInput.value) {
             fullNameGroup.appendChild(createErrorMessage('✖ Full name is required'));
@@ -138,6 +139,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fullNameInput.value.split(' ').length < 2) {
             fullNameGroup.appendChild(createErrorMessage('✖ Please enter your full name (first and last name)'));
             fullNameGroup.classList.add('has-error');
+            return false;
+        }
+
+        const nameRegex = /^[A-Za-z\s'-]+$/;
+        if (!nameRegex.test(nameValue)){
+            fullNameInput.parentElement.appendChild(createErrorMessage('✖ Full name can contain only characters'));
+            fullNameInput.parentElement.classList.add("has-error");
             return false;
         }
 

@@ -106,8 +106,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
 
-    function validateFullName() {
+    function validateFullName() {   
         clearErrors(fullNameInput);
+        const naemValue = fullNameInput.value.trim()
         if (!fullNameInput.value) {
             fullNameInput.parentElement.appendChild(createErrorMessage('✖ Full name is required'));
             fullNameInput.parentElement.classList.add('has-error');
@@ -118,6 +119,14 @@ document.addEventListener('DOMContentLoaded', function() {
             fullNameInput.parentElement.classList.add('has-error');
             return false;
         }
+
+        const nameRegex = /^[A-Za-z\s'-]+$/;
+        if (!nameRegex.test(nameValue)){
+            fullNameInput.parentElement.appendChild(createErrorMessage('✖ Full name can contain only characters'))
+            fullNameInput.parentElement.classList.add('has-error');
+            return false;
+        }
+
         return true;
     }
 
@@ -259,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
             successModal.className = 'success-modal';
             successModal.innerHTML = `
                 <div class="modal-content">
-                    <h3>✅ Registration Submitted</h3>
+                    <h3>Registration Submitted</h3>
                     <p>${result.message}</p>
                     <p>Your account will be activated after admin approval.</p>
                     <button onclick="window.location.href='/login'">Go to Login</button>
