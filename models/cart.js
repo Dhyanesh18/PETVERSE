@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Load models to ensure Mongoose knows about them
 require('./products');
 require('./pets');
 

@@ -685,6 +685,42 @@ hr {
     margin-top: 60px;
 }
 
+.product-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 10px 20px;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+}
+
+/* Update the existing pet-card selector to include product-card */
+.pet-card, .product-card {
+    flex: 0 0 250px;
+    height: 380px;
+    transition: all 0.3s ease;
+    margin: 20px 0px;
+    border: 1px solid rgba(0,0,0,0.1);
+    text-align: center;
+    padding: 20px 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+.pet-card:hover, .product-card:hover{
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+
+/* Ensure images have same dimensions */
+.pet-card img, .product-card img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
 @media screen and (max-width: 1240px) {
     .nav-links {
         display: none; 

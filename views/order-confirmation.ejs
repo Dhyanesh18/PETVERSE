@@ -214,7 +214,7 @@
             <h1 class="confirmation-title">Thank you for your order!</h1>
             <p class="confirmation-message">Your order has been received and is being processed. You will receive an email confirmation shortly.</p>
             
-            <div class="order-number" id="orderNumber">#ORD-2023-0001</div>
+            <div class="order-number" id="orderNumber"><%=orderId%></div>
             
             <div class="order-progress">
                 <div class="order-progress-icon">
@@ -222,7 +222,7 @@
                 </div>
                 <div class="order-progress-text">
                     <h3>Order Confirmed</h3>
-                    <p id="orderDate">June 10, 2023</p>
+                    <p id="orderDate">May 10, 2025</p>
                 </div>
             </div>
             
@@ -235,7 +235,7 @@
                         </div>
                         <div class="tracking-content">
                             <div class="tracking-title">Order Placed</div>
-                            <div class="tracking-date" id="orderPlacedDate">June 10, 2023</div>
+                            <div class="tracking-date" id="orderPlacedDate">May 10, 2025</div>
                         </div>
                     </div>
                     <div class="tracking-step">
@@ -253,7 +253,7 @@
                         </div>
                         <div class="tracking-content">
                             <div class="tracking-title">Shipping</div>
-                            <div class="tracking-date" id="estimatedShippingDate">Estimated: June 12, 2023</div>
+                            <div class="tracking-date" id="estimatedShippingDate">Estimated: May 12, 2025</div>
                         </div>
                     </div>
                     <div class="tracking-step">
@@ -262,7 +262,7 @@
                         </div>
                         <div class="tracking-content">
                             <div class="tracking-title">Delivery</div>
-                            <div class="tracking-date" id="estimatedDeliveryDate">Estimated: June 14, 2023</div>
+                            <div class="tracking-date" id="estimatedDeliveryDate">Estimated: May 14, 2025</div>
                         </div>
                     </div>
                 </div>
@@ -278,39 +278,13 @@
             </div>
         </div>
 
-        <div class="order-details">
-            <h2 class="section-title">Order Details</h2>
-            <div class="detail-row">
-                <span class="detail-label">Order Number:</span>
-                <span class="detail-value" id="orderNumberDetail">#ORD-2023-0001</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Order Date:</span>
-                <span class="detail-value" id="orderDateDetail">June 10, 2023</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Payment Method:</span>
-                <span class="detail-value" id="paymentMethod">Credit Card</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Shipping Address:</span>
-                <span class="detail-value" id="shippingAddress">123 Main St, Anytown, AN 12345</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Total Amount:</span>
-                <span class="detail-value" id="totalAmount">₹0.00</span>
-            </div>
-
-            <h3 class="section-title" style="margin-top: 30px;">Order Items</h3>
-            <div class="order-items" id="orderItems">
-                <!-- Order items will be populated by JavaScript -->
-            </div>
-        </div>
+        
 
         <div class="actions">
-            <a href="./Products.html" class="btn btn-secondary">Continue Shopping</a>
-            <a href="./homepage.html" class="btn">Back to Home</a>
+            <button class="btn btn-secondary" onclick="window.location.href = '/products'">Continue Shopping</button>
+            <button class="btn" onclick="window.location.href = '/'">Back to Home</button>
         </div>
+        
     </div>
 
     <footer id="footer">

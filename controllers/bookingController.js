@@ -3,13 +3,12 @@ const Service = require('../models/Service');
 const User = require('../models/users');
 const Availability = require('../models/availability');
 
-// Helper to convert day of week number to day name
 const getDayName = (dayNum) => {
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   return days[dayNum];
 };
 
-// Helper to format time from 24h to 12h format
+
 const formatTime = (time) => {
   const [hours, minutes] = time.split(':');
   const h = parseInt(hours);
