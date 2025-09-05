@@ -787,6 +787,12 @@ router.get('/buy/:id', isAuthenticated, async (req, res) => {
             avgProductRating = (totalRating / reviews.length).toFixed(1);
             reviewCount = reviews.length;
         }
+router.get('/checkout', isAuthenticated, (req, res) => {
+    res.render('checkout', {
+        navLinks: navLinksData
+    });
+});
+
 
         // Find similar products (same category, different brand)
         const similarProducts = await Product.find({
