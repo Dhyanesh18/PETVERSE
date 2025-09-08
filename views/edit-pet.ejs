@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Pet - PetVerse</title>
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 400px;
+    position: relative;
+    text-align: center;
+}
+
+.close-modal {
+    position: absolute;
+    right: 1rem;
+    top: 0.5rem;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.modal-ok-btn {
+    background: rgb(0, 180, 180);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    margin-top: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-ok-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 8px rgba(0, 180, 180, 0.5);
+}
+
+        .navbar{
+            background-color: #222;
+        }
+
+        .pet-form-container {
+            max-width: 800px;
+            margin: 100px auto 50px;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #444;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgb(0, 180, 180);
+            box-shadow: 0 0 5px rgba(0, 180, 180, 0.3);
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 1rem;
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            border-color: rgb(0, 180, 180);
+            background: rgba(0, 180, 180, 0.05);
+        }
+
+        .submit-btn {
+            background: rgb(0, 180, 180);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 180, 180, 0.5);
+        }
+
+        .image-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .preview-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .image-preview .preview-item {
+            position: relative;
+        }
+
+        .image-preview .remove-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header" id="header">
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="nav-icons">
+                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button onclick="window.location.href='/login'" class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/pets">Pets</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/products/petfood">Pet Food</a></li>
+                            <li><a href="/products/toys">Toys</a></li>
+                            <li><a href="/products/accessories">Accessories</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/services">Services</a></li>
+                            <li><a href="/mate">PetMate</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="pet-form-container">
+        <h2 class="form-title">Edit Pet</h2>
+        <form class="pet-form" action="/seller/pets/<%= pet._id %>?_method=PUT" method="POST" enctype="multipart/form-data">
+             <input type="hidden" name="_method" value="PUT">
+            <div class="form-group">
+                <label class="form-label" for="name">Pet Name</label>
+                <input class="form-input" type="text" id="name" name="name" value="<%= pet.name %>" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="category">Category</label>
+                <select class="form-input" id="category" name="category" required>
+                    <option value="">Select Category</option>
+                    <option value="Dog" <%= pet.category === 'Dog' ? 'selected' : '' %>>Dog</option>
+                    <option value="Cat" <%= pet.category === 'Cat' ? 'selected' : '' %>>Cat</option>
+                    <option value="Bird" <%= pet.category === 'Bird' ? 'selected' : '' %>>Bird</option>
+                    <option value="Fish" <%= pet.category === 'Fish' ? 'selected' : '' %>>Fish</option>
+                    <option value="Other" <%= pet.category === 'Other' ? 'selected' : '' %>>Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="breed">Breed</label>
+                <input class="form-input" type="text" id="breed" name="breed" value="<%= pet.breed %>" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="age">Age</label>
+                <input class="form-input" type="text" id="age" name="age" value="<%= pet.age %>" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="gender">Gender</label>
+                <select class="form-input" id="gender" name="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="male" <%= pet.gender === 'male' ? 'selected' : '' %>>Male</option>
+                    <option value="female" <%= pet.gender === 'female' ? 'selected' : '' %>>Female</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea class="form-input" id="description" name="description" rows="4"><%= pet.description %></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="price">Price (₹)</label>
+                <input class="form-input" type="number" id="price" name="price" value="<%= pet.price %>" step="0.01" min="0" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Pet Images (Max 5)</label>
+                <label class="file-input-label" for="images">
+                    Click to upload new images
+                    <input type="file" id="images" name="images" multiple accept="image/*" hidden>
+                </label>
+                <div class="image-preview" id="imagePreview">
+                    <% if (pet.images && pet.images.length > 0) { %>
+                        <% pet.images.forEach(function(image, index) { %>
+                            <div class="preview-item">
+                                <img src="data:<%= image.contentType %>;base64,<%= image.data.toString('base64') %>" alt="Pet Image" class="preview-image">
+                                <button type="button" class="remove-image" data-index="<%= index %>">&times;</button>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+                 <input type="hidden" name="keepImages" id="keepImages" value="<%= pet.images.map(() => 'true').join(',') %>">
+            </div>
+
+            <button type="submit" class="submit-btn">Update Pet</button>
+        </form>
+    </div>
+
+    <!-- Footer Section -->
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+        </div>
+    </footer>
+
+    <script>
+        let selectedFiles = []; // For new files being uploaded
+        let existingImages = <%= JSON.stringify(pet.images.map(img => ({ contentType: img.contentType, data: img.data.toString('base64') }))) %>;
+        let keepImagesStatus = existingImages.map(() => true);
+
+        const maxFiles = 5;
+        const imageInput = document.getElementById('images');
+        const imagePreview = document.getElementById('imagePreview');
+        const keepImagesInput = document.getElementById('keepImages');
+
+        // Initial render of existing images
+        renderImages();
+
+        document.querySelector('.pet-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            // Append new files
+            selectedFiles.forEach(file => {
+                formData.append('images', file);
+            });
+
+            // Update the hidden input with which existing images to keep
+            keepImagesInput.value = keepImagesStatus.join(',');
+             formData.set('keepImages', keepImagesInput.value);
+
+            try {
+                // Use fetch for PUT request
+                const response = await fetch(`/seller/pets/<%= pet._id %>`, {
+                    method: 'POST', // Use POST with _method=PUT
+                    body: formData
+                });
+
+                if (response.ok) {
+                     // Redirect to the seller dashboard after successful update
+                     window.location.href = '/seller/dashboard';
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.message || 'Error updating pet');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while updating the form');
+            }
+        });
+
+        imageInput?.addEventListener('change', function() {
+            const newFiles = Array.from(this.files);
+            const totalImages = existingImages.length + selectedFiles.length + newFiles.length;
+
+            if (totalImages > maxFiles) {
+                alert(`You can upload a maximum of ${maxFiles} images.`);
+                this.value = ''; // Clear the input
+                return;
+            }
+
+            selectedFiles = [...selectedFiles, ...newFiles];
+            renderImages();
+        });
+
+        imagePreview.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-image')) {
+                const item = e.target.closest('.preview-item');
+                const index = Array.from(imagePreview.children).indexOf(item);
+
+                if (index < existingImages.length) {
+                    // Mark existing image for removal
+                    keepImagesStatus[index] = false;
+                } else {
+                    // Remove new image
+                    selectedFiles.splice(index - existingImages.length, 1);
+                }
+                renderImages();
+                 // Update the hidden input
+                keepImagesInput.value = keepImagesStatus.join(',');
+            }
+        });
+
+        function renderImages() {
+            imagePreview.innerHTML = '';
+
+            // Render existing images that are kept
+            existingImages.forEach((image, index) => {
+                if (keepImagesStatus[index]) {
+                     const preview = document.createElement('div');
+                     preview.className = 'preview-item';
+                     preview.innerHTML = `
+                         <img src="data:${image.contentType};base64,${image.data}" alt="Pet Image" class="preview-image">
+                         <button type="button" class="remove-image" data-index="${index}">&times;</button>
+                     `;
+                     imagePreview.appendChild(preview);
+                }
+            });
+
+            // Render new images
+            selectedFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const preview = document.createElement('div');
+                    preview.className = 'preview-item';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview" class="preview-image">
+                        <button type="button" class="remove-image">&times;</button>
+                    `;
+                    imagePreview.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Dropdown menu functionality (kept from add-pet.ejs)
+        document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                const menu = this.nextElementSibling;
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            });
+        });
+    
+        // Close dropdowns when clicking outside (kept from add-pet.ejs)
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.display = 'none';
+                });
+            }
+        });
+    
+        // Hamburger menu functionality (kept from add-pet.ejs)
+        document.getElementById('hamburger').addEventListener('click', function() {
+            document.querySelector('.nav-links').classList.toggle('active');
+        });
+
+    </script>
+</body>
+</html> 

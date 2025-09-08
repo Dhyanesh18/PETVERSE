@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Order - PetVerse</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #222; }
+        .center { text-align: center; margin-top: 120px; }
+        .coming-soon { font-size: 2.2rem; color: #FF6B01; font-weight: 700; margin-bottom: 16px; }
+        .order-id { color: #666; font-size: 1.1rem; margin-bottom: 32px; }
+        .info { color: #888; font-size: 1rem; }
+        .btn-back {
+            display: inline-block;
+            margin-top: 32px;
+            padding: 12px 28px;
+            background: #FF6B01;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .btn-back:hover { background: #e05a00; }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <div class="coming-soon">Edit Order - Coming Soon!</div>
+        <div class="order-id">Order ID: <%= order.orderNumber %></div>
+        <div class="info">We're working on this feature. Soon you'll be able to edit your order details here.</div>
+        <a href="/order-details/<%= order._id %>" class="btn-back">Back to Order Details</a>
+    </div>
+</body>
+</html> 

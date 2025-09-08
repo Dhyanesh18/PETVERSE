@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         validate: {
-            validator: v => /^\d{10}$/.test(v),
+            validator: v => /^\d{10}$/.test(v), // 10-digit phone regex
             message: 'Phone must be 10 digits'
         }
     },
@@ -43,12 +43,14 @@ const userSchema = new mongoose.Schema({
         required: function() {
             return ['seller', 'service_provider'].includes(this.role);
         }
-    }
+    },
+    wishlistProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    wishlistPets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pet' }]
 }, { 
     timestamps: true 
 });
 
-// Password hashing
+// Password hashing (basic try-catch, no fancy config)
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();
     try {
@@ -59,7 +61,7 @@ userSchema.pre('save', async function(next) {
     }
 });
 
-// Password comparison
+// Password comparison (basic try-catch, no dummy checks)
 userSchema.methods.comparePassword = async function(inputPassword) {
     try {
         return await bcrypt.compare(inputPassword, this.password);

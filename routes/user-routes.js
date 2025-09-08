@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { isAuthenticated } = require('../middleware/auth');
 
-// Import Mongoose Models
 const Pet = require('../models/pets');
 const Product = require('../models/products');
 const Service = require('../models/serviceProvider');
@@ -11,16 +10,14 @@ const Review = require('../models/reviews');
 const User = require('../models/users');
 const Order = require('../models/order');
 const Booking = require('../models/Booking');
-const PetMate = require('../models/petMate');
-// const User = require('../models/users');
+const Chat = require('../models/chat');
 
-// Common navigation links data
 const navLinksData = [
     { name: 'Home', url: '/home' },
     { name: 'Pets', url: '/pets' },
     { 
         name: 'Products', 
-        url: '#', // Changed from /products - This link only toggles the dropdown
+        url: '#',
         dropdown: true,
         dropdownItems: [
             { name: 'Pet Food', url: '/products/petfood' },
@@ -30,27 +27,20 @@ const navLinksData = [
     },
     { 
         name: 'Services', 
-        url: '#', // Changed from /services - This link only toggles the dropdown
+        url: '#', 
         dropdown: true,
         dropdownItems: [
-            { name: 'Pet Care', url: '/services' }, // Link to general services page
+            { name: 'Pet Care', url: '/services' }, 
             { name: 'Pet Mate', url: '/mate' }
         ]
     },
     { name: 'About', url: '/about' }
 ];
 
-// Home page
-router.get('/home', isAuthenticated, async (req, res) => { // Made async for future DB fetches
+router.get('/home', isAuthenticated, async (req, res) => { 
     try {
-        // TODO: Fetch featured pets/products dynamically
-        const featuredPets = await Pet.find()
-        .sort({createdAt: 1})
-        .limit(5)
-        
-        const featuredProducts = await Product.find()
-        .sort({avgRating: -1})
-        .limit(5)
+        const featuredPets = await Pet.find({ available: true }).limit(4);
+        const featuredProducts = await Product.find({}).limit(4); 
 
         res.render('homepage', {
             title: 'PetVerse - Your Pet Care Companion',
@@ -61,7 +51,7 @@ router.get('/home', isAuthenticated, async (req, res) => { // Made async for fut
             heroTitle: 'Perfect Pet',
             heroSubtitle: 'Find your furry friend and everything they need',
             heroButtonText: 'Adopt Now',
-
+            slideshowTitle: 'Featured Pets',
             slides: [
                 { image: '/images/slide1.jpg', caption: 'Adorable Puppies' },
                 { image: '/images/slide2.jpg', caption: 'Playful Kittens' },
@@ -76,28 +66,11 @@ router.get('/home', isAuthenticated, async (req, res) => { // Made async for fut
             ],
             exploreButtonText: 'Explore',
             featuredPetsTitle: 'Featured Pets',
-            featuredPets: featuredPets.map(pet => ({
-                _id: pet._id,
-                name: pet.name,
-                age: pet.age,
-                price: pet.price,
-                breed: pet.breed,
-                images: pet.images,
-                category: pet.category,
-                description: pet.description
-            })),
+            featuredPets: featuredPets,
             detailsButtonText: 'View Details',
             featuredProductsTitle: 'Featured Products',
-            featuredProducts: featuredProducts.map(product => ({
-                _id: product._id,
-                name: product.name,
-                price: product.price,
-                images: product.images,
-                avgRating: product.avgRating,
-                reviewCount: product.reviewCount,
-                discount: product.discount,
-                category: product.category
-            })),
+            featuredProducts: featuredProducts,
+            buyButtonText: 'Buy Now',
             aboutTitle: 'About PetVerse',
             aboutText: [
                 'Welcome to PetVerse, your one-stop destination for all things pets!',
@@ -111,12 +84,18 @@ router.get('/home', isAuthenticated, async (req, res) => { // Made async for fut
             ],
             testimonialTitle: 'What Our Customers Say',
             testimonials: [
-                { text: 'Found my perfect companion here!', author: 'John Wick' },
-                { text: 'Great service and quality products', author: 'Donald Trump' },
-                { text: 'Best place for pet lovers, this is revolutionary', author: 'Tony stark' },
-                { text: 'Highly recommend! Was in dire need for such a website', author: 'Elon Musk' },
-                {text: 'Amazing experience! Highly recommend!', author: 'Dwayne Johnson' },
+                { text: 'Found my perfect companion here!', author: 'John D.' },
+                { text: 'Great service and quality products', author: 'Sarah M.' },
+                { text: 'Best place for pet lovers', author: 'Mike R.' }
             ],
+            ctaTitle: 'Ready to Find Your Perfect Pet?',
+            ctaSubtitle: 'Join our community of pet lovers today',
+            ctaButtons: [
+                { id: 'adopt', text: 'Adopt a Pet' },
+                { id: 'shop', text: 'Shop Products' }
+            ],
+            footerTagline: 'Your Pet Care Companion',
+            quickLinksTitle: 'Quick Links',
             footerLinks: [
                 { name: 'Home', url: '/home' },
                 { name: 'About', url: '/about' },
@@ -136,17 +115,33 @@ router.get('/home', isAuthenticated, async (req, res) => { // Made async for fut
     }
 });
 
-// Owner Dashboard route
 router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
     try {
-        // Check if user is an owner
         if (req.user.role !== 'owner') {
             return res.status(403).render('error', {
                 message: 'Access denied. This dashboard is for pet owners only.'
             });
         }
 
-        // Get mock data for dashboard or retrieve actual user data
+        const user = await User.findById(req.session.userId);
+        const wishlistedPets = await Pet.find({ _id: { $in: user.wishlistPets } });
+        const wishlistedProducts = await Product.find({ _id: { $in: user.wishlistProducts } });
+        
+        const totalWishlistItems = wishlistedPets.length + wishlistedProducts.length;
+
+        const orders = await Order.find({ customer: req.session.userId })
+            .populate('items.product')
+            .populate('seller')
+            .sort({ createdAt: -1 });
+        
+        const totalOrders = orders.length;
+        const activeOrders = orders.filter(order =>
+            ['pending', 'processing', 'confirmed'].includes(order.status)
+        ).length;
+        const totalSpent = orders
+            .filter(order => order.paymentStatus === 'paid')
+            .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        
         const userData = {
             username: req.user.username,
             email: req.user.email,
@@ -162,36 +157,33 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
                 month: 'long',
                 day: 'numeric'
             }),
-            totalOrders: 0,
-            activeOrders: 0,
-            totalSpent: 0,
-            wishlistItems: 0
+            totalOrders,
+            activeOrders,
+            totalSpent,
+            wishlistItems: totalWishlistItems
         };
 
-        // Mock order data - replace with actual data when available
-        const mockOrders = [];
-        
-        // Fetch user's bookings
         const bookings = await Booking.find({ user: req.user._id })
             .populate('service')
             .sort({ date: 1 })
             .lean();
-            
-        // Format the bookings for display
+        
         const formattedBookings = bookings.map(booking => ({
             id: booking._id,
             serviceName: booking.service?.name || 'Service Unavailable',
             serviceType: booking.service?.type || 'Unknown',
             date: booking.date,
             time: booking.slot,
-            status: 'Confirmed'  // You can add actual status logic here
+            status: 'Confirmed'  
         }));
         
         res.render('owner-dashboard', {
             user: userData,
-            orders: mockOrders,
+            orders: orders, 
             bookings: formattedBookings || [],
-            navLinks: navLinksData
+            navLinks: navLinksData,
+            wishlistedPets,
+            wishlistedProducts
         });
     } catch (err) {
         console.error('Error loading owner dashboard:', err);
@@ -201,16 +193,16 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
     }
 });
 
-// Pets route
 router.get('/pets', isAuthenticated, async (req, res) => {
     try {
         const pets = await Pet.find({ available: true });
-        
+        const user = await User.findById(req.session.userId);
+        const wishlistPets = user.wishlistPets.map(id => id.toString());
         res.render('pets', {
             navLinks: navLinksData,
             categoryTitle: 'Available Pets',
             pets: pets,
-            // Static filters for now - could be fetched or derived
+            wishlistPets: wishlistPets,
             categoryFilters: [
                 { id: 'dogs', value: 'dogs', label: 'Dogs' },
                 { id: 'cats', value: 'cats', label: 'Cats' },
@@ -245,20 +237,17 @@ router.get('/pets', isAuthenticated, async (req, res) => {
     }
 });
 
-// Product routes Helper
 async function renderProductPage(res, category, categoryTitle) {
     try {
         const page = parseInt(res.req.query.page) || 1;
-        const limit = 6; // Items per page
+        const limit = 6; 
         const skip = (page - 1) * limit;
 
         const query = category ? { category: category } : {};
         
-        // Get total count for pagination
         const totalProducts = await Product.countDocuments(query);
         const totalPages = Math.ceil(totalProducts / limit);
         
-        // Get products for current page
         const products = await Product.find(query)
             .skip(skip)
             .limit(limit)
@@ -291,12 +280,17 @@ async function renderProductPage(res, category, categoryTitle) {
             };
         });
         
-        // Add ratings to each product
+        // Get user's wishlist
+        const user = await User.findById(res.req.session.userId);
+        const wishlistedProducts = user.wishlistProducts.map(id => id.toString());
+        
+        // Add ratings and wishlist status to each product
         const productsWithRatings = products.map(product => {
             const productObj = product.toObject();
             const productRating = ratingsMap[product._id.toString()] || { avgRating: 0, reviewCount: 0 };
             productObj.avgRating = productRating.avgRating;
             productObj.reviewCount = productRating.reviewCount;
+            productObj.isWishlisted = wishlistedProducts.includes(product._id.toString());
             return productObj;
         });
 
@@ -344,95 +338,42 @@ router.get('/services', isAuthenticated, async (req, res) => {
 });
 
 // PetMate route
-const ITEMS_PER_PAGE = 10; // Number of items per page
-
-router.get('/mate', isAuthenticated, async (req, res) => {
+router.get('/mate', isAuthenticated, async (req, res) => { // Made async for future DB fetch
     try {
-        const { petType, breed, state, district, gender, age, page = 1 } = req.query;
-        const currentPage = parseInt(page);
-        
-        // Build filter object
-        const filter = {};
-        
-        // Handle array filters for checkboxes
-        if (petType) filter.petType = Array.isArray(petType) ? { $in: petType } : petType;
-        if (breed) filter.breed = Array.isArray(breed) ? { $in: breed } : breed;
-        if (state) filter['location.state'] = state;
-        if (district) filter['location.district'] = new RegExp(district, 'i');
-        if (gender) filter.gender = Array.isArray(gender) ? { $in: gender } : gender;
-        
-        // Handle age filters
-        if (age) {
-            const ageConditions = [];
-            const ageFilters = Array.isArray(age) ? age : [age];
-
-            ageFilters.forEach(ageFilter => {
-                switch(ageFilter) {
-                    case 'puppy':
-                        ageConditions.push({ 
-                            $or: [
-                                { 'age.value': { $lt: 1 }, 'age.unit': 'years' },
-                                { 'age.value': { $lt: 12 }, 'age.unit': 'months' }
-                            ]
-                        });
-                        break;
-                    case 'young':
-                        ageConditions.push({ 
-                            $or: [
-                                { 'age.value': { $gte: 1, $lte: 3 }, 'age.unit': 'years' },
-                                { 'age.value': { $gte: 12, $lte: 36 }, 'age.unit': 'months' }
-                            ]
-                        });
-                        break;
-                    // Add other age cases similarly
-                }
-            });
-
-            if (ageConditions.length > 0) {
-                filter.$and = ageConditions;
-            }
-        }
-
-        // Get total count for pagination
-        const totalPets = await PetMate.countDocuments(filter);
-        const totalPages = Math.ceil(totalPets / ITEMS_PER_PAGE);
-
-        // Fetch paginated pets
-        const matingPets = await PetMate.find(filter)
-            .populate('listedBy')
-            .sort({ createdAt: -1 })
-            .skip((currentPage - 1) * ITEMS_PER_PAGE)
-            .limit(ITEMS_PER_PAGE)
-            .exec();
-
-        // Get unique values for filters
-        const [rawPetTypes, rawBreeds, rawStates] = await Promise.all([
-            PetMate.distinct('petType'),
-            PetMate.distinct('breed'),
-            PetMate.distinct('location.state')
-        ]);
-
-        // Formatting function
-        const formatLabel = (str) => 
-            str.replace(/-/g, ' ')
-              .replace(/\b\w/g, c => c.toUpperCase());
-
+        // TODO: Fetch mating listings dynamically
+        const matingPets = []; // Placeholder
         res.render('mate', {
             navLinks: navLinksData,
-            petTypes: rawPetTypes.map(value => ({ value, label: formatLabel(value) })),
-            breeds: rawBreeds.map(value => ({ value, label: formatLabel(value) })),
-            states: rawStates.map(value => ({ value, label: formatLabel(value) })),
-            pets: matingPets,
-            selectedFilters: req.query,
-            currentPage,
-            totalPages,
-            pageSize: ITEMS_PER_PAGE
+             petTypes: [
+                { value: 'dog', label: 'Dog' },
+                { value: 'cat', label: 'Cat' },
+                { value: 'bird', label: 'Bird' },
+                { value: 'other', label: 'Other' }
+            ],
+            breeds: [
+                { value: 'german-shepherd', label: 'German Shepherd' },
+                { value: 'golden-retriever', label: 'Golden Retriever' },
+                { value: 'labrador', label: 'Labrador' },
+                { value: 'persian', label: 'Persian' },
+                { value: 'siamese', label: 'Siamese' },
+                { value: 'parrot', label: 'Parrot' },
+                { value: 'cockatiel', label: 'Cockatiel' }
+            ],
+            states: [
+                { value: 'maharashtra', label: 'Maharashtra' },
+                { value: 'karnataka', label: 'Karnataka' },
+                { value: 'tamil-nadu', label: 'Tamil Nadu' },
+                { value: 'kerala', label: 'Kerala' },
+                { value: 'delhi', label: 'Delhi' }
+            ],
+            pets: matingPets
         });
     } catch (err) {
         console.error('Error fetching mate data:', err);
         res.status(500).render('error', { message: 'Error loading PetMate page' });
     }
 });
+
 // About route
 router.get('/about', isAuthenticated, async (req, res) => { // Made async for future DB fetch
     try {
@@ -788,12 +729,36 @@ router.get('/buy/:id', isAuthenticated, async (req, res) => {
             reviewCount = reviews.length;
         }
 
-        // Find similar products (same category, different brand)
+        // Find similar products (same category, different brand) and populate images
         const similarProducts = await Product.find({
             category: product.category,
             brand: { $ne: product.brand },
             _id: { $ne: product._id }
-        }).limit(4);
+        })
+        .populate('images') // Populate the images field
+        .limit(4)
+        .lean(); // Add .lean() to make products plain JavaScript objects
+
+        // Fetch reviews for each similar product
+        for (const similar of similarProducts) {
+            const similarReviews = await Review.find({
+                targetType: 'Product',
+                targetId: similar._id
+            })
+            .populate('user', 'username firstName lastName profileImage')
+            .sort({ createdAt: -1 });
+            similar.reviews = similarReviews;
+             // Calculate average rating and review count for similar products
+            let avgSimilarRating = 0;
+            let similarReviewCount = 0;
+            if (similarReviews && similarReviews.length > 0) {
+                const totalRating = similarReviews.reduce((sum, review) => sum + review.rating, 0);
+                avgSimilarRating = (totalRating / similarReviews.length).toFixed(1);
+                similarReviewCount = similarReviews.length;
+            }
+            similar.avgRating = avgSimilarRating;
+            similar.reviewCount = similarReviewCount;
+        }
 
         res.render('Buy', {
             navLinks: navLinksData,
@@ -804,15 +769,22 @@ router.get('/buy/:id', isAuthenticated, async (req, res) => {
                 reviewCount: sellerReviewCount
             },
             similarProducts: similarProducts,
-            reviews: reviews,
+            reviews: reviews, // These are reviews for the main product
             productRating: avgProductRating,
-            reviewCount: reviewCount,
+            reviewCount: reviewCount, // These are review counts for the main product
             isAuthenticated: true
         });
     } catch (err) {
         console.error('Error fetching product details:', err);
         res.status(500).render('error', { message: 'Error loading product details' });
     }
+});
+
+// Checkout route
+router.get('/checkout', isAuthenticated, (req, res) => {
+    res.render('checkout', {
+        navLinks: navLinksData
+    });
 });
 
 // Submit review route
@@ -860,6 +832,401 @@ router.post('/submit-review', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('Error submitting review:', err);
         return res.status(500).render('error', { message: 'Error submitting review' });
+    }
+});
+
+// Toggle wishlist for Product (user-specific)
+router.post('/wishlist/product/:id', isAuthenticated, async (req, res) => {
+  const user = await User.findById(req.session.userId);
+  const prodId = req.params.id;
+  const index = user.wishlistProducts.findIndex(id => id.toString() === prodId);
+  let wishlisted;
+  if (index === -1) {
+    user.wishlistProducts.push(prodId);
+    wishlisted = true;
+  } else {
+    user.wishlistProducts.splice(index, 1);
+    wishlisted = false;
+  }
+  await user.save();
+  res.json({ wishlisted });
+});
+
+// Toggle wishlist for Pet (user-specific)
+router.post('/wishlist/pet/:id', isAuthenticated, async (req, res) => {
+  const user = await User.findById(req.session.userId);
+  const petId = req.params.id;
+  const index = user.wishlistPets.findIndex(id => id.toString() === petId);
+  let wishlisted;
+  if (index === -1) {
+    user.wishlistPets.push(petId);
+    wishlisted = true;
+  } else {
+    user.wishlistPets.splice(index, 1);
+    wishlisted = false;
+  }
+  await user.save();
+  res.json({ wishlisted });
+});
+
+// Get user orders
+router.get('/orders', isAuthenticated, async (req, res) => {
+    try {
+        const orders = await Order.find({ customer: req.session.userId })
+            .populate('items.product')
+            .populate('seller')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // Add image_url to each product in every order item
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                let image_url = '/images/default-product.jpg';
+                if (item.product && item.product.images && item.product.images.length > 0) {
+                    const img = item.product.images[0];
+                    if (img.url) {
+                        image_url = img.url;
+                    } else if (img.data && img.contentType) {
+                        let base64;
+                        if (typeof img.data === 'string') {
+                            base64 = img.data;
+                        } else if (img.data.buffer) {
+                            base64 = Buffer.from(img.data.buffer).toString('base64');
+                        } else if (Buffer.isBuffer(img.data)) {
+                            base64 = img.data.toString('base64');
+                        }
+                        image_url = `data:${img.contentType};base64,${base64}`;
+                    }
+                }
+                if (item.product) {
+                    item.product.image_url = image_url;
+                }
+            });
+        });
+
+        res.json({
+            success: true,
+            orders: orders
+        });
+    } catch (error) {
+        console.error('Error fetching orders:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch orders'
+        });
+    }
+});
+
+// Get single order details
+router.get('/order/:orderId', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.orderId,
+            customer: req.session.userId
+        })
+        .populate('items.product')
+        .populate('seller')
+        .lean();
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        // Add image_url to each product in the order
+        order.items.forEach(item => {
+            let image_url = '/images/default-product.jpg';
+            if (item.product && item.product.images && item.product.images.length > 0) {
+                const img = item.product.images[0];
+                if (img.url) {
+                    image_url = img.url;
+                } else if (img.data && img.contentType) {
+                    let base64;
+                    if (typeof img.data === 'string') {
+                        base64 = img.data;
+                    } else if (img.data.buffer) {
+                        base64 = Buffer.from(img.data.buffer).toString('base64');
+                    } else if (Buffer.isBuffer(img.data)) {
+                        base64 = img.data.toString('base64');
+                    }
+                    image_url = `data:${img.contentType};base64,${base64}`;
+                }
+            }
+            if (item.product) {
+                item.product.image_url = image_url;
+            }
+        });
+
+        res.json({
+            success: true,
+            order: order
+        });
+    } catch (error) {
+        console.error('Error fetching order details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch order details'
+        });
+    }
+});
+
+router.get('/user/dashboard', isAuthenticated, (req, res) => {
+    res.render('owner-dashboard', { user: req.user });
+});
+
+router.get('/order-details/:orderId', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.orderId,
+            customer: req.session.userId
+        })
+        .populate('items.product')
+        .populate('seller')
+        .lean();
+
+        if (!order) {
+            return res.status(404).render('error', { message: 'Order not found' });
+        }
+
+        // Add image_url to each product in the order
+        order.items.forEach(item => {
+            let image_url = '/images/default-product.jpg';
+            if (item.product && item.product.images && item.product.images.length > 0) {
+                const img = item.product.images[0];
+                if (img.url) {
+                    image_url = img.url;
+                } else if (img.data && img.contentType) {
+                    let base64;
+                    if (typeof img.data === 'string') {
+                        base64 = img.data;
+                    } else if (img.data.buffer) {
+                        base64 = Buffer.from(img.data.buffer).toString('base64');
+                    } else if (Buffer.isBuffer(img.data)) {
+                        base64 = img.data.toString('base64');
+                    }
+                    image_url = `data:${img.contentType};base64,${base64}`;
+                }
+            }
+            if (item.product) {
+                item.product.image_url = image_url;
+            }
+        });
+
+        // Pass navLinks and user to the view
+        res.render('order-details', { order, navLinks: navLinksData, user: req.user, siteName: 'PetVerse' });
+    } catch (error) {
+        console.error('Error fetching order details:', error);
+        res.status(500).render('error', { message: 'Failed to fetch order details' });
+    }
+});
+
+router.get('/order/:orderId/shipping', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.orderId,
+            customer: req.session.userId
+        })
+        .populate('seller')
+        .lean();
+
+        if (!order) {
+            return res.status(404).render('error', { message: 'Order not found' });
+        }
+
+        // Mock shipping status (replace with actual shipping provider data)
+        const shippingStatus = {
+            status: order.status,
+            estimatedDelivery: new Date(order.createdAt.getTime() + 3 * 24 * 60 * 60 * 1000), // 3 days from order date
+            trackingNumber: 'TRK-' + order.orderNumber
+        };
+
+        res.render('shipping-tracking', { order, shippingStatus });
+    } catch (error) {
+        console.error('Error fetching shipping details:', error);
+        res.status(500).render('error', { message: 'Failed to fetch shipping details' });
+    }
+});
+
+router.post('/order/:orderId/cancel', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.orderId,
+            customer: req.session.userId
+        });
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        // Check if the order can be cancelled (e.g., not already shipped or delivered)
+        if (order.status === 'shipped' || order.status === 'delivered') {
+            return res.status(400).json({
+                success: false,
+                message: 'Order cannot be cancelled as it is already shipped or delivered'
+            });
+        }
+
+        // Update order status to cancelled
+        order.status = 'cancelled';
+        await order.save();
+
+        res.json({
+            success: true,
+            message: 'Order cancelled successfully'
+        });
+    } catch (error) {
+        console.error('Error cancelling order:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to cancel order: ' + error.message
+        });
+    }
+});
+
+router.post('/order/:orderId/location', isAuthenticated, async (req, res) => {
+    try {
+        const { lat, lng } = req.body;
+        const order = await Order.findOne({
+            _id: req.params.orderId,
+            customer: req.session.userId
+        });
+        if (!order) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+        order.location = { lat, lng };
+        await order.save();
+        res.json({ success: true, message: 'Location shared successfully!' });
+    } catch (error) {
+        console.error('Error sharing location:', error);
+        res.status(500).json({ success: false, message: 'Failed to share location' });
+    }
+});
+
+// Chat routes
+router.get('/order/:orderId/chat-history', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.orderId)
+            .populate('customer', 'fullName')
+            .populate('seller', 'businessName');
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        // Verify that the user is either the customer or the seller
+        if (order.customer._id.toString() !== req.session.userId && 
+            order.seller._id.toString() !== req.session.userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized access to chat history'
+            });
+        }
+
+        // Get chat messages from the database
+        const messages = await Chat.find({ orderId: order._id })
+            .sort({ createdAt: 1 });
+
+        res.json({
+            success: true,
+            messages: messages.map(msg => ({
+                text: msg.message,
+                sender: msg.senderId.toString() === req.session.userId ? 'user' : 'support',
+                timestamp: msg.createdAt
+            }))
+        });
+    } catch (error) {
+        console.error('Error fetching chat history:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch chat history'
+        });
+    }
+});
+
+router.post('/order/chat', isAuthenticated, async (req, res) => {
+    try {
+        const { orderId, sellerId, message } = req.body;
+
+        const order = await Order.findById(orderId)
+            .populate('customer', 'fullName')
+            .populate('seller', 'businessName');
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        // Verify that the user is either the customer or the seller
+        if (order.customer._id.toString() !== req.session.userId && 
+            order.seller._id.toString() !== req.session.userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Unauthorized to send messages'
+            });
+        }
+
+        // Save message to database
+        const newMessage = new Chat({
+            orderId: order._id,
+            senderId: req.session.userId,
+            message: message,
+            createdAt: new Date()
+        });
+        await newMessage.save();
+
+        // Emit socket event for real-time updates
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`order_${orderId}`).emit('chatMessage', {
+                text: message,
+                sender: req.session.userId === order.customer._id.toString() ? 'user' : 'support',
+                timestamp: new Date()
+            });
+        }
+
+        res.json({
+            success: true,
+            message: {
+                text: message,
+                sender: req.session.userId === order.customer._id.toString() ? 'user' : 'support',
+                timestamp: new Date()
+            }
+        });
+    } catch (error) {
+        console.error('Error sending message:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to send message'
+        });
+    }
+});
+
+// Edit Order Page
+router.get('/order/:orderId/edit', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.orderId)
+            .populate('items.product')
+            .populate('seller')
+            .lean();
+
+        if (!order) {
+            return res.status(404).render('error', { message: 'Order not found' });
+        }
+
+        res.render('edit-order', { order });
+    } catch (error) {
+        console.error('Error loading edit order page:', error);
+        res.status(500).render('error', { message: 'Failed to load edit order page' });
     }
 });
 

@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="icon" href="/images/icon.jpg">
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
             /* Modern Color Palette */
@@ -272,7 +273,7 @@ transform: scale(1.2);
             align-items: center;
             gap: 0.5rem;
             padding: 0.75rem 1.5rem;
-            background: #4F46E5;
+            background: red;
             color: white;
             border-radius: 9999px;
             font-weight: 500;
@@ -281,7 +282,7 @@ transform: scale(1.2);
         }
 
         .nav-btn:hover {
-            background: #4338CA;
+            background: red;
             transform: translateY(-1px);
         }
 
@@ -1065,6 +1066,120 @@ transform: scale(1.2);
         .service-appointment-table tr:hover .time-badge {
             background-color: rgba(245, 158, 11, 0.12);
         }
+
+        /* Orders Section Styles */
+        .orders-container {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+        }
+
+        .order-card {
+            border: 1px solid #e5e7eb;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            overflow: hidden;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .order-info h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .order-date {
+            margin: 4px 0 0;
+            font-size: 0.9rem;
+            color: var(--text-tertiary);
+        }
+
+        .order-status {
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .order-status.pending { background-color: #FEF3C7; color: #92400E; }
+        .order-status.processing { background-color: #DBEAFE; color: #1E40AF; }
+        .order-status.shipped { background-color: #D1FAE5; color: #065F46; }
+        .order-status.delivered { background-color: #D1FAE5; color: #065F46; }
+        .order-status.cancelled { background-color: #FEE2E2; color: #991B1B; }
+
+        .order-items {
+            padding: var(--spacing-md);
+        }
+
+        .order-item {
+            display: flex;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md) 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .order-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+        }
+
+        .order-item-details h4 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .order-item-details p {
+            margin: 4px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .order-total {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .order-total span:last-child {
+            margin-left: 8px;
+            color: var(--primary);
+        }
+
+        .order-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -1160,6 +1275,76 @@ transform: scale(1.2);
             </div>
         </div>
 
+        <!-- Wishlist Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-heart"></i>
+                    My Wishlist
+                </h2>
+            </div>
+            <div class="products-grid">
+                <% if (wishlistedProducts && wishlistedProducts.length > 0) { %>
+                    <% wishlistedProducts.forEach(function(product) { %>
+                        <div class="product-card" style="cursor: pointer;" onclick="window.location.href='/buy/<%= product._id %>'">
+                            <div class="product-image-wrapper">
+                                <% if (product.images && product.images.length > 0) { %>
+                                    <% if (product.images[0].url) { %>
+                                        <img src="<%= product.images[0].url %>" alt="<%= product.name %>" />
+                                    <% } else if (product.images[0].data) { %>
+                                        <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" alt="<%= product.name %>" />
+                                    <% } else { %>
+                                        <img src="/images/default-product.jpg" alt="No image available" />
+                                    <% } %>
+                                <% } else { %>
+                                    <img src="/images/default-product.jpg" alt="No image available" />
+                                <% } %>
+                            </div>
+                            <div class="product-details">
+                                <div class="product-info">
+                                    <div class="product-title"><%= product.name %></div>
+                                    <div class="product-category"><%= product.category %></div>
+                                    <div class="product-price">₹<%= product.price.toFixed(2) %></div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+                <% if (wishlistedPets && wishlistedPets.length > 0) { %>
+                    <% wishlistedPets.forEach(function(pet) { %>
+                        <div class="product-card" style="cursor: pointer;" onclick="window.location.href='/seller/detail/<%= pet._id %>'">
+                            <div class="product-image-wrapper">
+                                <% if (pet.images && pet.images.length > 0) { %>
+                                    <% if (pet.images[0].url) { %>
+                                        <img src="<%= pet.images[0].url %>" alt="<%= pet.name %>" />
+                                    <% } else if (pet.images[0].data) { %>
+                                        <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" alt="<%= pet.name %>" />
+                                    <% } else { %>
+                                        <img src="/images/default-pet.jpg" alt="No image available" />
+                                    <% } %>
+                                <% } else { %>
+                                    <img src="/images/default-pet.jpg" alt="No image available" />
+                                <% } %>
+                            </div>
+                            <div class="product-details">
+                                <div class="product-info">
+                                    <div class="product-title"><%= pet.name %></div>
+                                    <div class="product-category"><%= pet.category %></div>
+                                    <div class="product-price">₹<%= pet.price.toFixed(2) %></div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+                <% if ((!wishlistedProducts || wishlistedProducts.length === 0) && (!wishlistedPets || wishlistedPets.length === 0)) { %>
+                    <div class="empty-state">
+                        <i class="fas fa-heart-broken"></i>
+                        <p>No items in your wishlist yet.</p>
+                    </div>
+                <% } %>
+            </div>
+        </section>
+
         <section class="section">
             <div class="section-header">
                 <h2 class="section-title">
@@ -1250,41 +1435,45 @@ transform: scale(1.2);
                         </tr>
                     </thead>
                     <tbody>
-                        <% orders.forEach(order=> { %>
-                            <tr>
-                                <td>#<%= order.id %>
-                                </td>
-                                <td>
-                                    <div class="order-product">
-                                        <img src="/images/dash/<%= order.product.image_url %>" alt="<%= order.product.title %>"
-                                            class="product-image">
-                                        <div class="product-info">
-                                            <span class="product-name">
-                                                <%= order.product.Breed || order.product.title %>
-                                            </span>
-                                            <span class="product-meta">
-                                                Quantity: <%= order.quantity %>
-                                            </span>
+                        <% orders.forEach(function(order) { %>
+                            <% order.items.forEach(function(item) { %>
+                                <tr>
+                                    <td>#<%= order.id %></td>
+                                    <td>
+                                        <div class="order-product">
+                                            <% if (item.product && item.product.images && item.product.images.length > 0) { %>
+                                                <% if (item.product.images[0].url) { %>
+                                                    <img src="<%= item.product.images[0].url %>" alt="<%= item.product.name %>" class="product-image">
+                                                <% } else if (item.product.images[0].data) { %>
+                                                    <img src="data:<%= item.product.images[0].contentType %>;base64,<%= item.product.images[0].data.toString('base64') %>" alt="<%= item.product.name %>" class="product-image">
+                                                <% } else { %>
+                                                    <img src="/images/default-product.jpg" alt="No image" class="product-image">
+                                                <% } %>
+                                            <% } else { %>
+                                                <img src="/images/default-product.jpg" alt="No image" class="product-image">
+                                            <% } %>
+                                            <div class="product-info">
+                                                <span class="product-name"><%= item.product.name %></span>
+                                            </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <%= order.orderDate %>
-                                </td>
-                                <td>₹<%= order.totalAmount.toLocaleString('en-IN') %>
-                                </td>
-                                <td>
-                                    <span class="status-badge <%= order.status.toLowerCase() %>">
-                                        <i class="fas fa-<%= 
-                                            order.status === 'delivered' ? 'check-circle' :
-                                            order.status === 'processing' ? 'clock' :
-                                            'hourglass-half'
-                                        %>"></i>
-                                        <%= order.status %>
-                                    </span>
-                                </td>
-                            </tr>
+                                    </td>
+                                    <td>
+                                        <%= order.orderDate %>
+                                    </td>
+                                    <td>₹<%= order.totalAmount.toLocaleString('en-IN') %></td>
+                                    <td>
+                                        <span class="status-badge <%= order.status.toLowerCase() %>">
+                                            <i class="fas fa-<%= 
+                                                order.status === 'delivered' ? 'check-circle' :
+                                                order.status === 'processing' ? 'clock' :
+                                                'hourglass-half'
+                                            %>"></i>
+                                            <%= order.status %>
+                                        </span>
+                                    </td>
+                                </tr>
                             <% }); %>
+                        <% }); %>
                     </tbody>
                 </table>
                 <% } else { %>
@@ -1370,6 +1559,16 @@ transform: scale(1.2);
                 </div>
             <% } %>
         </section>
+
+        <!-- Orders Section -->
+        <div class="dashboard-section" id="orders-section">
+            <h2 class="section-title">My Orders</h2>
+            <div class="orders-container">
+                <div class="orders-list" id="ordersList">
+                    <!-- Orders will be populated here -->
+                </div>
+            </div>
+        </div>
     </div>
     <footer id="footer">
         <div class="footer-container">
@@ -1449,6 +1648,92 @@ transform: scale(1.2);
                 });
             }
         });
+    </script>
+    <script>
+        window.addEventListener('pageshow', function(event) {
+            // If the page is loaded from bfcache, force a reload to check session
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+    <script>
+    // Function to load user orders
+    async function loadOrders() {
+        try {
+            const response = await fetch('/orders');
+            const data = await response.json();
+            // Log the fetched orders for debugging
+            console.log('Fetched orders:', data.orders);
+            if (data.success) {
+                const ordersList = document.getElementById('ordersList');
+                ordersList.innerHTML = '';
+                if (data.orders.length === 0) {
+                    ordersList.innerHTML = '<p class="no-data">No orders found</p>';
+                    return;
+                }
+                data.orders.forEach(order => {
+                    const orderElement = document.createElement('div');
+                    orderElement.className = 'order-card';
+                    orderElement.innerHTML = `
+                        <div class="order-header">
+                            <div class="order-info">
+                                <h3>Order #${order.orderNumber}</h3>
+                                <p class="order-date">${new Date(order.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div class="order-status ${order.status.toLowerCase()}">
+                                ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            ${order.items.map(item => {
+                                // Log image_url for debugging
+                                console.log('Order item image_url:', item.product.image_url);
+                                return `
+                                    <div class="order-item">
+                                        <img src="${item.product.image_url}" alt="${item.product.name}" class="order-item-image">
+                                        <div class="order-item-details">
+                                            <h4>${item.product.name}</h4>
+                                            <p>Quantity: ${item.quantity}</p>
+                                            <p>Price: ₹${item.price.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div class="order-footer">
+                            <div class="order-total">
+                                <span>Total Amount:</span>
+                                <span>₹${order.totalAmount.toLocaleString()}</span>
+                            </div>
+                            <div class="order-actions">
+                                <button class="btn btn-secondary" onclick="viewOrderDetails('${order._id}')">View Details</button>
+                            </div>
+                        </div>
+                    `;
+                    ordersList.appendChild(orderElement);
+                });
+            } else {
+                console.error('Failed to load orders:', data.message);
+            }
+        } catch (error) {
+            console.error('Error loading orders:', error);
+        }
+    }
+
+    // Function to view order details
+    function viewOrderDetails(orderId) {
+        // Implement order details view logic
+        window.location.href = `/order-details/${orderId}`;
+    }
+
+    // Load orders when the orders section is active
+    document.addEventListener('DOMContentLoaded', function() {
+        const ordersSection = document.getElementById('orders-section');
+        if (ordersSection) {
+            loadOrders();
+        }
+    });
     </script>
 </body>
 
