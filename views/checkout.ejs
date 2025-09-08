@@ -112,6 +112,19 @@
     </header>
 
     <div class="checkout-container">
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-error" style="
+                background-color: #fee2e2;
+                color: #b91c1c;
+                padding: 12px 16px;
+                margin-bottom: 20px;
+                border: 1px solid #fca5a5;
+                border-radius: 6px;
+            ">
+                <i class="fa fa-exclamation-circle"></i> <%= error %>
+            </div>
+        <% } %>
+
         <h1 class="section-title">Checkout</h1>
         
         <div class="checkout-grid">

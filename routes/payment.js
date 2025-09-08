@@ -1,187 +1,185 @@
 // routes/payment.js
 const express = require('express');
 const router = express.Router();
-const paymentController = require('../controllers/paymentController');
 const { isAuthenticated } = require('../middleware/auth');
-const attachWallet = require('../middleware/attachWallet');
+
 const Cart = require('../models/cart');
 const User = require('../models/users');
 const Wallet = require('../models/wallet');
-const Seller = require('../models/seller');
 const Product = require('../models/products');
+const Pet = require('../models/pets');
 const Order = require('../models/order');
-const Transaction = require("../models/transaction");
-// Render checkout page with wallet data
-// In your route handler (before rendering checkout.ejs)
+const Transaction = require('../models/transaction');
+
+
+// ------------------ Checkout Page (GET) ------------------
 router.get('/checkout', isAuthenticated, async (req, res) => {
     try {
         const cart = await Cart.findOne({ userId: req.user._id })
-                            .populate('items.productId')
-                            .lean();
-        
+        .populate('items.productId')
+        .lean();
+
+        if (!cart || cart.items.length === 0) {
+        return res.render('checkout', {
+            cart: { subtotal: 0, shipping: 0, tax: 0, total: 0 }
+        });
+        }
+
         // Calculate totals
         let subtotal = 0;
         cart.items.forEach(item => {
-            const price = item.productId.discount > 0 ?
-                item.productId.price * (1 - item.productId.discount/100) :
-                item.productId.price;
-            subtotal += price * item.quantity;
+        const product = item.productId;
+        if (!product) return;
+
+        const price = product.discount > 0
+            ? product.price * (1 - product.discount / 100)
+            : product.price;
+
+        subtotal += price * item.quantity;
         });
 
         const shipping = subtotal >= 500 ? 0 : 50;
         const tax = subtotal * 0.10;
-        
+
         res.render('checkout', {
-            cart: {
-                subtotal: subtotal.toFixed(2),
-                shipping: shipping.toFixed(2),
-                tax: tax.toFixed(2),
-                total: (subtotal + shipping + tax).toFixed(2)
-            }
+        cart: {
+            subtotal: subtotal.toFixed(2),
+            shipping: shipping.toFixed(2),
+            tax: tax.toFixed(2),
+            total: (subtotal + shipping + tax).toFixed(2)
+        }
         });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
     }
-});
+    });
 
-// Process payment
-router.post('/checkout', isAuthenticated, async (req, res)=>{
+
+    // ------------------ Checkout (POST) ------------------
+    router.post('/checkout', isAuthenticated, async (req, res) => {
     try {
-        const { 
-        fullName, address, city, state, zipCode, phone,
-        subtotal, shipping, tax, total 
-        } = req.body;
+        const userId = req.user._id;
+        const { fullName, address, city, state, zipCode, phone } = req.body;
 
-        const cart = await Cart.findOne({userId: req.session.userId})
+        let cart = await Cart.findOne({ userId })
         .populate({
             path: 'items.productId',
-            model: 'Product',
-            populate: {
-                path: 'seller',
-                model: 'User'
-            }
+            populate: { path: 'addedBy', model: 'User' }
         });
 
-        const sellerId = cart.items[0].productId.seller._id;
-        const seller = await User.findById(sellerId);
+        if (!cart || cart.items.length === 0) {
+        return res.status(400).json({ error: 'Cart is empty' });
+        }
 
-        const stockErrors = [];
+        let totalAmount = 0;
+        const orderItems = [];
+
         for (const item of cart.items) {
-            if (item.productId.stock < item.quantity) {
-            stockErrors.push({
-                product: item.productId.name,
-                available: item.productId.stock,
-                requested: item.quantity
+        const productDoc = item.productId;
+        if (!productDoc) continue;
+
+        if (item.itemType === 'Product') {
+            if (productDoc.stock < item.quantity) {
+            return res.status(400).render('checkout', {
+                cart,
+                error: `${productDoc.name} is out of stock`
             });
             }
-        }
-    
-        if (stockErrors.length > 0) {
-            return res.status(400).json({
-            error: "Insufficient stock",
-            details: stockErrors
-            });
+            productDoc.stock -= item.quantity;
+            await productDoc.save();
         }
 
-        const orderItems = cart.items.map(item => ({
-            product: item.productId._id, 
+        const price = productDoc.price * item.quantity;
+        totalAmount += price;
+
+        orderItems.push({
+            product: productDoc._id,
             quantity: item.quantity,
-            price: item.productId.price 
-        }));
+            price: productDoc.price
+        });
+        }
+
+        //Check balance before creating order
+        const userWallet = await Wallet.findOne({ user: userId });
+        if (!userWallet || userWallet.balance < totalAmount) {
+        return res.status(400).render('checkout', {
+            cart,
+            error: 'Insufficient balance. Please add funds to your wallet.'
+        });
+        }
+
+        const sellerId = cart.items[0].productId.addedBy;
 
         const order = new Order({
-            customer: req.session.userId,
-            seller: sellerId,
-            items: orderItems,
-            totalAmount: total,
-            shippingAddress: address,
-            status: "processing"
+        customer: userId,
+        seller: sellerId,
+        items: orderItems,
+        totalAmount,
+        shippingAddress: { fullName, address, city, state, zipCode, phone },
+        status: 'processing'
         });
 
         await order.save();
 
-        const bulkUpdateOps = cart.items.map(item => ({
-        updateOne: {
-            filter: { _id: item.productId._id },
-            update: { $inc: { stock: -item.quantity } }
-        }
-        }));
-
-        await Product.bulkWrite(bulkUpdateOps);
-        console.log("Stocks updated successfully");
-        console.log("Order created successfully");
-        
+        // Clear cart
         cart.items = [];
         cart.updatedAt = Date.now();
         await cart.save();
-        console.log("Cart emptied successfully");
 
-        const wallet = await Wallet.findOne({user: req.session.userId});
-        const balance = wallet.balance;
+        // Deduct & distribute
+        const sellerWallet = await Wallet.findOne({ user: sellerId });
+        const adminWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
 
-        const commission = total*0.05;
-        const sellerRevenue = total - commission;
+        const commission = totalAmount * 0.05;
+        const sellerRevenue = totalAmount - commission;
 
-        
-        const userWallet = await Wallet.findOne({user: req.session.userId});
-        const sellerWallet = await Wallet.findOne({user: sellerId});
-        const adminWallet = await Wallet.findOne({user: "6807e4424877bcd9980c7e00"});
+        await userWallet.deductFunds(totalAmount);
+        if (sellerWallet) await sellerWallet.addFunds(sellerRevenue);
+        if (adminWallet) await adminWallet.addFunds(commission);
 
-        
-        userWallet.deductFunds(total);
-        sellerWallet.addFunds(sellerRevenue);
-        const userToSeller = new Transaction({
-            from: req.session.userId,
-            to: sellerId,
-            amount: sellerRevenue
-        });
-        await userToSeller.save();
-        console.log("Transaction completed: User to Seller");
-        adminWallet.addFunds(commission);
+        await new Transaction({ from: userId, to: sellerId, amount: sellerRevenue }).save();
+        await new Transaction({ from: userId, to: "6807e4424877bcd9980c7e00", amount: commission }).save();
 
-        const userToAdmin = new Transaction({
-            from: req.session.userId,
-            to: "6807e4424877bcd9980c7e00",
-            amount: commission
-        });
-        await userToAdmin.save();
-        console.log("Transaction completed: User to Admin");
         res.redirect('/payment');
-    }
-    catch (err){
+    } catch (err) {
         console.error('Checkout error:', err);
-        res.status(500).send('Server Error');
+        res.status(500).render('checkout', { error: 'Something went wrong. Please try again.' });
     }
-});
+    });
 
-// Wallet balance endpoint
-router.get('/wallet', isAuthenticated, paymentController.getWalletBalance);
 
-// Render payment page
-router.get('/payment', isAuthenticated, async (req, res) => {
+
+    // ------------------ Wallet Balance ------------------
+    router.get('/wallet', isAuthenticated, async (req, res) => {
     try {
-        // Get wallet for the logged-in user
         const wallet = await Wallet.findOne({ user: req.user._id });
-        
-        // If no wallet found, create a default one
-        const walletData = wallet || { balance: 0 };
+        res.json(wallet || { balance: 0 });
+    } catch (err) {
+        res.status(500).json({ error: 'Server Error' });
+    }
+    });
 
+
+    // ------------------ Payment Page ------------------
+    router.get('/payment', isAuthenticated, async (req, res) => {
+    try {
+        const wallet = await Wallet.findOne({ user: req.user._id });
         res.render('payment', {
-            user: req.user,
-            wallet: walletData
+        user: req.user,
+        wallet: wallet || { balance: 0 }
         });
-
     } catch (err) {
         console.error('Payment route error:', err);
         res.status(500).send('Server Error');
     }
-});
+    });
 
-router.get('/order-confirmation', async (req,res)=>{
-    const order = await Order.find().sort({createdAt: -1}).limit(1);
-    const orderId = order._id;
-    res.render('order-confirmation', {orderId : orderId});
-});
+
+    // ------------------ Order Confirmation ------------------
+    router.get('/order-confirmation', async (req, res) => {
+    const order = await Order.find().sort({ createdAt: -1 }).limit(1);
+    res.render('order-confirmation', { orderId: order.length ? order[0]._id : null });
+    });
 
 module.exports = router;
