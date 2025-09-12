@@ -1145,18 +1145,17 @@ transform: scale(1.2);
                 <div class="stat-icon">
                     <i class="fas fa-rupee-sign"></i>
                 </div>
-                <div class="stat-value">₹<%= user.totalSpent.toLocaleString('en-IN') %>
+                <div class="stat-value">₹ <%= user.totalSpent.toLocaleString('en-IN') %>
                 </div>
                 <div class="stat-label">Total Spent</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">
-                    <i class="fas fa-heart"></i>
+                    <i class="fas fa-rupee-sign"></i>
                 </div>
-                <div class="stat-value">
-                    <%= user.wishlistItems %>
+                <div class="stat-value">₹ <%= user.walletAmount %>
                 </div>
-                <div class="stat-label">Wishlist Items</div>
+                <div class="stat-label">Wallent Balance</div>
             </div>
         </div>
 
@@ -1250,41 +1249,45 @@ transform: scale(1.2);
                         </tr>
                     </thead>
                     <tbody>
-                        <% orders.forEach(order=> { %>
+                        <% orders.forEach(order => { %>
+                        <% order.items.forEach(item => { %>
                             <tr>
-                                <td>#<%= order.id %>
-                                </td>
-                                <td>
-                                    <div class="order-product">
-                                        <img src="/images/dash/<%= order.product.image_url %>" alt="<%= order.product.title %>"
-                                            class="product-image">
-                                        <div class="product-info">
-                                            <span class="product-name">
-                                                <%= order.product.Breed || order.product.title %>
-                                            </span>
-                                            <span class="product-meta">
-                                                Quantity: <%= order.quantity %>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <%= order.orderDate %>
-                                </td>
-                                <td>₹<%= order.totalAmount.toLocaleString('en-IN') %>
-                                </td>
-                                <td>
-                                    <span class="status-badge <%= order.status.toLowerCase() %>">
-                                        <i class="fas fa-<%= 
-                                            order.status === 'delivered' ? 'check-circle' :
-                                            order.status === 'processing' ? 'clock' :
-                                            'hourglass-half'
-                                        %>"></i>
-                                        <%= order.status %>
+                            <td>#<%= order._id.toString().substring(0, 8) %>...</td>
+                            <td>
+                                <div class="order-product">
+                                <img src="<%= item.product?.images?.[0] || '/images/default-product.png' %>" />
+
+                                <div class="product-info">
+                                    <span class="product-name">
+                                    <%= item.product?.Breed || item.product?.title || 'Unknown Product' %>
                                     </span>
-                                </td>
+                                    <span class="product-meta">
+                                    Quantity: <%= item.quantity %>
+                                    </span>
+                                </div>
+                                </div>
+                            </td>
+                            <td>
+                                <%= new Date(order.createdAt).toLocaleDateString('en-IN') %>
+                            </td>
+                            <td>
+                                ₹<%= order.totalAmount.toLocaleString('en-IN') %>
+                            </td>
+                            <td>
+                                <span class="status-badge <%= order.status.toLowerCase() %>">
+                                <i class="fas fa-<%= 
+                                    order.status === 'completed' ? 'check-circle' :
+                                    order.status === 'processing' ? 'clock' :
+                                    order.status === 'pending' ? 'hourglass-half' :
+                                    'times-circle'
+                                %>"></i>
+                                <%= order.status %>
+                                </span>
+                            </td>
                             </tr>
-                            <% }); %>
+                        <% }) %>
+                        <% }) %>
+
                     </tbody>
                 </table>
                 <% } else { %>

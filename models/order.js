@@ -1,4 +1,3 @@
-// models/order.js
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
@@ -6,7 +5,7 @@ const orderSchema = new mongoose.Schema({
     type: String,
     unique: true,
     required: [true, 'Order number is required'],
-    default: null // Temporary default to pass initial validation
+    default: null 
   },
   customer: {
     type: mongoose.Schema.Types.ObjectId,
@@ -54,8 +53,8 @@ const orderSchema = new mongoose.Schema({
     }
 });
 
-// Generate order number before saving
-orderSchema.pre('validate', async function(next) {  // Change from 'save' to 'validate'
+
+orderSchema.pre('validate', async function(next) {
   if (!this.orderNumber) {
     const count = await this.constructor.countDocuments();
     this.orderNumber = `ORD${Date.now()}${count + 1}`;

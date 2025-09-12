@@ -146,7 +146,36 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Get mock data for dashboard or retrieve actual user data
+        // Fetch orders where this user is the customer
+        const orders = await Order.find({ customer: req.user._id })
+            .populate({
+                path: 'items.product',
+                select: 'title breed images price description seller'
+            })
+            .lean();
+
+        // Calculate stats
+        const totalOrders = orders.length;
+        const activeOrders = orders.filter(o => ['pending', 'processing'].includes(o.status)).length;
+        const totalSpent = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+        const walletAmount = 10000 - totalSpent;
+
+        // Fetch bookings
+        const bookings = await Booking.find({ user: req.user._id })
+            .populate('service')
+            .sort({ date: 1 })
+            .lean();
+
+        const formattedBookings = bookings.map(booking => ({
+            id: booking._id,
+            serviceName: booking.service?.provider || 'Service Unavailable',
+            serviceType: booking.service?.serviceType || 'Unknown',
+            date: booking.date,
+            time: booking.slot,
+            status: 'Confirmed'
+        }));
+
+        // ✅ Build userData here
         const userData = {
             username: req.user.username,
             email: req.user.email,
@@ -162,44 +191,27 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
                 month: 'long',
                 day: 'numeric'
             }),
-            totalOrders: 0,
-            activeOrders: 0,
-            totalSpent: 0,
-            wishlistItems: 0
+            totalOrders,
+            activeOrders,
+            totalSpent,
+            walletAmount
         };
 
-        // Mock order data - replace with actual data when available
-        const mockOrders = [];
-        
-        // Fetch user's bookings
-        const bookings = await Booking.find({ user: req.user._id })
-            .populate('service')
-            .sort({ date: 1 })
-            .lean();
-            
-        // Format the bookings for display
-        const formattedBookings = bookings.map(booking => ({
-            id: booking._id,
-            serviceName: booking.service?.name || 'Service Unavailable',
-            serviceType: booking.service?.type || 'Unknown',
-            date: booking.date,
-            time: booking.slot,
-            status: 'Confirmed'  // You can add actual status logic here
-        }));
-        
+        // ✅ Use real variables
         res.render('owner-dashboard', {
             user: userData,
-            orders: mockOrders,
-            bookings: formattedBookings || [],
+            orders,
+            bookings: formattedBookings,
             navLinks: navLinksData
         });
     } catch (err) {
         console.error('Error loading owner dashboard:', err);
-        res.status(500).render('error', { 
-            message: 'Error loading dashboard. Please try again later.' 
+        res.status(500).render('error', {
+            message: 'Error loading dashboard. Please try again later.'
         });
     }
 });
+
 
 // Pets route
 router.get('/pets', isAuthenticated, async (req, res) => {
