@@ -7,6 +7,30 @@
   <link rel="stylesheet" href="/css/booking.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    /* Validation Styling - Clean Version */
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .error-text {
+      color: #e74c3c;
+      font-size: 14px;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    .input-error {
+      border: 2px solid #e74c3c !important;
+      background-color: #fdf2f2 !important;
+    }
+    
+    .input-success {
+      border: 2px solid #27ae60 !important;
+      background-color: #f2fdf2 !important;
+    }
+  </style>
 </head>
 <body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>">
   <!-- Header -->
@@ -103,12 +127,13 @@
           </div>
         <% } else { %>
           <h2>Book an Appointment</h2>
-          <form action="/booking" method="POST" class="booking-form">
+          <form action="/booking" method="POST" class="booking-form" id="bookingForm" novalidate>
             <input type="hidden" name="serviceId" value="<%= service._id %>">
             
             <div class="form-group">
               <label for="datePicker"><i class="fas fa-calendar"></i> Select Date:</label>
               <input type="date" id="datePicker" name="date" required>
+              <div class="error-text" id="dateErrorText"></div>
             </div>
             
             <div class="form-group">
@@ -119,9 +144,10 @@
               <div id="no-slots" class="no-slots" style="display: none;">
                 No available slots for this date. Please select another date.
               </div>
+              <div class="error-text" id="slotErrorText"></div>
             </div>
           
-            <button type="submit" class="book-now-btn">Confirm Booking</button>
+            <button type="submit" class="book-now-btn" id="submitBtn">Confirm Booking</button>
           </form>
         <% } %>
       </div>
@@ -156,63 +182,6 @@
   </footer>
 
   <script src="/js/Services.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Set the minimum date for the date picker to today
-      const datePicker = document.getElementById('datePicker');
-      const slotSelect = document.getElementById('slotSelect');
-      const noSlots = document.getElementById('no-slots');
-      
-      if (datePicker) {
-        const today = new Date().toISOString().split('T')[0];
-        datePicker.min = today;
-        
-        // Add date picker change event
-        datePicker.addEventListener('change', async function() {
-          const date = this.value;
-          const serviceId = "<%= service._id %>";
-          
-          if (!date) {
-            slotSelect.disabled = true;
-            slotSelect.innerHTML = '<option value="">-- First select a date --</option>';
-            noSlots.style.display = 'none';
-            return;
-          }
-          
-          try {
-            // Show loading state
-            slotSelect.disabled = true;
-            slotSelect.innerHTML = '<option value="">Loading available slots...</option>';
-            
-            // Fetch available slots from the server
-            const response = await fetch(`/booking/available/slots?serviceId=${serviceId}&date=${date}`);
-            const data = await response.json();
-            
-            // Update the slots dropdown
-            if (data.availableSlots && data.availableSlots.length > 0) {
-              slotSelect.innerHTML = '<option value="">-- Select a time slot --</option>';
-              data.availableSlots.forEach(slot => {
-                const option = document.createElement('option');
-                option.value = slot;
-                option.textContent = slot;
-                slotSelect.appendChild(option);
-              });
-              slotSelect.disabled = false;
-              noSlots.style.display = 'none';
-            } else {
-              slotSelect.innerHTML = '<option value="">No available slots</option>';
-              slotSelect.disabled = true;
-              noSlots.style.display = 'block';
-            }
-          } catch (error) {
-            console.error('Error loading slots:', error);
-            slotSelect.innerHTML = '<option value="">Error loading slots</option>';
-            slotSelect.disabled = true;
-            noSlots.style.display = 'none';
-          }
-        });
-      }
-    });
-  </script>
+  <script src="/js/booking-validation.js"></script>
 </body>
 </html>
