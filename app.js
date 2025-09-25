@@ -65,6 +65,9 @@ const sellerRoutes = require('./routes/seller');
 const serviceRoutes = require('./routes/services-routes');
 const paymentRoutes = require('./routes/payment');
 
+const apiRoutes = require('./routes/apiRoutes');
+app.use('/api', apiRoutes);
+
 // Main routes
 app.use('/', userRoutes);
 app.use('/', authRoutes);
