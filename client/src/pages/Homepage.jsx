@@ -1,9 +1,8 @@
-import Navbar from './Navbar';
-import Footer from './Footer';
-import Slideshow from './Slideshow';
-import FeaturedSection from './FeaturedSection';
-import PetCard from './PetCard'; 
-import ProductCard from './ProductCard'; 
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import Slideshow from '../components/SlideShow';
+import FeaturedSection from '../components/FeaturedSection';
+import ItemCard from '../components/ItemCard'; 
 import { getFeaturedPets, getFeaturedProducts } from '../services/api';
 import { Link } from 'react-router-dom';
 
@@ -54,7 +53,7 @@ const HomePage = () => {
                 <FeaturedSection
                     title="Featured Pets"
                     fetchFunction={getFeaturedPets}
-                    CardComponent={PetCard}
+                    CardComponent={({ item }) => <ItemCard item={item} type="pet" />}
                     viewAllLink="/pets"
                 />
                 <hr />
@@ -62,7 +61,8 @@ const HomePage = () => {
                 <FeaturedSection
                     title="Featured Products"
                     fetchFunction={getFeaturedProducts}
-                    CardComponent={ProductCard}
+                    // Changed: Do the same for products
+                    CardComponent={({ item }) => <ItemCard item={item} type="product" />}
                     viewAllLink="/products"
                 />
 
