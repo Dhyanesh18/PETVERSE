@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const { isAuthenticated } = require('../middleware/auth');
 
-// Import Mongoose Models
 const Pet = require('../models/pets');
 const Product = require('../models/products');
 const Service = require('../models/serviceProvider');
@@ -12,28 +11,18 @@ const User = require('../models/users');
 const Order = require('../models/order');
 const Booking = require('../models/Booking');
 const PetMate = require('../models/petMate');
-// const User = require('../models/users');
 
-// Common navigation links data
+
 const navLinksData = [
     { name: 'Home', url: '/home' },
     { name: 'Pets', url: '/pets' },
-    { 
-        name: 'Products', 
-        url: '#', // Changed from /products - This link only toggles the dropdown
-        dropdown: true,
-        dropdownItems: [
-            { name: 'Pet Food', url: '/products/petfood' },
-            { name: 'Toys', url: '/products/toys' },
-            { name: 'Accessories', url: '/products/accessories' }
-        ]
-    },
+    { name: 'Products', url: '/products'},
     { 
         name: 'Services', 
-        url: '#', // Changed from /services - This link only toggles the dropdown
+        url: '#', 
         dropdown: true,
         dropdownItems: [
-            { name: 'Pet Care', url: '/services' }, // Link to general services page
+            { name: 'Pet Care', url: '/services' },
             { name: 'Pet Mate', url: '/mate' }
         ]
     },
@@ -41,9 +30,8 @@ const navLinksData = [
 ];
 
 // Home page
-router.get('/home', isAuthenticated, async (req, res) => { // Made async for future DB fetches
+router.get('/home', isAuthenticated, async (req, res) => {
     try {
-        // TODO: Fetch featured pets/products dynamically
         const featuredPets = await Pet.find()
         .sort({createdAt: 1})
         .limit(5)
@@ -53,29 +41,18 @@ router.get('/home', isAuthenticated, async (req, res) => { // Made async for fut
         .limit(5)
 
         res.render('homepage', {
-            title: 'PetVerse - Your Pet Care Companion',
-            iconPath: '/images/favicon.ico',
-            siteName: 'PetVerse',
-            loginUrl: '/login',
             navLinks: navLinksData,
-            heroTitle: 'Perfect Pet',
-            heroSubtitle: 'Find your furry friend and everything they need',
-            heroButtonText: 'Adopt Now',
-
             slides: [
                 { image: '/images/slide1.jpg', caption: 'Adorable Puppies' },
                 { image: '/images/slide2.jpg', caption: 'Playful Kittens' },
                 { image: '/images/slide3.jpg', caption: 'Exotic Birds' }
             ],
-            petSectionTitle: 'Search by Pet',
             petCategories: [
                 { name: 'Dogs', image: '/images/dog.jpg' },
                 { name: 'Cats', image: '/images/cat.jpg' },
                 { name: 'Birds', image: '/images/bird.jpg' },
                 { name: 'Fish', image: '/images/fish.jpg' }
             ],
-            exploreButtonText: 'Explore',
-            featuredPetsTitle: 'Featured Pets',
             featuredPets: featuredPets.map(pet => ({
                 _id: pet._id,
                 name: pet.name,
@@ -86,8 +63,6 @@ router.get('/home', isAuthenticated, async (req, res) => { // Made async for fut
                 category: pet.category,
                 description: pet.description
             })),
-            detailsButtonText: 'View Details',
-            featuredProductsTitle: 'Featured Products',
             featuredProducts: featuredProducts.map(product => ({
                 _id: product._id,
                 name: product.name,
@@ -98,18 +73,11 @@ router.get('/home', isAuthenticated, async (req, res) => { // Made async for fut
                 discount: product.discount,
                 category: product.category
             })),
-            aboutTitle: 'About PetVerse',
-            aboutText: [
-                'Welcome to PetVerse, your one-stop destination for all things pets!',
-                'We are dedicated to helping you find the perfect pet and providing everything they need to live a happy and healthy life.'
-            ],
-            featuresTitle: 'Why Choose Us',
             features: [
                 { title: 'Quality Pets', description: 'Healthy and well-cared-for pets from trusted breeders' },
                 { title: 'Premium Products', description: 'High-quality pet supplies and accessories' },
                 { title: 'Expert Services', description: 'Professional pet care and grooming services' }
             ],
-            testimonialTitle: 'What Our Customers Say',
             testimonials: [
                 { text: 'Found my perfect companion here!', author: 'John Wick' },
                 { text: 'Great service and quality products', author: 'Donald Trump' },
@@ -117,18 +85,6 @@ router.get('/home', isAuthenticated, async (req, res) => { // Made async for fut
                 { text: 'Highly recommend! Was in dire need for such a website', author: 'Elon Musk' },
                 {text: 'Amazing experience! Highly recommend!', author: 'Dwayne Johnson' },
             ],
-            footerLinks: [
-                { name: 'Home', url: '/home' },
-                { name: 'About', url: '/about' },
-                { name: 'Contact', url: '/contact' },
-                { name: 'Privacy Policy', url: '/privacy' }
-            ],
-            socialTitle: 'Follow Us',
-            socialLinks: [
-                { name: 'Facebook', url: '#' },
-                { name: 'Twitter', url: '#' },
-                { name: 'Instagram', url: '#' }
-            ]
         });
     } catch (err) {
         console.error('Error fetching homepage data:', err);
@@ -175,7 +131,6 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             status: 'Confirmed'
         }));
 
-        // ✅ Build userData here
         const userData = {
             username: req.user.username,
             email: req.user.email,
@@ -197,7 +152,6 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             walletAmount
         };
 
-        // ✅ Use real variables
         res.render('owner-dashboard', {
             user: userData,
             orders,
@@ -256,89 +210,6 @@ router.get('/pets', isAuthenticated, async (req, res) => {
         res.status(500).render('error', { message: 'Error fetching pets' });
     }
 });
-
-// Product routes Helper
-async function renderProductPage(res, category, categoryTitle) {
-    try {
-        const page = parseInt(res.req.query.page) || 1;
-        const limit = 6; // Items per page
-        const skip = (page - 1) * limit;
-
-        const query = category ? { category: category } : {};
-        
-        // Get total count for pagination
-        const totalProducts = await Product.countDocuments(query);
-        const totalPages = Math.ceil(totalProducts / limit);
-        
-        // Get products for current page
-        const products = await Product.find(query)
-            .skip(skip)
-            .limit(limit)
-            .sort({ createdAt: -1 });
-            
-        // Get ratings for all products
-        const productIds = products.map(product => product._id);
-        const productRatings = await Review.aggregate([
-            {
-                $match: {
-                    targetType: 'Product',
-                    targetId: { $in: productIds }
-                }
-            },
-            {
-                $group: {
-                    _id: '$targetId',
-                    avgRating: { $avg: '$rating' },
-                    reviewCount: { $sum: 1 }
-                }
-            }
-        ]);
-        
-        // Create a map of product ratings for easy lookup
-        const ratingsMap = {};
-        productRatings.forEach(item => {
-            ratingsMap[item._id.toString()] = {
-                avgRating: parseFloat(item.avgRating.toFixed(1)) || 0,
-                reviewCount: item.reviewCount || 0
-            };
-        });
-        
-        // Add ratings to each product
-        const productsWithRatings = products.map(product => {
-            const productObj = product.toObject();
-            const productRating = ratingsMap[product._id.toString()] || { avgRating: 0, reviewCount: 0 };
-            productObj.avgRating = productRating.avgRating;
-            productObj.reviewCount = productRating.reviewCount;
-            return productObj;
-        });
-
-        res.render('products', {
-            navLinks: navLinksData,
-            categoryTitle: categoryTitle,
-            products: productsWithRatings,
-            currentPage: page,
-            totalPages: totalPages,
-            // Static filters for now
-            categoryFilters: [
-                { id: 'petfood', value: 'Pet Food', label: 'Pet Food' },
-                { id: 'toys', value: 'Toys', label: 'Toys' },
-                { id: 'accessories', value: 'Accessories', label: 'Accessories' }
-            ],
-            brandFilters: [], // TODO: Populate dynamically
-            ratingFilters: [], // TODO: Populate dynamically
-            dynamicFilters: [] // TODO: Populate dynamically
-        });
-    } catch (err) {
-        console.error(`Error fetching ${categoryTitle}:`, err);
-        res.status(500).render('error', { message: `Error fetching ${categoryTitle}` });
-    }
-}
-
-// Specific Product Routes (call helper)
-router.get('/products', isAuthenticated, (req, res) => renderProductPage(res, null, 'All Products'));
-router.get('/products/petfood', isAuthenticated, (req, res) => renderProductPage(res, 'Pet Food', 'Pet Food'));
-router.get('/products/toys', isAuthenticated, (req, res) => renderProductPage(res, 'Toys', 'Pet Toys'));
-router.get('/products/accessories', isAuthenticated, (req, res) => renderProductPage(res, 'Accessories', 'Pet Accessories'));
 
 // Services route
 router.get('/services', isAuthenticated, async (req, res) => {
@@ -448,59 +319,58 @@ router.get('/mate', isAuthenticated, async (req, res) => {
 // About route
 router.get('/about', isAuthenticated, async (req, res) => { // Made async for future DB fetch
     try {
-        // TODO: Fetch stats dynamically
-         const teamMembers = [
-             {
-                 name: 'Dhyaneshvar K',
-                 role: 'Member 1',
-                 image: '/images/mem.jpg',
-                 social: {
-                     linkedin: '#',
-                     twitter: '#',
-                     instagram: '#'
-                 }
-             },
-             {
-                 name: 'Jeevan M',
-                 role: 'Member 2',
-                 image: '/images/mem.jpg',
-                 social: {
-                     linkedin: '#',
-                     twitter: '#',
-                     instagram: '#'
-                 }
-             },
-             {
-                 name: 'Suresh',
-                 role: 'Member 3',
-                 image: '/images/mem.jpg',
-                 social: {
-                     linkedin: '#',
-                     twitter: '#',
-                     instagram: '#'
-                 }
-             },
-             {
-                 name: 'Koushik',
-                 role: 'Member 4',
-                 image: '/images/mem.jpg',
-                 social: {
-                     linkedin: '#',
-                     twitter: '#',
-                     github: '#'
-                 }
-             },
-             {
-                 name: 'Charan',
-                 role: 'Member 5',
-                 image: '/images/mem.jpg',
-                 social: {
-                     linkedin: '#',
-                     twitter: '#',
-                     github: '#'
-                 }
-             }
-         ];
+            const teamMembers = [
+                {
+                    name: 'Dhyaneshvar K',
+                    role: 'Member 1',
+                    image: '/images/mem.jpg',
+                    social: {
+                        linkedin: '#',
+                        twitter: '#',
+                        instagram: '#'
+                    }
+                },
+                {
+                    name: 'Jeevan M',
+                    role: 'Member 2',
+                    image: '/images/mem.jpg',
+                    social: {
+                        linkedin: '#',
+                        twitter: '#',
+                        instagram: '#'
+                    }
+                },
+                {
+                    name: 'Suresh',
+                    role: 'Member 3',
+                    image: '/images/mem.jpg',
+                    social: {
+                        linkedin: '#',
+                        twitter: '#',
+                        instagram: '#'
+                    }
+                },
+                {
+                    name: 'Koushik',
+                    role: 'Member 4',
+                    image: '/images/mem.jpg',
+                    social: {
+                        linkedin: '#',
+                        twitter: '#',
+                        github: '#'
+                    }
+                },
+                {
+                    name: 'Charan',
+                    role: 'Member 5',
+                    image: '/images/mem.jpg',
+                    social: {
+                        linkedin: '#',
+                        twitter: '#',
+                        github: '#'
+                    }
+                }
+            ];
         res.render('about', {
             navLinks: navLinksData,
             activeUsers: 10000,

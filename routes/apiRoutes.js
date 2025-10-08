@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const Pet = require('../models/Pet');
-const Product = require('../models/Product');
+const Pet = require('../models/pets');
+const Product = require('../models/products');
 
 
 router.get('/featured-pets', async (req, res) => {
@@ -10,7 +10,7 @@ router.get('/featured-pets', async (req, res) => {
         const pets = await Pet.find().sort({ createdAt: -1 }).limit(4);
         res.json(pets);
     } catch (err) {
-        console.error(err); // Good practice to log the error
+        console.error(err);
         res.status(500).json({ message: 'Error fetching featured pets' });
     }
 });
@@ -26,7 +26,7 @@ router.get('/featured-products', async (req, res) => {
 });
 
 router.get('/check-session', (req, res) => {
-    if (req.session && req.session.user) { // Added a check for req.session itself
+    if (req.session && req.session.user) { 
         res.json({
             isLoggedIn: true,
             isAdmin: req.session.user.role === 'admin'
@@ -36,5 +36,4 @@ router.get('/check-session', (req, res) => {
     }
 });
 
-// Don't forget to export the router
 module.exports = router;
