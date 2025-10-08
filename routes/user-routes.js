@@ -211,6 +211,173 @@ router.get('/pets', isAuthenticated, async (req, res) => {
     }
 });
 
+// Products route
+router.get('/products', isAuthenticated, (req, res) => renderProductPage(res, null, 'All Products'));
+
+
+async function renderProductPage(res, category, categoryTitle) {
+
+
+
+    try {
+
+
+        const page = parseInt(res.req.query.page) || 1;
+
+
+        const limit = 6; // Items per page
+
+
+        const skip = (page - 1) * limit;
+
+
+
+
+
+        const query = category ? { category: category } : {};
+
+
+        
+
+
+        // Get total count for pagination
+
+
+        const totalProducts = await Product.countDocuments(query);
+
+
+        const totalPages = Math.ceil(totalProducts / limit);
+
+
+        
+
+
+        // Get products for current page
+
+
+        const products = await Product.find(query)
+
+
+            .skip(skip)
+
+
+            .limit(limit)
+
+
+            .sort({ createdAt: -1 });
+
+
+            
+
+
+        // Get ratings for all products
+
+
+        const productIds = products.map(product => product._id);
+
+
+        const productRatings = await Review.aggregate([
+
+
+            {
+
+
+                $match: {
+
+
+                    targetType: 'Product',
+
+
+                    targetId: { $in: productIds }
+
+
+                }
+
+
+            },
+
+
+            {
+
+
+                $group: {
+
+
+                    _id: '$targetId',
+
+
+                    avgRating: { $avg: '$rating' },
+
+
+                    reviewCount: { $sum: 1 }
+
+
+                }
+
+
+            }
+
+
+        ]);
+
+
+        
+
+
+        // Create a map of product ratings for easy lookup
+
+
+        const ratingsMap = {};
+
+
+        productRatings.forEach(item => {
+
+
+            ratingsMap[item._id.toString()] = {
+
+
+                avgRating: parseFloat(item.avgRating.toFixed(1)) || 0,
+
+
+                reviewCount: item.reviewCount || 0
+
+
+            };
+
+
+        });
+
+        const productsWithRatings = products.map(product => {
+            const productObj = product.toObject();
+            const productRating = ratingsMap[product._id.toString()] || { avgRating: 0, reviewCount: 0 };
+            productObj.avgRating = productRating.avgRating;
+            productObj.reviewCount = productRating.reviewCount;
+            return productObj;
+        });
+
+        res.render('products', {
+            navLinks: navLinksData,
+            categoryTitle: categoryTitle,
+            products: productsWithRatings,
+            currentPage: page,
+            totalPages: totalPages,
+            categoryFilters: [
+                { id: 'petfood', value: 'Pet Food', label: 'Pet Food' },
+                { id: 'toys', value: 'Toys', label: 'Toys' },
+                { id: 'accessories', value: 'Accessories', label: 'Accessories' }
+            ],
+
+            brandFilters: [], 
+            ratingFilters: [], 
+            dynamicFilters: [] 
+        });
+
+    } catch (err) {
+        console.error(`Error fetching ${categoryTitle}:`, err);
+        res.status(500).render('error', { message: `Error fetching ${categoryTitle}` });
+    }
+}
+
 // Services route
 router.get('/services', isAuthenticated, async (req, res) => {
     try {

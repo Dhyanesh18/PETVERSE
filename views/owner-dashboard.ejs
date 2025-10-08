@@ -1069,42 +1069,7 @@ transform: scale(1.2);
 </head>
 
 <body>
-    <!-- Main Navigation Header -->
-    <header class="header" id="header">
-        <nav id="navbar" class="navbar">
-            <div class="nav-content">
-                <div class="logo"><a href="/home"><i class="fa fa-paw"></i> PetVerse</a></div>
-                <div class="nav-icons">
-                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                    <button onclick="window.location.href='/owner-dashboard'" class="icon-btn"><i class="fa fa-user"></i></button>
-                </div>
-                <div class="search">
-                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <% navLinks.forEach(function(link) { %>
-                        <% if (link.dropdown) { %>
-                            <li class="dropdown">
-                                <a href="<%= link.url %>" class="dropdown-toggle"><%= link.name %> <i class="fa fa-angle-down"></i></a>
-                                <ul class="dropdown-menu">
-                                    <% link.dropdownItems.forEach(function(item) { %>
-                                        <li><a href="<%= item.url %>"><%= item.name %></a></li>
-                                    <% }); %>
-                                </ul>
-                            </li>
-                        <% } else { %>
-                            <li><a href="<%= link.url %>"><%= link.name %></a></li>
-                        <% } %>
-                    <% }); %>
-                </ul>
-            </div>
-        </nav>
-    </header>
-
+    <%- include('partials/header') %>
     <div class="dashboard-container">
         <header class="dashboard-header">
             <h1 class="header-title">
@@ -1416,42 +1381,6 @@ transform: scale(1.2);
                 cartCount.style.display = totalItems > 0 ? 'inline-block' : 'none';
             }
         }
-    </script>
-    <script>
-        // Get all dropdown toggles and menus
-        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
-
-        // Add click event to each dropdown toggle
-        dropdownToggles.forEach((toggle, index) => {
-            toggle.addEventListener('click', function(event) {
-                event.stopPropagation(); // Prevent this click from triggering the document click handler
-
-                // Close all other dropdown menus first
-                dropdownMenus.forEach((menu, menuIndex) => {
-                    if (menuIndex !== index) {
-                        menu.classList.remove('show');
-                    }
-                });
-        
-            // Toggle the current dropdown menu
-                const currentDropdownMenu = this.nextElementSibling;
-                currentDropdownMenu.classList.toggle('show');
-            });
-        });
-
-    // Close all dropdowns when clicking anywhere else on the page
-        document.addEventListener('click', function(event) {
-            // Check if click is outside of any dropdown
-            if (!event.target.closest('.dropdown')) {
-            // Close all dropdown menus
-                dropdownMenus.forEach(menu => {
-                    if (menu.classList.contains('show')) {
-                        menu.classList.remove('show');
-                    }
-                });
-            }
-        });
     </script>
 </body>
 

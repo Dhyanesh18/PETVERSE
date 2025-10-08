@@ -95,54 +95,11 @@ hamburger.addEventListener('click', () => {
 
 // Multiple dropdown menus
 document.addEventListener("DOMContentLoaded", function () {
-  const dropdownToggles = document.querySelectorAll(".dropdown-toggle");
-  
-  // Add click event to each dropdown toggle
-  dropdownToggles.forEach(toggle => {
-    toggle.addEventListener("click", function (event) {
-      event.preventDefault();
-      
-      const currentDropdownMenu = this.nextElementSibling;
-      const allDropdownMenus = document.querySelectorAll(".dropdown-menu");
-      
-      // Close all other dropdowns
-      allDropdownMenus.forEach(menu => {
-        if (menu !== currentDropdownMenu) {
-          menu.classList.remove("show");
-        }
-      });
-      
-      // Toggle current dropdown
-      currentDropdownMenu.classList.toggle("show");
-      navbar.classList.add('scrolled');
-    });
-  });
-  
-  // Close dropdowns when clicking outside
-  document.addEventListener("click", function (event) {
-    let clickedInsideDropdown = false;
-    
-    // Check if click was inside any dropdown toggle or menu
-    dropdownToggles.forEach(toggle => {
-      const dropdownMenu = toggle.nextElementSibling;
-      if (toggle.contains(event.target) || dropdownMenu.contains(event.target)) {
-        clickedInsideDropdown = true;
-      }
-    });
-    
-    // If clicked outside any dropdown, close all dropdowns
-    if (!clickedInsideDropdown) {
-      document.querySelectorAll('.dropdown-menu').forEach(menu => {
-        menu.classList.remove("show");
-      });
-      
-      // Remove scrolled class if appropriate
-      if (window.scrollY <= 50 && !navlinks.classList.contains('active')) {
-        navbar.classList.remove('scrolled');
-      }
+    if (window.scrollY <= 50 && !navlinks.classList.contains('active')) {
+      navbar.classList.remove('scrolled');
     }
-  });
-});
+  }
+);
 
 // Always fetch cart count from server on page load
 async function updateCartCountFromServer() {

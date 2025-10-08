@@ -49,47 +49,7 @@
     </style>
 </head>
 <body>
-    <header class="header" id="header">
-        <nav id="navbar" class="navbar">
-            <div class="nav-content">
-                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
-                <div class="nav-icons">
-                    <button onclick="window.location.href='/cart'" class="icon-btn cart-icon" id="cartIcon">
-                        <i class="fa fa-shopping-cart"></i>
-                        <span class="cart-count" id="cartCount" style="display: none;">0</span>
-                    </button>
-                    <button onclick="window.location.href='/login'" class="icon-btn"><i class="fa fa-user"></i></button>
-                </div>
-                <div class="search">
-                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/products/petfood">Pet Food</a></li>
-                            <li><a href="/products/toys">Toys</a></li>
-                            <li><a href="/products/accessories">Accessories</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/services">Services</a></li>
-                            <li><a href="/mate">PetMate</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
     <br>
     <!-- Main Content -->
     <div class="main-container">
@@ -484,49 +444,6 @@
                     })
                     .catch(error => console.error('Error fetching cart count:', error));
             }
-            
-            // Dropdown menu functionality
-            const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-            
-            dropdownToggles.forEach(toggle => {
-                toggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Get the current dropdown menu
-                    const currentDropdownMenu = this.nextElementSibling;
-                    
-                    // Close all other dropdown menus
-                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                        if (menu !== currentDropdownMenu) {
-                            menu.classList.remove('show');
-                        }
-                    });
-                    
-                    // Toggle the current dropdown menu
-                    currentDropdownMenu.classList.toggle('show');
-                });
-            });
-            
-            // Close dropdown menus when clicking outside
-            document.addEventListener('click', function(e) {
-                let clickedInsideDropdown = false;
-                
-                // Check if click was inside any dropdown toggle or menu
-                dropdownToggles.forEach(toggle => {
-                    const dropdownMenu = toggle.nextElementSibling;
-                    if (toggle.contains(e.target) || (dropdownMenu && dropdownMenu.contains(e.target))) {
-                        clickedInsideDropdown = true;
-                    }
-                });
-                
-                // If clicked outside dropdowns, close all of them
-                if (!clickedInsideDropdown) {
-                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                        menu.classList.remove('show');
-                    });
-                }
-            });
-
             // Filter functionality
             const clearFiltersBtn = document.getElementById('clear-filters');
             if (clearFiltersBtn) {

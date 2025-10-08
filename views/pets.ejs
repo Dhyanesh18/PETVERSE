@@ -186,7 +186,6 @@
             document.getElementById('max-price').value = '';
         });
     </script>
-    <script src="/js/script.js"></script>
     <script src="/js/cart-manager.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -210,6 +209,7 @@
             }
         });
     </script>
+    <script src="/js/script.js"></script>
     <style>
         .product-card {
             cursor: pointer;
@@ -220,42 +220,7 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
     </style>
-    <script>
-        // Get all dropdown toggles and menus
-        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
-
-        // Add click event to each dropdown toggle
-        dropdownToggles.forEach((toggle, index) => {
-            toggle.addEventListener('click', function(event) {
-                event.stopPropagation(); // Prevent this click from triggering the document click handler
-
-                // Close all other dropdown menus first
-                dropdownMenus.forEach((menu, menuIndex) => {
-                    if (menuIndex !== index) {
-                        menu.classList.remove('show');
-                    }
-                });
-        
-            // Toggle the current dropdown menu
-                const currentDropdownMenu = this.nextElementSibling;
-                currentDropdownMenu.classList.toggle('show');
-            });
-        });
-
-    // Close all dropdowns when clicking anywhere else on the page
-        document.addEventListener('click', function(event) {
-            // Check if click is outside of any dropdown
-            if (!event.target.closest('.dropdown')) {
-            // Close all dropdown menus
-                dropdownMenus.forEach(menu => {
-                    if (menu.classList.contains('show')) {
-                        menu.classList.remove('show');
-                    }
-                });
-            }
-        });
-    </script>
+    
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {

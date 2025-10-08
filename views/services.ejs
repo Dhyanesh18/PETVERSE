@@ -1,21 +1,16 @@
-<!-- views/services.ejs -->
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title><%= pageTitle %></title>
 
-  <!-- Link to your CSS -->
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/services.css">
   
-  <!-- Font Awesome (optional, for icons) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-      /* Cart count style */
       .cart-icon {
           position: relative;
       }
@@ -37,10 +32,8 @@
   </style>
 </head>
 <body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>">
-    <!-- Header -->
     <%- include('partials/header') %>
 
-    <!-- Main container: sidebar + services content -->
     <div class="main-container">
       <!-- Filters Sidebar -->
       <div class="filters-sidebar">
@@ -228,7 +221,6 @@
         </div>
     </footer>
 
-    <script src="/js/script.js"></script>
     <script src="/js/cart-manager.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
