@@ -64,6 +64,7 @@ const mateRoutes = require('./routes/mate-routes');
 const sellerRoutes = require('./routes/seller');
 const serviceRoutes = require('./routes/services-routes');
 const paymentRoutes = require('./routes/payment');
+const searchRoutes = require('./routes/search');
 
 const apiRoutes = require('./routes/apiRoutes');
 app.use('/api', apiRoutes);
@@ -90,7 +91,8 @@ app.use('/booking', bookingRoutes);
 app.use('/services',serviceRoutes);
 app.use('/service-provider', serviceProviderRoutes);
 app.use('/', reviewRoutes);
-app.use('/',paymentRoutes);
+app.use('/',paymentRoutes)
+app.use('/search', searchRoutes);
 
 app.get('/', (req, res) => {
   if (req.session.userId) {

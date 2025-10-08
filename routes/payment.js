@@ -16,108 +16,121 @@ const Transaction = require('../models/transaction');
 router.get('/checkout', isAuthenticated, async (req, res) => {
     try {
         const cart = await Cart.findOne({ userId: req.user._id })
-        .populate('items.productId')
-        .lean();
+            .populate('items.productId')
+            .lean();
 
         if (!cart || cart.items.length === 0) {
-        return res.render('checkout', {
-            cart: { subtotal: 0, shipping: 0, tax: 0, total: 0 }
-        });
+            return res.render('checkout', {
+                cart: { subtotal: 0, shipping: 0, tax: 0, total: 0 }
+            });
         }
 
         // Calculate totals
         let subtotal = 0;
         cart.items.forEach(item => {
-        const product = item.productId;
-        if (!product) return;
+            const product = item.productId;
+            if (!product) return;
 
-        const price = product.discount > 0
-            ? product.price * (1 - product.discount / 100)
-            : product.price;
+            const price = product.discount > 0
+                ? product.price * (1 - product.discount / 100)
+                : product.price;
 
-        subtotal += price * item.quantity;
+            subtotal += price * item.quantity;
         });
 
         const shipping = subtotal >= 500 ? 0 : 50;
         const tax = subtotal * 0.10;
 
         res.render('checkout', {
-        cart: {
-            subtotal: subtotal.toFixed(2),
-            shipping: shipping.toFixed(2),
-            tax: tax.toFixed(2),
-            total: (subtotal + shipping + tax).toFixed(2)
-        }
+            cart: {
+                subtotal: subtotal.toFixed(2),
+                shipping: shipping.toFixed(2),
+                tax: tax.toFixed(2),
+                total: (subtotal + shipping + tax).toFixed(2)
+            }
         });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
     }
-    });
+});
 
 
-    // ------------------ Checkout (POST) ------------------
-    router.post('/checkout', isAuthenticated, async (req, res) => {
+// ------------------ Checkout (POST) ------------------
+router.post('/checkout', isAuthenticated, async (req, res) => {
     try {
         const userId = req.user._id;
         const { fullName, address, city, state, zipCode, phone } = req.body;
 
-        let cart = await Cart.findOne({ userId })
-        .populate({
-            path: 'items.productId',
-            populate: { path: 'addedBy', model: 'User' }
-        });
+        // First, get the cart with basic population
+        let cart = await Cart.findOne({ userId }).populate('items.productId');
 
         if (!cart || cart.items.length === 0) {
-        return res.status(400).json({ error: 'Cart is empty' });
+            return res.status(400).json({ error: 'Cart is empty' });
+        }
+
+        // Populate seller/addedBy based on item type
+        for (const item of cart.items) {
+            if (item.productId) {
+                if (item.itemType === 'Product') {
+                    await item.productId.populate('seller');
+                } else if (item.itemType === 'Pet') {
+                    await item.productId.populate('addedBy');
+                }
+            }
         }
 
         let totalAmount = 0;
         const orderItems = [];
 
         for (const item of cart.items) {
-        const productDoc = item.productId;
-        if (!productDoc) continue;
+            const productDoc = item.productId;
+            if (!productDoc) continue;
 
-        if (item.itemType === 'Product') {
-            if (productDoc.stock < item.quantity) {
-            return res.status(400).render('checkout', {
-                cart,
-                error: `${productDoc.name} is out of stock`
-            });
+            // Check stock for products
+            if (item.itemType === 'Product') {
+                if (productDoc.stock < item.quantity) {
+                    return res.status(400).render('checkout', {
+                        cart,
+                        error: `${productDoc.name} is out of stock`
+                    });
+                }
+                productDoc.stock -= item.quantity;
+                await productDoc.save();
             }
-            productDoc.stock -= item.quantity;
-            await productDoc.save();
+
+            const price = productDoc.price * item.quantity;
+            totalAmount += price;
+
+            orderItems.push({
+                product: productDoc._id,
+                quantity: item.quantity,
+                price: productDoc.price
+            });
         }
 
-        const price = productDoc.price * item.quantity;
-        totalAmount += price;
-
-        orderItems.push({
-            product: productDoc._id,
-            quantity: item.quantity,
-            price: productDoc.price
-        });
-        }
-
-        //Check balance before creating order
+        // Check balance before creating order
         const userWallet = await Wallet.findOne({ user: userId });
         if (!userWallet || userWallet.balance < totalAmount) {
-        return res.status(400).render('checkout', {
-            cart,
-            error: 'Insufficient balance. Please add funds to your wallet.'
-        });
+            return res.status(400).render('checkout', {
+                cart,
+                error: 'Insufficient balance. Please add funds to your wallet.'
+            });
         }
 
-        const sellerId = cart.items[0].productId.addedBy;
+        // Get the seller ID based on item type
+        const firstItem = cart.items[0];
+        const sellerId = firstItem.itemType === 'Product' 
+            ? firstItem.productId.seller 
+            : firstItem.productId.addedBy;
 
         const order = new Order({
-        customer: userId,
-        seller: sellerId,
-        items: orderItems,
-        totalAmount,
-        shippingAddress: { fullName, address, city, state, zipCode, phone },
-        status: 'processing'
+            customer: userId,
+            seller: sellerId,
+            items: orderItems,
+            totalAmount,
+            shippingAddress: { fullName, address, city, state, zipCode, phone },
+            status: 'processing'
         });
 
         await order.save();
@@ -127,7 +140,7 @@ router.get('/checkout', isAuthenticated, async (req, res) => {
         cart.updatedAt = Date.now();
         await cart.save();
 
-        // Deduct & distribute
+        // Deduct & distribute funds
         const sellerWallet = await Wallet.findOne({ user: sellerId });
         const adminWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
 
@@ -144,42 +157,70 @@ router.get('/checkout', isAuthenticated, async (req, res) => {
         res.redirect('/payment');
     } catch (err) {
         console.error('Checkout error:', err);
-        res.status(500).render('checkout', { error: 'Something went wrong. Please try again.' });
+
+        // Try to safely get user's cart to re-render page
+        let cart = { subtotal: 0, shipping: 0, tax: 0, total: 0 };
+
+        try {
+            const existingCart = await Cart.findOne({ userId: req.user._id }).populate('items.productId').lean();
+            if (existingCart && existingCart.items.length > 0) {
+                let subtotal = 0;
+                existingCart.items.forEach(item => {
+                    const product = item.productId;
+                    if (!product) return;
+                    const price = product.discount > 0
+                        ? product.price * (1 - product.discount / 100)
+                        : product.price;
+                    subtotal += price * item.quantity;
+                });
+                const shipping = subtotal >= 500 ? 0 : 50;
+                const tax = subtotal * 0.10;
+                cart = {
+                    subtotal: subtotal.toFixed(2),
+                    shipping: shipping.toFixed(2),
+                    tax: tax.toFixed(2),
+                    total: (subtotal + shipping + tax).toFixed(2)
+                };
+            }
+        } catch (innerErr) {
+            console.error('Failed to recalculate cart:', innerErr);
+        }
+
+        res.status(500).render('checkout', { cart, error: 'Something went wrong. Please try again.' });
     }
-    });
+});
 
 
-
-    // ------------------ Wallet Balance ------------------
-    router.get('/wallet', isAuthenticated, async (req, res) => {
+// ------------------ Wallet Balance ------------------
+router.get('/wallet', isAuthenticated, async (req, res) => {
     try {
         const wallet = await Wallet.findOne({ user: req.user._id });
         res.json(wallet || { balance: 0 });
     } catch (err) {
         res.status(500).json({ error: 'Server Error' });
     }
-    });
+});
 
 
-    // ------------------ Payment Page ------------------
-    router.get('/payment', isAuthenticated, async (req, res) => {
+// ------------------ Payment Page ------------------
+router.get('/payment', isAuthenticated, async (req, res) => {
     try {
         const wallet = await Wallet.findOne({ user: req.user._id });
         res.render('payment', {
-        user: req.user,
-        wallet: wallet || { balance: 0 }
+            user: req.user,
+            wallet: wallet || { balance: 0 }
         });
     } catch (err) {
         console.error('Payment route error:', err);
         res.status(500).send('Server Error');
     }
-    });
+});
 
 
-    // ------------------ Order Confirmation ------------------
-    router.get('/order-confirmation', async (req, res) => {
+// ------------------ Order Confirmation ------------------
+router.get('/order-confirmation', async (req, res) => {
     const order = await Order.find().sort({ createdAt: -1 }).limit(1);
     res.render('order-confirmation', { orderId: order.length ? order[0]._id : null });
-    });
+});
 
 module.exports = router;

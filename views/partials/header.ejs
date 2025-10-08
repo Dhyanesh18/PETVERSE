@@ -10,8 +10,16 @@
                 <a href="/login" class="icon-btn"><i class="fa fa-user"></i></a>
             </div>
             <div class="search">
-                <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                <button class="search-btn"><i class="fa fa-search"></i></button>
+                <input 
+                    class="search-bar" 
+                    id="navbarSearchInput" 
+                    type="text" 
+                    placeholder="Search pets, products or services" 
+                >
+                <button class="search-btn" id="navbarSearchBtn">
+                    <i class="fa fa-search"></i>
+                </button>
+                <div id="searchResultsDropdown" class="search-results-dropdown" style="display: none;"></div>
             </div>
             <button class="hamburger" id="hamburger">
                 <i class="fa fa-bars"></i>
@@ -47,6 +55,82 @@
 <!-- Add JavaScript for dropdowns and hamburger menu if not already present globally -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('navbarSearchInput');
+        const searchBtn = document.getElementById('navbarSearchBtn');
+        const resultsDropdown = document.getElementById('searchResultsDropdown');
+
+        async function performSearch(query) {
+        if (!query.trim()) {
+            resultsDropdown.style.display = 'none';
+            resultsDropdown.innerHTML = '';
+            return;
+        }
+
+        try {
+            const res = await fetch(`/search/api?term=${encodeURIComponent(query)}`);
+            const data = await res.json();
+
+            const { pets, products, services } = data;
+
+            if (pets.length === 0 && products.length === 0 && services.length === 0) {
+            resultsDropdown.innerHTML = '<p class="no-results">No results found.</p>';
+            resultsDropdown.style.display = 'block';
+            return;
+            }
+
+            // Create dropdown HTML
+            let html = '';
+
+            if (pets.length > 0) {
+            html += `<h4>Pets</h4>`;
+            pets.forEach(p => {
+                html += `<a href="/pets/${p._id}" class="result-item">${p.name} (${p.breed})</a>`;
+            });
+            }
+
+            if (products.length > 0) {
+            html += `<h4>Products</h4>`;
+            products.forEach(p => {
+                html += `<a href="/products/${p._id}" class="result-item">${p.name} (${p.brand})</a>`;
+            });
+            }
+
+            if (services.length > 0) {
+            html += `<h4>Services</h4>`;
+            services.forEach(s => {
+                html += `<a href="/services/${s._id}" class="result-item">${s.serviceType}</a>`;
+            });
+            }
+
+            resultsDropdown.innerHTML = html;
+            resultsDropdown.style.display = 'block';
+        } catch (err) {
+            console.error('Search failed:', err);
+        }
+        }
+
+        // Trigger search as you type
+        let debounceTimeout;
+        searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(() => {
+            performSearch(searchInput.value);
+        }, 400);
+        });
+
+        // Optional: pressing Enter redirects to full search page
+        searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            window.location.href = `/search?q=${encodeURIComponent(searchInput.value)}`;
+        }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search')) {
+            resultsDropdown.style.display = 'none';
+        }
+        });
         // Dropdown menu functionality
         const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
         const dropdownMenus = document.querySelectorAll('.dropdown-menu');
