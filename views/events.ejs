@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pet Events - PetVerse</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="/css/events.css">
     <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/events.css">
 </head>
 <body>
     <%- include('partials/header') %>
@@ -30,36 +30,43 @@
                 <h3>Category</h3>
                 <div class="filter-options">
                     <div class="filter-option">
-                        <input type="radio" id="all" name="category" value="all" <%= filters.category === 'all' ? 'checked' : '' %>>
+                        <input type="radio" id="all" name="category" value="all" checked>
                         <label for="all">All Events</label>
                     </div>
                     <div class="filter-option">
-                        <input type="radio" id="workshop" name="category" value="Workshop" <%= filters.category === 'Workshop' ? 'checked' : '' %>>
+                        <input type="radio" id="workshop" name="category" value="Workshop">
                         <label for="workshop">Workshop</label>
                     </div>
                     <div class="filter-option">
-                        <input type="radio" id="training" name="category" value="Training" <%= filters.category === 'Training' ? 'checked' : '' %>>
-                        <label for="training">Training</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="radio" id="adoption" name="category" value="Adoption Drive" <%= filters.category === 'Adoption Drive' ? 'checked' : '' %>>
+                        <input type="radio" id="adoption" name="category" value="Adoption Drive">
                         <label for="adoption">Adoption Drive</label>
                     </div>
                     <div class="filter-option">
-                        <input type="radio" id="show" name="category" value="Pet Show" <%= filters.category === 'Pet Show' ? 'checked' : '' %>>
+                        <input type="radio" id="show" name="category" value="Pet Show">
                         <label for="show">Pet Show</label>
                     </div>
                     <div class="filter-option">
-                        <input type="radio" id="health" name="category" value="Health Camp" <%= filters.category === 'Health Camp' ? 'checked' : '' %>>
-                        <label for="health">Health Camp</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="radio" id="meetup" name="category" value="Meetup" <%= filters.category === 'Meetup' ? 'checked' : '' %>>
-                        <label for="meetup">Meetup</label>
-                    </div>
-                    <div class="filter-option">
-                        <input type="radio" id="competition" name="category" value="Competition" <%= filters.category === 'Competition' ? 'checked' : '' %>>
+                        <input type="radio" id="competition" name="category" value="Competition">
                         <label for="competition">Competition</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fee Type Filter -->
+            <div class="filter-section">
+                <h3>Entry Fee</h3>
+                <div class="filter-options">
+                    <div class="filter-option">
+                        <input type="radio" id="allFees" name="feeType" value="all" checked>
+                        <label for="allFees">All Events</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="freeEvents" name="feeType" value="free">
+                        <label for="freeEvents">Free Events</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="paidEvents" name="feeType" value="paid">
+                        <label for="paidEvents">Paid Events</label>
                     </div>
                 </div>
             </div>
@@ -67,13 +74,13 @@
             <!-- City Filter -->
             <div class="filter-section">
                 <h3>Location</h3>
-                <input type="text" id="cityFilter" placeholder="Enter city" value="<%= filters.city %>">
+                <input type="text" id="cityFilter" placeholder="Enter city">
             </div>
             
             <!-- Date Filter -->
             <div class="filter-section">
                 <h3>Date</h3>
-                <input type="date" id="dateFilter" value="<%= filters.date %>" min="<%= new Date().toISOString().split('T')[0] %>">
+                <input type="date" id="dateFilter" min="<%= new Date().toISOString().split('T')[0] %>">
             </div>
             
             <button class="apply-filters-btn">Apply Filters</button>
@@ -83,7 +90,7 @@
         <!-- Events Grid -->
         <div class="events-container">
             <div class="events-header">
-                <h2>Upcoming Events (<%= events.length %>)</h2>
+                <h2>Upcoming Events (<span id="eventCount">0</span>)</h2>
                 <% if (user && user.role === 'service_provider') { %>
                     <a href="/events/add/new" class="create-event-btn">
                         <i class="fas fa-plus-circle"></i> Create Event
@@ -91,91 +98,164 @@
                 <% } %>
             </div>
 
-            <% if (events.length === 0) { %>
-                <div class="no-events">
-                    <i class="fas fa-calendar-times"></i>
-                    <p>No events found matching your criteria</p>
-                </div>
-            <% } else { %>
-                <div class="events-grid">
-                    <% events.forEach(event => { %>
-                        <div class="event-card" onclick="window.location.href='/events/<%= event._id %>'">
-                            <div class="event-image">
-                                <% if (event.images && event.images.length > 0) { %>
-                                    <img src="data:<%= event.images[0].contentType %>;base64,<%= event.images[0].data.toString('base64') %>" alt="<%= event.title %>">
-                                <% } else { %>
-                                    <img src="/images/default-event.jpg" alt="Event">
-                                <% } %>
-                                <div class="event-category-badge"><%= event.category %></div>
-                                <% if (event.isFull) { %>
-                                    <div class="event-full-badge">FULL</div>
-                                <% } %>
-                            </div>
-                            
-                            <div class="event-info">
-                                <h3 class="event-title"><%= event.title %></h3>
-                                
-                                <div class="event-meta">
-                                    <div class="meta-item">
-                                        <i class="fas fa-calendar"></i>
-                                        <span><%= event.formattedDate %></span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <i class="fas fa-clock"></i>
-                                        <span><%= event.startTime %> - <%= event.endTime %></span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span><%= event.location.city %></span>
-                                    </div>
-                                    <div class="meta-item">
-                                        <i class="fas fa-user-friends"></i>
-                                        <span><%= event.availableSlots %> slots left</span>
-                                    </div>
-                                </div>
-                                
-                                <p class="event-description"><%= event.description.substring(0, 100) %>...</p>
-                                
-                                <div class="event-footer">
-                                    <div class="event-fee">
-                                        <% if (event.entryFee === 0) { %>
-                                            <span class="free-badge">FREE</span>
-                                        <% } else { %>
-                                            <span class="fee-amount">₹<%= event.entryFee %></span>
-                                        <% } %>
-                                    </div>
-                                    <button class="view-details-btn">
-                                        View Details <i class="fas fa-arrow-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    <% }); %>
-                </div>
-            <% } %>
+            <div id="loadingIndicator" class="loading-indicator">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading events...</p>
+            </div>
+
+            <div id="eventsGrid" class="events-grid"></div>
+
+            <div id="noEvents" class="no-events" style="display: none;">
+                <i class="fas fa-calendar-times"></i>
+                <p>No events found matching your criteria</p>
+            </div>
         </div>
     </div>
 
     <%- include('partials/footer') %>
 
     <script>
-        // Filter functionality
+        let currentFilters = {
+            category: 'all',
+            city: '',
+            date: '',
+            feeType: 'all'
+        };
+
+        // Load events on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadEvents();
+        });
+
+        // Apply filters button
         document.querySelector('.apply-filters-btn').addEventListener('click', function() {
-            const category = document.querySelector('input[name="category"]:checked').value;
-            const city = document.getElementById('cityFilter').value;
-            const date = document.getElementById('dateFilter').value;
-            
-            let url = '/events?';
-            if (category !== 'all') url += `category=${category}&`;
-            if (city) url += `city=${encodeURIComponent(city)}&`;
-            if (date) url += `date=${date}`;
-            
-            window.location.href = url;
+            currentFilters.category = document.querySelector('input[name="category"]:checked').value;
+            currentFilters.feeType = document.querySelector('input[name="feeType"]:checked').value;
+            currentFilters.city = document.getElementById('cityFilter').value;
+            currentFilters.date = document.getElementById('dateFilter').value;
+            loadEvents();
         });
-        
+
+        // Clear filters button
         document.querySelector('.clear-filters').addEventListener('click', function() {
-            window.location.href = '/events';
+            document.getElementById('all').checked = true;
+            document.getElementById('allFees').checked = true;
+            document.getElementById('cityFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            currentFilters = {
+                category: 'all',
+                city: '',
+                date: '',
+                feeType: 'all'
+            };
+            loadEvents();
         });
+
+        // Load events via AJAX
+        async function loadEvents() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const eventsGrid = document.getElementById('eventsGrid');
+            const noEvents = document.getElementById('noEvents');
+            const eventCount = document.getElementById('eventCount');
+
+            // Show loading
+            loadingIndicator.style.display = 'block';
+            eventsGrid.innerHTML = '';
+            noEvents.style.display = 'none';
+
+            try {
+                // Build query string
+                const params = new URLSearchParams();
+                if (currentFilters.category !== 'all') params.append('category', currentFilters.category);
+                if (currentFilters.feeType !== 'all') params.append('feeType', currentFilters.feeType);
+                if (currentFilters.city) params.append('city', currentFilters.city);
+                if (currentFilters.date) params.append('date', currentFilters.date);
+
+                const response = await fetch(`/events/api/list?${params.toString()}`);
+                const data = await response.json();
+
+                loadingIndicator.style.display = 'none';
+
+                if (data.success && data.events.length > 0) {
+                    eventCount.textContent = data.count;
+                    renderEvents(data.events);
+                } else {
+                    eventCount.textContent = '0';
+                    noEvents.style.display = 'block';
+                }
+            } catch (err) {
+                console.error('Error loading events:', err);
+                loadingIndicator.style.display = 'none';
+                noEvents.style.display = 'block';
+                eventCount.textContent = '0';
+            }
+        }
+
+        // Render events to the grid
+        function renderEvents(events) {
+            const eventsGrid = document.getElementById('eventsGrid');
+            eventsGrid.innerHTML = '';
+
+            events.forEach(event => {
+                const eventCard = createEventCard(event);
+                eventsGrid.appendChild(eventCard);
+            });
+        }
+
+        // Create event card element
+        function createEventCard(event) {
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            card.onclick = () => window.location.href = `/events/${event._id}`;
+
+            const fullBadge = event.isFull ? '<div class="event-full-badge">FULL</div>' : '';
+            const feeDisplay = event.entryFee === 0 
+                ? '<span class="free-badge">FREE</span>' 
+                : `<span class="fee-amount">₹${event.entryFee}</span>`;
+
+            card.innerHTML = `
+                <div class="event-card-header">
+                    <div class="event-category-badge">${event.category}</div>
+                    ${fullBadge}
+                </div>
+                
+                <div class="event-info">
+                    <h3 class="event-title">${event.title}</h3>
+                    
+                    <div class="event-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>${event.formattedDate}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span>${event.startTime} - ${event.endTime}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${event.location.city}</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-user-friends"></i>
+                            <span>${event.availableSlots} slots left</span>
+                        </div>
+                    </div>
+                    
+                    <p class="event-description">${event.description.substring(0, 100)}...</p>
+                    
+                    <div class="event-footer">
+                        <div class="event-fee">
+                            ${feeDisplay}
+                        </div>
+                        <button class="view-details-btn">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
     </script>
 </body>
 </html>

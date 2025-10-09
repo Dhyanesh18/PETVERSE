@@ -51,7 +51,6 @@ mongoose.connect(process.env.MONGODB_URI)
 
 const authRoutes = require('./routes/auth-routes');
 const adminRoutes = require('./routes/admin-routes');
-const eventRoutes = require('./routes/event-routes');
 const imageRoutes = require('./routes/image-routes');
 const productRoutes = require('./routes/product-routes');
 const bookingRoutes = require('./routes/booking');
@@ -66,6 +65,9 @@ const sellerRoutes = require('./routes/seller');
 const serviceRoutes = require('./routes/services-routes');
 const paymentRoutes = require('./routes/payment');
 const searchRoutes = require('./routes/search');
+
+
+
 
 const apiRoutes = require('./routes/apiRoutes');
 app.use('/api', apiRoutes);
@@ -94,7 +96,9 @@ app.use('/service-provider', serviceProviderRoutes);
 app.use('/', reviewRoutes);
 app.use('/',paymentRoutes)
 app.use('/search', searchRoutes);
-app.use('/events', eventRoutes);
+
+
+
 
 app.get('/', (req, res) => {
   if (req.session.userId) {
@@ -110,3 +114,10 @@ const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log(`PetVerse app listening at http://localhost:${port}`);
 });
+
+
+// Add this at the top with other route imports
+const eventRoutes = require('./routes/event-routes');
+
+// Add this with other app.use() statements
+app.use('/events', eventRoutes);

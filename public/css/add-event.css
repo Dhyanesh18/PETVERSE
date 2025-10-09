@@ -66,10 +66,12 @@ body {
 }
 
 .form-section h3 {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 600;
     color: #333;
     margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #4CAF50;
 }
 
 .form-group {
@@ -78,21 +80,22 @@ body {
 
 .form-group label {
     display: block;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: #333;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 10px 12px;
+    padding: 12px 15px;
     border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 0.9rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
     transition: all 0.3s;
+    font-family: 'Poppins', sans-serif;
 }
 
 .form-group input:focus,
@@ -105,59 +108,74 @@ body {
 
 .form-group textarea {
     resize: vertical;
-    min-height: 120px;
+    min-height: 100px;
 }
 
 .form-group small {
     display: block;
     margin-top: 8px;
-    font-size: 0.8rem;
-    color: #999;
+    font-size: 0.85rem;
+    color: #666;
 }
 
 .char-count {
-    color: #4CAF50;
-    font-weight: 600;
+    text-align: right;
+    color: #999;
 }
 
 .form-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
 }
 
-.image-preview {
-    display: flex;
-    gap: 15px;
+/* Document Preview Styles */
+.document-preview {
     margin-top: 15px;
-    flex-wrap: wrap;
 }
 
-.preview-item {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.document-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    margin-top: 10px;
 }
 
-.preview-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.document-preview-item i.fas {
+    font-size: 2rem;
+    color: #4CAF50;
 }
 
-.remove-preview {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background: rgba(244, 67, 54, 0.9);
+.document-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.document-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    word-break: break-word;
+}
+
+.document-size {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.remove-document {
+    background: #f44336;
     color: white;
     border: none;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -165,8 +183,8 @@ body {
     transition: all 0.3s;
 }
 
-.remove-preview:hover {
-    background: #f44336;
+.remove-document:hover {
+    background: #d32f2f;
     transform: scale(1.1);
 }
 
@@ -175,43 +193,42 @@ body {
     gap: 15px;
     justify-content: flex-end;
     margin-top: 40px;
-    padding-top: 30px;
-    border-top: 2px solid #f0f0f0;
 }
 
-.cancel-btn, .submit-btn {
+.cancel-btn,
+.submit-btn {
     padding: 12px 30px;
     border: none;
-    border-radius: 5px;
-    font-size: 0.9rem;
+    border-radius: 8px;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Poppins', sans-serif;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    transition: all 0.3s;
+    gap: 8px;
 }
 
 .cancel-btn {
-    background: white;
+    background: #f5f5f5;
     color: #666;
     border: 1px solid #ddd;
 }
 
 .cancel-btn:hover {
-    background: #f8f9fa;
-    border-color: #bbb;
+    background: #e0e0e0;
 }
 
 .submit-btn {
-    background: #4CAF50;
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
     color: white;
+    box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
 }
 
 .submit-btn:hover {
-    background: #388E3C;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
 }
 
 .submit-btn:disabled {
@@ -220,28 +237,30 @@ body {
     transform: none;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
     .add-event-container {
         margin-top: 100px;
     }
-    
+
     #addEventForm {
         padding: 25px;
     }
-    
+
     .form-header h1 {
         font-size: 2rem;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
     }
-    
+
     .form-actions {
         flex-direction: column;
     }
-    
-    .cancel-btn, .submit-btn {
+
+    .cancel-btn,
+    .submit-btn {
         width: 100%;
         justify-content: center;
     }

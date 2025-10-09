@@ -13,26 +13,6 @@
 
     <div class="event-detail-container">
         <div class="event-detail-content">
-            <!-- Event Images -->
-            <div class="event-images">
-                <% if (event.images && event.images.length > 0) { %>
-                    <div class="main-image">
-                        <img src="data:<%= event.images[0].contentType %>;base64,<%= event.images[0].data.toString('base64') %>" alt="<%= event.title %>">
-                    </div>
-                    <% if (event.images.length > 1) { %>
-                        <div class="thumbnail-images">
-                            <% event.images.slice(1).forEach((image, index) => { %>
-                                <img src="data:<%= image.contentType %>;base64,<%= image.data.toString('base64') %>" alt="Image <%= index + 2 %>">
-                            <% }); %>
-                        </div>
-                    <% } %>
-                <% } else { %>
-                    <div class="main-image">
-                        <img src="/images/default-event.jpg" alt="Event">
-                    </div>
-                <% } %>
-            </div>
-
             <!-- Event Details -->
             <div class="event-details">
                 <div class="event-header">

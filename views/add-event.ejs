@@ -35,13 +35,9 @@
                     <select id="category" name="category" required>
                         <option value="">Select Category</option>
                         <option value="Workshop">Workshop</option>
-                        <option value="Training">Training</option>
                         <option value="Adoption Drive">Adoption Drive</option>
                         <option value="Pet Show">Pet Show</option>
-                        <option value="Health Camp">Health Camp</option>
-                        <option value="Meetup">Meetup</option>
                         <option value="Competition">Competition</option>
-                        <option value="Other">Other</option>
                     </select>
                 </div>
                 
@@ -50,12 +46,16 @@
                     <textarea id="description" name="description" required maxlength="1000" rows="5" placeholder="Describe your event..."></textarea>
                     <small class="char-count">0 / 1000</small>
                 </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Government Permission</h3>
                 
                 <div class="form-group">
-                    <label for="images">Event Images (Max 3)</label>
-                    <input type="file" id="images" name="images" accept="image/*" multiple>
-                    <small>Upload up to 3 images (Max 5MB each)</small>
-                    <div id="imagePreview" class="image-preview"></div>
+                    <label for="permissionDocument">Permission Letter *</label>
+                    <input type="file" id="permissionDocument" name="permissionDocument" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" required>
+                    <small>Upload government permission letter (PDF, DOC, DOCX, JPG, PNG - Max 10MB)</small>
+                    <div id="documentPreview" class="document-preview"></div>
                 </div>
             </div>
 
