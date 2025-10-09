@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Events - PetVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/events.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <!-- Hero Section -->
+    <section class="events-hero">
+        <div class="hero-content">
+            <h1>Pet Events & Activities</h1>
+            <p>Join exciting pet events, workshops, and meetups in your city</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Filters Sidebar -->
+        <div class="filters-sidebar">
+            <h2>Filters</h2>
+            
+            <!-- Category Filter -->
+            <div class="filter-section">
+                <h3>Category</h3>
+                <div class="filter-options">
+                    <div class="filter-option">
+                        <input type="radio" id="all" name="category" value="all" <%= filters.category === 'all' ? 'checked' : '' %>>
+                        <label for="all">All Events</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="workshop" name="category" value="Workshop" <%= filters.category === 'Workshop' ? 'checked' : '' %>>
+                        <label for="workshop">Workshop</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="training" name="category" value="Training" <%= filters.category === 'Training' ? 'checked' : '' %>>
+                        <label for="training">Training</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="adoption" name="category" value="Adoption Drive" <%= filters.category === 'Adoption Drive' ? 'checked' : '' %>>
+                        <label for="adoption">Adoption Drive</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="show" name="category" value="Pet Show" <%= filters.category === 'Pet Show' ? 'checked' : '' %>>
+                        <label for="show">Pet Show</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="health" name="category" value="Health Camp" <%= filters.category === 'Health Camp' ? 'checked' : '' %>>
+                        <label for="health">Health Camp</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="meetup" name="category" value="Meetup" <%= filters.category === 'Meetup' ? 'checked' : '' %>>
+                        <label for="meetup">Meetup</label>
+                    </div>
+                    <div class="filter-option">
+                        <input type="radio" id="competition" name="category" value="Competition" <%= filters.category === 'Competition' ? 'checked' : '' %>>
+                        <label for="competition">Competition</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- City Filter -->
+            <div class="filter-section">
+                <h3>Location</h3>
+                <input type="text" id="cityFilter" placeholder="Enter city" value="<%= filters.city %>">
+            </div>
+            
+            <!-- Date Filter -->
+            <div class="filter-section">
+                <h3>Date</h3>
+                <input type="date" id="dateFilter" value="<%= filters.date %>" min="<%= new Date().toISOString().split('T')[0] %>">
+            </div>
+            
+            <button class="apply-filters-btn">Apply Filters</button>
+            <button class="clear-filters">Clear All Filters</button>
+        </div>
+
+        <!-- Events Grid -->
+        <div class="events-container">
+            <div class="events-header">
+                <h2>Upcoming Events (<%= events.length %>)</h2>
+                <% if (user && user.role === 'service_provider') { %>
+                    <a href="/events/add/new" class="create-event-btn">
+                        <i class="fas fa-plus-circle"></i> Create Event
+                    </a>
+                <% } %>
+            </div>
+
+            <% if (events.length === 0) { %>
+                <div class="no-events">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>No events found matching your criteria</p>
+                </div>
+            <% } else { %>
+                <div class="events-grid">
+                    <% events.forEach(event => { %>
+                        <div class="event-card" onclick="window.location.href='/events/<%= event._id %>'">
+                            <div class="event-image">
+                                <% if (event.images && event.images.length > 0) { %>
+                                    <img src="data:<%= event.images[0].contentType %>;base64,<%= event.images[0].data.toString('base64') %>" alt="<%= event.title %>">
+                                <% } else { %>
+                                    <img src="/images/default-event.jpg" alt="Event">
+                                <% } %>
+                                <div class="event-category-badge"><%= event.category %></div>
+                                <% if (event.isFull) { %>
+                                    <div class="event-full-badge">FULL</div>
+                                <% } %>
+                            </div>
+                            
+                            <div class="event-info">
+                                <h3 class="event-title"><%= event.title %></h3>
+                                
+                                <div class="event-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar"></i>
+                                        <span><%= event.formattedDate %></span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span><%= event.startTime %> - <%= event.endTime %></span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span><%= event.location.city %></span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-user-friends"></i>
+                                        <span><%= event.availableSlots %> slots left</span>
+                                    </div>
+                                </div>
+                                
+                                <p class="event-description"><%= event.description.substring(0, 100) %>...</p>
+                                
+                                <div class="event-footer">
+                                    <div class="event-fee">
+                                        <% if (event.entryFee === 0) { %>
+                                            <span class="free-badge">FREE</span>
+                                        <% } else { %>
+                                            <span class="fee-amount">₹<%= event.entryFee %></span>
+                                        <% } %>
+                                    </div>
+                                    <button class="view-details-btn">
+                                        View Details <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script>
+        // Filter functionality
+        document.querySelector('.apply-filters-btn').addEventListener('click', function() {
+            const category = document.querySelector('input[name="category"]:checked').value;
+            const city = document.getElementById('cityFilter').value;
+            const date = document.getElementById('dateFilter').value;
+            
+            let url = '/events?';
+            if (category !== 'all') url += `category=${category}&`;
+            if (city) url += `city=${encodeURIComponent(city)}&`;
+            if (date) url += `date=${date}`;
+            
+            window.location.href = url;
+        });
+        
+        document.querySelector('.clear-filters').addEventListener('click', function() {
+            window.location.href = '/events';
+        });
+    </script>
+</body>
+</html>
