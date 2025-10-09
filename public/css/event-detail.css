@@ -1,0 +1,374 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f8f8f8;
+    color: #333;
+}
+
+.event-detail-container {
+    max-width: 1300px;
+    margin: 120px auto 40px;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 30px;
+}
+
+.event-detail-content {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.event-images .main-image {
+    width: 100%;
+    height: 400px;
+    overflow: hidden;
+}
+
+.event-images .main-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbnail-images {
+    display: flex;
+    gap: 10px;
+    padding: 15px;
+    background: #f8f9fa;
+}
+
+.thumbnail-images img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.thumbnail-images img:hover {
+    transform: scale(1.05);
+    border-color: #4CAF50;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.event-details {
+    padding: 30px;
+}
+
+.event-header {
+    margin-bottom: 25px;
+}
+
+.event-category {
+    display: inline-block;
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.event-header h1 {
+    font-size: 2.2rem;
+    color: #333;
+    margin: 0;
+    font-weight: 700;
+}
+
+.event-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s;
+}
+
+.info-card:hover {
+    background: #e8f5e9;
+    transform: translateY(-2px);
+}
+
+.info-card i {
+    font-size: 1.5rem;
+    color: #4CAF50;
+    margin-top: 2px;
+}
+
+.info-card h4 {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0 0 5px 0;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.info-card p {
+    font-size: 1rem;
+    color: #333;
+    margin: 0;
+    font-weight: 600;
+}
+
+.info-card .address {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: #666;
+}
+
+.info-card .fee {
+    font-size: 1.3rem;
+    color: #4CAF50;
+}
+
+.info-card .fee .free {
+    background: #4CAF50;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+.event-description {
+    margin-bottom: 25px;
+}
+
+.event-description h3 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    color: #333;
+    font-weight: 600;
+}
+
+.event-description p {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #555;
+}
+
+.event-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.tag {
+    background: #e5e7eb;
+    color: #4b5563;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+}
+
+.event-contact {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.event-contact h4 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: #333;
+    font-weight: 600;
+}
+
+.event-contact p {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.event-contact i {
+    color: #4CAF50;
+    width: 20px;
+}
+
+/* Registration Sidebar */
+.registration-sidebar {
+    height: fit-content;
+    position: sticky;
+    top: 120px;
+}
+
+.registration-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.registration-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: #333;
+    font-weight: 600;
+}
+
+.auth-required, .event-full, .registered-status {
+    text-align: center;
+    padding: 30px 20px;
+}
+
+.auth-required i, .event-full i, .registered-status i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.auth-required i {
+    color: #ffc107;
+}
+
+.event-full i {
+    color: #f44336;
+}
+
+.registered-status i {
+    color: #4CAF50;
+}
+
+.auth-required p, .event-full p, .registered-status p {
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.login-btn, .register-btn, .unregister-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s;
+    text-decoration: none;
+}
+
+.login-btn, .register-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.login-btn:hover, .register-btn:hover {
+    background-color: #388E3C;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.unregister-btn {
+    background: #f44336;
+    color: white;
+}
+
+.unregister-btn:hover {
+    background: #d32f2f;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.quick-info {
+    margin-top: 25px;
+    padding-top: 25px;
+    border-top: 1px solid #eee;
+}
+
+.quick-info h4 {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    color: #333;
+    font-weight: 600;
+}
+
+.quick-info ul {
+    list-style: none;
+    padding: 0;
+}
+
+.quick-info li {
+    padding: 8px 0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+}
+
+.quick-info i {
+    color: #4CAF50;
+    width: 20px;
+}
+
+@media (max-width: 968px) {
+    .event-detail-container {
+        grid-template-columns: 1fr;
+        margin-top: 100px;
+    }
+    
+    .registration-sidebar {
+        position: static;
+    }
+    
+    .event-info-grid {
+        grid-template-columns: 1fr;
+    }
+}
