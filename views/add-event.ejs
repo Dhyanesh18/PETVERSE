@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Event - PetVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/add-event.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="add-event-container">
+        <div class="form-header">
+            <h1><i class="fas fa-calendar-plus"></i> Create New Event</h1>
+            <p>Fill in the details to create a pet event</p>
+        </div>
+
+        <% if (error) { %>
+            <div class="error-message"><%= error %></div>
+        <% } %>
+
+        <form id="addEventForm" enctype="multipart/form-data">
+            <div class="form-section">
+                <h3>Basic Information</h3>
+                
+                <div class="form-group">
+                    <label for="title">Event Title *</label>
+                    <input type="text" id="title" name="title" required maxlength="100" placeholder="e.g., Dog Training Workshop">
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category *</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select Category</option>
+                        <option value="Workshop">Workshop</option>
+                        <option value="Training">Training</option>
+                        <option value="Adoption Drive">Adoption Drive</option>
+                        <option value="Pet Show">Pet Show</option>
+                        <option value="Health Camp">Health Camp</option>
+                        <option value="Meetup">Meetup</option>
+                        <option value="Competition">Competition</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description *</label>
+                    <textarea id="description" name="description" required maxlength="1000" rows="5" placeholder="Describe your event..."></textarea>
+                    <small class="char-count">0 / 1000</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="images">Event Images (Max 3)</label>
+                    <input type="file" id="images" name="images" accept="image/*" multiple>
+                    <small>Upload up to 3 images (Max 5MB each)</small>
+                    <div id="imagePreview" class="image-preview"></div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Date & Time</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventDate">Event Date *</label>
+                        <input type="date" id="eventDate" name="eventDate" required min="<%= new Date().toISOString().split('T')[0] %>">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="startTime">Start Time *</label>
+                        <input type="time" id="startTime" name="startTime" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="endTime">End Time *</label>
+                        <input type="time" id="endTime" name="endTime" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Location</h3>
+                
+                <div class="form-group">
+                    <label for="venue">Venue Name *</label>
+                    <input type="text" id="venue" name="venue" required placeholder="e.g., City Park">
+                </div>
+                
+                <div class="form-group">
+                    <label for="address">Address *</label>
+                    <input type="text" id="address" name="address" required placeholder="Street address">
+                </div>
+                
+                <div class="form-group">
+                    <label for="city">City *</label>
+                    <input type="text" id="city" name="city" required placeholder="City name">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Registration Details</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="entryFee">Entry Fee (₹)</label>
+                        <input type="number" id="entryFee" name="entryFee" min="0" value="0" placeholder="0 for free">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="maxAttendees">Maximum Attendees *</label>
+                        <input type="number" id="maxAttendees" name="maxAttendees" required min="1" max="1000" placeholder="e.g., 50">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Contact Information</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contactEmail">Contact Email</label>
+                        <input type="email" id="contactEmail" name="contactEmail" placeholder="Your email (optional)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contactPhone">Contact Phone</label>
+                        <input type="tel" id="contactPhone" name="contactPhone" placeholder="10 digit number">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tags">Tags (comma separated)</label>
+                    <input type="text" id="tags" name="tags" placeholder="e.g., training, puppies, beginners">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="cancel-btn" onclick="window.history.back()">Cancel</button>
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-calendar-check"></i> Create Event
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script src="/js/add-event.js"></script>
+</body>
+</html>
