@@ -167,7 +167,8 @@
             <!-- Pets Grid -->
             <div class="pets-grid">
                 <% pets.forEach(pet => { %>
-                    <div class="pet-card">
+                    <a href="/services/breeders">
+                        <div class="pet-card">
                         <div class="pet-image">
                             <% if(pet.images && pet.images.length > 0) { %>
                                 <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
@@ -197,6 +198,7 @@
                             </div>
                         </div>
                     </div>
+                    </a>
                 <% }); %>
             </div>
 

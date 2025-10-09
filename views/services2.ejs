@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Breeding Services - PetVerse</title>
+
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/services.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .cart-icon {
+            position: relative;
+        }
+        .cart-count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ff6b6b;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .services-content {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .services-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>">
+    <%- include('partials/header') %>
+
+    <div class="main-container">
+        <!-- Services Content -->
+        <div class="services-content">
+            <div class="search-container mb-4">
+                <input 
+                    type="text" 
+                    id="locationFilter" 
+                    class="form-control" 
+                    placeholder="Search by location..."
+                    style="max-width: 300px; border: 1px solid black; box-shadow:  0 0 10px 1px rgba(0,0,0,0.2)  ;margin: 0 auto;"
+                >
+            </div>
+            <h1 class="page-title">Breeding Services</h1>
+            <div class="services-container">
+                <% services.forEach(service => { 
+                    if (service.serviceType.toLowerCase() === 'breeder') { %>
+                        <div class="service-card">
+                            <div class="service-image">
+                                <% let imagePath = '/images/services/service12.jpg' %>
+                                <img src="<%= imagePath %>" alt="<%= service.name %>">
+                            </div>
+                            <div class="service-info">
+                                <h2 class="service-name"><%= service.fullName %></h2>
+                                <div class="service-meta">
+                                    <p class="service-category"><%= service.serviceType %></p>
+                                </div>
+                                
+                                <p class="service-location">
+                                    <i class="fa fa-map-marker"></i> <%= service.serviceAddress %>
+                                </p>
+                                
+                                <p class="service-contact">
+                                    <i class="fa fa-phone"></i> <%= service.phone %> 
+                                    <span class="service-email">
+                                        <i class="fa fa-envelope"></i> <%= service.email %>
+                                    </span>
+                                </p>
+                                
+                                <div class="service-buttons">
+                                    <button class="service-btn book-btn" onclick="bookService('<%= service.id %>')">
+                                        Book Now
+                                    </button>
+                                    <a href="/services/<%= service.id %>" class="service-btn details-btn">
+                                        View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>;
+
+    <script src="/js/cart-manager.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof cartManager !== 'undefined') {
+                cartManager.initializeCart();
+            }
+        });
+
+        function bookService(serviceId) {
+            window.location.href = `/booking/create/${serviceId}`;
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const locationFilter = document.getElementById('locationFilter');
+            const servicesContainer = document.querySelector('.services-container');
+            let timeoutId;
+
+            locationFilter.addEventListener('input', function(e) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    fetchFilteredServices(e.target.value);
+                }, 300); // Debounce for 300ms
+            });
+
+            async function fetchFilteredServices(location) {
+                try {
+                    const response = await fetch(`/services/api/filter-breeders?location=${encodeURIComponent(location)}`);
+                    const services = await response.json();
+                    
+                    if (!response.ok) throw new Error(services.message);
+                    
+                    updateServicesDisplay(services);
+                } catch (error) {
+                    console.error('Error fetching filtered services:', error);
+                }
+            }
+
+            function updateServicesDisplay(data) {
+                const servicesContainer = document.querySelector('.services-container');
+                
+                if (data.isEmpty) {
+                    servicesContainer.innerHTML = `
+                        <div class="no-results">
+                            <h2 style="
+                                text-align: center;
+                                color: #666;
+                                font-size: 1.5rem;
+                                padding: 50px 20px;
+                                grid-column: 1 / -1;
+                                width: 100%;
+                            ">
+                                <i class="fas fa-search" style="margin-right: 10px;"></i>
+                                No breeders found in this area
+                            </h2>
+                        </div>
+                    `;
+                    return;
+                }
+
+                servicesContainer.innerHTML = data.services.map(service => `
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="/images/services/service12.jpg" alt="${service.fullName}">
+                        </div>
+                        <div class="service-info">
+                            <h2 class="service-name">${service.fullName}</h2>
+                            <div class="service-meta">
+                                <p class="service-category">${service.serviceType}</p>
+                            </div>
+                            
+                            <p class="service-location">
+                                <i class="fa fa-map-marker"></i> ${service.serviceAddress}
+                            </p>
+                            
+                            <p class="service-contact">
+                                <i class="fa fa-phone"></i> ${service.phone} 
+                                <span class="service-email">
+                                    <i class="fa fa-envelope"></i> ${service.email}
+                                </span>
+                            </p>
+                            
+                            <div class="service-buttons">
+                                <button class="service-btn book-btn" onclick="bookService('${service._id}')">
+                                    Book Now
+                                </button>
+                                <a href="/services/${service._id}" class="service-btn details-btn">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        });
+    </script>
+</body>
+</html>
