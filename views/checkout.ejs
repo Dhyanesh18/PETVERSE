@@ -70,6 +70,76 @@
             padding-top: 10px;
             border-top: 1px solid #eee;
         }
+        .order-item {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            align-items: flex-start;
+        }
+        .order-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .order-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            margin-right: 15px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .order-item-details {
+            flex: 1;
+        }
+        .order-item-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0 0 8px 0;
+            line-height: 1.3;
+        }
+        .order-item-meta {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 0 0 8px 0;
+            line-height: 1.4;
+        }
+        .order-item-quantity {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .order-item-price {
+            font-weight: 600;
+            color: #333;
+        }
+        .discount-badge {
+            background-color: #ff6b6b;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+            display: inline-block;
+        }
+        .pet-detail {
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 0.8rem;
+        }
+        .pet-detail i {
+            margin-right: 4px;
+            color: #FF6B01;
+        }
+        .empty-order {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -177,7 +247,47 @@
             <div class="checkout-summary">
                 <h2 class="section-title">Order Summary</h2>
                 <div class="order-items" id="orderItems">
-                    <!-- Will be populated by JavaScript -->
+                    <% if (cart && cart.items && cart.items.length > 0) { %>
+                        <% cart.items.forEach(item => { %>
+                            <div class="order-item">
+                                <% if (item.productId && item.productId.images && item.productId.images.length > 0) { %>
+                                    <% if (item.productId.images[0].data) { %>
+                                        <img src="data:<%= item.productId.images[0].contentType %>;base64,<%= item.productId.images[0].data.toString('base64') %>" 
+                                             class="order-item-image" alt="<%= item.productId.name %>">
+                                    <% } else { %>
+                                        <img src="<%= item.productId.images[0].url || '/images/default-product.jpg' %>" 
+                                             class="order-item-image" alt="<%= item.productId.name %>">
+                                    <% } %>
+                                <% } else { %>
+                                    <img src="/images/default-product.jpg" class="order-item-image" alt="<%= item.productId?.name || 'Product' %>">
+                                <% } %>
+                                <div class="order-item-details">
+                                    <h4 class="order-item-name"><%= item.productId?.name || 'Unknown Product' %></h4>
+                                    <% if (item.itemType === 'Product') { %>
+                                        <p class="order-item-meta">
+                                            Brand: <strong><%= item.productId?.brand || 'N/A' %></strong>
+                                            <% if (item.productId?.discount && item.productId.discount > 0) { %>
+                                                <span class="discount-badge"><%= item.productId.discount %>% OFF</span>
+                                            <% } %>
+                                        </p>
+                                    <% } else if (item.itemType === 'Pet') { %>
+                                        <p class="order-item-meta">
+                                            <span class="pet-detail"><i class="fa fa-paw"></i> <%= item.productId?.category || 'Pet' %></span>
+                                            <span class="pet-detail"><i class="fa fa-dog"></i> <%= item.productId?.breed || 'N/A' %></span>
+                                        </p>
+                                    <% } %>
+                                    <div class="order-item-quantity">
+                                        <span>Quantity: <strong><%= item.quantity %></strong></span>
+                                        <span class="order-item-price">₹<%= (item.productId?.price * item.quantity).toFixed(2) %></span>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="empty-order">
+                            <p>No items in cart</p>
+                        </div>
+                    <% } %>
                 </div>
                 <div class="summary-item">
                     <span>Subtotal</span>
@@ -235,7 +345,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var clientCart = <%- JSON.stringify(cart.items || []) %>;
             // Server-side cart data (from EJS)
             const cartData = {
                 subtotal: parseFloat(<%= cart.subtotal %>) || 0,
@@ -253,23 +362,6 @@
                 `₹${cartData.tax.toFixed(2)}`;
             document.getElementById('total').textContent = 
                 `₹${cartData.total.toFixed(2)}`;
-        
-            // Populate order items from localStorage
-            const orderItemsContainer = document.getElementById('orderItems');
-            orderItemsContainer.innerHTML = '';
-            
-            clientCart.forEach(item => {
-                const itemElement = document.createElement('div');
-                itemElement.className = 'order-item';
-                itemElement.innerHTML = `
-                    <img src="${item.image_url}" class="order-item-image">
-                    <div>
-                        <div>${item.title.substring(0, 30)}${item.title.length > 30 ? '...' : ''}</div>
-                        <div>₹${item.price.toFixed(2)} × ${item.quantity}</div>
-                    </div>
-                `;
-                orderItemsContainer.appendChild(itemElement);
-            });
         
             // Form submission handler
             document.getElementById('checkoutForm').addEventListener('submit', function(e) {

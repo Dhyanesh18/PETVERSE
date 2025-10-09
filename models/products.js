@@ -56,6 +56,10 @@ const productSchema = new mongoose.Schema({
     reviewCount: {
         type: Number,
         default: 0
+    },
+       wishlist: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

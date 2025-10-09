@@ -43,7 +43,10 @@ const userSchema = new mongoose.Schema({
         required: function() {
             return ['seller', 'service_provider'].includes(this.role);
         }
-    }
+    },
+        wishlistProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    wishlistPets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pet' }]
+
 }, { 
     timestamps: true 
 });

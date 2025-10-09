@@ -7,13 +7,153 @@
     <link rel="stylesheet" href="/css/styles.css">
     <!-- Link to CSS -->
     <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="/css/homepage.css"> 
+    
     <!-- Font Awesome (for icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     
     <!-- Chart.js for dashboard analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* Orders Section Styles */
+        .dashboard-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .orders-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            color: #007bff;
+            margin-right: 1rem;
+        }
+        
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .orders-table-container {
+            overflow-x: auto;
+        }
+        
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .orders-table th,
+        .orders-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .orders-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .orders-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .customer-info,
+        .seller-info {
+            font-size: 0.9rem;
+        }
+        
+        .order-items {
+            max-width: 200px;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+            font-size: 0.85rem;
+        }
+        
+        .item-name {
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+        
+        .item-quantity {
+            color: #666;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-badge.pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-badge.processing {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-badge.completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.confirmed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #ccc;
+        }
+    </style>
 </head>
 <body>
     <!-- Hidden data elements for charts -->
@@ -249,6 +389,106 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                
+                <!-- Recent Orders Section -->
+                <div class="dashboard-section">
+                    <h3>Recent Orders</h3>
+                    <div class="orders-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-shopping-cart"></i>
+                            <div class="stat-info">
+                                <span class="stat-number"><%= orderStats.total %></span>
+                                <span class="stat-label">Total Orders</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-clock"></i>
+                            <div class="stat-info">
+                                <span class="stat-number"><%= orderStats.pending %></span>
+                                <span class="stat-label">Pending</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-cog"></i>
+                            <div class="stat-info">
+                                <span class="stat-number"><%= orderStats.processing %></span>
+                                <span class="stat-label">Processing</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-check-circle"></i>
+                            <div class="stat-info">
+                                <span class="stat-number"><%= orderStats.completed %></span>
+                                <span class="stat-label">Completed</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-rupee-sign"></i>
+                            <div class="stat-info">
+                                <span class="stat-number">₹<%= orderStats.revenue.toLocaleString() %></span>
+                                <span class="stat-label">Total Revenue</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <% if (orders && orders.length > 0) { %>
+                        <div class="orders-table-container">
+                            <table class="orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Seller</th>
+                                        <th>Items</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% orders.forEach(order => { %>
+                                        <tr>
+                                            <td>#<%= order.orderNumber || order._id %></td>
+                                            <td>
+                                                <div class="customer-info">
+                                                    <strong><%= order.customer?.fullName || 'Unknown' %></strong>
+                                                    <br><small><%= order.customer?.email || 'No email' %></small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="seller-info">
+                                                    <strong><%= order.seller?.businessName || order.seller?.fullName || 'Unknown' %></strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="order-items">
+                                                    <% order.items.forEach(item => { %>
+                                                        <div class="order-item">
+                                                            <span class="item-name"><%= item.product?.name || 'Product Unavailable' %></span>
+                                                            <span class="item-quantity">×<%= item.quantity %></span>
+                                                        </div>
+                                                    <% }); %>
+                                                </div>
+                                            </td>
+                                            <td>₹<%= order.totalAmount.toLocaleString() %></td>
+                                            <td>
+                                                <span class="status-badge <%= order.status.toLowerCase() %>">
+                                                    <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                                                </span>
+                                            </td>
+                                            <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <i class="fas fa-shopping-cart"></i>
+                            <p>No orders found</p>
+                        </div>
+                    <% } %>
                 </div>
                 
                 <!-- Pending Applications Tab -->

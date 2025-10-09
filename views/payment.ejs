@@ -286,8 +286,8 @@
                             <i class="fa fa-wallet payment-method-icon" style="color: #10b981;"></i>
                             <div>
                                 <div style="font-weight: 500;">PetVerse Wallet</div>
-                                <!-- Add this in your payment summary section -->
-<div hidden id="walletBalance"><%= wallet.balance %></div>
+                                <div style="font-size: 0.9rem; color: #6b7280;">Balance: ₹<%= wallet.balance.toFixed(2) %></div>
+                                <div hidden id="walletBalance"><%= wallet.balance %></div>
                             </div>
                         </div>
 
@@ -315,7 +315,7 @@
                     <span id="shipping">₹0.00</span>
                 </div>
                 <div class="summary-item">
-                    <span>Tax</span>
+                    <span>Tax (18%)</span>
                     <span id="tax">₹0.00</span>
                 </div>
                 <div class="summary-total">
@@ -363,31 +363,54 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-        // Load cart totals from localStorage
-        const cartTotals = JSON.parse(localStorage.getItem('cartTotals')) || {
-            subtotal: 0,
-            shipping: 0,
-            tax: 0,
-            total: 0
-        };
+        // Use server-side cart data
+        const cartData = <%- JSON.stringify(cart) %>;
+        
+        // Update order summary with server-side values
+        document.getElementById('subtotal').textContent = `₹${cartData.subtotal.toFixed(2)}`;
+        document.getElementById('shipping').textContent = cartData.shipping === 0 ? 
+            'Free' : `₹${cartData.shipping.toFixed(2)}`;
+        document.getElementById('tax').textContent = `₹${cartData.tax.toFixed(2)}`;
+        document.getElementById('total').textContent = `₹${cartData.total.toFixed(2)}`;
+
+        // Populate order items
+        populateOrderItems(cartData.items);
 
 
 
-        // Update order summary with actual values
-        document.getElementById('subtotal').textContent = `₹${cartTotals.subtotal.toFixed(2)}`;
-        document.getElementById('shipping').textContent = cartTotals.shipping === 0 ? 
-            'Free' : `₹${cartTotals.shipping.toFixed(2)}`;
-        document.getElementById('tax').textContent = `₹${cartTotals.tax.toFixed(2)}`;
-        document.getElementById('total').textContent = `₹${cartTotals.total.toFixed(2)}`;
+        // Function to populate order items
+        function populateOrderItems(items) {
+            const orderItemsContainer = document.getElementById('orderItems');
+            orderItemsContainer.innerHTML = '';
 
+            if (items.length === 0) {
+                orderItemsContainer.innerHTML = '<p>Your cart is empty</p>';
+                document.getElementById('toReviewBtn').disabled = true;
+                return;
+            }
 
+            items.forEach(item => {
+                const orderItemElement = document.createElement('div');
+                orderItemElement.className = 'order-item';
+                orderItemElement.innerHTML = `
+                    <img src="${item.image_url}" alt="${item.name}" class="order-item-image">
+                    <div class="order-item-details">
+                        <div class="order-item-title">${item.name.substring(0, 30)}${item.name.length > 30 ? '...' : ''}</div>
+                        <div class="order-item-price">₹${item.price.toLocaleString()}</div>
+                        <div class="order-item-quantity">Qty: ${item.quantity}</div>
+                    </div>
+                `;
+                orderItemsContainer.appendChild(orderItemElement);
+            });
+        }
 
         // Update payment validation
         function validatePaymentInfo() {
             const paymentMethod = document.querySelector('input[name="payment-method"]:checked').id;
             
             if (paymentMethod === 'wallet') {
-                if (walletBalance < cartTotals.total) {
+                const walletBalance = parseFloat(document.getElementById('walletBalance').textContent);
+                if (walletBalance < cartData.total) {
                     alert('Insufficient wallet balance');
                     return false;
                 }
@@ -408,7 +431,9 @@
 
             // Update wallet balance color dynamically
             if (method === 'wallet') {
-                walletBalanceElement.style.color = walletBalance >= cartTotals.total ? 
+                const walletBalance = parseFloat(document.getElementById('walletBalance').textContent);
+                const walletBalanceElement = element.querySelector('.payment-method-icon');
+                walletBalanceElement.style.color = walletBalance >= cartData.total ? 
                     '#10b981' : 
                     '#e53e3e';
             }
@@ -426,31 +451,27 @@
             return;
         }
 
-        // 2. Get fresh cart totals
-        const cartRes = await fetch('/cart');
-        const cart = await cartRes.json();
+        // 2. Use current cart data
+        const cart = cartData;
         
         // 3. Handle wallet balance check
         if (paymentMethod.id === 'wallet') {
-            const walletRes = await fetch('/payment/wallet');
-            const walletData = await walletRes.json();
+            const walletBalance = parseFloat(document.getElementById('walletBalance').textContent);
             
-            if (walletData.balance < cart.total) {
+            if (walletBalance < cart.total) {
                 alert('Insufficient wallet balance');
                 return;
             }
         }
 
         // 4. Process payment
-        const response = await fetch('/payment/checkout', {
+        const response = await fetch('/payment', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                paymentMethod: paymentMethod.id,
-                shippingAddress: JSON.parse(localStorage.getItem('shippingInfo'))
+                paymentMethod: paymentMethod.id
             })
         });
 
@@ -462,8 +483,11 @@
             localStorage.removeItem('cart');
             localStorage.removeItem('shippingInfo');
             
-            // Redirect with order details
-            window.location.href = `/payment/order-confirmation?orderId=${result.orderId}&orderNumber=${result.orderNumber}`;
+            // Replace current history entry to prevent going back to payment page
+            history.replaceState(null, null, window.location.href);
+            
+            // Redirect to order confirmation
+            window.location.replace(`/order-confirmation`);
         } else {
             alert(`Payment failed: ${result.message}`);
         }
@@ -486,47 +510,6 @@
             }
         }
 
-        function populateOrderSummary(cart) {
-            const orderItemsContainer = document.getElementById('orderItems');
-            orderItemsContainer.innerHTML = '';
-
-            let subtotal = 0;
-
-            if (cart.length === 0) {
-                orderItemsContainer.innerHTML = '<p>Your cart is empty</p>';
-                document.getElementById('toReviewBtn').disabled = true;
-                return;
-            }
-
-            cart.forEach(item => {
-                const price = parseFloat(item.price.replace(/,/g, ''));
-                const itemTotal = price * item.quantity;
-                subtotal += itemTotal;
-
-                const orderItemElement = document.createElement('div');
-                orderItemElement.className = 'order-item';
-                orderItemElement.innerHTML = `
-                    <img src="${item.image_url}" alt="${item.title}" class="order-item-image">
-                    <div class="order-item-details">
-                        <div class="order-item-title">${item.title.substring(0, 30)}${item.title.length > 30 ? '...' : ''}</div>
-                        <div class="order-item-price">₹${price.toLocaleString()}</div>
-                        <div class="order-item-quantity">Qty: ${item.quantity}</div>
-                    </div>
-                `;
-                orderItemsContainer.appendChild(orderItemElement);
-            });
-
-            // Calculate shipping, tax, and total
-            const shipping = subtotal > 1000 ? 0 : 100;
-            const tax = subtotal * 0.18; // 18% GST
-            const total = subtotal + shipping + tax;
-
-            // Update summary values
-            document.getElementById('subtotal').textContent = `₹${subtotal.toLocaleString()}`;
-            document.getElementById('shipping').textContent = shipping === 0 ? 'Free' : `₹${shipping.toLocaleString()}`;
-            document.getElementById('tax').textContent = `₹${tax.toLocaleString()}`;
-            document.getElementById('total').textContent = `₹${total.toLocaleString()}`;
-        }
 
         function loadShippingInfo() {
             // This would load shipping info from localStorage if available
@@ -565,21 +548,20 @@
         }
 
         function validatePaymentInfo() {
-    const paymentMethod = document.querySelector('input[name="payment-method"]:checked').id;
-    
-    // For wallet payments
-    if (paymentMethod === 'wallet') {
-        const walletBalance = parseFloat(document.getElementById('walletBalance').textContent);
-        const totalAmount = parseFloat(document.getElementById('total').textContent.replace('₹', ''));
-        
-        if (walletBalance < totalAmount) {
-            alert('Insufficient wallet balance');
-            return false;
+            const paymentMethod = document.querySelector('input[name="payment-method"]:checked').id;
+            
+            // For wallet payments
+            if (paymentMethod === 'wallet') {
+                const walletBalance = parseFloat(document.getElementById('walletBalance').textContent);
+                
+                if (walletBalance < cartData.total) {
+                    alert('Insufficient wallet balance');
+                    return false;
+                }
+            }
+            
+            return true;
         }
-    }
-    
-    return true;
-}
 
         function selectPaymentMethod(element, method) {
             // Remove selected class from all payment methods
