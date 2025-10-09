@@ -3,7 +3,6 @@ const Review = require('../models/reviews');
 
 exports.getServices = async (req, res) => {
   try {
-    // Find all service providers
     const providers = await User.find({ role: 'service_provider' });
     console.log(`Found ${providers.length} service providers`);
 
@@ -18,10 +17,8 @@ exports.getServices = async (req, res) => {
     };
 
     const services = await Promise.all(providers.map(async (provider) => {
-      // Debug log for provider information
       console.log(`Processing provider: ${provider._id}, Name: ${provider.fullName}`);
       
-      // Fetch reviews for this service provider from Review model
       const reviews = await Review.find({ 
         targetType: 'ServiceProvider', 
         targetId: provider._id 
@@ -29,23 +26,19 @@ exports.getServices = async (req, res) => {
       
       console.log(`Found ${reviews.length} reviews for provider ${provider._id}`);
       
-      // Log first review details if available
       if (reviews.length > 0) {
         console.log(`Sample review - Rating: ${reviews[0].rating}, Comment: ${reviews[0].comment ? reviews[0].comment.substring(0, 30) + '...' : 'No comment'}`);
       }
       
-      // Calculate review statistics from reviews collection
       const reviewCount = reviews.length;
       const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
       const avgRating = reviewCount > 0 ? totalRating / reviewCount : 0;
       const formattedRating = parseFloat(avgRating.toFixed(1));
 
-      // Get top reviews (limit to 2 most recent)
       const topReviews = reviews
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         .slice(0, 2);
       
-      // Determine price based on service type (standard pricing)
       let price;
       if (provider.serviceType === 'veterinarian' || provider.serviceType === 'trainer') {
         price = 500;
@@ -54,35 +47,29 @@ exports.getServices = async (req, res) => {
       } else if (provider.serviceType === 'pet sitter' || provider.serviceType === 'breeder') {
         price = 200;
       } else {
-        price = 400; // Default price for other service types
+        price = 400;
       }
 
-      // Create service object using only fields that exist in the schemas
       return {
         id: provider._id,
-        name: provider.fullName, // From User schema
-        username: provider.username, // From User schema
-        email: provider.email, // From User schema
-        phone: provider.phone, // From User schema
-        serviceType: provider.serviceType, // From ServiceProvider schema
-        serviceAddress: provider.serviceAddress, // From ServiceProvider schema
-        isApproved: provider.isApproved, // From User schema (approval status)
-        
-        // Mapped and calculated fields
+        name: provider.fullName,
+        username: provider.username,
+        email: provider.email,
+        phone: provider.phone,
+        serviceType: provider.serviceType,
+        serviceAddress: provider.serviceAddress,
+        isApproved: provider.isApproved,
         category: categoryMap[provider.serviceType] || 'Pet Service',
         rating: formattedRating,
         reviewCount: reviewCount,
         price: price,
         topReviews: topReviews || [],
-        
-        // Default image path
         image: provider.image ? `/images/provider/${provider._id}` : '/images/default-provider.jpg'
       };
     }));
 
     console.log(`Rendering services page with ${services.length} service providers`);
     
-    // Add a check before rendering to ensure we have valid data
     if (services.length === 0) {
       console.log('No services found to display');
     }
@@ -107,7 +94,6 @@ exports.getServiceDetails = async (req, res) => {
       return res.status(404).render('error', { message: 'Service provider not found' });
     }
     
-    // Get reviews for this provider
     const reviews = await Review.find({ 
       targetType: 'ServiceProvider', 
       targetId: providerId 
@@ -154,7 +140,6 @@ exports.getServiceDetails = async (req, res) => {
       reviews: reviews
     };
     
-    // Check if user has already reviewed this service
     let userReview = null;
     if (req.user && req.user._id) {
       userReview = await Review.findOne({
@@ -173,5 +158,37 @@ exports.getServiceDetails = async (req, res) => {
   } catch (err) {
     console.error('Error fetching service details:', err);
     res.status(500).render('error', { message: 'Error loading service details' });
+  }
+};
+
+// NEW FUNCTION - AJAX endpoint to get reviews
+exports.getProviderReviews = async (req, res) => {
+  try {
+    const providerId = req.params.providerId;
+    
+    const reviews = await Review.find({ 
+      targetType: 'ServiceProvider', 
+      targetId: providerId 
+    })
+    .populate('user', 'fullName username')
+    .sort({ createdAt: -1 });
+    
+    const reviewCount = reviews.length;
+    const avgRating = reviewCount > 0 
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount 
+      : 0;
+    
+    res.json({
+      success: true,
+      reviews: reviews,
+      avgRating: parseFloat(avgRating.toFixed(1)),
+      reviewCount: reviewCount
+    });
+  } catch (err) {
+    console.error('Error fetching provider reviews:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error loading reviews'
+    });
   }
 };

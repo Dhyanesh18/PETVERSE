@@ -5,11 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title><%= pageTitle %></title>
 
-  <!-- Link to CSS -->
   <link rel="stylesheet" href="/css/services.css">
   <link rel="stylesheet" href="/css/service-details.css">
   <link rel="stylesheet" href="/css/styles.css"> 
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="/css/homepage.css">
@@ -119,6 +117,8 @@
       border-radius: 5px;
       cursor: pointer;
       transition: background-color 0.3s;
+      text-decoration: none;
+      display: inline-block;
     }
     
     .book-button:hover {
@@ -156,10 +156,138 @@
     .star-rating {
       color: #ffc107;
     }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1001;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      overflow: auto;
+    }
+    
+    .modal-content {
+      background-color: #fff;
+      margin: 50px auto;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+      position: relative;
+      padding: 30px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .close-modal {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 1.5rem;
+      color: #777;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    
+    .close-modal:hover {
+      color: #f44336;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+    
+    .rating-select {
+      display: flex;
+      gap: 10px;
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    
+    .rating-select i {
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .rating-select i:hover {
+      transform: scale(1.2);
+    }
+    
+    .rating-select i.fas {
+      color: #ffc107;
+    }
+    
+    .rating-select i.far {
+      color: #ddd;
+    }
+    
+    #review-comment {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-family: 'Poppins', sans-serif;
+      resize: vertical;
+    }
+    
+    .alert {
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .alert-error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 768px) {
+      .service-header {
+        flex-direction: column;
+      }
+      .service-image {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto;
+      }
+      .reviews-header {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
   </style>
 </head>
-<body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>">
-    <!-- Header -->
+<body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>" data-service-id="<%= service.id %>">
     <header class="header">
         <nav id="navbar" class="navbar">
             <div class="nav-content">
@@ -202,33 +330,32 @@
         </nav>
     </header>
 
-    <!-- Main Service Details Content -->
     <div class="service-detail-container">
-      <!-- Service Header with Image and Basic Info -->
+      <div id="alert-container"></div>
+      
       <div class="service-header">
         <div class="service-image">
           <%
-let imagePath = '/images/services/service2.jpg'; // fallback image
-switch (service.category.toLowerCase()) {
-case 'veterinarian':
-imagePath = '/images/services/service1.jpg';
-break;
-case 'groomer':
-imagePath = '/images/services/service7.jpg';
-break;
-case 'pet sitter':
-imagePath = '/images/services/service11.jpg';
-break;
-case 'trainer':
-imagePath = '/images/services/service6.jpg';
-break;
-case 'breeder':
-imagePath = '/images/services/service12.jpg';
-break;
-}
-%>
-<img src="<%= imagePath %>" alt="<%= service.name %>">
-
+            let imagePath = '/images/services/service2.jpg';
+            switch (service.category.toLowerCase()) {
+              case 'veterinarian':
+                imagePath = '/images/services/service1.jpg';
+                break;
+              case 'groomer':
+                imagePath = '/images/services/service7.jpg';
+                break;
+              case 'pet sitter':
+                imagePath = '/images/services/service11.jpg';
+                break;
+              case 'trainer':
+                imagePath = '/images/services/service6.jpg';
+                break;
+              case 'breeder':
+                imagePath = '/images/services/service12.jpg';
+                break;
+            }
+          %>
+          <img src="<%= imagePath %>" alt="<%= service.name %>">
         </div>
         
         <div class="service-info">
@@ -246,7 +373,7 @@ break;
             </div>
             <div class="meta-item">
               <i class="fas fa-star"></i>
-              <span><%= service.rating || 0 %> (<%= service.reviewCount || 0 %> Reviews)</span>
+              <span><span id="service-rating"><%= service.rating || 0 %></span> (<span id="review-count"><%= service.reviewCount || 0 %></span> Reviews)</span>
             </div>
           </div>
           
@@ -254,7 +381,6 @@ break;
         </div>
       </div>
       
-      <!-- Pricing Section -->
       <div class="pricing">
         <h3>Services & Pricing</h3>
         <% if (service.category === 'Veterinary Doctor') { %>
@@ -304,7 +430,6 @@ break;
         <% } %>
       </div>
       
-      <!-- Booking Section -->
       <div class="booking-section">
         <a href="/booking/<%= service.id %>" class="book-button">Book Now</a>
       </div>
@@ -319,37 +444,38 @@ break;
           <% } %>
         </div>
         
-        <% if (service.reviews && service.reviews.length > 0) { %>
-          <% service.reviews.forEach(review => { %>
-            <div class="review-card">
-              <div class="review-header">
-                <div class="review-author"><%= review.user ? review.user.fullName : 'Anonymous' %></div>
-                <div class="star-rating">
-                  <% for (let i = 1; i <= 5; i++) { %>
-                    <% if (i <= review.rating) { %>
-                      <i class="fas fa-star"></i>
-                    <% } else { %>
-                      <i class="far fa-star"></i>
+        <div id="reviews-container">
+          <% if (service.reviews && service.reviews.length > 0) { %>
+            <% service.reviews.forEach(review => { %>
+              <div class="review-card">
+                <div class="review-header">
+                  <div class="review-author"><%= review.user ? review.user.fullName : 'Anonymous' %></div>
+                  <div class="star-rating">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <% if (i <= review.rating) { %>
+                        <i class="fas fa-star"></i>
+                      <% } else { %>
+                        <i class="far fa-star"></i>
+                      <% } %>
                     <% } %>
-                  <% } %>
+                  </div>
                 </div>
+                <p><%= review.comment %></p>
+                <small><%= new Date(review.createdAt).toLocaleDateString() %></small>
               </div>
-              <p><%= review.comment %></p>
-              <small><%= new Date(review.createdAt).toLocaleDateString() %></small>
-            </div>
-          <% }); %>
-        <% } else { %>
-          <p>No reviews yet. Be the first to review this service!</p>
-        <% } %>
+            <% }); %>
+          <% } else { %>
+            <p>No reviews yet. Be the first to review this service!</p>
+          <% } %>
+        </div>
       </div>
     </div>
     
-    <!-- Review Form Modal -->
-    <div id="review-modal" class="modal" style="display: none;">
+    <div id="review-modal" class="modal">
       <div class="modal-content">
         <span class="close-modal">&times;</span>
         <h2>Write a Review</h2>
-        <form id="service-review-form" data-provider-id="<%= service.id %>">
+        <form id="service-review-form">
           <div class="form-group">
             <label>Rating</label>
             <div class="rating-select">
@@ -364,15 +490,18 @@ break;
           
           <div class="form-group">
             <label for="review-comment">Your Review</label>
-            <textarea id="review-comment" rows="4" required><%= userReview ? userReview.comment : '' %></textarea>
+            <textarea id="review-comment" rows="4" required maxlength="200"><%= userReview ? userReview.comment : '' %></textarea>
+            <small><span id="char-count">0</span>/200 characters</small>
           </div>
           
-          <button type="submit" class="book-button">Submit Review</button>
+          <button type="submit" class="book-button" id="submit-review-btn">
+            <span id="submit-text">Submit Review</span>
+            <span id="submit-loading" style="display: none;" class="loading"></span>
+          </button>
         </form>
       </div>
     </div>
 
-    <!-- Footer -->
     <footer id="footer">
         <div class="footer-container">
             <div class="footer-logo">
@@ -397,11 +526,241 @@ break;
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+            <p>&copy; 2025 PetVerse. All Rights Reserved</p>
         </div>
     </footer>
 
-    <!-- Include Services.js for navbar functionality -->
     <script src="/js/Services.js"></script>
+    
+    <!-- AJAX REVIEW SCRIPT - NO ALERTS -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('review-modal');
+        const writeReviewBtn = document.getElementById('writeReviewBtn');
+        const closeModal = document.querySelector('.close-modal');
+        const reviewForm = document.getElementById('service-review-form');
+        const ratingStars = document.querySelectorAll('.rating-select i');
+        const ratingValue = document.getElementById('rating-value');
+        const reviewComment = document.getElementById('review-comment');
+        const charCount = document.getElementById('char-count');
+        const submitBtn = document.getElementById('submit-review-btn');
+        const submitText = document.getElementById('submit-text');
+        const submitLoading = document.getElementById('submit-loading');
+        const serviceId = document.body.getAttribute('data-service-id');
+        
+        if (writeReviewBtn) {
+            writeReviewBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                modal.style.display = 'block';
+            });
+        }
+        
+        if (closeModal) {
+            closeModal.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+        }
+        
+        window.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        
+        ratingStars.forEach(star => {
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.getAttribute('data-rating'));
+                ratingValue.value = rating;
+                
+                ratingStars.forEach((s, index) => {
+                    if (index < rating) {
+                        s.classList.remove('far');
+                        s.classList.add('fas');
+                    } else {
+                        s.classList.remove('fas');
+                        s.classList.add('far');
+                    }
+                });
+            });
+            
+            star.addEventListener('mouseenter', function() {
+                const rating = parseInt(this.getAttribute('data-rating'));
+                ratingStars.forEach((s, index) => {
+                    s.style.color = index < rating ? '#ffc107' : '#ddd';
+                });
+            });
+        });
+        
+        const ratingSelect = document.querySelector('.rating-select');
+        if (ratingSelect) {
+            ratingSelect.addEventListener('mouseleave', function() {
+                const currentRating = parseInt(ratingValue.value) || 0;
+                ratingStars.forEach((s, index) => {
+                    if (index < currentRating) {
+                        s.classList.remove('far');
+                        s.classList.add('fas');
+                        s.style.color = '#ffc107';
+                    } else {
+                        s.classList.remove('fas');
+                        s.classList.add('far');
+                        s.style.color = '#ddd';
+                    }
+                });
+            });
+        }
+        
+        if (reviewComment) {
+            reviewComment.addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
+            charCount.textContent = reviewComment.value.length;
+        }
+        
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const rating = parseInt(ratingValue.value);
+                const comment = reviewComment.value.trim();
+                
+                if (!rating || rating < 1 || rating > 5) {
+                    showAlert('Please select a rating', 'error');
+                    return false;
+                }
+                
+                if (!comment) {
+                    showAlert('Please write a review', 'error');
+                    return false;
+                }
+                
+                if (comment.length > 200) {
+                    showAlert('Review must be 200 characters or less', 'error');
+                    return false;
+                }
+                
+                submitText.style.display = 'none';
+                submitLoading.style.display = 'inline-block';
+                submitBtn.disabled = true;
+                
+                try {
+                    const response = await fetch('/api/reviews', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            rating: rating,
+                            comment: comment,
+                            targetType: 'ServiceProvider',
+                            targetId: serviceId
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        showAlert('Review submitted successfully!', 'success');
+                        
+                        setTimeout(() => {
+                            modal.style.display = 'none';
+                        }, 1000);
+                        
+                        await loadReviews();
+                        updateRatingDisplay(data.avgRating, data.reviewCount);
+                        
+                        reviewForm.reset();
+                        ratingValue.value = '';
+                        ratingStars.forEach(s => {
+                            s.classList.remove('fas');
+                            s.classList.add('far');
+                        });
+                        charCount.textContent = '0';
+                    } else {
+                        showAlert(data.message || 'Failed to submit review', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error submitting review:', error);
+                    showAlert('An error occurred. Please try again.', 'error');
+                } finally {
+                    submitText.style.display = 'inline';
+                    submitLoading.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+                
+                return false;
+            });
+        }
+        
+        async function loadReviews() {
+            try {
+                const response = await fetch(`/services/api/reviews/${serviceId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const reviewsContainer = document.getElementById('reviews-container');
+                    
+                    if (data.reviews.length === 0) {
+                        reviewsContainer.innerHTML = '<p>No reviews yet. Be the first to review this service!</p>';
+                    } else {
+                        reviewsContainer.innerHTML = data.reviews.map(review => `
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <div class="review-author">${review.user ? review.user.fullName : 'Anonymous'}</div>
+                                    <div class="star-rating">
+                                        ${generateStars(review.rating)}
+                                    </div>
+                                </div>
+                                <p>${review.comment}</p>
+                                <small>${new Date(review.createdAt).toLocaleDateString()}</small>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+            }
+        }
+        
+        function generateStars(rating) {
+            let starsHtml = '';
+            for (let i = 1; i <= 5; i++) {
+                starsHtml += i <= rating ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
+            }
+            return starsHtml;
+        }
+        
+        function updateRatingDisplay(avgRating, reviewCount) {
+            const ratingElement = document.getElementById('service-rating');
+            const countElement = document.getElementById('review-count');
+            
+            if (ratingElement) {
+                ratingElement.textContent = parseFloat(avgRating).toFixed(1);
+            }
+            
+            if (countElement) {
+                countElement.textContent = reviewCount;
+            }
+        }
+        
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alert-container');
+            alertContainer.innerHTML = '';
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.display = 'block';
+            
+            alertContainer.appendChild(alert);
+            alertContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 3000);
+        }
+    });
+    </script>
 </body>
-</html> 
+</html>
