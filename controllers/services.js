@@ -192,3 +192,85 @@ exports.getProviderReviews = async (req, res) => {
     });
   }
 };
+
+exports.getBreederServices = async (req, res) => {
+    try {
+        const breedingProviders = await User.find({ 
+            role: 'service_provider',
+            serviceType: 'breeder'
+        });
+
+        const services = await Promise.all(breedingProviders.map(async (provider) => {
+            const reviews = await Review.find({ 
+                targetType: 'ServiceProvider', 
+                targetId: provider._id 
+            });
+            
+            const reviewCount = reviews.length;
+            const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+            const avgRating = reviewCount > 0 ? totalRating / reviewCount : 0;
+            
+            return {
+                id: provider._id,
+                name: provider.fullName,
+                email: provider.email,
+                phone: provider.phone,
+                serviceType: provider.serviceType,
+                serviceAddress: provider.serviceAddress,
+                category: 'Breeding Services',
+                rating: parseFloat(avgRating.toFixed(1)),
+                reviewCount: reviewCount,
+                price: 200,
+                image: provider.image ? `/images/provider/${provider._id}` : '/images/default-provider.jpg'
+            };
+        }));
+
+        res.render('services2', { 
+            pageTitle: 'Breeding Services',
+            services: services,
+            user: req.user
+        });
+    } catch (error) {
+        console.error('Error fetching breeder services:', error);
+        res.status(500).render('error', { 
+            message: 'Error loading breeder services' 
+        });
+    }
+};
+
+exports.filterBreedersByLocation = async (req, res) => {
+    try {
+        const locationQuery = req.query.location;
+        
+        let query = {
+            role: 'service_provider',
+            serviceType: 'breeder'
+        };
+
+        if (locationQuery) {
+            query.serviceAddress = new RegExp(locationQuery, 'i');
+        }
+
+        const breeders = await User.find(query);
+        
+        const services = breeders.map(breeder => ({
+            _id: breeder._id,
+            fullName: breeder.fullName,
+            email: breeder.email,
+            phone: breeder.phone,
+            serviceType: breeder.serviceType,
+            serviceAddress: breeder.serviceAddress
+        }));
+
+        res.json({
+            services,
+            isEmpty: services.length === 0
+        });
+    } catch (error) {
+        console.error('Error filtering breeders:', error);
+        res.status(500).json({ 
+            message: 'Error filtering breeders',
+            error: error.message 
+        });
+    }
+};
