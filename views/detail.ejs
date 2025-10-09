@@ -31,50 +31,7 @@
   </style>
 </head>
 <body>
-  <!-- Header space -->
-  <header class="header" id="header">
-    <nav id="navbar" class="navbar">
-        <div class="nav-content">
-            <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
-            <div class="nav-icons">
-                <button onclick="window.location.href='/cart'" class="icon-btn cart-icon">
-                    <i class="fa fa-shopping-cart"></i>
-                    <span class="cart-count" id="cartCount" style="display: none;">0</span>
-                </button>
-                <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
-            </div>
-            <div class="search">
-                <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                <button class="search-btn"><i class="fa fa-search"></i></button>
-            </div>
-            <button class="hamburger" id="hamburger">
-                <i class="fa fa-bars"></i>
-            </button>
-            <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/about">About</a></li>
-                <li><a href="/pets">Pets</a></li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="/products/petfood">Pet Food</a></li>
-                        <li><a href="/products/toys">Toys</a></li>
-                        <li><a href="/products/accessories">Accessories</a></li>
-                    </ul>
-                </li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="/services">Services</a></li>
-                        <li><a href="/mate">PetMate</a></li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-    </nav>
-</header>
-
-  <!-- Main Product Details Section -->
+  <%- include('partials/header') %>
   <div class="container mx-auto p-4">
     <div class="product-detail flex flex-col md:flex-row gap-8">
       <!-- Product Image -->

@@ -10,6 +10,13 @@
 body {
     background-color: #f8f8f8;
     color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+main {
+    margin-top: 0;
+    padding-top: 0;
 }
 
 /* Events Hero Section */
@@ -19,7 +26,12 @@ body {
     padding: 80px 20px;
     text-align: center;
     margin-bottom: 40px;
-    margin-top: 80px;
+    margin-top: 68px;
+}
+
+.hero-section {
+    margin-top: 0;
+    padding-top: 80px; /* Adjust this value based on your navbar height */
 }
 
 .hero-content h1 {
@@ -34,6 +46,14 @@ body {
 .hero-content p {
     font-size: 1.2rem;
     opacity: 0.95;
+}
+
+/* Navbar */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
 }
 
 /* Main Container */

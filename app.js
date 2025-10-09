@@ -51,6 +51,7 @@ mongoose.connect(process.env.MONGODB_URI)
 
 const authRoutes = require('./routes/auth-routes');
 const adminRoutes = require('./routes/admin-routes');
+const eventRoutes = require('./routes/event-routes');
 const imageRoutes = require('./routes/image-routes');
 const productRoutes = require('./routes/product-routes');
 const bookingRoutes = require('./routes/booking');
@@ -93,6 +94,7 @@ app.use('/service-provider', serviceProviderRoutes);
 app.use('/', reviewRoutes);
 app.use('/',paymentRoutes)
 app.use('/search', searchRoutes);
+app.use('/events', eventRoutes);
 
 app.get('/', (req, res) => {
   if (req.session.userId) {

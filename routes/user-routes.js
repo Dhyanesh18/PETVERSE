@@ -23,7 +23,8 @@ const navLinksData = [
         dropdown: true,
         dropdownItems: [
             { name: 'Pet Care', url: '/services' },
-            { name: 'Pet Mate', url: '/mate' }
+            { name: 'Pet Mate', url: '/mate' },
+            { name: 'Events', url: "/events"}
         ]
     },
     { name: 'About', url: '/about' }
