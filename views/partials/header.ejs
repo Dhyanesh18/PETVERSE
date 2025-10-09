@@ -84,14 +84,14 @@
             if (pets.length > 0) {
             html += `<h4>Pets</h4>`;
             pets.forEach(p => {
-                html += `<a href="/pets/${p._id}" class="result-item">${p.name} (${p.breed})</a>`;
+                html += `<a href="/seller/detail/${p._id}" class="result-item">${p.name} (${p.breed})</a>`;
             });
             }
 
             if (products.length > 0) {
             html += `<h4>Products</h4>`;
             products.forEach(p => {
-                html += `<a href="/products/${p._id}" class="result-item">${p.name} (${p.brand})</a>`;
+                html += `<a href="/buy/${p._id}" class="result-item">${p.name} (${p.brand})</a>`;
             });
             }
 
@@ -118,7 +118,7 @@
         }, 200);
         });
 
-        // Optional: pressing Enter redirects to full search page
+        // Pressing Enter redirects to full search page
         searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             window.location.href = `/search?q=${encodeURIComponent(searchInput.value)}`;
