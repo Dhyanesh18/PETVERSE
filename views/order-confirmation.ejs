@@ -170,44 +170,7 @@
 </head>
 
 <body>
-    <header class="header" id="header">
-        <nav id="navbar" class="navbar">
-            <div class="nav-content">
-                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
-                <div class="nav-icons">
-                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                    <button onclick="window.location.href='/login'"class="icon-btn"><i class="fa fa-user"></i></button>
-                </div>
-                <div class="search">
-                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="/about">About</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Products <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/products/petfood">Pet Food</a></li>
-                            <li><a href="/products/toys">Toys</a></li>
-                            <li><a href="/products/accessories">Accessories</a></li>
-                        </ul>
-                    </li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle">Services <i class="fa fa-angle-down"></i></a>
-                        <ul class="dropdown-menu">
-                            <li><a href="/services">Services</a></li>
-                            <li><a href="/mate">PetMate</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
 
     <div class="confirmation-container">
         <div class="confirmation-card">
@@ -215,7 +178,7 @@
             <h1 class="confirmation-title">Thank you for your order!</h1>
             <p class="confirmation-message">Your order has been received and is being processed. You will receive an email confirmation shortly.</p>
             
-            <div class="order-number" id="orderNumber"><%=orderId%></div>
+            <div class="order-number" id="orderNumber"><%= orderId %></div>
             
             <div class="order-progress">
                 <div class="order-progress-icon">
@@ -223,7 +186,7 @@
                 </div>
                 <div class="order-progress-text">
                     <h3>Order Confirmed</h3>
-                    <p id="orderDate">May 10, 2025</p>
+                    <p id="orderDate"></p>
                 </div>
             </div>
             
@@ -236,7 +199,7 @@
                         </div>
                         <div class="tracking-content">
                             <div class="tracking-title">Order Placed</div>
-                            <div class="tracking-date" id="orderPlacedDate">May 10, 2025</div>
+                            <div class="tracking-date" id="orderPlacedDate"></div>
                         </div>
                     </div>
                     <div class="tracking-step">
@@ -245,7 +208,7 @@
                         </div>
                         <div class="tracking-content">
                             <div class="tracking-title">Processing</div>
-                            <div class="tracking-date">Estimated: 1-2 days</div>
+                            <div class="tracking-date" id="processingDate"></div>
                         </div>
                     </div>
                     <div class="tracking-step">
@@ -254,7 +217,7 @@
                         </div>
                         <div class="tracking-content">
                             <div class="tracking-title">Shipping</div>
-                            <div class="tracking-date" id="estimatedShippingDate">Estimated: May 12, 2025</div>
+                            <div class="tracking-date" id="shippingDate"></div>
                         </div>
                     </div>
                     <div class="tracking-step">
@@ -263,12 +226,12 @@
                         </div>
                         <div class="tracking-content">
                             <div class="tracking-title">Delivery</div>
-                            <div class="tracking-date" id="estimatedDeliveryDate">Estimated: May 14, 2025</div>
+                            <div class="tracking-date" id="deliveryDate"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="what-happens-next">
                 <h3>What Happens Next?</h3>
                 <ul>
@@ -279,159 +242,37 @@
             </div>
         </div>
 
-        
-
         <div class="actions">
             <button class="btn btn-secondary" onclick="window.location.href = '/products'">Continue Shopping</button>
             <button class="btn" onclick="window.location.href = '/'">Back to Home</button>
         </div>
-        
     </div>
 
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-logo">
-                <h2>PetVerse</h2>
-                <p>Your one-stop destination for all pet needs</p>
-            </div>
-            <div class="footer-links">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Shop</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Events</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
-            </div>
-            <div class="footer-social">
-                <h3>Follow Us</h3>
-                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
-                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
-                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
-        </div>
-    </footer>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Use server-side order data
-            const orderData = <%- JSON.stringify(order) %>;
-            const orderId = '<%= orderId %>';
-            
-            // Prevent going back to payment page after order completion
-            history.replaceState(null, null, window.location.href);
-            window.addEventListener('popstate', function(event) {
-                // Redirect to home if user tries to go back
-                window.location.href = '/';
-            });
-            
-            displayOrderDetails(orderData, orderId);
-            updateCartCount();
-        });
-
-        function updateCartCount() {
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            let cartCountElement = document.getElementById('cartCount');
-
-            let totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            cartCountElement.textContent = totalItems;
-            cartCountElement.style.display = totalItems > 0 ? 'inline-block' : 'none';
-        }
-
-        function displayOrderDetails(order, orderId) {
-            // Use the actual order ID from server
-            const orderNumber = `#ORD-${orderId}`;
-            document.getElementById('orderNumber').textContent = orderNumber;
-
-            // Get current date for order date
-            const orderDate = new Date();
-            const formattedDate = orderDate.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-            document.getElementById('orderDate').textContent = formattedDate;
-            document.getElementById('orderPlacedDate').textContent = formattedDate;
-
-            // Calculate estimated shipping date (2 business days from order)
-            const shippingDate = new Date(orderDate);
-            shippingDate.setDate(shippingDate.getDate() + 2);
-            const formattedShippingDate = shippingDate.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-            document.getElementById('estimatedShippingDate').textContent = 
-                `Estimated: ${formattedShippingDate}`;
-
-            // Calculate estimated delivery date (5-7 days from order)
-            const deliveryDate = new Date(orderDate);
-            deliveryDate.setDate(deliveryDate.getDate() + 7); // Setting to 7 days for delivery
-            const formattedDeliveryDate = deliveryDate.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-            document.getElementById('estimatedDeliveryDate').textContent = 
-                `Estimated: ${formattedDeliveryDate}`;
-
-            // Display payment method
-            let paymentMethodText = 'Unknown';
-            switch(order.paymentMethod) {
-                case 'credit-card':
-                    paymentMethodText = 'Credit/Debit Card';
-                    break;
-                case 'upi':
-                    paymentMethodText = 'UPI';
-                    break;
-                case 'cod':
-                    paymentMethodText = 'Cash on Delivery';
-                    break;
-            }
-            document.getElementById('paymentMethod').textContent = paymentMethodText;
-
-            // Display shipping address
-            const address = order.customer;
-            const formattedAddress = `${address.address}, ${address.city}, ${address.state} ${address.zipCode}, ${address.country}`;
-            document.getElementById('shippingAddress').textContent = formattedAddress;
-
-            // Calculate and display total amount
-            let subtotal = 0;
-            order.items.forEach(item => {
-                const price = parseFloat(item.price.replace(/,/g, ''));
-                subtotal += price * item.quantity;
-            });
-
-            const shipping = subtotal > 1000 ? 0 : 100;
-            const tax = subtotal * 0.18; // 18% GST
-            const total = subtotal + shipping + tax;
-            document.getElementById('totalAmount').textContent = `₹${total.toLocaleString()}`;
-
-            // Display order items
-            const orderItemsContainer = document.getElementById('orderItems');
-            orderItemsContainer.innerHTML = '';
-
-            order.items.forEach(item => {
-                const price = parseFloat(item.price.replace(/,/g, ''));
-                
-                const orderItemElement = document.createElement('div');
-                orderItemElement.className = 'order-item';
-                orderItemElement.innerHTML = `
-                    <img src="${item.image_url}" alt="${item.title}" class="order-item-image">
-                    <div class="order-item-details">
-                        <div class="order-item-title">${item.title.substring(0, 30)}${item.title.length > 30 ? '...' : ''}</div>
-                        <div class="order-item-price">₹${price.toLocaleString()}</div>
-                        <div class="order-item-quantity">Qty: ${item.quantity}</div>
-                    </div>
-                `;
-                orderItemsContainer.appendChild(orderItemElement);
-            });
-        }
-    </script>
+    <%- include('partials/footer') %>
 </body>
+<script>
+        // Compute dates and fill in the placeholders
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
 
+            const formatDate = (date) => {
+                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            };
+
+            document.getElementById('orderDate').textContent = formatDate(now);
+            document.getElementById('orderPlacedDate').textContent = formatDate(now);
+
+            const processing = new Date(now);
+            processing.setDate(now.getDate() + 1);
+            document.getElementById('processingDate').textContent = `Estimated: ${formatDate(processing)}`;
+
+            const shipping = new Date(now);
+            shipping.setDate(now.getDate() + 2);
+            document.getElementById('shippingDate').textContent = `Estimated: ${formatDate(shipping)}`;
+
+            const delivery = new Date(now);
+            delivery.setDate(now.getDate() + 5);
+            document.getElementById('deliveryDate').textContent = `Estimated: ${formatDate(delivery)}`;
+        });
+    </script>
 </html>

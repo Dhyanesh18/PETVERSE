@@ -11,6 +11,7 @@ const User = require('../models/users');
 const Order = require('../models/order');
 const Booking = require('../models/Booking');
 const PetMate = require('../models/petMate');
+const Transaction = require('../models/transaction');
 const Wallet = require('../models/wallet');
 
 
@@ -176,6 +177,8 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             endTime: ev.endTime,
             city: ev.location?.city,
             category: ev.category
+        }));
+
         // Add this before the render statement in owner-dashboard route
         const bookings = await Booking.find({ customer: req.user._id })
             .populate('service')
@@ -886,7 +889,7 @@ router.get('/checkout', isAuthenticated, async (req, res) => {
 // POST checkout route - handle form submission
 router.post('/checkout', isAuthenticated, async (req, res) => {
     try {
-        // Get user's cart
+        // 1️⃣ Fetch cart
         const cart = await Cart.findOne({ userId: req.session.userId })
             .populate({
                 path: 'items.productId',
@@ -901,38 +904,21 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Extract form data
-        const {
-            fullName,
-            address,
-            city,
-            state,
-            zipCode,
-            phone,
-            subtotal,
-            shipping,
-            tax,
-            total
-        } = req.body;
+        // 2️⃣ Extract shipping form data
+        const { fullName, address, city, state, zipCode, phone } = req.body;
 
-        // Validate required fields
+        // 3️⃣ Validate shipping fields
         const errors = [];
-        if (!fullName || !fullName.trim()) errors.push('Full name is required');
-        if (!address || !address.trim()) errors.push('Address is required');
-        if (!city || !city.trim()) errors.push('City is required');
-        if (!state || !state.trim()) errors.push('State is required');
-        if (!zipCode || !zipCode.trim()) errors.push('Zip code is required');
-        if (!phone || !phone.trim()) errors.push('Phone number is required');
+        if (!fullName?.trim()) errors.push('Full name is required');
+        if (!address?.trim()) errors.push('Address is required');
+        if (!city?.trim()) errors.push('City is required');
+        if (!state?.trim()) errors.push('State is required');
+        if (!zipCode?.trim()) errors.push('Zip code is required');
+        if (!phone?.trim()) errors.push('Phone number is required');
 
-        // Validate phone number format
-        if (phone && !/^[6-9]\d{9}$/.test(phone.replace(/\D/g, ''))) {
-            errors.push('Please enter a valid 10-digit phone number');
-        }
-
-        // Validate zip code format
-        if (zipCode && !/^\d{6}$/.test(zipCode)) {
-            errors.push('Please enter a valid 6-digit zip code');
-        }
+        // Phone & zip validation
+        if (phone && !/^[6-9]\d{9}$/.test(phone.replace(/\D/g, ''))) errors.push('Please enter a valid 10-digit phone number');
+        if (zipCode && !/^\d{6}$/.test(zipCode)) errors.push('Please enter a valid 6-digit zip code');
 
         if (errors.length > 0) {
             return res.render('checkout', {
@@ -942,46 +928,30 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Calculate totals from server-side data
-        const calculatedSubtotal = cart.items.reduce((sum, item) => {
+        // 4️⃣ Calculate totals entirely on backend
+        const subtotal = cart.items.reduce((sum, item) => {
             const price = parseFloat(item.productId?.price) || 0;
             const quantity = parseInt(item.quantity) || 1;
-            return sum + (price * quantity);
+            return sum + price * quantity;
         }, 0);
-        const calculatedShipping = calculatedSubtotal > 500 ? 0 : 50;
-        const calculatedTax = calculatedSubtotal * 0.18;
-        const calculatedTotal = calculatedSubtotal + calculatedShipping + calculatedTax;
 
+        const shipping = subtotal >= 500 ? 0 : 50;
+        const tax = subtotal * 0.10; // 10% GST
+        const total = subtotal + shipping + tax;
 
-        // Verify totals match (basic security check)
-        if (Math.abs(calculatedTotal - parseFloat(total)) > 0.01) {
-            return res.render('checkout', {
-                navLinks: navLinksData,
-                cart: cart,
-                error: 'Order total mismatch. Please refresh and try again.'
-            });
-        }
-
-        // Get user info for email
-        const user = await User.findById(req.session.userId);
-
-        // Create order with proper data validation
-        const orderItems = cart.items.map(item => {
-            const price = parseFloat(item.productId?.price) || 0;
-            const quantity = parseInt(item.quantity) || 1;
-            
-            if (!item.productId || !item.productId._id) {
-                throw new Error('Invalid product in cart');
-            }
-            
-            return {
+        // 5️⃣ Store pending order in session
+        req.session.pendingOrder = {
+            items: cart.items.map(item => ({
                 product: item.productId._id,
-                quantity: quantity,
-                price: price
-            };
-        });
+                quantity: parseInt(item.quantity),
+                price: parseFloat(item.productId.price),
+                seller: item.productId.seller
+            })),
+            totalAmount: total,
+            seller: cart.items[0]?.productId.seller || null
+        };
 
-        // Store shipping information in session for payment processing
+        // 6️⃣ Store shipping info in session
         req.session.shippingInfo = {
             fullName: fullName.trim(),
             address: address.trim(),
@@ -991,15 +961,9 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
             phone: phone.trim()
         };
 
-        // Store cart data in session for payment processing
-        req.session.pendingOrder = {
-            items: orderItems,
-            totalAmount: calculatedTotal,
-            seller: cart.items[0].productId.seller
-        };
-
-        // Redirect to payment page - order will be created only after successful payment
+        // 7️⃣ Redirect to payment page (wallet payment)
         res.redirect('/payment');
+
     } catch (err) {
         console.error('Error processing checkout:', err);
         res.render('checkout', {
@@ -1009,6 +973,7 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
         });
     }
 });
+
 
 // Payment page route
 router.get('/payment', isAuthenticated, async (req, res) => {
@@ -1080,7 +1045,7 @@ router.get('/payment', isAuthenticated, async (req, res) => {
             });
 
             const shipping = subtotal >= 500 ? 0 : 50;
-            const tax = subtotal * 0.18; // 18% GST
+            const tax = subtotal * 0.10; // 10% GST
             const total = subtotal + shipping + tax;
 
             cartData.subtotal = subtotal;
@@ -1107,72 +1072,100 @@ router.get('/payment', isAuthenticated, async (req, res) => {
 
 // Process payment route - create order only after successful payment
 router.post('/payment', isAuthenticated, async (req, res) => {
-    try {
-        // Check if we have pending order data in session
-        if (!req.session.pendingOrder || !req.session.shippingInfo) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'No pending order found. Please complete checkout first.' 
-            });
-        }
-
-        const { paymentMethod } = req.body;
-        const { items, totalAmount, seller } = req.session.pendingOrder;
-        const shippingInfo = req.session.shippingInfo;
-
-        // Process payment
-        if (paymentMethod === 'wallet') {
-            // Deduct from wallet
-            const wallet = await Wallet.findOne({ user: req.session.userId });
-            if (!wallet) {
-                return res.status(400).json({ success: false, message: 'Wallet not found' });
-            }
-            
-            try {
-                await wallet.deductFunds(totalAmount);
-            } catch (error) {
-                return res.status(400).json({ success: false, message: 'Insufficient wallet balance' });
-            }
-        }
-
-        // Create order only after successful payment
-        console.log('Creating order with items:', items);
-        const order = new Order({
-            customer: req.session.userId,
-            seller: seller,
-            items: items,
-            totalAmount: totalAmount,
-            status: 'confirmed', // Order is confirmed after successful payment
-            paymentStatus: 'paid',
-            paymentMethod: paymentMethod || 'wallet',
-            shippingAddress: shippingInfo
-        });
-
-        await order.save();
-        console.log('Order created with ID:', order._id);
-
-        // Clear the cart after successful order creation
-        const cart = await Cart.findOne({ userId: req.session.userId });
-        if (cart) {
-            cart.items = [];
-            await cart.save();
-        }
-
-        // Clear session data
-        delete req.session.pendingOrder;
-        delete req.session.shippingInfo;
-
-        // Redirect to order confirmation
-        res.json({ 
-            success: true, 
-            message: 'Payment successful!',
-            redirectUrl: `/order-details/${order._id}`
-        });
-    } catch (error) {
-        console.error('Error processing payment:', error);
-        res.status(500).json({ success: false, message: 'Payment processing failed' });
+  try {
+    if (!req.session.pendingOrder || !req.session.shippingInfo) {
+      return res.status(400).send('No pending order found. Please complete checkout first.');
     }
+
+    const { items } = req.session.pendingOrder;
+    const shippingInfo = req.session.shippingInfo;
+    const userId = req.session.userId;
+
+    // Only wallet is supported
+    const paymentMethod = 'wallet';
+
+    // 1️⃣ Fetch user wallet
+    const userWallet = await Wallet.findOne({ user: userId });
+    if (!userWallet) return res.status(400).send('User wallet not found');
+
+    // 2️⃣ Calculate totals
+    let subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    let shipping = subtotal >= 500 ? 0 : 50;
+    let totalAmount = subtotal + shipping;
+
+    if (userWallet.balance < totalAmount) {
+      return res.status(400).send('Insufficient wallet balance');
+    }
+
+    // 3️⃣ Deduct from user wallet
+    await userWallet.deductFunds(totalAmount);
+
+    // 4️⃣ Admin wallet
+    const adminWalletId = '68e927a3cdb7fb04ad6b53bb';
+    const adminWallet = await Wallet.findById(adminWalletId);
+    if (!adminWallet) throw new Error('Admin wallet not found');
+
+    const adminShare = subtotal >= 500 ? subtotal * 0.10 : subtotal * 0.10 + shipping;
+    await adminWallet.addFunds(adminShare);
+
+    // 5️⃣ Record transaction for admin
+    await Transaction.create({
+      from: userId,
+      to: adminWallet.user,
+      amount: adminShare
+    });
+
+    // 6️⃣ Pay each seller
+    for (const item of items) {
+      const sellerWallet = await Wallet.findOne({ user: item.seller });
+      if (!sellerWallet) continue; // skip missing wallet
+
+      const sellerShare = item.price * item.quantity * 0.90;
+      await sellerWallet.addFunds(sellerShare);
+
+      // Record transaction for seller
+      await Transaction.create({
+        from: userId,
+        to: sellerWallet.user,
+        amount: sellerShare
+      });
+    }
+
+    // 7️⃣ Create order
+    const order = new Order({
+      customer: userId,
+      seller: items[0]?.seller || null, // main seller for order record
+      items: items,
+      totalAmount: totalAmount,
+      status: 'completed',
+      paymentStatus: 'paid',
+      paymentMethod,
+      shippingAddress: shippingInfo
+    });
+    await order.save();
+
+    // 8️⃣ Clear cart
+    const cart = await Cart.findOne({ userId });
+    if (cart) {
+      cart.items = [];
+      await cart.save();
+    }
+
+    // 9️⃣ Clear session
+    delete req.session.pendingOrder;
+    delete req.session.shippingInfo;
+
+    //  🔟 Redirect to order confirmation
+    res.json({ 
+    success: true, 
+    redirectUrl: `/order-confirmation/${order._id}`
+    });
+  } catch (error) {
+    console.error('Payment processing failed:', error);
+    res.status(500).send('Payment processing failed. Please try again.');
+  }
 });
+
 
 // Buy page route
 router.get('/buy/:id', isAuthenticated, async (req, res) => {
@@ -1470,21 +1463,23 @@ router.get('/order-details/:orderId', isAuthenticated, async (req, res) => {
 });
 
 // Order confirmation route
-router.get('/order-confirmation', isAuthenticated, async (req, res) => {
+// GET /order-confirmation/:orderId
+// GET /order-confirmation/:orderId
+router.get('/order-confirmation/:orderId', isAuthenticated, async (req, res) => {
     try {
-        // Get the most recent order for the user
-        const order = await Order.findOne({ customer: req.session.userId })
-            .sort({ createdAt: -1 })
+        const { orderId } = req.params;
+
+        // Fetch the order from DB
+        const order = await Order.findById(orderId)
             .populate('items.product')
             .lean();
 
         if (!order) {
-            return res.redirect('/');
+            return res.redirect('/'); // Redirect if order not found
         }
 
         res.render('order-confirmation', {
             navLinks: navLinksData,
-            order: order,
             orderId: order._id,
             user: req.user
         });
@@ -1493,5 +1488,23 @@ router.get('/order-confirmation', isAuthenticated, async (req, res) => {
         res.redirect('/');
     }
 });
+
+// GET /api/orders/:orderId
+router.get('/api/orders/:orderId', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.orderId)
+            .populate('items.product')
+            .lean();
+
+        if (!order) return res.status(404).json({ error: 'Order not found' });
+
+        res.json(order);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch order' });
+    }
+});
+
+
 
 module.exports = router;

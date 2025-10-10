@@ -443,58 +443,27 @@
 
     document.getElementById('toReviewBtn').addEventListener('click', async function(e) {
     e.preventDefault();
-    
+
     try {
-        // 1. Validate payment method
-        const paymentMethod = document.querySelector('input[name="payment-method"]:checked');
-        if (!paymentMethod) {
-            alert('Please select a payment method');
-            return;
-        }
+        const paymentMethod = document.querySelector('input[name="payment-method"]:checked').id;
 
-        // 2. Use current cart data
-        const cart = cartData;
-        
-        // 3. Handle wallet balance check
-        if (paymentMethod.id === 'wallet') {
-            const walletBalance = parseFloat(document.getElementById('walletBalance').textContent);
-            
-            if (walletBalance < cart.total) {
-                alert('Insufficient wallet balance');
-                return;
-            }
-        }
-
-        // 4. Process payment
         const response = await fetch('/payment', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                paymentMethod: paymentMethod.id
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentMethod })
         });
 
         const result = await response.json();
 
-        // 5. Handle response
         if (result.success) {
-            // Clear local storage
             localStorage.removeItem('cart');
             localStorage.removeItem('shippingInfo');
-            
-            // Replace current history entry to prevent going back to payment page
-            history.replaceState(null, null, window.location.href);
-            
-            // Redirect to order confirmation
-            window.location.replace(`/order-confirmation`);
+            window.location.href = result.redirectUrl;  // Use backend-provided redirect
         } else {
             alert(`Payment failed: ${result.message}`);
         }
-
-    } catch (error) {
-        console.error('Payment error:', error);
+    } catch (err) {
+        console.error('Payment error:', err);
         alert('Payment processing failed. Please try again.');
     }
 });
@@ -577,37 +546,5 @@
             document.getElementById(method).checked = true;
         }
     </script>
-    <script>
-document.getElementById('payment-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    try {
-        const response = await fetch('/payment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value
-            })
-        });
-
-        const data = await response.json();
-        
-        if (data.error) {
-            alert(data.error);
-            return;
-        }
-
-        if (data.success) {
-            window.location.href = `/order-confirmation?orderId=${data.orderId}`;
-        }
-    } catch (err) {
-        alert('Payment failed. Please try again.');
-        console.error(err);
-    }
-});
-</script>
 </body>
-
 </html>
