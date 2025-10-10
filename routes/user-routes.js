@@ -114,12 +114,6 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
 
-        console.log('Found orders:', orders.length);
-        if (orders.length > 0) {
-            console.log('First order items:', orders[0].items);
-            console.log('First item product:', orders[0].items[0]?.product);
-        }
-
         // Remove any items that failed to populate (no product)
         const cleanedOrders = orders
             .map(o => ({
@@ -136,27 +130,17 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             orderDate: o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN') : ''
         }));
 
-        // Calculate stats - count all orders except cancelled and pending_payment
+        // Calculate stats
         const validOrders = ordersForView.filter(o => !['cancelled', 'pending_payment'].includes(o.status));
         const totalOrders = validOrders.length;
         const activeOrders = ordersForView.filter(o => ['pending', 'processing'].includes(o.status)).length;
-        const totalSpent = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-        const walletAmount = 10000 - totalSpent;
 
-        // Fetch bookings
-        const bookings = await Booking.find({ user: req.user._id })
-            .populate('service')
-            .sort({ date: 1 })
-            .lean();
+        // Get actual wallet balance
+        const wallet = await Wallet.findOne({ user: req.user._id });
+        const walletAmount = wallet ? wallet.balance : 0;  
 
-        const formattedBookings = bookings.map(booking => ({
-            id: booking._id,
-            serviceName: booking.service?.provider || 'Service Unavailable',
-            serviceType: booking.service?.serviceType || 'Unknown',
-            date: booking.date,
-            time: booking.slot,
-            status: 'Confirmed'
-        }));
+        // Calculate total spent based on initial balance (10000) minus remaining balance
+        const totalSpent = 10000 - walletAmount;  // This is the key change
 
         const userData = {
             username: req.user.username,
@@ -175,9 +159,21 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             }),
             totalOrders,
             activeOrders,
-            totalSpent,
-            walletAmount
+            totalSpent,  // Now correctly shows amount spent from initial 10000
+            walletAmount // Shows remaining balance
         };
+
+        // Add this before the render statement in owner-dashboard route
+        const bookings = await Booking.find({ customer: req.user._id })
+            .populate('service')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const formattedBookings = bookings.map(booking => ({
+            ...booking,
+            bookingDate: new Date(booking.createdAt).toLocaleDateString('en-IN'),
+            serviceDate: new Date(booking.serviceDate).toLocaleDateString('en-IN')
+        }));
 
         res.render('owner-dashboard', {
             user: userData,
@@ -839,7 +835,7 @@ router.get('/checkout', isAuthenticated, async (req, res) => {
             return sum + (price * quantity);
         }, 0);
         const shipping = subtotal > 500 ? 0 : 50; // Free shipping over ₹500
-        const tax = subtotal * 0.18; // 18% GST
+        const tax = subtotal * 0.10; // 10% GST
         const total = subtotal + shipping + tax;
 
         // Add calculated values to cart object
@@ -942,10 +938,6 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
         const calculatedTax = calculatedSubtotal * 0.18;
         const calculatedTotal = calculatedSubtotal + calculatedShipping + calculatedTax;
 
-        // Debug logging
-        console.log('Cart items:', cart.items);
-        console.log('Calculated subtotal:', calculatedSubtotal);
-        console.log('Calculated total:', calculatedTotal);
 
         // Verify totals match (basic security check)
         if (Math.abs(calculatedTotal - parseFloat(total)) > 0.01) {
@@ -1488,4 +1480,4 @@ router.get('/order-confirmation', isAuthenticated, async (req, res) => {
     }
 });
 
-module.exports = router; 
+module.exports = router;

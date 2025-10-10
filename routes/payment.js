@@ -39,7 +39,7 @@ router.get('/checkout', isAuthenticated, async (req, res) => {
         });
 
         const shipping = subtotal >= 500 ? 0 : 50;
-        const tax = subtotal * 0.18; // 18% GST
+        const tax = subtotal * 0.10; // 18% GST
 
         res.render('checkout', {
             cart: {
@@ -261,6 +261,92 @@ router.get('/payment', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('Payment route error:', err);
         res.status(500).send('Server Error');
+    }
+});
+
+
+// ------------------ Payment Processing (POST) ------------------
+router.post('/payment', isAuthenticated, async (req, res) => {
+    try {
+        const { paymentMethod } = req.body;
+        
+        // Get customer's wallet
+        const customerWallet = await Wallet.findOne({ user: req.user._id });
+        if (!customerWallet) {
+            return res.status(400).json({ success: false, message: 'Wallet not found' });
+        }
+
+        // Get total amount from cart
+        const cart = await Cart.findOne({ user: req.user._id }).populate('items.product');
+        const subtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const tax = subtotal * 0.10;  // 10% tax
+        const total = subtotal + tax;
+
+        // Check wallet balance
+        if (customerWallet.balance < total) {
+            return res.status(400).json({ success: false, message: 'Insufficient wallet balance' });
+        }
+
+        // Start transaction
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        try {
+            // Deduct amount from customer wallet
+            await customerWallet.deductFunds(total);
+
+            // Calculate seller and admin shares
+            const adminShare = total * 0.10;  // 10% to admin
+            const sellerShare = total * 0.90;  // 90% to seller
+
+            // Find admin wallet
+            const adminWallet = await Wallet.findOne({ user: 'ADMIN_USER_ID' }); // Replace with actual admin user ID
+            await adminWallet.addFunds(adminShare);
+
+            // For each item in cart, add funds to respective sellers
+            for (const item of cart.items) {
+                const sellerWallet = await Wallet.findOne({ user: item.product.seller });
+                const itemTotal = item.price * item.quantity;
+                const itemSellerShare = itemTotal * 0.90;
+                await sellerWallet.addFunds(itemSellerShare);
+            }
+
+            // Create order
+            const order = new Order({
+                customer: req.user._id,
+                items: cart.items,
+                totalAmount: total,
+                status: 'completed',
+                paymentMethod: paymentMethod
+            });
+            await order.save();
+
+            // Clear cart
+            await Cart.findOneAndDelete({ user: req.user._id });
+
+            // Commit transaction
+            await session.commitTransaction();
+            
+            res.json({ 
+                success: true, 
+                orderId: order._id,
+                message: 'Payment processed successfully' 
+            });
+
+        } catch (error) {
+            // If error, abort transaction
+            await session.abortTransaction();
+            throw error;
+        } finally {
+            session.endSession();
+        }
+
+    } catch (error) {
+        console.error('Payment processing error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Payment processing failed' 
+        });
     }
 });
 
