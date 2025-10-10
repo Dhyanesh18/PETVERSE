@@ -54,17 +54,30 @@ function isServiceProvider(req, res, next) {
     });
 }
 
+// Middleware to allow only pet owners
+function isOwner(req, res, next) {
+    if (req.user && req.user.role === 'owner') {
+        return next();
+    }
+    return res.status(403).render('error', {
+        message: 'Access denied. Only pet owners can register for events.'
+    });
+}
+
 // Public routes
 router.get('/', eventController.getEvents);
 router.get('/api/list', eventController.getEventsAPI); // New API endpoint
 router.get('/:id', eventController.getEventDetails);
+router.get('/:id/ticket', isAuthenticated, isOwner, eventController.getTicketForUser);
+router.get('/:id/payment', isAuthenticated, isOwner, eventController.getEventPaymentPage);
+router.post('/:id/pay', isAuthenticated, isOwner, eventController.payForEvent);
 
 // Service provider routes
 router.get('/add/new', isAuthenticated, isServiceProvider, eventController.showAddEventForm);
 router.post('/add', isAuthenticated, isServiceProvider, upload.single('permissionDocument'), eventController.createEvent);
 
 // User routes (requires authentication)
-router.post('/register', isAuthenticated, eventController.registerForEvent);
+router.post('/register', isAuthenticated, isOwner, eventController.registerForEvent);
 router.delete('/:id/unregister', isAuthenticated, eventController.unregisterFromEvent);
 router.get('/my/registered', isAuthenticated, eventController.getMyEvents);
 

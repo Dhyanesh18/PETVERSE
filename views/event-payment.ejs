@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - <%= event.title %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="/css/checkout.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .checkout-steps { display: flex; justify-content: space-between; margin-bottom: 30px; position: relative; }
+        .checkout-steps::before { content: ""; position: absolute; top: 15px; left: 0; right: 0; height: 4px; background-color: #e5e7eb; z-index: 1; }
+        .step { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; }
+        .step-number { width: 34px; height: 34px; border-radius: 50%; background-color: #e5e7eb; color: #6b7280; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-bottom: 8px; transition: all 0.3s ease; }
+        .step-title { font-size: 0.9rem; color: #6b7280; font-weight: 500; transition: all 0.3s ease; }
+        .step.active .step-number { background-color: #FF6B01; color: white; }
+        .step.active .step-title { color: #FF6B01; font-weight: 600; }
+        .step.completed .step-number { background-color: #10b981; color: white; }
+        .payment-methods { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; }
+        .payment-method { display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
+        .payment-method:hover { border-color: #FF6B01; }
+        .payment-method.selected { border-color: #FF6B01; background-color: #fff8f5; }
+        .payment-method-icon { font-size: 1.5rem; color: #6b7280; min-width: 28px; text-align: center; }
+        .checkout-summary .summary-item, .checkout-summary .summary-total { display: flex; justify-content: space-between; margin: 8px 0; }
+        .wallet-badge { margin-top: 10px; padding: 10px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <header class="header" id="header">
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="/"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="nav-icons">
+                    <button onclick="window.location.href='/owner-dashboard'" class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/about">About</a></li>
+                    <li><a href="/events">Events</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <div class="checkout-container">
+        <h1 class="section-title" style="font-size: 2rem; border-bottom: none;">Event Payment</h1>
+        <div class="checkout-steps">
+            <div class="step completed"><div class="step-number"><i class="fa fa-check"></i></div><div class="step-title">Register</div></div>
+            <div class="step active"><div class="step-number">2</div><div class="step-title">Payment</div></div>
+            <div class="step"><div class="step-number">3</div><div class="step-title">Ticket</div></div>
+        </div>
+
+        <div class="checkout-grid">
+            <div class="checkout-form-container">
+                <div class="checkout-form">
+                    <h2 class="section-title">Payment Method</h2>
+                <div class="payment-methods" data-amount="<%= (event.entryFee || 0).toFixed(2) %>">
+                        <!-- Credit / Debit Card -->
+                        <div class="payment-method" onclick="selectPaymentMethod(this, 'credit-card')">
+                            <input type="radio" name="payment-method" id="credit-card">
+                            <i class="fa fa-credit-card payment-method-icon"></i>
+                            <div>
+                                <div style="font-weight: 500;">Credit / Debit Card</div>
+                                <div style="font-size: 0.9rem; color: #6b7280;">Pay securely with your card</div>
+                            </div>
+                            <div class="payment-method-details">
+                                <div class="form-group">
+                                    <label for="cardName">Name on Card</label>
+                                    <input type="text" id="cardName" class="form-control" placeholder="Enter name on card">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="cardNumber">Card Number</label>
+                                        <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="expiryDate">Expiry Date</label>
+                                        <input type="text" id="expiryDate" class="form-control" placeholder="MM/YY">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="cvv">CVV</label>
+                                        <input type="text" id="cvv" class="form-control" placeholder="123">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- UPI -->
+                        <div class="payment-method" onclick="selectPaymentMethod(this, 'upi')">
+                            <input type="radio" name="payment-method" id="upi">
+                            <i class="fa fa-mobile payment-method-icon" style="font-size: 1.8rem;"></i>
+                            <div>
+                                <div style="font-weight: 500;">UPI</div>
+                                <div style="font-size: 0.9rem; color: #6b7280;">Pay using UPI apps like Google Pay, PhonePe, Paytm</div>
+                            </div>
+                            <div class="payment-method-details">
+                                <div class="form-group">
+                                    <label for="upiId">UPI ID</label>
+                                    <input type="text" id="upiId" class="form-control" placeholder="yourname@upi">
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Wallet -->
+                        <div class="payment-method selected" onclick="selectPaymentMethod(this, 'wallet')">
+                            <input type="radio" name="payment-method" id="wallet" checked>
+                            <i class="fa fa-wallet payment-method-icon" style="color: #10b981;"></i>
+                            <div>
+                                <div style="font-weight: 500;">PetVerse Wallet</div>
+                                <div style="font-size: 0.9rem; color: #6b7280;">Balance: ₹<span id="walletBalanceText"><%= (wallet.balance || 0).toFixed(2) %></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="checkout-navigation">
+                        <button onclick="window.location.href='/events/<%= event._id %>'" class="btn btn-secondary">Back to Event</button>
+                        <button class="btn" id="payBtn">Proceed Payment</button>
+                    </div>
+                    <div class="wallet-badge"><i class="fa fa-shield" style="color:#10b981; margin-right:6px;"></i> Secure wallet payment</div>
+                </div>
+            </div>
+
+            <div class="checkout-summary">
+                <h2 class="section-title">Event Summary</h2>
+                <div class="order-items">
+                    <div class="order-item">
+                        <div class="order-item-details">
+                            <div class="order-item-title"><%= event.title %></div>
+                            <div class="order-item-price">Category: <%= event.category %></div>
+                            <div class="order-item-quantity"><i class="fa fa-calendar"></i> <%= new Date(event.eventDate).toLocaleDateString() %> • <i class="fa fa-clock-o"></i> <%= event.startTime %> - <%= event.endTime %></div>
+                            <div class="order-item-quantity"><i class="fa fa-map-marker"></i> <%= event.location?.venue %>, <%= event.location?.city %></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-item"><span>Entry Fee</span><span id="fee">₹<%= (event.entryFee || 0).toFixed(2) %></span></div>
+                <div class="summary-total"><span>Total</span><span id="total">₹<%= (event.entryFee || 0).toFixed(2) %></span></div>
+            </div>
+        </div>
+    </div>
+
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="/products">Shop</a></li>
+                    <li><a href="/services">Services</a></li>
+                    <li><a href="/events">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reserved</p>
+        </div>
+    </footer>
+
+    <script>
+        async function refreshWalletBalance() {
+            try {
+                const res = await fetch('/payment/wallet');
+                const data = await res.json();
+                const textEl = document.getElementById('walletBalanceText');
+                if (textEl && data && typeof data.balance === 'number') {
+                    textEl.textContent = Number(data.balance).toFixed(2);
+                }
+            } catch (e) {
+                console.warn('Failed to refresh wallet balance');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', refreshWalletBalance);
+
+        function selectPaymentMethod(element, method) {
+            document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            document.getElementById(method).checked = true;
+
+            // Toggle details visibility
+            document.querySelectorAll('.payment-method .payment-method-details').forEach(d => d.style.display = 'none');
+            const details = element.querySelector('.payment-method-details');
+            if (details) details.style.display = 'block';
+        }
+
+        document.getElementById('payBtn').addEventListener('click', async function(e) {
+            e.preventDefault();
+            const btn = this;
+            btn.disabled = true;
+            try {
+                const selected = document.querySelector('input[name="payment-method"]:checked');
+                if (!selected) {
+                    alert('Please select a payment method');
+                    return (btn.disabled = false);
+                }
+                let payload = { paymentMethod: selected.id, details: {} };
+                if (selected.id === 'upi') {
+                    const upiId = (document.getElementById('upiId')?.value || '').trim();
+                    payload.details.upiId = upiId;
+                } else if (selected.id === 'credit-card') {
+                    payload.details.cardName = (document.getElementById('cardName')?.value || '').trim();
+                    payload.details.cardNumber = (document.getElementById('cardNumber')?.value || '').trim();
+                    payload.details.expiryDate = (document.getElementById('expiryDate')?.value || '').trim();
+                    payload.details.cvv = (document.getElementById('cvv')?.value || '').trim();
+                } else if (selected.id === 'wallet') {
+                    // Validate current wallet balance against amount
+                    try {
+                        const res = await fetch('/payment/wallet');
+                        const data = await res.json();
+                        const amount = parseFloat(document.querySelector('.payment-methods').getAttribute('data-amount')) || 0;
+                        if (!data || typeof data.balance !== 'number' || data.balance < amount) {
+                            alert('Insufficient wallet balance');
+                            return;
+                        }
+                    } catch (_) {}
+                }
+                const res = await fetch('/events/<%= event._id %>/pay', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    alert(data.message || 'Payment failed');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Payment failed');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+
+

@@ -1,5 +1,6 @@
 const Event = require('../models/event');
 const User = require('../models/users');
+const Wallet = require('../models/wallet');
 
 // Get all events (public listing) - Renders initial page
 exports.getEvents = async (req, res) => {
@@ -246,7 +247,9 @@ exports.registerForEvent = async (req, res) => {
         res.status(200).json({
             success: true,
             message: 'Successfully registered for event',
-            availableSlots: event.availableSlots
+            availableSlots: event.availableSlots,
+            eventId: event._id,
+            entryFee: event.entryFee || 0
         });
     } catch (err) {
         console.error('Error registering for event:', err);
@@ -254,6 +257,119 @@ exports.registerForEvent = async (req, res) => {
             success: false,
             message: 'Failed to register for event'
         });
+    }
+};
+
+// View ticket for a registered user
+exports.getTicketForUser = async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const event = await Event.findById(eventId).populate('organizer', 'fullName email').lean();
+        if (!event) {
+            return res.status(404).render('error', { message: 'Event not found' });
+        }
+
+        // Verify registration
+        const attendee = (event.attendees || []).find(a => a.user.toString() === req.user._id.toString());
+        if (!attendee) {
+            return res.status(403).render('error', { message: 'You are not registered for this event' });
+        }
+
+        const ticket = {
+            eventId: event._id,
+            title: event.title,
+            category: event.category,
+            date: event.eventDate,
+            startTime: event.startTime,
+            endTime: event.endTime,
+            venue: event.location?.venue,
+            city: event.location?.city,
+            attendeeName: req.user.fullName,
+            numberOfPets: attendee.numberOfPets || 1,
+            registeredAt: attendee.registeredAt,
+            organizerName: event.organizer?.fullName || 'Organizer'
+        };
+
+        return res.render('event-ticket', { user: req.user, ticket });
+    } catch (err) {
+        console.error('Get ticket error:', err);
+        return res.status(500).render('error', { message: 'Failed to load ticket' });
+    }
+};
+
+// Render event payment page similar to checkout/payment.ejs
+exports.getEventPaymentPage = async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const event = await Event.findById(eventId).lean();
+        if (!event) return res.status(404).render('error', { message: 'Event not found' });
+
+        // Ensure user is registered before paying
+        const isRegistered = event.attendees && event.attendees.some(a => a.user.toString() === req.user._id.toString());
+        if (!isRegistered) return res.status(403).render('error', { message: 'Register for the event first' });
+
+        const wallet = await Wallet.findOne({ user: req.user._id });
+        res.render('event-payment', {
+            user: req.user,
+            wallet: wallet || { balance: 0 },
+            event
+        });
+    } catch (err) {
+        console.error('Event payment page error:', err);
+        res.status(500).render('error', { message: 'Failed to load payment page' });
+    }
+};
+
+// Handle event payment (wallet) and redirect to ticket
+exports.payForEvent = async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const event = await Event.findById(eventId);
+        if (!event) return res.status(404).json({ success: false, message: 'Event not found' });
+
+        const isRegistered = event.attendees && event.attendees.some(a => a.user.toString() === req.user._id.toString());
+        if (!isRegistered) return res.status(403).json({ success: false, message: 'Register for the event first' });
+
+        const amount = event.entryFee || 0;
+        const { paymentMethod, details } = req.body || {};
+
+        // Support wallet, upi, and credit-card methods
+        if (paymentMethod === 'wallet') {
+            const wallet = await Wallet.findOne({ user: req.user._id });
+            if (!wallet) return res.status(400).json({ success: false, message: 'Wallet not found' });
+            if (amount > 0) {
+                if (wallet.balance < amount) return res.status(400).json({ success: false, message: 'Insufficient wallet balance' });
+                await wallet.deductFunds(amount);
+            }
+        } else if (paymentMethod === 'upi') {
+            // Basic UPI validation
+            const upiId = details && details.upiId ? String(details.upiId).trim() : '';
+            const upiRegex = /^[\w.\-]{2,}@[A-Za-z]{2,}$/;
+            if (!upiRegex.test(upiId)) {
+                return res.status(400).json({ success: false, message: 'Invalid UPI ID' });
+            }
+            // Assume external UPI success for this implementation (no charge capture)
+        } else if (paymentMethod === 'credit-card') {
+            // Basic card validation (format only)
+            const name = details && details.cardName ? String(details.cardName).trim() : '';
+            const number = details && details.cardNumber ? String(details.cardNumber).replace(/\s+/g, '') : '';
+            const expiry = details && details.expiryDate ? String(details.expiryDate).trim() : '';
+            const cvv = details && details.cvv ? String(details.cvv).trim() : '';
+            const numRegex = /^\d{13,19}$/; // simplistic check
+            const expRegex = /^(0[1-9]|1[0-2])\/(\d{2})$/;
+            const cvvRegex = /^\d{3,4}$/;
+            if (!name || !numRegex.test(number) || !expRegex.test(expiry) || !cvvRegex.test(cvv)) {
+                return res.status(400).json({ success: false, message: 'Invalid card details' });
+            }
+            // Assume external card success for this implementation (no charge capture)
+        } else {
+            return res.status(400).json({ success: false, message: 'Unsupported payment method' });
+        }
+
+        return res.json({ success: true, redirect: `/events/${eventId}/ticket` });
+    } catch (err) {
+        console.error('Event payment error:', err);
+        return res.status(500).json({ success: false, message: 'Payment failed' });
     }
 };
 

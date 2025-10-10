@@ -10,6 +10,8 @@ const Product = require('../models/products');
 const Pet = require('../models/pets');
 const Order = require('../models/order');
 const Transaction = require('../models/transaction');
+const Event = require('../models/event');
+const UserModel = require('../models/users');
 
 
 // ------------------ Checkout Page (GET) ------------------
@@ -261,6 +263,100 @@ router.get('/payment', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('Payment route error:', err);
         res.status(500).send('Server Error');
+    }
+});
+
+
+// ------------------ Common Payment Page (Events/Service Booking) ------------------
+// GET /payment/common?type=event|service&id=<id>&amount=<optional override>
+router.get('/payment/common', isAuthenticated, async (req, res) => {
+    try {
+        const { type, id, amount } = req.query;
+
+        if (!type || !id) {
+            return res.status(400).render('error', { message: 'Missing payment context' });
+        }
+
+        const wallet = await Wallet.findOne({ user: req.user._id });
+
+        let item = null;
+        let computedAmount = 0;
+        let title = '';
+        let meta = {};
+
+        if (type === 'event') {
+            const ev = await Event.findById(id).lean();
+            if (!ev) return res.status(404).render('error', { message: 'Event not found' });
+            item = { _id: ev._id, name: ev.title, kind: 'Event' };
+            computedAmount = typeof amount !== 'undefined' ? parseFloat(amount) || 0 : (ev.entryFee || 0);
+            title = 'Event Registration Payment';
+            meta = { date: ev.eventDate, city: ev.location?.city };
+        } else if (type === 'service') {
+            // Service booking: compute price similarly to services listing (based on provider's serviceType)
+            const provider = await UserModel.findById(id).lean();
+            if (!provider || provider.role !== 'service_provider') {
+                return res.status(404).render('error', { message: 'Service provider not found' });
+            }
+            const mapPrice = (serviceType) => {
+                if (serviceType === 'veterinarian' || serviceType === 'trainer') return 500;
+                if (serviceType === 'groomer') return 300;
+                if (serviceType === 'walking' || serviceType === 'sitting' || serviceType === 'pet sitter') return 200;
+                if (serviceType === 'breeder') return 200;
+                return 400;
+            };
+            item = { _id: provider._id, name: provider.fullName || 'Service Booking', kind: 'Service Booking' };
+            computedAmount = typeof amount !== 'undefined' ? parseFloat(amount) || 0 : mapPrice(provider.serviceType);
+            title = 'Service Booking Payment';
+            meta = { serviceType: provider.serviceType, city: provider.serviceAddress };
+        } else {
+            return res.status(400).render('error', { message: 'Invalid payment type' });
+        }
+
+        res.render('payment-common', {
+            user: req.user,
+            wallet: wallet || { balance: 0 },
+            context: { type, id },
+            item,
+            amount: computedAmount,
+            title,
+            meta
+        });
+    } catch (err) {
+        console.error('Common payment route error:', err);
+        res.status(500).render('error', { message: 'Failed to load payment page' });
+    }
+});
+
+// POST /payment/common — deduct wallet for single-item flows (event/service)
+router.post('/payment/common', isAuthenticated, async (req, res) => {
+    try {
+        const { type, id, amount, paymentMethod } = req.body;
+        if (!type || !id || !amount) {
+            return res.status(400).json({ success: false, message: 'Missing payment details' });
+        }
+
+        if (paymentMethod && paymentMethod !== 'wallet') {
+            return res.status(400).json({ success: false, message: 'Only wallet method supported currently' });
+        }
+
+        const wallet = await Wallet.findOne({ user: req.user._id });
+        if (!wallet) return res.status(400).json({ success: false, message: 'Wallet not found' });
+
+        const charge = parseFloat(amount);
+        if (Number.isNaN(charge) || charge < 0) {
+            return res.status(400).json({ success: false, message: 'Invalid amount' });
+        }
+
+        if (wallet.balance < charge) {
+            return res.status(400).json({ success: false, message: 'Insufficient wallet balance' });
+        }
+
+        await wallet.deductFunds(charge);
+
+        return res.json({ success: true, newBalance: wallet.balance });
+    } catch (err) {
+        console.error('Common payment post error:', err);
+        res.status(500).json({ success: false, message: 'Payment failed' });
     }
 });
 

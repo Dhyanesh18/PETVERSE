@@ -150,7 +150,10 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
         const totalOrders = validOrders.length;
         const activeOrders = ordersForView.filter(o => ['pending', 'processing'].includes(o.status)).length;
         const totalSpent = validOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-        const walletAmount = 10000 - totalSpent;
+        // Fetch actual wallet balance
+        const Wallet = require('../models/wallet');
+        const walletDoc = await Wallet.findOne({ user: req.user._id });
+        const walletAmount = walletDoc && typeof walletDoc.balance === 'number' ? walletDoc.balance : 0;
 
         // Fetch bookings
         const bookings = await Booking.find({ user: req.user._id })
@@ -188,13 +191,29 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             walletAmount
         };
 
+        // Fetch registered events for owner dashboard
+        const Event = require('../models/event');
+        const events = await Event.find({ 'attendees.user': req.user._id })
+            .sort({ eventDate: 1 })
+            .lean();
+        const registeredEvents = events.map(ev => ({
+            id: ev._id,
+            title: ev.title,
+            date: ev.eventDate,
+            startTime: ev.startTime,
+            endTime: ev.endTime,
+            city: ev.location?.city,
+            category: ev.category
+        }));
+
         res.render('owner-dashboard', {
             user: userData,
             orders: ordersForView.filter(o => !['cancelled', 'pending_payment'].includes(o.status)), // Only show valid orders
             bookings: formattedBookings,
             navLinks: navLinksData,
             wishlistedPets: [],
-            wishlistedProducts: []
+            wishlistedProducts: [],
+            registeredEvents
         });
     } catch (err) {
         console.error('Error loading owner dashboard:', err);
