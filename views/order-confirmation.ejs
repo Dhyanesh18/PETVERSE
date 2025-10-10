@@ -346,20 +346,18 @@
             // Use the actual order ID from server
             const orderNumber = `#ORD-${orderId}`;
             document.getElementById('orderNumber').textContent = orderNumber;
-            document.getElementById('orderNumberDetail').textContent = orderNumber;
 
-            // Format and display order date
-            const orderDate = new Date(order.createdAt);
+            // Get current date for order date
+            const orderDate = new Date();
             const formattedDate = orderDate.toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
             });
             document.getElementById('orderDate').textContent = formattedDate;
-            document.getElementById('orderDateDetail').textContent = formattedDate;
             document.getElementById('orderPlacedDate').textContent = formattedDate;
 
-            // Calculate and display estimated shipping and delivery dates
+            // Calculate estimated shipping date (2 business days from order)
             const shippingDate = new Date(orderDate);
             shippingDate.setDate(shippingDate.getDate() + 2);
             const formattedShippingDate = shippingDate.toLocaleDateString('en-US', { 
@@ -367,16 +365,19 @@
                 month: 'long', 
                 day: 'numeric' 
             });
-            document.getElementById('estimatedShippingDate').textContent = `Estimated: ${formattedShippingDate}`;
+            document.getElementById('estimatedShippingDate').textContent = 
+                `Estimated: ${formattedShippingDate}`;
 
+            // Calculate estimated delivery date (5-7 days from order)
             const deliveryDate = new Date(orderDate);
-            deliveryDate.setDate(deliveryDate.getDate() + 4);
+            deliveryDate.setDate(deliveryDate.getDate() + 7); // Setting to 7 days for delivery
             const formattedDeliveryDate = deliveryDate.toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
             });
-            document.getElementById('estimatedDeliveryDate').textContent = `Estimated: ${formattedDeliveryDate}`;
+            document.getElementById('estimatedDeliveryDate').textContent = 
+                `Estimated: ${formattedDeliveryDate}`;
 
             // Display payment method
             let paymentMethodText = 'Unknown';
@@ -433,4 +434,4 @@
     </script>
 </body>
 
-</html> 
+</html>

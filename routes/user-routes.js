@@ -17,16 +17,7 @@ const Wallet = require('../models/wallet');
 const navLinksData = [
     { name: 'Home', url: '/home' },
     { name: 'Pets', url: '/pets' },
-    { 
-        name: 'Products', 
-        url: '#', 
-        dropdown: true,
-        dropdownItems: [
-            { name: 'Pet Food', url: '/products/petfood' },
-            { name: 'Toys', url: '/products/toys' },
-            { name: 'Accessories', url: '/products/accessories' }
-        ]
-    },
+    { name: 'Products', url: '/products'},
     { 
         name: 'Services', 
         url: '#', 
