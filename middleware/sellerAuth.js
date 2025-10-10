@@ -10,8 +10,8 @@ module.exports = (req, res, next) => {
         return res.redirect('/login');
     }
     
-    // Check if user is a seller
-    if (req.user.role === 'seller') {
+    // Allow admins to bypass seller check
+    if (req.user.role === 'admin' || req.user.role === 'seller') {
         console.log('Seller authenticated:', req.user.email);
         return next();
     }

@@ -97,15 +97,17 @@ router.get('/home', isAuthenticated, async (req, res) => {
 // Owner Dashboard route
 router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
     try {
-        // Check if user is an owner
-        if (req.user.role !== 'owner') {
+        // Check if user is an owner; allow admin to preview
+        if (!(req.user.role === 'owner' || req.user.role === 'admin')) {
             return res.status(403).render('error', {
                 message: 'Access denied. This dashboard is for pet owners only.'
             });
         }
+        // Support admin preview of a specific owner via query param
+        const targetUserId = req.user.role === 'admin' && req.query.userId ? req.query.userId : req.user._id;
 
         // Fetch orders where this user is the customer
-        const orders = await Order.find({ customer: req.user._id })
+        const orders = await Order.find({ customer: targetUserId })
             .populate({
                 path: 'items.product',
                 select: 'name breed images price description seller',
@@ -144,7 +146,7 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
         const walletAmount = 10000 - totalSpent;
 
         // Fetch bookings
-        const bookings = await Booking.find({ user: req.user._id })
+        const bookings = await Booking.find({ user: targetUserId })
             .populate('service')
             .sort({ date: 1 })
             .lean();
@@ -158,12 +160,20 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             status: 'Confirmed'
         }));
 
+        // If admin is previewing, load that user's profile; else current user
+        let profileUser = req.user;
+        if (req.user.role === 'admin' && req.query.userId) {
+            const userModel = require('../models/users');
+            const found = await userModel.findById(targetUserId).lean();
+            if (found) profileUser = found;
+        }
+
         const userData = {
-            username: req.user.username,
-            email: req.user.email,
-            phone: req.user.phone,
-            address: req.user.address || 'Not provided',
-            joinedDate: new Date(req.user.createdAt).toLocaleDateString('en-US', {
+            username: profileUser.username,
+            email: profileUser.email,
+            phone: profileUser.phone,
+            address: profileUser.address || 'Not provided',
+            joinedDate: new Date(profileUser.createdAt).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'

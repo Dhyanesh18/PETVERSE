@@ -18,8 +18,19 @@ document.addEventListener('DOMContentLoaded', function() {
           const tabId = this.getAttribute('data-tab');
           document.getElementById(`${tabId}-tab`).classList.add('active');
           
-          // Update the page title
-          document.querySelector('.page-title').textContent = `${tabId.charAt(0).toUpperCase() + tabId.slice(1)} Applications`;
+          // Update the page title with special cases
+          const titleMap = {
+              dashboard: 'Admin Dashboard',
+              pending: 'Pending Applications',
+              approved: 'Approved Applications',
+              rejected: 'Rejected Applications',
+              all: 'All Applications',
+              products: 'Product Management',
+              services: 'Service Management',
+              pets: 'Pet Management',
+              orders: 'Order Management'
+          };
+          document.querySelector('.page-title').textContent = titleMap[tabId] || `${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`;
       });
   });
   
@@ -236,6 +247,156 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize counters on page load
   updateCounters();
+
+  // Orders tab: update status handler
+  document.addEventListener('click', async function(e) {
+      if (e.target && e.target.classList.contains('update-order-status')) {
+          const row = e.target.closest('tr');
+          const orderId = row.getAttribute('data-id');
+          const statusSelect = row.querySelector('.order-status-select');
+          const newStatus = statusSelect.value;
+
+          try {
+              const res = await fetch(`/admin/order/${orderId}/status`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: newStatus })
+              });
+              const data = await res.json();
+              if (!res.ok || !data.success) {
+                  alert(data.error || 'Failed to update order status');
+                  return;
+              }
+              showSuccessMessage('Order status updated');
+          } catch (err) {
+              alert('Network error updating order status');
+          }
+      }
+  });
+
+  // All Users: search and role filter
+  const userSearchInput = document.getElementById('user-search');
+  const userSearchBtn = document.getElementById('search-user-btn');
+  const userRoleFilter = document.getElementById('user-role-filter');
+  const usersTableBody = document.getElementById('users-table-body');
+
+  function filterUsers() {
+      if (!usersTableBody) return;
+      const query = (userSearchInput?.value || '').toLowerCase().trim();
+      const role = (userRoleFilter?.value || 'all');
+
+      const rows = Array.from(usersTableBody.querySelectorAll('tr'));
+      rows.forEach(row => {
+          const name = row.children[0]?.textContent?.toLowerCase() || '';
+          const username = row.children[1]?.textContent?.toLowerCase() || '';
+          const email = row.children[2]?.textContent?.toLowerCase() || '';
+          const roleBadge = row.querySelector('.role-badge')?.textContent?.toLowerCase() || '';
+
+          const matchesQuery = !query || name.includes(query) || username.includes(query) || email.includes(query);
+          const matchesRole = role === 'all' || roleBadge === role.replace('_', ' ');
+
+          row.style.display = (matchesQuery && matchesRole) ? '' : 'none';
+      });
+  }
+
+  userSearchBtn?.addEventListener('click', filterUsers);
+  userSearchInput?.addEventListener('input', () => {
+      // simple debounce
+      clearTimeout(window.__userSearchDebounce);
+      window.__userSearchDebounce = setTimeout(filterUsers, 200);
+  });
+  userRoleFilter?.addEventListener('change', filterUsers);
+
+  // Expose view/edit/delete user handlers
+  window.viewUserDetails = function(userId) {
+      const row = document.querySelector(`tr[data-id="${userId}"]`);
+      const roleText = row?.querySelector('.role-badge')?.textContent?.trim().toLowerCase();
+      let path = '/';
+      if (roleText === 'owner') path = `/owner-dashboard?userId=${encodeURIComponent(userId)}`;
+      else if (roleText === 'seller') path = `/seller/dashboard?userId=${encodeURIComponent(userId)}`;
+      else if (roleText === 'service_provider' || roleText === 'service provider') path = `/service-provider/dashboard?userId=${encodeURIComponent(userId)}`;
+      else if (roleText === 'admin') path = '/admin/dashboard';
+      try {
+          window.open(path, '_blank');
+      } catch (_) {
+          alert('Cannot open dashboard page.');
+      }
+  };
+
+  window.editUser = function(userId) {
+      console.log('Edit user', userId);
+      alert('Edit user not implemented yet.');
+  };
+
+  window.deleteUser = function(userId) {
+      if (!confirm('Delete this user?')) return;
+      console.log('Delete user', userId);
+      alert('Delete user not implemented yet.');
+  };
+
+  // Products: search + category filter (client-side fallback)
+  const productSearch = document.getElementById('product-search');
+  const productSearchBtn = document.getElementById('search-product-btn');
+  const productCategoryFilter = document.getElementById('product-category-filter');
+  const productsGrid = document.querySelector('.products-grid');
+
+  function normalizeCategory(value) {
+      const v = (value || '').toString().toLowerCase().replace(/[^a-z]/g, '');
+      if (v.includes('food')) return 'food';
+      if (v.includes('toy')) return 'toys';
+      if (v.includes('accessor')) return 'accessories';
+      if (v.includes('health')) return 'health';
+      return v;
+  }
+
+  function filterProducts() {
+      if (!productsGrid) return;
+      const query = (productSearch?.value || '').toLowerCase().trim();
+      const category = (productCategoryFilter?.value || 'all').toLowerCase();
+      const cards = Array.from(productsGrid.querySelectorAll('.product-card'));
+      cards.forEach(card => {
+          const name = card.getAttribute('data-name')?.toLowerCase() || '';
+          const cat = normalizeCategory(card.getAttribute('data-category')) || '';
+          const seller = card.getAttribute('data-seller')?.toLowerCase() || '';
+          const matchesQuery = !query || name.includes(query) || seller.includes(query);
+          const matchesCat = category === 'all' || cat === normalizeCategory(category);
+          card.style.display = (matchesQuery && matchesCat) ? '' : 'none';
+      });
+  }
+
+  productSearchBtn?.addEventListener('click', filterProducts);
+  productSearch?.addEventListener('input', () => {
+      clearTimeout(window.__prodSearchDebounce);
+      window.__prodSearchDebounce = setTimeout(filterProducts, 200);
+  });
+  productCategoryFilter?.addEventListener('change', filterProducts);
+
+  // Product view handler (eye icon)
+  window.viewProduct = function(productId) {
+      try {
+          window.open(`/buy/${productId}`, '_blank');
+      } catch (_) {
+          alert('Unable to open product view');
+      }
+  };
+
+  // Pet view handler (eye icon)
+  window.viewPet = function(petId) {
+      try {
+          window.open(`/seller/detail/${petId}`, '_blank');
+      } catch (_) {
+          alert('Unable to open pet view');
+      }
+  };
+
+  // Service view handler (eye icon)
+  window.viewService = function(serviceId) {
+      try {
+          window.open(`/services/${serviceId}`, '_blank');
+      } catch (_) {
+          alert('Unable to open service view');
+      }
+  };
 });
 
 // Expose viewCredentials function to show a credentials modal

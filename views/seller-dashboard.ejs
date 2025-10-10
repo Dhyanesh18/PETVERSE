@@ -328,6 +328,72 @@
             border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
+        /* Profile Information Styles */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-lg);
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--background);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .info-item:hover {
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-1px);
+        }
+
+        .info-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius-md);
+            font-size: 1.1rem;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-md);
+            }
+        }
+
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -810,6 +876,119 @@
                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             }
         }
+
+        /* Order Status Select Styling */
+        .order-status-select {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            font-size: 14px;
+            min-width: 120px;
+            cursor: pointer;
+        }
+
+        .order-status-select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10000;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .notification-success {
+            border-left: 4px solid #28a745;
+        }
+
+        .notification-error {
+            border-left: 4px solid #dc3545;
+        }
+
+        .notification-info {
+            border-left: 4px solid #17a2b8;
+        }
+
+        .notification i {
+            font-size: 18px;
+        }
+
+        .notification-success i {
+            color: #28a745;
+        }
+
+        .notification-error i {
+            color: #dc3545;
+        }
+
+        .notification-info i {
+            color: #17a2b8;
+        }
+
+        .notification span {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .notification-close:hover {
+            background: #f8f9fa;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Update button styling */
+        .update-order-status {
+            background: #28a745;
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .update-order-status:hover {
+            background: #218838;
+        }
+
+        .update-order-status:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -866,6 +1045,93 @@
         </div>
 
         <div class="dashboard-content">
+            <!-- Profile Information Section -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-user-circle"></i> Profile Information</h2>
+                </div>
+                <div class="profile-grid">
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Email Address</div>
+                                <div class="info-value">
+                                    <%= user.email %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Phone Number</div>
+                                <div class="info-value">
+                                    <%= user.phone %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Business Name</div>
+                                <div class="info-value">
+                                    <%= seller.businessName %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Business Address</div>
+                                <div class="info-value">
+                                    <%= seller.businessAddress %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Member Since</div>
+                                <div class="info-value">
+                                    <%= new Date(user.createdAt).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    }) %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Last Login</div>
+                                <div class="info-value">
+                                    <%= new Date().toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    }) %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="content-section">
                 <div class="section-header">
                     <h2><i class="fas fa-box"></i> Product Management</h2>
@@ -879,7 +1145,11 @@
                         <% products.forEach(product => { %>
                             <div class="product-card">
                                 <div class="product-image-container">
-                                    <img src="<%= product.image_url %>" alt="<%= product.title %>" class="product-image">
+                                    <% if (product.image_url && product.image_url !== 'default-product.jpg') { %>
+                                        <img src="<%= product.image_url %>" alt="<%= product.title %>" class="product-image">
+                                    <% } else { %>
+                                        <img src="/images/products/product1.jpg" alt="<%= product.title %>" class="product-image">
+                                    <% } %>
                                     <% if(product.dis && product.dis !== '0%') { %>
                                         <span class="discount-tag"><%= product.dis %> OFF</span>
                                     <% } %>
@@ -998,16 +1268,18 @@
                                     </td>
                                     <td>₹<%= order.total.toLocaleString() %></td>
                                     <td>
-                                        <span class="status-badge <%= order.status.toLowerCase() %>">
-                                            <%= order.status %>
-                                        </span>
+                                        <select class="order-status-select" data-order-id="<%= order._id %>">
+                                            <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                            <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                                            <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                                            <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                            <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                        </select>
                                     </td>
                                     <td class="actions">
-                                        <% if(order.status === 'pending') { %>
-                                            <button class="btn btn-primary btn-sm" onclick="processOrder('<%= order._id %>')">
-                                                <i class="fas fa-check"></i> Process
-                                            </button>
-                                        <% } %>
+                                        <button class="btn btn-success btn-sm update-order-status" data-order-id="<%= order._id %>">
+                                            <i class="fas fa-save"></i> Update
+                                        </button>
                                         <button class="btn btn-info btn-sm" onclick="viewOrderDetails('<%= order._id %>')">
                                             <i class="fas fa-eye"></i> Details
                                         </button>
@@ -1303,6 +1575,95 @@
                 });
             }
         });
+
+        // Order status update functionality
+        document.addEventListener('click', async function(e) {
+            if (e.target && e.target.classList.contains('update-order-status')) {
+                const orderId = e.target.getAttribute('data-order-id');
+                const row = e.target.closest('tr');
+                const statusSelect = row.querySelector('.order-status-select');
+                const newStatus = statusSelect.value;
+
+                // Show loading state
+                const originalText = e.target.innerHTML;
+                e.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+                e.target.disabled = true;
+
+                try {
+                    const res = await fetch(`/seller/orders/${orderId}/status`, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                    
+                    const data = await res.json();
+                    
+                    if (!res.ok || !data.success) {
+                        throw new Error(data.error || 'Failed to update order status');
+                    }
+
+                    // Show success message
+                    showNotification(`Order status updated to ${newStatus}`, 'success');
+                    
+                    // Update the status badge if it exists
+                    const statusBadge = row.querySelector('.status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+                        statusBadge.className = `status-badge ${newStatus.toLowerCase()}`;
+                    }
+
+                } catch (err) {
+                    console.error('Order status update error:', err);
+                    showNotification(err.message || 'Network error updating order status', 'error');
+                    
+                    // Revert the status select to original value
+                    statusSelect.value = statusSelect.getAttribute('data-original-value') || 'pending';
+                } finally {
+                    // Restore button state
+                    e.target.innerHTML = originalText;
+                    e.target.disabled = false;
+                }
+            }
+        });
+
+        // Store original status values when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusSelects = document.querySelectorAll('.order-status-select');
+            statusSelects.forEach(select => {
+                select.setAttribute('data-original-value', select.value);
+            });
+        });
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <span>${message}</span>
+                <button class="notification-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            // Add to page
+            document.body.appendChild(notification);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
     </script>
 </body>
 </html> 

@@ -68,7 +68,7 @@ exports.getAllPets = async (req, res) => {
 exports.getPetById = async (req, res) => {
     try {
         const pet = await Pet.findById(req.params.id)
-            .populate('addedBy', 'username phone');
+            .populate('addedBy', 'username phone email');
 
         if (!pet) {
             return res.status(404).render('error', { message: 'Pet not found' });
@@ -99,9 +99,11 @@ exports.getPetById = async (req, res) => {
                 deliveryEstimate: '3-5 days',
                 seller: pet.addedBy ? {
                     username: pet.addedBy.username,
-                    phone: pet.addedBy.phone
+                    phone: pet.addedBy.phone,
+                    email: pet.addedBy.email
                 } : null,
-                isPet: true // Add a flag to identify as a pet in the template
+                isPet: true, // Add a flag to identify as a pet in the template
+                rating: 0 // Add default rating for pets
             },
             similarProducts: similarPets.map(p => ({
                 _id: p._id,
@@ -111,7 +113,14 @@ exports.getPetById = async (req, res) => {
                     '/images/default-pet.jpg',
                 price: p.price,
                 description: p.description || 'No description available'
-            }))
+            })),
+            navLinks: [
+                { name: 'Home', url: '/' },
+                { name: 'Pets', url: '/pets' },
+                { name: 'Products', url: '/products'},
+                { name: 'Services', url: '/services' },
+                { name: 'About', url: '/about' }
+            ]
         });
     } catch (err) {
         console.error('Get pet error:', err);

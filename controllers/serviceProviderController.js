@@ -10,7 +10,8 @@ const getDashboard = async (req, res) => {
             return res.redirect('/login');
         }
 
-        const serviceProviderId = req.user._id;
+        // Support admin preview of a specific service provider via query param
+        const serviceProviderId = req.user.role === 'admin' && req.query.userId ? req.query.userId : req.user._id;
         const today = new Date('2025-05-07'); // As per requirements
 
         // Format today as YYYY-MM-DD for string comparison
@@ -56,12 +57,19 @@ const getDashboard = async (req, res) => {
             });
         }
 
+        // If admin is previewing, load that user's profile; else current user
+        let profileUser = req.user;
+        if (req.user.role === 'admin' && req.query.userId) {
+            const found = await User.findById(serviceProviderId).lean();
+            if (found) profileUser = found;
+        }
+
         res.render('service-provider-dashboard', {
             futureBookings,
             pastBookings,
             totalReviews,
             averageRating: averageRating.toFixed(1),
-            user: req.user, // Pass the user object to the template
+            user: profileUser, // Pass the target user object to the template
             usersMap
         });
     } catch (error) {
