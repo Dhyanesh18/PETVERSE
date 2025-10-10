@@ -40,7 +40,7 @@ body {
 
 .event-category {
     display: inline-block;
-    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    background: linear-gradient(135deg, #3b99c1 0%, #2bbca9 100%);
     color: white;
     padding: 8px 20px;
     border-radius: 20px;
@@ -71,7 +71,7 @@ body {
     padding: 20px;
     background: #f8f9fa;
     border-radius: 10px;
-    border-left: 4px solid #4CAF50;
+    border-left: 4px solid #2bbca9;
     transition: all 0.3s;
 }
 
@@ -82,7 +82,7 @@ body {
 
 .info-card i {
     font-size: 1.8rem;
-    color: #4CAF50;
+    color: #2bbca9;
     min-width: 30px;
 }
 
@@ -112,7 +112,7 @@ body {
 }
 
 .info-card .free {
-    color: #4CAF50;
+    color: #2bbca9;
     font-weight: 700;
 }
 
@@ -144,7 +144,7 @@ body {
 
 .tag {
     background: #e8f5e9;
-    color: #2e7d32;
+    color: #2bbca9;
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 0.85rem;
@@ -155,7 +155,7 @@ body {
     background: #f8f9fa;
     padding: 25px;
     border-radius: 10px;
-    border-left: 4px solid #2196F3;
+    border-left: 4px solid #21cdf3;
 }
 
 .event-contact h4 {
@@ -175,7 +175,7 @@ body {
 }
 
 .event-contact i {
-    color: #2196F3;
+    color: #21cdf3;
     font-size: 1.1rem;
     width: 20px;
 }
@@ -228,7 +228,7 @@ body {
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: #4CAF50;
+    border-color: #2bbca9;
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
@@ -256,14 +256,14 @@ body {
 }
 
 .register-btn {
-    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    background: linear-gradient(135deg, #3b99c1 0%, #2bbca9 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 4px 15px rgba(76, 155, 175, 0.3);
 }
 
 .register-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 6px 20px rgba(47, 159, 190, 0.4);
 }
 
 .unregister-btn {
@@ -311,7 +311,7 @@ body {
 }
 
 .registered-status i {
-    color: #4CAF50;
+    color: #2bbca9;
 }
 
 .auth-required p,
@@ -352,7 +352,7 @@ body {
 }
 
 .quick-info i {
-    color: #4CAF50;
+    color: #2bbca9;
     font-size: 1rem;
 }
 

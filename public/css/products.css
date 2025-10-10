@@ -130,7 +130,7 @@ body {
 }
 
 .price-filter button {
-    background-color: #00695c;
+    background: linear-gradient(135deg, #3b99c1 0%, #08a993 100%);
     color: white;
     border: none;
     padding: 6px 12px;
@@ -294,7 +294,7 @@ body {
 .add-to-cart {
     flex: 1;
     padding: 10px;
-    background: #00695c;
+    background: linear-gradient(135deg, #3b99c1 0%, #08a993 100%);
     color: white;
     border: none;
     border-radius: 4px;
@@ -304,7 +304,7 @@ body {
 }
 
 .add-to-cart:hover {
-    background: #004d40;
+    background: #014e72;
 }
 
 .add-to-cart:disabled {

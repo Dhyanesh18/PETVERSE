@@ -102,6 +102,45 @@
     transform: scale(1.1);
 }
 
+.cart-icon {
+    position: relative;
+}
+
+.cart-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: #ff6b6b;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+}
+
+.pet-card ,.product-card{
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+        height: 100%; /* Ensure consistent height */
+}
+
+.pet-card img ,.product-card img{
+    width: 100%;
+    height: 250px; /* Fixed height */
+    object-fit: cover; /* Maintain aspect ratio */
+    border-bottom: 1px solid #ddd;
+}
+
+.pet-card .price , .product-card .price{
+    font-size: 1.2rem;
+}
+
 .nav-links {
     display: flex;
     gap: 2rem;
