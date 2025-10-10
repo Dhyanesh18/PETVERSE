@@ -2,42 +2,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('addEventForm');
     const descriptionTextarea = document.getElementById('description');
     const charCount = document.querySelector('.char-count');
-    const imageInput = document.getElementById('images');
-    const imagePreview = document.getElementById('imagePreview');
-    
+    const documentInput = document.getElementById('permissionDocument');
+    const documentPreview = document.getElementById('documentPreview');
+
     // Character count for description
     descriptionTextarea.addEventListener('input', function() {
         const count = this.value.length;
         charCount.textContent = `${count} / 1000`;
     });
-    
-    // Image preview
-    imageInput.addEventListener('change', function(e) {
-        imagePreview.innerHTML = '';
-        const files = Array.from(e.target.files).slice(0, 3);
+
+    // Document preview
+    documentInput.addEventListener('change', function(e) {
+        documentPreview.innerHTML = '';
+        const file = e.target.files[0];
         
-        files.forEach(file => {
-            if (file.size > 5 * 1024 * 1024) {
-                alert('Image size must be less than 5MB');
+        if (file) {
+            // Check file size (10MB max)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                documentInput.value = '';
                 return;
             }
+
+            const div = document.createElement('div');
+            div.className = 'document-preview-item';
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const div = document.createElement('div');
-                div.className = 'preview-item';
-                div.innerHTML = `
-                    <img src="${e.target.result}" alt="Preview">
-                    <button type="button" class="remove-preview" onclick="this.parentElement.remove()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
-                imagePreview.appendChild(div);
-            };
-            reader.readAsDataURL(file);
-        });
+            const icon = getFileIcon(file.type);
+            const fileSize = (file.size / 1024).toFixed(2);
+            
+            div.innerHTML = `
+                <i class="fas ${icon}"></i>
+                <div class="document-info">
+                    <span class="document-name">${file.name}</span>
+                    <span class="document-size">${fileSize} KB</span>
+                </div>
+                <button type="button" class="remove-document" onclick="this.parentElement.remove(); document.getElementById('permissionDocument').value = '';">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            documentPreview.appendChild(div);
+        }
     });
-    
+
+    // Get file icon based on type
+    function getFileIcon(type) {
+        if (type.includes('pdf')) return 'fa-file-pdf';
+        if (type.includes('word') || type.includes('doc')) return 'fa-file-word';
+        if (type.includes('image')) return 'fa-file-image';
+        return 'fa-file-alt';
+    }
+
     // Form submission
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -55,6 +69,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const phone = document.getElementById('contactPhone').value;
         if (phone && !/^\d{10}$/.test(phone)) {
             alert('Phone number must be 10 digits');
+            return;
+        }
+
+        // Check if permission document is uploaded
+        if (!documentInput.files[0]) {
+            alert('Please upload government permission letter');
             return;
         }
         
