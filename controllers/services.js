@@ -1,5 +1,6 @@
 const User = require('../models/users');
 const Review = require('../models/reviews');
+const Wallet = require('../models/wallet');
 
 exports.getServices = async (req, res) => {
   try {
@@ -158,6 +159,96 @@ exports.getServiceDetails = async (req, res) => {
   } catch (err) {
     console.error('Error fetching service details:', err);
     res.status(500).render('error', { message: 'Error loading service details' });
+  }
+};
+
+// Service payment pages and handler (similar to events)
+exports.getServicePaymentPage = async (req, res) => {
+  try {
+    const providerId = req.params.id;
+    const provider = await User.findById(providerId).lean();
+    if (!provider || provider.role !== 'service_provider') {
+      return res.status(404).render('error', { message: 'Service provider not found' });
+    }
+
+    const mapPrice = (serviceType) => {
+      if (serviceType === 'veterinarian' || serviceType === 'trainer') return 500;
+      if (serviceType === 'groomer') return 300;
+      if (serviceType === 'walking' || serviceType === 'sitting' || serviceType === 'pet sitter') return 200;
+      if (serviceType === 'breeder') return 200;
+      return 400;
+    };
+
+    const price = mapPrice(provider.serviceType);
+    const wallet = await Wallet.findOne({ user: req.user._id });
+
+    const service = {
+      _id: provider._id,
+      title: provider.fullName || 'Service Booking',
+      category: provider.serviceType,
+      date: null,
+      startTime: null,
+      endTime: null,
+      location: { venue: provider.serviceAddress, city: provider.serviceAddress },
+      entryFee: price
+    };
+
+    return res.render('service-payment', { user: req.user, wallet: wallet || { balance: 0 }, service });
+  } catch (err) {
+    console.error('Service payment page error:', err);
+    res.status(500).render('error', { message: 'Failed to load payment page' });
+  }
+};
+
+exports.payForService = async (req, res) => {
+  try {
+    const providerId = req.params.id;
+    const provider = await User.findById(providerId).lean();
+    if (!provider || provider.role !== 'service_provider') {
+      return res.status(404).json({ success: false, message: 'Service provider not found' });
+    }
+
+    const mapPrice = (serviceType) => {
+      if (serviceType === 'veterinarian' || serviceType === 'trainer') return 500;
+      if (serviceType === 'groomer') return 300;
+      if (serviceType === 'walking' || serviceType === 'sitting' || serviceType === 'pet sitter') return 200;
+      if (serviceType === 'breeder') return 200;
+      return 400;
+    };
+    const amount = mapPrice(provider.serviceType);
+
+    const { paymentMethod, details } = req.body || {};
+    if (paymentMethod === 'wallet') {
+      const wallet = await Wallet.findOne({ user: req.user._id });
+      if (!wallet) return res.status(400).json({ success: false, message: 'Wallet not found' });
+      if (wallet.balance < amount) return res.status(400).json({ success: false, message: 'Insufficient wallet balance' });
+      await wallet.deductFunds(amount);
+    } else if (paymentMethod === 'upi') {
+      const upiId = details && details.upiId ? String(details.upiId).trim() : '';
+      const upiRegex = /^[\w.\-]{2,}@[A-Za-z]{2,}$/;
+      if (!upiRegex.test(upiId)) {
+        return res.status(400).json({ success: false, message: 'Invalid UPI ID' });
+      }
+    } else if (paymentMethod === 'credit-card') {
+      const name = details && details.cardName ? String(details.cardName).trim() : '';
+      const number = details && details.cardNumber ? String(details.cardNumber).replace(/\s+/g, '') : '';
+      const expiry = details && details.expiryDate ? String(details.expiryDate).trim() : '';
+      const cvv = details && details.cvv ? String(details.cvv).trim() : '';
+      const numRegex = /^\d{13,19}$/;
+      const expRegex = /^(0[1-9]|1[0-2])\/(\d{2})$/;
+      const cvvRegex = /^\d{3,4}$/;
+      if (!name || !numRegex.test(number) || !expRegex.test(expiry) || !cvvRegex.test(cvv)) {
+        return res.status(400).json({ success: false, message: 'Invalid card details' });
+      }
+    } else {
+      return res.status(400).json({ success: false, message: 'Unsupported payment method' });
+    }
+
+    // After payment success, redirect to owner dashboard; booking confirmation is already created earlier
+    return res.json({ success: true, redirect: `/owner-dashboard` });
+  } catch (err) {
+    console.error('Service payment error:', err);
+    res.status(500).json({ success: false, message: 'Payment failed' });
   }
 };
 

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - PetVerse</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .pay-container { max-width: 980px; margin: 2rem auto; background: #fff; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+        .pay-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .pay-item { border: 1px solid #eee; border-radius: 10px; padding: 1rem; }
+        .pay-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; }
+        .btn { background: #4F46E5; color: white; border: none; padding: .75rem 1.25rem; border-radius: 8px; cursor: pointer; }
+        .btn:disabled { opacity: .6; cursor: not-allowed; }
+        .btn-secondary { background: #e5e7eb; color: #111827; }
+        .meta { color: #6b7280; font-size: .9rem; }
+        .wallet { background: #f9fafb; border: 1px solid #eee; border-radius: 10px; padding: .75rem 1rem; margin: 1rem 0; }
+    </style>
+    <script>
+        async function submitPayment(e) {
+            e.preventDefault();
+            const btn = document.getElementById('payBtn');
+            btn.disabled = true;
+            try {
+                const res = await fetch('/payment/common', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: '<%= context.type %>',
+                        id: '<%= context.id %>',
+                        amount: <%= amount %>,
+                        paymentMethod: 'wallet'
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if ('<%= context.type %>' === 'event') {
+                        window.location.href = `/events/<%= context.id %>/ticket`;
+                    } else {
+                        window.location.href = '/services';
+                    }
+                } else {
+                    alert(data.message || 'Payment failed');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Payment failed');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="pay-container">
+        <div class="pay-header">
+            <h1><%= title %></h1>
+            <div class="wallet">Wallet balance: ₹<%= (wallet.balance || 0).toFixed(2) %></div>
+        </div>
+
+        <div class="pay-item">
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight:600; font-size:1.1rem;"> <%= item.name %> </div>
+                    <div class="meta">
+                        <%= item.kind %>
+                        <% if (meta && meta.date) { %> • <%= new Date(meta.date).toLocaleDateString() %> <% } %>
+                        <% if (meta && meta.city) { %> • <%= meta.city %> <% } %>
+                        <% if (meta && meta.serviceType) { %> • <%= meta.serviceType %> <% } %>
+                    </div>
+                </div>
+                <div style="font-size:1.25rem; font-weight:700;">₹<%= amount.toFixed(2) %></div>
+            </div>
+        </div>
+
+        <div class="pay-actions">
+            <button class="btn-secondary" onclick="history.back()">Back</button>
+            <button class="btn" id="payBtn" onclick="submitPayment(event)">Pay with Wallet</button>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
+
+

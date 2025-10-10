@@ -134,7 +134,7 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
         const validOrders = ordersForView.filter(o => !['cancelled', 'pending_payment'].includes(o.status));
         const totalOrders = validOrders.length;
         const activeOrders = ordersForView.filter(o => ['pending', 'processing'].includes(o.status)).length;
-
+      
         // Get actual wallet balance
         const wallet = await Wallet.findOne({ user: req.user._id });
         const walletAmount = wallet ? wallet.balance : 0;  
@@ -163,6 +163,19 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             walletAmount // Shows remaining balance
         };
 
+        // Fetch registered events for owner dashboard
+        const Event = require('../models/event');
+        const events = await Event.find({ 'attendees.user': req.user._id })
+            .sort({ eventDate: 1 })
+            .lean();
+        const registeredEvents = events.map(ev => ({
+            id: ev._id,
+            title: ev.title,
+            date: ev.eventDate,
+            startTime: ev.startTime,
+            endTime: ev.endTime,
+            city: ev.location?.city,
+            category: ev.category
         // Add this before the render statement in owner-dashboard route
         const bookings = await Booking.find({ customer: req.user._id })
             .populate('service')
@@ -181,7 +194,8 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             bookings: formattedBookings,
             navLinks: navLinksData,
             wishlistedPets: [],
-            wishlistedProducts: []
+            wishlistedProducts: [],
+            registeredEvents
         });
     } catch (err) {
         console.error('Error loading owner dashboard:', err);

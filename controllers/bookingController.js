@@ -177,18 +177,8 @@ exports.bookSlot = async (req, res) => {
     
     await booking.save();
     
-    // Return confirmation to user
-    res.render('booking', {
-      service,
-      error: null,
-      confirmed: true,
-      booking: { 
-        name: req.user.fullName || name, 
-        date: new Date(date).toLocaleDateString(), 
-        slot
-      },
-      user: req.user
-    });
+    // Redirect to service payment page after booking
+    return res.redirect(`/services/${serviceId}/payment`);
   } catch (err) {
     console.error('Booking failed:', err);
     res.status(500).send('Booking failed: ' + err.message);

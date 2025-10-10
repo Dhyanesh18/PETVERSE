@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Ticket - <%= ticket.title %></title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .ticket-container { max-width: 800px; margin: 2rem auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.08); overflow: hidden; }
+        .ticket-header { background: #4F46E5; color: #fff; padding: 1.25rem 1.5rem; display:flex; justify-content: space-between; align-items: center; }
+        .ticket-body { padding: 1.5rem; }
+        .row { display:flex; gap: 1rem; flex-wrap: wrap; }
+        .col { flex: 1 1 250px; }
+        .label { color: #6b7280; font-size: .85rem; }
+        .value { font-weight: 600; }
+        .actions { display:flex; justify-content:flex-end; gap:1rem; margin-top:1.25rem; }
+        .btn { background: #4F46E5; color: #fff; border: none; padding: .6rem 1rem; border-radius: 8px; cursor: pointer; }
+        .btn-secondary { background: #e5e7eb; color: #111827; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <div class="ticket-container">
+        <div class="ticket-header">
+            <div>
+                <div style="opacity:.9; font-size:.9rem;">Event Ticket</div>
+                <div style="font-size:1.4rem; font-weight:700;"><%= ticket.title %></div>
+            </div>
+            <div>
+                <i class="fas fa-qrcode" style="font-size:2rem; opacity:.9;"></i>
+            </div>
+        </div>
+
+        <div class="ticket-body">
+            <div class="row">
+                <div class="col">
+                    <div class="label">Attendee</div>
+                    <div class="value"><%= ticket.attendeeName %></div>
+                </div>
+                <div class="col">
+                    <div class="label">Category</div>
+                    <div class="value"><%= ticket.category %></div>
+                </div>
+            </div>
+            <div class="row" style="margin-top:.5rem;">
+                <div class="col">
+                    <div class="label">Date</div>
+                    <div class="value"><%= new Date(ticket.date).toLocaleDateString() %></div>
+                </div>
+                <div class="col">
+                    <div class="label">Time</div>
+                    <div class="value"><%= ticket.startTime %> - <%= ticket.endTime %></div>
+                </div>
+                <div class="col">
+                    <div class="label">City</div>
+                    <div class="value"><%= ticket.city %></div>
+                </div>
+            </div>
+            <div class="row" style="margin-top:.5rem;">
+                <div class="col">
+                    <div class="label">Venue</div>
+                    <div class="value"><%= ticket.venue %></div>
+                </div>
+                <div class="col">
+                    <div class="label">Registered At</div>
+                    <div class="value"><%= new Date(ticket.registeredAt).toLocaleString() %></div>
+                </div>
+                <div class="col">
+                    <div class="label">Number of Pets</div>
+                    <div class="value"><%= ticket.numberOfPets %></div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn-secondary" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+                <a class="btn" href="/events/<%= ticket.eventId %>"><i class="fas fa-arrow-left"></i> Back to Event</a>
+            </div>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+</body>
+</html>
+
+

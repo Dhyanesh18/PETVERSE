@@ -174,8 +174,12 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('Successfully registered for the event!');
-                    location.reload();
+                    // Skip payment for free events
+                    if ((data.entryFee || 0) === 0) {
+                        window.location.href = `/events/${eventId}/ticket`;
+                    } else {
+                        window.location.href = `/events/${eventId}/payment`;
+                    }
                 } else {
                     alert(data.message || 'Failed to register');
                 }

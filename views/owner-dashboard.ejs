@@ -1445,6 +1445,50 @@ transform: scale(1.2);
         <section class="section">
             <div class="section-header">
                 <h2 class="section-title">
+                    <i class="fas fa-ticket-alt"></i>
+                    Registered Events
+                </h2>
+            </div>
+
+            <% if (registeredEvents && registeredEvents.length > 0) { %>
+                <table class="orders-table">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>City</th>
+                            <th>Ticket</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% registeredEvents.forEach(function(ev) { %>
+                            <tr>
+                                <td><%= ev.title %> <span class="product-meta" style="margin-left:8px;">(<%= ev.category %>)</span></td>
+                                <td><%= new Date(ev.date).toLocaleDateString() %></td>
+                                <td><%= ev.startTime %> - <%= ev.endTime %></td>
+                                <td><%= ev.city %></td>
+                                <td>
+                                    <a href="/events/<%= ev.id %>/ticket" class="btn btn-secondary">View Ticket</a>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="empty-state">
+                    <i class="fas fa-ticket-alt"></i>
+                    <p>No event registrations yet. Explore and join an event!</p>
+                    <a href="/events" class="btn btn-primary">
+                        <i class="fas fa-calendar"></i> Browse Events
+                    </a>
+                </div>
+            <% } %>
+        </section>
+
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">
                     <i class="fas fa-user-circle"></i>
                     Profile Information
                 </h2>
