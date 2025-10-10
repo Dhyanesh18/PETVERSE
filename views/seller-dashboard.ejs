@@ -986,7 +986,7 @@
                         <tbody>
                             <% sellerOrders.forEach(order => { %>
                                 <tr>
-                                    <td>#<%= order._id %></td>
+                                    <td>#<%= order.orderNumber || order._id %></td>
                                     <td><%= order.customer.name %></td>
                                     <td>
                                         <% order.items.filter(item => item.seller.toString() === user._id.toString()).forEach(item => { %>

@@ -39,7 +39,7 @@ router.get('/checkout', isAuthenticated, async (req, res) => {
         });
 
         const shipping = subtotal >= 500 ? 0 : 50;
-        const tax = subtotal * 0.10;
+        const tax = subtotal * 0.18; // 18% GST
 
         res.render('checkout', {
             cart: {
@@ -174,7 +174,7 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
                     subtotal += price * item.quantity;
                 });
                 const shipping = subtotal >= 500 ? 0 : 50;
-                const tax = subtotal * 0.10;
+                const tax = subtotal * 0.18; // 18% GST
                 cart = {
                     subtotal: subtotal.toFixed(2),
                     shipping: shipping.toFixed(2),
@@ -206,9 +206,57 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
 router.get('/payment', isAuthenticated, async (req, res) => {
     try {
         const wallet = await Wallet.findOne({ user: req.user._id });
+        
+        // Get cart data with populated products
+        const cart = await Cart.findOne({ userId: req.user._id })
+            .populate('items.productId')
+            .lean();
+
+        let cartData = {
+            items: [],
+            subtotal: 0,
+            shipping: 0,
+            tax: 0,
+            total: 0
+        };
+
+        if (cart && cart.items.length > 0) {
+            let subtotal = 0;
+            cart.items.forEach(item => {
+                const product = item.productId;
+                if (!product) return;
+
+                const price = product.discount > 0
+                    ? product.price * (1 - product.discount / 100)
+                    : product.price;
+
+                const itemTotal = price * item.quantity;
+                subtotal += itemTotal;
+
+                cartData.items.push({
+                    _id: product._id,
+                    name: product.name,
+                    price: price,
+                    quantity: item.quantity,
+                    image_url: product.image_url || '/images/default-product.jpg',
+                    itemType: item.itemType
+                });
+            });
+
+            const shipping = subtotal >= 500 ? 0 : 50;
+            const tax = subtotal * 0.18; // 18% GST
+            const total = subtotal + shipping + tax;
+
+            cartData.subtotal = subtotal;
+            cartData.shipping = shipping;
+            cartData.tax = tax;
+            cartData.total = total;
+        }
+
         res.render('payment', {
             user: req.user,
-            wallet: wallet || { balance: 0 }
+            wallet: wallet || { balance: 0 },
+            cart: cartData
         });
     } catch (err) {
         console.error('Payment route error:', err);

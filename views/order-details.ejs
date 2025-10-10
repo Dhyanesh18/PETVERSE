@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - PetVerse</title>
+    <link rel="icon" href="/images/icon.jpg">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/homepage.css">
+<body>
+<%- include('partials/header', { navLinks: navLinks, user: user, siteName: siteName }) %>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root {
+            --primary: #FF6B01;
+            --primary-light: #fff5f0;
+            --secondary: #1976d2;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666;
+            --text-tertiary: #999;
+            --border: #e5e7eb;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --success: #10b981;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 24px;
+            padding-top: 80px; /* Adjust this value to match your header's height */
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .order-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .order-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .order-id {
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+
+        .order-status {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .product-section {
+            background: var(--background);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .product-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .product-img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: var(--radius-md);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .product-meta {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .stepper {
+            margin: 32px 0;
+            position: relative;
+        }
+
+        .stepper::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: 12px;
+            bottom: 24px;
+            width: 2px;
+            background: var(--border);
+            z-index: 1;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+
+        .step.done .step-icon {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .step.active .step-icon {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .step-date {
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+        }
+
+        .step-desc {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+
+        .location-card {
+            background: var(--primary-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 24px 0;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .location-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+
+        .location-text {
+            flex: 1;
+        }
+
+        .location-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .location-desc {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e05a00;
+        }
+
+        .btn-secondary {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--background);
+        }
+
+        .btn-danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 16px;
+            }
+
+            .order-card {
+                padding: 20px;
+            }
+
+            .product-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .product-img {
+                width: 100%;
+                height: 200px;
+            }
+
+            .order-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: relative;
+            background: var(--card-bg);
+            margin: 10% auto;
+            padding: 0;
+            width: 90%;
+            max-width: 600px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        /* Coming Soon Modal Styles */
+        .coming-soon-content {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .coming-soon-icon {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .coming-soon-title {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .coming-soon-description {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .coming-soon-info {
+            background: var(--primary-light);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 24px;
+        }
+
+        .coming-soon-info p {
+            color: var(--primary);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* Order details page specific header styling */
+        .navbar {
+            background-color: #111 !important;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 80px; /* Adjust this value to match your header's height */
+        }
+        .main-content {
+            flex: 1 0 auto;
+        }
+        footer, .footer {
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- <header class="header" id="header">
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="#"><i class="fa fa-paw"></i> <%= siteName %></a></div>
+                <div class="nav-icons">
+                    <button onclick="window.location.href='/cart'" class="icon-btn cart-icon" id="cartIcon">
+                        <i class="fa fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount" style="display: none;">0</span>
+                    </button>
+                    <button id="userButton" class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <% navLinks.forEach(function(link) { %>
+                        <% if (link.dropdown) { %>
+                            <li class="dropdown">
+                                <a href="<%= link.url %>" class="dropdown-toggle"><%= link.name %> <i class="fa fa-angle-down"></i></a>
+                                <ul class="dropdown-menu">
+                                    <% link.dropdownItems.forEach(function(item) { %>
+                                        <li><a href="<%= item.url %>"><%= item.name %></a></li>
+                                    <% }); %>
+                                </ul>
+                            </li>
+                        <% } else { %>
+                            <li><a href="<%= link.url %>"><%= link.name %></a></li>
+                        <% } %>
+                    <% }); %>
+                </ul>
+            </div>
+        </nav>
+    </header> -->
+    <div class="main-content">
+    <div class="container">
+        <div class="order-card">
+            <div class="order-header">
+                <div>
+                    <h1 class="order-title">Order Details</h1>
+                    <div class="order-id">Order #<%= order.orderNumber %></div>
+                </div>
+                <div class="order-status">
+                    <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
+                </div>
+            </div>
+
+        <div class="product-section">
+            <% order.items.forEach(function(item) { %>
+                <div class="product-row">
+                    <% if (item.itemType === 'Pet') { %>
+                        <a href="/detail/<%= item.product._id %>">
+                            <img src="<%= item.product.image_url %>" alt="Pet Image" class="product-img">
+                        </a>
+                        <div class="product-info">
+                            <a href="/detail/<%= item.product._id %>" style="text-decoration:none;color:inherit;">
+                                <div class="product-name"><%= item.product.name %></div>
+                            </a>
+                            <div class="product-meta">
+                                <%= item.product.breed ? item.product.breed + ',' : '' %>
+                                <%= item.product.age ? item.product.age + ',' : '' %>
+                                <%= item.product.gender ? item.product.gender + ',' : '' %>
+                                Seller: <%= order.seller ? order.seller.businessName : 'N/A' %>
+                            </div>
+                            <div class="product-price">₹<%= item.price.toLocaleString() %></div>
+                        </div>
+                    <% } else { %>
+                        <% if (item.product) { %>
+                            <a href="/buy/<%= item.product._id %>">
+                                <% if (item.product.images && item.product.images.length > 0) { %>
+                                    <img src="data:<%= item.product.images[0].contentType %>;base64,<%= item.product.images[0].data.toString('base64') %>" alt="Product Image" class="product-img">
+                                <% } else { %>
+                                    <img src="/images/default-product.jpg" alt="Product Image" class="product-img">
+                                <% } %>
+                            </a>
+                            <div class="product-info">
+                                <a href="/buy/<%= item.product._id %>" style="text-decoration:none;color:inherit;">
+                                    <div class="product-name"><%= item.product.name %></div>
+                                </a>
+                                <div class="product-meta">
+                                    <%= item.product.size ? item.product.size + ',' : '' %>
+                                    <%= item.product.color ? item.product.color + ',' : '' %>
+                                    Seller: <%= order.seller ? order.seller.businessName : 'N/A' %>
+                                </div>
+                                <div class="product-price">₹<%= item.price.toLocaleString() %></div>
+                            </div>
+                        <% } else { %>
+                            <img src="/images/default-product.jpg" alt="Product Not Available" class="product-img">
+                            <div class="product-info">
+                                <div class="product-name" style="color: #666;">Product No Longer Available</div>
+                                <div class="product-meta" style="color: #999;">
+                                    This product has been removed from our catalog
+                                </div>
+                                <div class="product-price">₹<%= item.price.toLocaleString() %></div>
+                            </div>
+                        <% } %>
+                    <% } %>
+                </div>
+            <% }); %>
+        </div>
+
+        <div class="location-card">
+            <div class="location-icon">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <div class="location-text">
+                <div class="location-title">Share Your Location</div>
+                <div class="location-desc">Help our delivery agent reach you faster</div>
+            </div>
+            <button class="btn btn-primary" onclick="shareLocation()">
+                <i class="fas fa-share-alt"></i>
+                Share
+            </button>
+        </div>
+
+        <div class="stepper">
+            <% 
+                const steps = [
+                    { label: 'Payment Pending', date: order.createdAt, done: !['pending_payment'].includes(order.status), active: order.status === 'pending_payment' },
+                    { label: 'Order Confirmed', date: order.createdAt, done: ['confirmed', 'processing', 'completed', 'shipped', 'out_for_delivery', 'delivered'].includes(order.status), active: order.status === 'confirmed' },
+                    { label: 'Shipped', date: order.shippedAt, done: order.status === 'shipped' || order.status === 'out_for_delivery' || order.status === 'delivered', active: order.status === 'shipped' },
+                    { label: 'Out For Delivery', date: order.outForDeliveryAt, done: order.status === 'out_for_delivery' || order.status === 'delivered', active: order.status === 'out_for_delivery' },
+                    { label: 'Delivered', date: order.deliveredAt, done: order.status === 'delivered', active: order.status === 'delivered' }
+                ];
+                steps.forEach((step, idx) => { 
+            %>
+                <div class="step <%= step.done ? 'done' : '' %> <%= step.active ? 'active' : '' %>">
+                    <div class="step-icon">
+                        <% if (step.done) { %>
+                            <i class="fas fa-check"></i>
+                        <% } else { %>
+                            <i class="fas fa-circle"></i>
+                        <% } %>
+                    </div>
+                    <div class="step-content">
+                        <span class="step-label"><%= step.label %></span>
+                        <% if (step.date) { %>
+                            <span class="step-date">
+                                <%= new Date(step.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %>
+                            </span>
+                        <% } %>
+                        <% if (step.label === 'Shipped' && step.done) { %>
+                            <div class="step-desc">Your item has left our facility<% if(order.shippedLocation){ %>, <%= order.shippedLocation %><% } %></div>
+                        <% } %>
+                        <% if (step.label === 'Delivered' && !step.done && order.estimatedDelivery) { %>
+                            <div class="step-desc">Estimated delivery: <%= new Date(order.estimatedDelivery).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) %> By 11 PM</div>
+                        <% } %>
+                    </div>
+                </div>
+            <% }); %>
+        </div>
+
+        <div class="order-actions">
+            <button onclick="cancelOrder('<%= order._id %>')" class="btn btn-danger">
+                <i class="fas fa-times"></i>
+                Cancel Order
+            </button>
+            <button onclick="editOrder('<%= order._id %>')" class="btn btn-secondary">
+                <i class="fas fa-edit"></i>
+                Edit Order
+            </button>
+            <button onclick="showComingSoon()" class="btn btn-secondary">
+                <i class="fas fa-comments"></i>
+                Chat with us
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Coming Soon Modal -->
+<div id="comingSoonModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Chat Feature</h2>
+            <button onclick="closeComingSoon()" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="text-align: center; padding: 40px 20px;">
+                <div style="font-size: 4rem; color: var(--primary); margin-bottom: 20px;">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3 style="color: var(--text-primary); margin-bottom: 16px;">Coming Soon!</h3>
+                <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6;">
+                    We're working on bringing you a seamless chat experience to communicate with our support team and sellers. 
+                    This feature will be available soon!
+                </p>
+                <div style="background: var(--primary-light); padding: 16px; border-radius: var(--radius-md); margin-bottom: 24px;">
+                    <p style="color: var(--primary); font-weight: 600; margin: 0;">
+                        <i class="fas fa-info-circle"></i>
+                        For now, you can contact us through email or phone for any order-related queries.
+                    </p>
+                </div>
+                <button onclick="closeComingSoon()" class="btn btn-primary">
+                    <i class="fas fa-check"></i>
+                    Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('partials/footer') %>
+
+<script>
+    function cancelOrder(orderId) {
+        if (confirm('Are you sure you want to cancel this order?')) {
+            fetch(`/order/${orderId}/cancel`, { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Order cancelled successfully');
+                    window.location.reload();
+                } else {
+                    alert('Failed to cancel order: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while cancelling the order');
+            });
+        }
+    }
+
+    function shareLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const { latitude, longitude } = position.coords;
+                    // Send location to server
+                    fetch('/order/<%= order._id %>/location', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ latitude, longitude })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Location shared successfully');
+                        } else {
+                            alert('Failed to share location: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while sharing location');
+                    });
+                },
+                error => {
+                    alert('Unable to retrieve your location. Please enable location services.');
+                }
+            );
+        } else {
+            alert('Geolocation is not supported by your browser');
+        }
+    }
+
+    function editOrder(orderId) {
+        // Redirect to edit order page
+        window.location.href = `/order/${orderId}/edit`;
+    }
+
+    function showComingSoon() {
+        const modal = document.getElementById('comingSoonModal');
+        modal.style.display = 'block';
+    }
+
+    function closeComingSoon() {
+        const modal = document.getElementById('comingSoonModal');
+        modal.style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('comingSoonModal');
+        if (event.target === modal) {
+            closeComingSoon();
+        }
+    }
+</script>
+</body>
+</html> 

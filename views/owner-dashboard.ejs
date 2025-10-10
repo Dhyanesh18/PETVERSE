@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="icon" href="/images/icon.jpg">
-    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         :root {
             /* Modern Color Palette */
@@ -273,7 +273,7 @@ transform: scale(1.2);
             align-items: center;
             gap: 0.5rem;
             padding: 0.75rem 1.5rem;
-            background: #4F46E5;
+            background: red;
             color: white;
             border-radius: 9999px;
             font-weight: 500;
@@ -282,7 +282,7 @@ transform: scale(1.2);
         }
 
         .nav-btn:hover {
-            background: #4338CA;
+            background: red;
             transform: translateY(-1px);
         }
 
@@ -1066,11 +1066,259 @@ transform: scale(1.2);
         .service-appointment-table tr:hover .time-badge {
             background-color: rgba(245, 158, 11, 0.12);
         }
+
+        /* Orders Section Styles */
+        .orders-container {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+        }
+
+        .order-card {
+            border: 1px solid #e5e7eb;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            overflow: hidden;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .order-info h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+        }
+
+        .order-date {
+            margin: 4px 0 0;
+            font-size: 0.9rem;
+            color: var(--text-tertiary);
+        }
+
+        .order-status {
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .order-status.pending { background-color: #FEF3C7; color: #92400E; }
+        .order-status.processing { background-color: #DBEAFE; color: #1E40AF; }
+        .order-status.shipped { background-color: #D1FAE5; color: #065F46; }
+        .order-status.delivered { background-color: #D1FAE5; color: #065F46; }
+        .order-status.cancelled { background-color: #FEE2E2; color: #991B1B; }
+
+        .order-items {
+            padding: var(--spacing-md);
+        }
+
+        .order-item {
+            display: flex;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md) 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .order-item:last-child {
+            border-bottom: none;
+        }
+
+        .order-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+        }
+
+        .order-item-details h4 {
+            margin: 0 0 8px;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .order-item-details p {
+            margin: 4px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .order-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            background-color: #f9fafb;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .order-total {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .order-total span:last-child {
+            margin-left: 8px;
+            color: var(--primary);
+        }
+
+        .order-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+        
+        /* Real-time notification styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            min-width: 300px;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .notification-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+        
+        .notification-error {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+        
+        .notification-warning {
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: white;
+        }
+        
+        .notification-info {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+        }
+        
+        .notification-content {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .notification-message {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 10px;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        
+        .notification-close:hover {
+            opacity: 1;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Real-time connection indicator */
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 1000;
+        }
+        
+        .connection-status.connected {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .connection-status.disconnected {
+            background: #f44336;
+            color: white;
+        }
+        
+        .connection-status.polling {
+            background: #ff9800;
+            color: white;
+        }
     </style>
 </head>
 
 <body>
-    <%- include('partials/header') %>
+    <!-- Main Navigation Header -->
+    <header class="header" id="header">
+        <nav id="navbar" class="navbar">
+            <div class="nav-content">
+                <div class="logo"><a href="/home"><i class="fa fa-paw"></i> PetVerse</a></div>
+                <div class="nav-icons">
+                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
+                    <button onclick="window.location.href='/owner-dashboard'" class="icon-btn"><i class="fa fa-user"></i></button>
+                </div>
+                <div class="search">
+                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
+                    <button class="search-btn"><i class="fa fa-search"></i></button>
+                </div>
+                <button class="hamburger" id="hamburger">
+                    <i class="fa fa-bars"></i>
+                </button>
+                <ul class="nav-links">
+                    <% navLinks.forEach(function(link) { %>
+                        <% if (link.dropdown) { %>
+                            <li class="dropdown">
+                                <a href="<%= link.url %>" class="dropdown-toggle"><%= link.name %> <i class="fa fa-angle-down"></i></a>
+                                <ul class="dropdown-menu">
+                                    <% link.dropdownItems.forEach(function(item) { %>
+                                        <li><a href="<%= item.url %>"><%= item.name %></a></li>
+                                    <% }); %>
+                                </ul>
+                            </li>
+                        <% } else { %>
+                            <li><a href="<%= link.url %>"><%= link.name %></a></li>
+                        <% } %>
+                    <% }); %>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
     <div class="dashboard-container">
         <header class="dashboard-header">
             <h1 class="header-title">
@@ -1111,7 +1359,7 @@ transform: scale(1.2);
                 <div class="stat-icon">
                     <i class="fas fa-rupee-sign"></i>
                 </div>
-                <div class="stat-value">₹ <%= user.totalSpent.toLocaleString('en-IN') %>
+                <div class="stat-value">₹<%= user.totalSpent.toLocaleString('en-IN') %>
                 </div>
                 <div class="stat-label">Total Spent</div>
             </div>
@@ -1124,6 +1372,75 @@ transform: scale(1.2);
                 <div class="stat-label">Wallent Balance</div>
             </div>
         </div>
+
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-heart"></i>
+                    My Wishlist
+                </h2>
+            </div>
+            <div class="products-grid">
+                <% if (wishlistedProducts && wishlistedProducts.length > 0) { %>
+                    <% wishlistedProducts.forEach(function(product) { %>
+                        <div class="product-card" style="cursor: pointer;" onclick="window.location.href='/buy/<%= product._id %>'">
+                            <div class="product-image-wrapper">
+                                <% if (product.images && product.images.length > 0) { %>
+                                    <% if (product.images[0].url) { %>
+                                        <img src="<%= product.images[0].url %>" alt="<%= product.name %>" />
+                                    <% } else if (product.images[0].data) { %>
+                                        <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" alt="<%= product.name %>" />
+                                    <% } else { %>
+                                        <img src="/images/default-product.jpg" alt="No image available" />
+                                    <% } %>
+                                <% } else { %>
+                                    <img src="/images/default-product.jpg" alt="No image available" />
+                                <% } %>
+                            </div>
+                            <div class="product-details">
+                                <div class="product-info">
+                                    <div class="product-title"><%= product.name %></div>
+                                    <div class="product-category"><%= product.category %></div>
+                                    <div class="product-price">₹<%= product.price.toFixed(2) %></div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+                <% if (wishlistedPets && wishlistedPets.length > 0) { %>
+                    <% wishlistedPets.forEach(function(pet) { %>
+                        <div class="product-card" style="cursor: pointer;" onclick="window.location.href='/seller/detail/<%= pet._id %>'">
+                            <div class="product-image-wrapper">
+                                <% if (pet.images && pet.images.length > 0) { %>
+                                    <% if (pet.images[0].url) { %>
+                                        <img src="<%= pet.images[0].url %>" alt="<%= pet.name %>" />
+                                    <% } else if (pet.images[0].data) { %>
+                                        <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" alt="<%= pet.name %>" />
+                                    <% } else { %>
+                                        <img src="/images/default-pet.jpg" alt="No image available" />
+                                    <% } %>
+                                <% } else { %>
+                                    <img src="/images/default-pet.jpg" alt="No image available" />
+                                <% } %>
+                            </div>
+                            <div class="product-details">
+                                <div class="product-info">
+                                    <div class="product-title"><%= pet.name %></div>
+                                    <div class="product-category"><%= pet.category %></div>
+                                    <div class="product-price">₹<%= pet.price.toFixed(2) %></div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+                <% if ((!wishlistedProducts || wishlistedProducts.length === 0) && (!wishlistedPets || wishlistedPets.length === 0)) { %>
+                    <div class="empty-state">
+                        <i class="fas fa-heart-broken"></i>
+                        <p>No items in your wishlist yet.</p>
+                    </div>
+                <% } %>
+            </div>
+        </section>
 
         <section class="section">
             <div class="section-header">
@@ -1215,45 +1532,49 @@ transform: scale(1.2);
                         </tr>
                     </thead>
                     <tbody>
-                        <% orders.forEach(order => { %>
-                        <% order.items.forEach(item => { %>
-                            <tr>
-                            <td>#<%= order._id.toString().substring(0, 8) %>...</td>
-                            <td>
-                                <div class="order-product">
-                                <img src="<%= item.product?.images?.[0] || '/images/default-product.png' %>" />
-
-                                <div class="product-info">
-                                    <span class="product-name">
-                                    <%= item.product?.Breed || item.product?.title || 'Unknown Product' %>
-                                    </span>
-                                    <span class="product-meta">
-                                    Quantity: <%= item.quantity %>
-                                    </span>
-                                </div>
-                                </div>
-                            </td>
-                            <td>
-                                <%= new Date(order.createdAt).toLocaleDateString('en-IN') %>
-                            </td>
-                            <td>
-                                ₹<%= order.totalAmount.toLocaleString('en-IN') %>
-                            </td>
-                            <td>
-                                <span class="status-badge <%= order.status.toLowerCase() %>">
-                                <i class="fas fa-<%= 
-                                    order.status === 'completed' ? 'check-circle' :
-                                    order.status === 'processing' ? 'clock' :
-                                    order.status === 'pending' ? 'hourglass-half' :
-                                    'times-circle'
-                                %>"></i>
-                                <%= order.status %>
-                                </span>
-                            </td>
-                            </tr>
-                        <% }) %>
-                        <% }) %>
-
+                        <% orders.forEach(function(order) { %>
+                            <% order.items.forEach(function(item) { %>
+                                <tr>
+                                    <td>#<%= order.orderNumber || order._id %></td>
+                                    <td>
+                                        <div class="order-product">
+                                            <% if (item.product && item.product.images && item.product.images.length > 0) { %>
+                                                <% if (item.product.images[0].url) { %>
+                                                    <img src="<%= item.product.images[0].url %>" alt="<%= item.product.name %>" class="product-image">
+                                                <% } else if (item.product.images[0].data) { %>
+                                                    <img src="data:<%= item.product.images[0].contentType %>;base64,<%= item.product.images[0].data.toString('base64') %>" alt="<%= item.product.name %>" class="product-image">
+                                                <% } else { %>
+                                                    <img src="/images/default-product.jpg" alt="No image" class="product-image">
+                                                <% } %>
+                                            <% } else { %>
+                                                <img src="/images/default-product.jpg" alt="No image" class="product-image">
+                                            <% } %>
+                                            <div class="product-info">
+                                                <% if (item.product) { %>
+                                                    <span class="product-name"><%= item.product.name %></span>
+                                                <% } else { %>
+                                                    <span class="product-name" style="color: #666;">Product No Longer Available</span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <%= order.orderDate %>
+                                    </td>
+                                    <td>₹<%= order.totalAmount.toLocaleString('en-IN') %></td>
+                                    <td>
+                                        <span class="status-badge <%= order.status.toLowerCase() %>">
+                                            <i class="fas fa-<%= 
+                                                order.status === 'delivered' ? 'check-circle' :
+                                                order.status === 'processing' ? 'clock' :
+                                                'hourglass-half'
+                                            %>"></i>
+                                            <%= order.status %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% }); %>
                     </tbody>
                 </table>
                 <% } else { %>
@@ -1339,6 +1660,16 @@ transform: scale(1.2);
                 </div>
             <% } %>
         </section>
+
+        <!-- Orders Section -->
+        <div class="dashboard-section" id="orders-section">
+            <h2 class="section-title">My Orders</h2>
+            <div class="orders-container">
+                <div class="orders-list" id="ordersList">
+                    <!-- Orders will be populated here -->
+                </div>
+            </div>
+        </div>
     </div>
     <footer id="footer">
         <div class="footer-container">
@@ -1383,6 +1714,378 @@ transform: scale(1.2);
             }
         }
     </script>
+    <script>
+        // Get all dropdown toggles and menus
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+
+        // Add click event to each dropdown toggle
+        dropdownToggles.forEach((toggle, index) => {
+            toggle.addEventListener('click', function(event) {
+                event.stopPropagation(); // Prevent this click from triggering the document click handler
+
+                // Close all other dropdown menus first
+                dropdownMenus.forEach((menu, menuIndex) => {
+                    if (menuIndex !== index) {
+                        menu.classList.remove('show');
+                    }
+                });
+        
+            // Toggle the current dropdown menu
+                const currentDropdownMenu = this.nextElementSibling;
+                currentDropdownMenu.classList.toggle('show');
+            });
+        });
+
+    // Close all dropdowns when clicking anywhere else on the page
+        document.addEventListener('click', function(event) {
+            // Check if click is outside of any dropdown
+            if (!event.target.closest('.dropdown')) {
+            // Close all dropdown menus
+                dropdownMenus.forEach(menu => {
+                    if (menu.classList.contains('show')) {
+                        menu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+    <script>
+        window.addEventListener('pageshow', function(event) {
+            // If the page is loaded from bfcache, force a reload to check session
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    // Industrial-grade real-time order management system
+    class RealTimeOrderManager {
+        constructor() {
+            this.socket = null;
+            this.pollingInterval = null;
+            this.isConnected = false;
+            this.retryCount = 0;
+            this.maxRetries = 5;
+            this.retryDelay = 1000; // 1 second
+            this.pollingIntervalMs = 30000; // 30 seconds
+            this.lastUpdateTime = null;
+            
+            this.init();
+        }
+        
+        init() {
+            this.connectSocket();
+            this.startPolling();
+            this.setupEventListeners();
+        }
+        
+        connectSocket() {
+            try {
+                this.socket = io();
+                
+                this.socket.on('connect', () => {
+                    this.isConnected = true;
+                    this.retryCount = 0;
+                    this.updateConnectionStatus('connected', 'Real-time Connected');
+                    
+                    // Authenticate user for real-time features
+                    this.socket.emit('authenticate', {
+                        userId: '<%= user.username %>',
+                        role: 'owner'
+                    });
+                });
+                
+                this.socket.on('disconnect', () => {
+                    this.isConnected = false;
+                    this.updateConnectionStatus('disconnected', 'Connection Lost');
+                    this.handleReconnection();
+                });
+                
+                this.socket.on('orderUpdated', (data) => {
+                    console.log('Order updated via real-time:', data);
+                    this.handleOrderUpdate(data);
+                });
+                
+                this.socket.on('newOrderNotification', (data) => {
+                    console.log('New order notification:', data);
+                    this.showNotification(`New order: ${data.orderNumber}`, 'success');
+                });
+                
+                this.socket.on('error', (error) => {
+                    console.error('Socket error:', error);
+                    this.showNotification('Connection error occurred', 'error');
+                });
+                
+            } catch (error) {
+                console.error('Failed to initialize socket:', error);
+                this.handleReconnection();
+            }
+        }
+        
+        handleReconnection() {
+            if (this.retryCount < this.maxRetries) {
+                this.retryCount++;
+                const delay = this.retryDelay * Math.pow(2, this.retryCount - 1); // Exponential backoff
+                
+                console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.retryCount}/${this.maxRetries})`);
+                
+                setTimeout(() => {
+                    this.connectSocket();
+                }, delay);
+            } else {
+                console.error('Max reconnection attempts reached. Falling back to polling only.');
+                // this.showNotification('Real-time connection failed. Using polling mode.', 'warning');
+            }
+        }
+        
+        startPolling() {
+            // Polling as fallback for real-time updates
+            this.pollingInterval = setInterval(() => {
+                if (!this.isConnected) {
+                    this.updateConnectionStatus('polling', 'Polling Mode');
+                    this.loadOrders();
+                }
+            }, this.pollingIntervalMs);
+        }
+        
+        setupEventListeners() {
+            // Update when page becomes visible
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    this.loadOrders();
+                }
+            });
+            
+            // Update when window gains focus
+            window.addEventListener('focus', () => {
+                this.loadOrders();
+            });
+            
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                this.cleanup();
+            });
+        }
+        
+        handleOrderUpdate(data) {
+            // Update specific order in the UI
+            const orderElement = document.querySelector(`[data-order-id="${data.orderId}"]`);
+            if (orderElement) {
+                const statusElement = orderElement.querySelector('.order-status');
+                if (statusElement) {
+                    statusElement.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+                    statusElement.className = `order-status ${data.status.toLowerCase()}`;
+                }
+                
+                this.showNotification(`Order ${data.orderNumber} status updated to ${data.status}`, 'info');
+            } else {
+                // Order not in current view, refresh the list
+                this.loadOrders();
+            }
+        }
+        
+        showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-message">${message}</span>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+            `;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        updateConnectionStatus(status, text) {
+            const statusElement = document.getElementById('connectionStatus');
+            const textElement = document.getElementById('connectionText');
+            
+            if (statusElement && textElement) {
+                statusElement.className = `connection-status ${status}`;
+                textElement.textContent = text;
+            }
+        }
+        
+        cleanup() {
+            if (this.socket) {
+                this.socket.disconnect();
+            }
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+            }
+        }
+    }
+    
+    // Initialize real-time manager
+    const realTimeManager = new RealTimeOrderManager();
+    
+    // Function to load user orders
+    async function loadOrders() {
+        try {
+            console.log('Loading orders...');
+            const response = await fetch('/orders');
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log('Fetched data:', data);
+            
+            const ordersList = document.getElementById('ordersList');
+            if (!ordersList) {
+                console.error('ordersList element not found!');
+                return;
+            }
+            
+            if (data.success) {
+                ordersList.innerHTML = '';
+                if (!data.orders || data.orders.length === 0) {
+                    ordersList.innerHTML = '<p class="no-data">No orders found</p>';
+                    console.log('No orders found');
+                    return;
+                }
+                
+                console.log('Processing orders:', data.orders.length);
+                data.orders.forEach((order, index) => {
+                    console.log(`Processing order ${index + 1}:`, order);
+                    const orderElement = document.createElement('div');
+                    orderElement.className = 'order-card';
+                    orderElement.setAttribute('data-order-id', order._id);
+                    orderElement.innerHTML = `
+                        <div class="order-header">
+                            <div class="order-info">
+                                <h3>Order #${order.orderNumber || order._id}</h3>
+                                <p class="order-date">${new Date(order.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div class="order-status ${order.status.toLowerCase()}">
+                                ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            ${order.items.map(item => {
+                                console.log('Order item:', item);
+                                
+                                // Handle null product case
+                                if (!item.product) {
+                                    return `
+                                        <div class="order-item">
+                                            <img src="/images/default-product.jpg" alt="Product Unavailable" class="order-item-image">
+                                            <div class="order-item-details">
+                                                <h4 style="color: #666;">Product No Longer Available</h4>
+                                                <p style="color: #999; font-size: 0.9em;">This product has been removed from our catalog</p>
+                                                <p>Quantity: ${item.quantity}</p>
+                                                <p>Price: ₹${item.price.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+                                
+                                const productName = item.product.name;
+                                
+                                // Handle different image formats
+                                let productImage = '/images/default-product.jpg';
+                                if (item.product.images && item.product.images.length > 0) {
+                                    const img = item.product.images[0];
+                                    if (img.url) {
+                                        productImage = img.url;
+                                    } else if (img.data && img.contentType) {
+                                        // Convert buffer to base64
+                                        let base64;
+                                        if (typeof img.data === 'string') {
+                                            base64 = img.data;
+                                        } else if (img.data.buffer) {
+                                            base64 = Buffer.from(img.data.buffer).toString('base64');
+                                        } else if (Buffer.isBuffer(img.data)) {
+                                            base64 = img.data.toString('base64');
+                                        }
+                                        productImage = `data:${img.contentType};base64,${base64}`;
+                                    }
+                                } else if (item.product.image_url) {
+                                    productImage = item.product.image_url;
+                                }
+                                
+                                return `
+                                    <div class="order-item">
+                                        <img src="${productImage}" alt="${productName}" class="order-item-image">
+                                        <div class="order-item-details">
+                                            <h4>${productName}</h4>
+                                            <p>Quantity: ${item.quantity}</p>
+                                            <p>Price: ₹${item.price.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div class="order-footer">
+                            <div class="order-total">
+                                <span>Total Amount:</span>
+                                <span>₹${order.totalAmount.toLocaleString()}</span>
+                            </div>
+                            <div class="order-actions">
+                                <button class="btn btn-secondary" onclick="viewOrderDetails('${order._id}')">View Details</button>
+                            </div>
+                        </div>
+                    `;
+                    ordersList.appendChild(orderElement);
+                });
+                console.log('Orders loaded successfully');
+            } else {
+                console.error('Failed to load orders:', data.message);
+                ordersList.innerHTML = '<p class="error">Failed to load orders: ' + (data.message || 'Unknown error') + '</p>';
+            }
+        } catch (error) {
+            console.error('Error loading orders:', error);
+            const ordersList = document.getElementById('ordersList');
+            if (ordersList) {
+                ordersList.innerHTML = '<p class="error">Error loading orders. Please refresh the page.</p>';
+            }
+        }
+    }
+
+    // Function to view order details
+    function viewOrderDetails(orderId) {
+        // Implement order details view logic
+        window.location.href = `/order-details/${orderId}`;
+    }
+
+    // Load orders when the orders section is active
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded');
+        const ordersSection = document.getElementById('orders-section');
+        const ordersList = document.getElementById('ordersList');
+        
+        console.log('Orders section found:', !!ordersSection);
+        console.log('Orders list found:', !!ordersList);
+        
+        if (ordersSection && ordersList) {
+            console.log('Loading orders...');
+            loadOrders();
+        } else {
+            console.error('Required elements not found!');
+            if (!ordersSection) console.error('orders-section element not found');
+            if (!ordersList) console.error('ordersList element not found');
+        }
+    });
+    </script>
+
+    <!-- Real-time connection status indicator -->
+    <!-- <div id="connectionStatus" class="connection-status disconnected">
+        <span id="connectionText">Connecting...</span>
+    </div> -->
 </body>
 
 </html>

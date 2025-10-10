@@ -318,11 +318,18 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Get the most recent order
-            const orders = JSON.parse(localStorage.getItem('orders')) || [];
-
-            const latestOrder = orders[orders.length - 1];
-            displayOrderDetails(latestOrder);
+            // Use server-side order data
+            const orderData = <%- JSON.stringify(order) %>;
+            const orderId = '<%= orderId %>';
+            
+            // Prevent going back to payment page after order completion
+            history.replaceState(null, null, window.location.href);
+            window.addEventListener('popstate', function(event) {
+                // Redirect to home if user tries to go back
+                window.location.href = '/';
+            });
+            
+            displayOrderDetails(orderData, orderId);
             updateCartCount();
         });
 
@@ -335,14 +342,14 @@
             cartCountElement.style.display = totalItems > 0 ? 'inline-block' : 'none';
         }
 
-        function displayOrderDetails(order) {
-            // Generate a random order number
-            const orderNumber = `#ORD-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+        function displayOrderDetails(order, orderId) {
+            // Use the actual order ID from server
+            const orderNumber = `#ORD-${orderId}`;
             document.getElementById('orderNumber').textContent = orderNumber;
             document.getElementById('orderNumberDetail').textContent = orderNumber;
 
             // Format and display order date
-            const orderDate = new Date(order.orderDate);
+            const orderDate = new Date(order.createdAt);
             const formattedDate = orderDate.toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long', 
