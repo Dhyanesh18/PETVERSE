@@ -214,9 +214,20 @@
                 <div class="checkout-form">
                     <h2 class="section-title">Payment Method</h2>
                     <div class="payment-methods">
+                        <!-- PetVerse Wallet -->
+                        <div class="payment-method selected" onclick="selectPaymentMethod(this, 'wallet')">
+                            <input type="radio" name="payment-method" id="wallet" checked>
+                            <i class="fa fa-wallet payment-method-icon" style="color: #10b981;"></i>
+                            <div>
+                                <div style="font-weight: 500;">PetVerse Wallet</div>
+                                <div style="font-size: 0.9rem; color: #6b7280;">Balance: ₹<%= wallet.balance.toFixed(2) %></div>
+                                <div hidden id="walletBalance"><%= wallet.balance %></div>
+                            </div>
+                        </div>
+
                         <!-- Credit Card -->
-                        <div class="payment-method selected" onclick="selectPaymentMethod(this, 'credit-card')">
-                            <input type="radio" name="payment-method" id="credit-card" checked>
+                        <div class="payment-method" onclick="selectPaymentMethod(this, 'credit-card')">
+                            <input type="radio" name="payment-method" id="credit-card">
                             <i class="fa fa-credit-card payment-method-icon"></i>
                             <div>
                                 <div style="font-weight: 500;">Credit / Debit Card</div>
@@ -281,16 +292,6 @@
                             </div>
                         </div>
 
-                        <div class="payment-method" onclick="selectPaymentMethod(this, 'wallet')">
-                            <input type="radio" name="payment-method" id="wallet">
-                            <i class="fa fa-wallet payment-method-icon" style="color: #10b981;"></i>
-                            <div>
-                                <div style="font-weight: 500;">PetVerse Wallet</div>
-                                <div style="font-size: 0.9rem; color: #6b7280;">Balance: ₹<%= wallet.balance.toFixed(2) %></div>
-                                <div hidden id="walletBalance"><%= wallet.balance %></div>
-                            </div>
-                        </div>
-
                     </div>
 
                     <div class="checkout-navigation">
@@ -315,7 +316,7 @@
                     <span id="shipping">₹0.00</span>
                 </div>
                 <div class="summary-item">
-                    <span>Tax (18%)</span>
+                    <span>Tax (10%)</span>
                     <span id="tax">₹0.00</span>
                 </div>
                 <div class="summary-total">
@@ -576,6 +577,37 @@
             document.getElementById(method).checked = true;
         }
     </script>
+    <script>
+document.getElementById('payment-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    try {
+        const response = await fetch('/payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        if (data.success) {
+            window.location.href = `/order-confirmation?orderId=${data.orderId}`;
+        }
+    } catch (err) {
+        alert('Payment failed. Please try again.');
+        console.error(err);
+    }
+});
+</script>
 </body>
 
 </html>

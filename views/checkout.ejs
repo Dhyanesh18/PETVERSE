@@ -140,6 +140,25 @@
             color: #666;
             font-style: italic;
         }
+        .form-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .form-control {
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #FF6B01;
+        }
+        
+        .error-message {
+            margin-top: 5px;
+            color: red;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -385,6 +404,115 @@
                 if (!isValid) alert('Please fill all required fields');
                 return isValid;
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const cartData = {
+                subtotal: parseFloat(<%= cart.subtotal %>) || 0,
+                shipping: parseFloat(<%= cart.shipping %>) || 0,
+                tax: parseFloat(<%= cart.tax %>) || 0,
+                total: parseFloat(<%= cart.total %>) || 0
+            };
+
+            const form = document.getElementById('checkoutForm');
+            const fields = {
+                fullName: {
+                    regex: /^[a-zA-Z\s]{2,50}$/,
+                    error: 'Name should be 2-50 characters long and contain only letters'
+                },
+                address: {
+                    regex: /^[\w\s,.-]{5,100}$/,
+                    error: 'Please enter a valid address (5-100 characters)'
+                },
+                city: {
+                    regex: /^[a-zA-Z\s]{2,50}$/,
+                    error: 'City should contain only letters'
+                },
+                state: {
+                    regex: /^[a-zA-Z\s]{2,50}$/,
+                    error: 'State should contain only letters'
+                },
+                zipCode: {
+                    regex: /^\d{6}$/,
+                    error: 'Please enter a valid 6-digit zip code'
+                },
+                phone: {
+                    regex: /^[6-9]\d{9}$/,
+                    error: 'Please enter a valid 10-digit Indian phone number'
+                }
+            };
+
+            // Add error message containers after each input
+            Object.keys(fields).forEach(fieldId => {
+                const input = document.getElementById(fieldId);
+                const errorDiv = document.createElement('div');
+                errorDiv.id = `${fieldId}Error`;
+                errorDiv.className = 'error-message';
+                errorDiv.style.color = 'red';
+                errorDiv.style.fontSize = '12px';
+                errorDiv.style.marginTop = '5px';
+                errorDiv.style.display = 'none';
+                input.parentNode.appendChild(errorDiv);
+            });
+
+            // Real-time validation
+            Object.keys(fields).forEach(fieldId => {
+                const input = document.getElementById(fieldId);
+                input.addEventListener('input', () => validateField(fieldId));
+                input.addEventListener('blur', () => validateField(fieldId));
+            });
+
+            function validateField(fieldId) {
+                const input = document.getElementById(fieldId);
+                const errorDiv = document.getElementById(`${fieldId}Error`);
+                const field = fields[fieldId];
+                
+                if (!input.value.trim()) {
+                    showError(input, errorDiv, 'This field is required');
+                    return false;
+                }
+                
+                if (!field.regex.test(input.value.trim())) {
+                    showError(input, errorDiv, field.error);
+                    return false;
+                }
+                
+                hideError(input, errorDiv);
+                return true;
+            }
+
+            function showError(input, errorDiv, message) {
+                input.style.borderColor = 'red';
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+
+            function hideError(input, errorDiv) {
+                input.style.borderColor = '#ddd';
+                errorDiv.style.display = 'none';
+            }
+
+            // Form submission handler
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                let isValid = true;
+                Object.keys(fields).forEach(fieldId => {
+                    if (!validateField(fieldId)) {
+                        isValid = false;
+                    }
+                });
+
+                if (isValid) {
+                    form.submit();
+                } else {
+                    // Scroll to the first error
+                    const firstError = document.querySelector('.error-message[style="display: block;"]');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            });
         });
     </script>
 </body>
