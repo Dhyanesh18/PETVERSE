@@ -415,6 +415,12 @@
             </h1>
             <div class="user-info">
                 <span class="user-name">Welcome, <%= (typeof user !== 'undefined' && user && user.name) ? user.name : 'Provider' %></span>
+                <% if (user && user.role === 'service_provider') { %>
+                <a href="/events/add/new" class="nav-btn">
+                    <i class="fas fa-plus-circle"></i>
+                    Create Event
+                </a>
+                <% } %>
                 <a href="/logout" class="nav-btn">
                     <i class="fas fa-sign-out-alt"></i>
                     Logout

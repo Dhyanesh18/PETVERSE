@@ -83,7 +83,6 @@
                 <input type="date" id="dateFilter" min="<%= new Date().toISOString().split('T')[0] %>">
             </div>
             
-            <button class="apply-filters-btn">Apply Filters</button>
             <button class="clear-filters">Clear All Filters</button>
         </div>
 
@@ -127,13 +126,29 @@
             loadEvents();
         });
 
-        // Apply filters button
-        document.querySelector('.apply-filters-btn').addEventListener('click', function() {
+        // Auto-apply filters on change (AJAX fetch)
+        const categoryRadios = document.querySelectorAll('input[name="category"]');
+        const feeTypeRadios = document.querySelectorAll('input[name="feeType"]');
+        const cityInput = document.getElementById('cityFilter');
+        const dateInput = document.getElementById('dateFilter');
+
+        function syncFiltersFromUI() {
             currentFilters.category = document.querySelector('input[name="category"]:checked').value;
             currentFilters.feeType = document.querySelector('input[name="feeType"]:checked').value;
-            currentFilters.city = document.getElementById('cityFilter').value;
-            currentFilters.date = document.getElementById('dateFilter').value;
-            loadEvents();
+            currentFilters.city = cityInput.value;
+            currentFilters.date = dateInput.value;
+        }
+
+        // Change listeners for radios and date
+        categoryRadios.forEach(r => r.addEventListener('change', () => { syncFiltersFromUI(); loadEvents(); }));
+        feeTypeRadios.forEach(r => r.addEventListener('change', () => { syncFiltersFromUI(); loadEvents(); }));
+        dateInput.addEventListener('change', () => { syncFiltersFromUI(); loadEvents(); });
+
+        // Debounced input for city text field
+        let cityDebounce;
+        cityInput.addEventListener('input', () => {
+            clearTimeout(cityDebounce);
+            cityDebounce = setTimeout(() => { syncFiltersFromUI(); loadEvents(); }, 300);
         });
 
         // Clear filters button
