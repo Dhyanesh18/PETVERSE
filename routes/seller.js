@@ -14,10 +14,10 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
         console.log('Dashboard route - User ID:', req.user._id);
         console.log('User role:', req.user.role);
         
-        // For regular user models, we need to check if it's a seller discriminator
-        const seller = req.user.role === 'seller' ? req.user : await Seller.findById(req.user._id);
+        // Allow admin to view seller dashboard; otherwise require seller
+        const seller = req.user.role === 'seller' ? req.user : (req.user.role === 'admin' ? await Seller.findOne({ _id: req.user._id }) : null);
         
-        if (!seller) {
+        if (!seller && req.user.role !== 'admin') {
             console.error('Seller not found for ID:', req.user._id);
             return res.status(404).render('error', { 
                 message: 'Seller not found. Make sure you are logged in with a seller account.' 

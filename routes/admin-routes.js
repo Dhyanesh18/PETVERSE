@@ -120,6 +120,51 @@ router.get('/dashboard', adminAuth, async (req, res) => {
         // Monthly revenue data (for the revenue chart) - replace with real data in production
         const revenueData = generateMonthlyRevenue();
 
+        // Orders and order statistics for the dashboard
+        let orders = [];
+        let orderStats = {
+            total: 0,
+            pending: 0,
+            processing: 0,
+            completed: 0,
+            revenue: 0
+        };
+
+        try {
+            const Order = require('../models/order');
+
+            // Recent orders for the table
+            orders = await Order.find()
+                .populate('customer')
+                .populate('seller')
+                .populate('items.product')
+                .sort({ createdAt: -1 })
+                .limit(10);
+
+            // Counts by status
+            const [totalCount, pendingCount, processingCount, completedCount] = await Promise.all([
+                Order.countDocuments({}),
+                Order.countDocuments({ status: 'pending' }),
+                Order.countDocuments({ status: 'processing' }),
+                Order.countDocuments({ status: 'completed' })
+            ]);
+
+            // Total revenue across all orders
+            const revenueAgg = await Order.aggregate([
+                { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+            ]);
+
+            orderStats = {
+                total: totalCount,
+                pending: pendingCount,
+                processing: processingCount,
+                completed: completedCount,
+                revenue: (revenueAgg[0] && revenueAgg[0].total) || 0
+            };
+        } catch (err) {
+            console.log('Order model not available, using empty orders and zeroed stats');
+        }
+
         res.render('admin', {
             admin: req.user,
             pendingUsers,
@@ -131,6 +176,8 @@ router.get('/dashboard', adminAuth, async (req, res) => {
             products,
             services,
             pets,
+            orders,
+            orderStats,
             userGrowthData,
             productCategoriesData,
             revenueData,
@@ -445,6 +492,33 @@ router.post('/reject-user/:userId', adminAuth, async (req, res) => {
         res.json({ success: true, message: 'User rejected successfully' });
     } catch (err) {
         console.error('User rejection error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Admin route to update order status
+router.post('/order/:orderId/status', adminAuth, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { status } = req.body;
+
+        const allowed = ['pending', 'processing', 'completed', 'cancelled'];
+        if (!allowed.includes(status)) {
+            return res.status(400).json({ error: 'Invalid status' });
+        }
+
+        const Order = require('../models/order');
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        order.status = status;
+        await order.save();
+
+        res.json({ success: true, status: order.status });
+    } catch (err) {
+        console.error('Order status update error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });

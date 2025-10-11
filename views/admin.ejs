@@ -228,6 +228,7 @@
                 <li data-tab="products"><i class="fas fa-box"></i> Products</li>
                 <li data-tab="services"><i class="fas fa-hands-helping"></i> Services</li>
                 <li data-tab="pets"><i class="fas fa-paw"></i> Pets</li>
+                <li data-tab="orders"><i class="fas fa-shopping-cart"></i> Orders</li>
             </ul>
             
             <h2>Filters</h2>
@@ -278,14 +279,14 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <i class="fas fa-check-circle stat-icon approved-icon"></i>
+                    <i class="fas fa-check stat-icon approved-icon"></i>
                     <div class="stat-info">
                         <h3>Approved</h3>
                         <p class="stat-number" id="approved-count">42</p>
                     </div>
                 </div>
                 <div class="stat-card">
-                    <i class="fas fa-times-circle stat-icon rejected-icon"></i>
+                    <i class="fas fa-times stat-icon rejected-icon"></i>
                     <div class="stat-info">
                         <h3>Rejected</h3>
                         <p class="stat-number" id="rejected-count">7</p>
@@ -391,105 +392,7 @@
                     </div>
                 </div>
                 
-                <!-- Recent Orders Section -->
-                <div class="dashboard-section">
-                    <h3>Recent Orders</h3>
-                    <div class="orders-stats">
-                        <div class="stat-card">
-                            <i class="fas fa-shopping-cart"></i>
-                            <div class="stat-info">
-                                <span class="stat-number"><%= orderStats.total %></span>
-                                <span class="stat-label">Total Orders</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-clock"></i>
-                            <div class="stat-info">
-                                <span class="stat-number"><%= orderStats.pending %></span>
-                                <span class="stat-label">Pending</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-cog"></i>
-                            <div class="stat-info">
-                                <span class="stat-number"><%= orderStats.processing %></span>
-                                <span class="stat-label">Processing</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-check-circle"></i>
-                            <div class="stat-info">
-                                <span class="stat-number"><%= orderStats.completed %></span>
-                                <span class="stat-label">Completed</span>
-                            </div>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-rupee-sign"></i>
-                            <div class="stat-info">
-                                <span class="stat-number">₹<%= orderStats.revenue.toLocaleString() %></span>
-                                <span class="stat-label">Total Revenue</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <% if (orders && orders.length > 0) { %>
-                        <div class="orders-table-container">
-                            <table class="orders-table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Customer</th>
-                                        <th>Seller</th>
-                                        <th>Items</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% orders.forEach(order => { %>
-                                        <tr>
-                                            <td>#<%= order.orderNumber || order._id %></td>
-                                            <td>
-                                                <div class="customer-info">
-                                                    <strong><%= order.customer?.fullName || 'Unknown' %></strong>
-                                                    <br><small><%= order.customer?.email || 'No email' %></small>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="seller-info">
-                                                    <strong><%= order.seller?.businessName || order.seller?.fullName || 'Unknown' %></strong>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="order-items">
-                                                    <% order.items.forEach(item => { %>
-                                                        <div class="order-item">
-                                                            <span class="item-name"><%= item.product?.name || 'Product Unavailable' %></span>
-                                                            <span class="item-quantity">×<%= item.quantity %></span>
-                                                        </div>
-                                                    <% }); %>
-                                                </div>
-                                            </td>
-                                            <td>₹<%= order.totalAmount.toLocaleString() %></td>
-                                            <td>
-                                                <span class="status-badge <%= order.status.toLowerCase() %>">
-                                                    <%= order.status.charAt(0).toUpperCase() + order.status.slice(1) %>
-                                                </span>
-                                            </td>
-                                            <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
-                                        </tr>
-                                    <% }); %>
-                                </tbody>
-                            </table>
-                        </div>
-                    <% } else { %>
-                        <div class="empty-state">
-                            <i class="fas fa-shopping-cart"></i>
-                            <p>No orders found</p>
-                        </div>
-                    <% } %>
-                </div>
+                <!-- Recent Orders section removed (now solely managed in Orders tab) -->
                 
                 <!-- Pending Applications Tab -->
                 <div class="tab-pane" id="pending-tab">
@@ -883,9 +786,26 @@
                     
                     <div class="products-grid">
                         <% products.forEach(product => { %>
-                            <div class="product-card" data-id="<%= product._id %>">
+                            <div class="product-card" data-id="<%= product._id %>" data-name="<%= product.name %>" data-category="<%= product.category || '' %>" data-seller="<%= (product.seller && product.seller.businessName) || '' %>">
                                 <div class="product-image">
-                                    <img src="<%= product.image %>" alt="<%= product.name %>">
+                                    <% 
+                                        let imgSrc = product.image;
+                                        if (!imgSrc && product.images && product.images.length > 0) {
+                                            const img = product.images[0];
+                                            if (img.url) {
+                                                imgSrc = img.url;
+                                            } else if (img.data && img.contentType) {
+                                                let base64 = '';
+                                                if (typeof img.data === 'string') {
+                                                    base64 = img.data;
+                                                } else if (img.data && img.data.buffer) {
+                                                    base64 = Buffer.from(img.data.buffer).toString('base64');
+                                                }
+                                                imgSrc = `data:${img.contentType};base64,${base64}`;
+                                            }
+                                        }
+                                    %>
+                                    <img src="<%= imgSrc || '/images/products/product1.jpg' %>" alt="<%= product.name %>">
                                 </div>
                                 <div class="product-info">
                                     <h3><%= product.name %></h3>
@@ -918,9 +838,9 @@
                     </div>
                     
                     <div class="pagination">
-                        <button id="products-prev-page"><i class="fas fa-chevron-left"></i></button>
-                        <span id="products-page-info">Page 1 of 3</span>
-                        <button id="products-next-page"><i class="fas fa-chevron-right"></i></button>
+                        <button id="products-prev-page" class="page-btn" title="Previous"><i class="fas fa-chevron-left"></i></button>
+                        <span id="products-page-info" class="page-info">Page 1 of 3</span>
+                        <button id="products-next-page" class="page-btn" title="Next"><i class="fas fa-chevron-right"></i></button>
                     </div>
                 </div>
                 
@@ -947,7 +867,7 @@
                     <div class="pets-grid">
                         <% if (pets && pets.length > 0) { %>
                             <% pets.forEach(pet => { %>
-                                <div class="pet-card" data-id="<%= pet._id %>">
+                                <div class="pet-card" data-id="<%= pet._id %>" data-name="<%= pet.name.toLowerCase() %>" data-category="<%= pet.category %>" data-breed="<%= pet.breed.toLowerCase() %>">
                                     <div class="pet-image">
                                         <% if (pet.images && pet.images.length > 0 && pet.images[0].data) { %>
                                             <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" alt="<%= pet.name %>">
@@ -1016,7 +936,7 @@
                     <div class="services-grid">
                         <% if (services && services.length > 0) { %>
                             <% services.forEach(service => { %>
-                                <div class="service-card" data-id="<%= service._id %>">
+                                <div class="service-card" data-id="<%= service._id %>" data-name="<%= service.name.toLowerCase() %>" data-type="<%= (service.provider && service.provider.serviceType || '').toLowerCase() %>" data-provider="<%= (service.provider && service.provider.fullName || '').toLowerCase() %>">
                                     <div class="service-info">
                                         <h3><%= service.name %></h3>
                                         <p class="service-provider">by <%= service.provider && service.provider.fullName || 'Unknown Provider' %></p>
@@ -1059,6 +979,75 @@
                         <span id="services-page-info">Page 1 of 1</span>
                         <button id="services-next-page"><i class="fas fa-chevron-right"></i></button>
                     </div>
+                </div>
+
+                <!-- Orders Management Tab -->
+                <div class="tab-pane" id="orders-tab">
+                    <h2 class="tab-title">Order Management</h2>
+                    <% if (orders && orders.length > 0) { %>
+                        <div class="orders-table-container">
+                            <table class="orders-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Customer</th>
+                                        <th>Seller</th>
+                                        <th>Items</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Placed</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% orders.forEach(order => { %>
+                                        <tr data-id="<%= order._id %>">
+                                            <td>#<%= order.orderNumber || order._id %></td>
+                                            <td>
+                                                <div class="customer-info">
+                                                    <strong><%= order.customer && order.customer.fullName || 'Unknown' %></strong>
+                                                    <br><small><%= order.customer && order.customer.email || 'No email' %></small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="seller-info">
+                                                    <strong><%= order.seller && (order.seller.businessName || order.seller.fullName) || 'Unknown' %></strong>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="order-items">
+                                                    <% order.items.forEach(item => { %>
+                                                        <div class="order-item">
+                                                            <span class="item-name"><%= item.product && item.product.name || 'Product' %></span>
+                                                            <span class="item-quantity">×<%= item.quantity %></span>
+                                                        </div>
+                                                    <% }) %>
+                                                </div>
+                                            </td>
+                                            <td>₹<%= order.totalAmount.toLocaleString() %></td>
+                                            <td>
+                                                <select class="order-status-select">
+                                                    <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                                    <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                                                    <option value="completed" <%= order.status === 'completed' ? 'selected' : '' %>>Completed</option>
+                                                    <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                                </select>
+                                            </td>
+                                            <td><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                                            <td>
+                                                <button class="update-order-status">Update</button>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <i class="fas fa-shopping-cart"></i>
+                            <p>No orders found.</p>
+                        </div>
+                    <% } %>
                 </div>
             </div>
         </div>
