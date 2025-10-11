@@ -175,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (card && card.closest('.tab-pane').id === 'pending-tab') {
           card.remove();
           updateCounters();
+          loadDashboardData(); // Update dashboard data
       }
   };
   
@@ -192,6 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (card && card.closest('.tab-pane').id === 'pending-tab') {
           card.remove();
           updateCounters();
+          loadDashboardData(); // Update dashboard data
       }
   };
   
@@ -229,12 +231,30 @@ document.addEventListener('DOMContentLoaded', function() {
       `;
   };
   
-  // Helper function to update counters based on visible application cards
+  // Helper function to update counters based on actual application data
   function updateCounters() {
-      document.getElementById('pending-count').textContent = document.querySelectorAll('#pending-tab .application-card:not([style*="display: none"])').length;
-      document.getElementById('approved-count').textContent = document.querySelectorAll('#approved-tab .application-card:not([style*="display: none"])').length;
-      document.getElementById('rejected-count').textContent = document.querySelectorAll('#rejected-tab .application-card:not([style*="display: none"])').length;
-      document.getElementById('total-count').textContent = document.querySelectorAll('.application-card:not([style*="display: none"])').length;
+      // Count actual applications from the DOM
+      const pendingCount = document.querySelectorAll('#pending-tab .application-card').length;
+      const approvedCount = document.querySelectorAll('#approved-tab .application-card').length;
+      const rejectedCount = document.querySelectorAll('#rejected-tab .application-card').length;
+      
+      // Count actual sellers
+      const pendingSellers = document.querySelectorAll('#pending-users-tab .user-card[data-role="seller"]').length;
+      const approvedSellers = document.querySelectorAll('#all-users-tab .user-card[data-role="seller"], #all-users-tab tr[data-role="seller"]').length;
+      const totalSellers = pendingSellers + approvedSellers;
+      
+      // Update dashboard cards with real data
+      const approvedElement = document.getElementById('approved-count');
+      const totalPendingElement = document.getElementById('total-pending-count');
+      const sellerElement = document.getElementById('seller-count');
+      const activeMembersElement = document.getElementById('active-members');
+      const inactiveMembersElement = document.getElementById('inactive-members');
+      
+      if (approvedElement) approvedElement.textContent = approvedCount;
+      if (totalPendingElement) totalPendingElement.textContent = pendingCount; // Show only pending count
+      if (sellerElement) sellerElement.textContent = totalSellers;
+      if (activeMembersElement) activeMembersElement.textContent = approvedCount;
+      if (inactiveMembersElement) inactiveMembersElement.textContent = rejectedCount;
   }
   
   // Mobile navigation
@@ -247,6 +267,9 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize counters on page load
   updateCounters();
+  
+  // Initialize dashboard with dynamic data
+  initializeDashboard();
 
   // Orders tab: update status handler
   document.addEventListener('click', async function(e) {
@@ -541,3 +564,70 @@ window.deactivateService = function(serviceId) {
   console.log('Deactivate service', serviceId);
   alert('Service deactivation not implemented yet. Please contact the developer.');
 };
+
+// Dashboard initialization function
+function initializeDashboard() {
+  // Add click handlers to dashboard cards for navigation
+  const dashboardCards = document.querySelectorAll('.dashboard-card');
+  
+  dashboardCards.forEach(card => {
+    card.addEventListener('click', function() {
+      const cardTitle = this.querySelector('h3').textContent;
+      
+      // Map card titles to corresponding tabs
+      const tabMapping = {
+        'Total Pending': 'pending',
+        'Approved': 'approved',
+        'Active Members': 'approved',
+        'Inactive Members': 'rejected',
+        'Seller': 'pending-users'
+      };
+      
+      const targetTab = tabMapping[cardTitle];
+      if (targetTab) {
+        // Find and click the corresponding tab
+        const tabElement = document.querySelector(`[data-tab="${targetTab}"]`);
+        if (tabElement) {
+          tabElement.click();
+        }
+      }
+    });
+    
+    // Add hover effect
+    card.style.cursor = 'pointer';
+  });
+  
+  // Load dynamic data for dashboard cards
+  loadDashboardData();
+}
+
+// Function to load dashboard data from actual application data
+function loadDashboardData() {
+  // Count actual applications from the DOM
+  const pendingApplications = document.querySelectorAll('#pending-tab .application-card').length;
+  const approvedApplications = document.querySelectorAll('#approved-tab .application-card').length;
+  const rejectedApplications = document.querySelectorAll('#rejected-tab .application-card').length;
+  
+  // Count actual sellers from pending users
+  const pendingSellers = document.querySelectorAll('#pending-users-tab .user-card[data-role="seller"]').length;
+  const approvedSellers = document.querySelectorAll('#all-users-tab .user-card[data-role="seller"], #all-users-tab tr[data-role="seller"]').length;
+  const totalSellers = pendingSellers + approvedSellers;
+  
+  // Update dashboard cards with real data
+  const approvedElement = document.getElementById('approved-count');
+  const totalPendingElement = document.getElementById('total-pending-count');
+  const sellerElement = document.getElementById('seller-count');
+  const activeMembersElement = document.getElementById('active-members');
+  const inactiveMembersElement = document.getElementById('inactive-members');
+  const upcomingRenewalsElement = document.getElementById('upcoming-renewals');
+  
+  if (approvedElement) approvedElement.textContent = approvedApplications;
+  if (totalPendingElement) totalPendingElement.textContent = pendingApplications; // Show only pending count
+  if (sellerElement) sellerElement.textContent = totalSellers;
+  if (activeMembersElement) activeMembersElement.textContent = approvedApplications;
+  if (inactiveMembersElement) inactiveMembersElement.textContent = rejectedApplications;
+  
+  // For upcoming renewals, we'll set a static value since we don't have renewal data
+  if (upcomingRenewalsElement) upcomingRenewalsElement.textContent = '0';
+}
+

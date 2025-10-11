@@ -269,35 +269,66 @@
             <!-- Success Message Container -->
             <div id="success-message-container"></div>
             
-            <!-- Stats Summary -->
-            <div class="stats-container">
-                <div class="stat-card">
-                    <i class="fas fa-clock stat-icon pending-icon"></i>
-                    <div class="stat-info">
-                        <h3>Pending</h3>
-                        <p class="stat-number" id="pending-count">15</p>
+             <!-- Dashboard Cards Grid -->
+             <div class="dashboard-cards-grid">
+                 <div class="dashboard-card green-card">
+                     <div class="card-icon">
+                         <i class="fas fa-check-circle"></i>
                     </div>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-check stat-icon approved-icon"></i>
-                    <div class="stat-info">
+                     <div class="card-content">
                         <h3>Approved</h3>
-                        <p class="stat-number" id="approved-count">42</p>
+                         <p class="card-value" id="approved-count">0</p>
                     </div>
                 </div>
-                <div class="stat-card">
-                    <i class="fas fa-times stat-icon rejected-icon"></i>
-                    <div class="stat-info">
-                        <h3>Rejected</h3>
-                        <p class="stat-number" id="rejected-count">7</p>
+                 
+                 <div class="dashboard-card orange-card">
+                     <div class="card-icon">
+                         <i class="fas fa-list"></i>
                     </div>
+                     <div class="card-content">
+                         <h3>Total Pending</h3>
+                         <p class="card-value" id="total-pending-count">22</p>
                 </div>
-                <div class="stat-card">
-                    <i class="fas fa-list stat-icon total-icon"></i>
-                    <div class="stat-info">
-                        <h3>Total</h3>
-                        <p class="stat-number" id="total-count">13</p>
                     </div>
+                 
+                 <div class="dashboard-card purple-card">
+                     <div class="card-icon">
+                         <i class="fas fa-store"></i>
+                     </div>
+                     <div class="card-content">
+                         <h3>Seller</h3>
+                         <p class="card-value" id="seller-count">5</p>
+                     </div>
+                 </div>
+                 
+                 <div class="dashboard-card light-green-card">
+                     <div class="card-icon">
+                         <i class="fas fa-bell"></i>
+                     </div>
+                     <div class="card-content">
+                         <h3>Upcoming Renewals</h3>
+                         <p class="card-value" id="upcoming-renewals">16</p>
+                     </div>
+                 </div>
+                 
+                 <div class="dashboard-card dark-teal-card">
+                     <div class="card-icon">
+                         <i class="fas fa-user-check"></i>
+                     </div>
+                     <div class="card-content">
+                         <h3>Active Members</h3>
+                         <p class="card-value" id="active-members">11</p>
+                     </div>
+                 </div>
+                 
+                 <div class="dashboard-card pink-card">
+                     <div class="card-icon">
+                         <i class="fas fa-user-times"></i>
+                     </div>
+                     <div class="card-content">
+                         <h3>Inactive Members</h3>
+                         <p class="card-value" id="inactive-members">0</p>
+                     </div>
                 </div>
             </div>
             
