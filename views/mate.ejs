@@ -46,12 +46,33 @@
         #clrfltr:hover {
             background-color: #f98787;
         }
+        .petmate-disclaimer {
+            background-color: #fef0be; /* light yellow */
+            color: #795b00; /* dark yellow/brown */
+            border: 1px solid #ebbd35;
+            padding: 12px 20px;
+            margin: -20px 50px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+        .petmate-disclaimer p {
+            margin: 0;
+        }
     </style>
 </head>
 <body>
     <%- include('partials/header') %>
     <br>
     <!-- Main Content -->
+    <div class="petmate-disclaimer">
+                    <p>
+                        ⚠️ Disclaimer: PetVerse provides this platform to connect pet owners and registered breeders. 
+                        We do not guarantee the health, behavior, or safety of pets listed. 
+                        Users should exercise caution and follow local regulations when arranging meetups or bookings.
+                    </p>
+                </div>
     <div class="main-container">
         <!-- Filters Sidebar -->
          <div class="filters-sidebar">
@@ -144,6 +165,7 @@
         <!-- Pets Display Area -->
         <div class="pets-container">
             <div class="pets-header">
+
                 <h1>Pet Mating Partners</h1>
                 <select class="sort-dropdown">
                     <option value="recent">Most Recent</option>
