@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results - <%= query %></title>
+    <link rel="stylesheet" href="/css/products.css">
+    <link rel="stylesheet" href="/css/results.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <%- include('partials/header') %>
+
+    <div class="container">
+        <h1>Search Results for "<%= query %>"</h1>
+
+        <!-- PETS SECTION -->
+        <div class="pet-results">
+        <h2>Pets</h2>
+        <% if (pets && pets.length > 0) { %>
+            <div class="products-grid">
+            <% pets.forEach(pet => { %>
+                <div class="product-card"
+                    data-type="pet"
+                    data-category="<%= pet.category || '' %>"
+                    data-breed="<%= pet.breed || '' %>"
+                    data-age="<%= pet.age || '' %>"
+                    data-price="<%= pet.price %>"
+                    onclick="window.location.href='/seller/detail/<%= pet._id %>'">
+                <div class="product-image">
+                    <% if (pet.images && pet.images.length > 0) { %>
+                    <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
+                        alt="<%= pet.name %>">
+                    <% } else { %>
+                    <img src="/images/default-pet.jpg" alt="No image available">
+                    <% } %>
+                </div>
+                <div class="pet-info">
+                    <h3 class="product-name"><%= pet.breed %></h3>
+                    <p class="product-description"><%= pet.description %></p>
+                    <div class="product-price">₹<%= pet.price.toFixed(2) %></div>
+                    <div class="pet-details">
+                    <span class="pet-age"><i class="fas fa-birthday-cake"></i> <%= pet.age %></span>
+                    <span class="pet-gender">
+                        <% if (pet.gender === 'male') { %>
+                        <i class="fas fa-mars"></i> Male
+                        <% } else { %>
+                        <i class="fas fa-venus"></i> Female
+                        <% } %>
+                    </span>
+                    </div>
+                    <br/>
+                    <div class="pet-action">
+                    <button onclick="window.location.href='/seller/detail/<%= pet._id %>'" class="add-to-cart">View Details</button>
+                    <button class="wishlist-btn"><i class="far fa-heart"></i></button>
+                    </div>
+                </div>
+                </div>
+            <% }); %>
+            </div>
+        <% } else { %>
+            <p class="no-results">No pets found.</p>
+        <% } %>
+        </div>
+
+        <!-- PRODUCTS SECTION -->
+        <div class="product-results">
+        <h2>Products</h2>
+        <% if (products && products.length > 0) { %>
+            <div class="products-grid">
+            <% products.forEach(product => { %>
+                <div class="product-card" data-category="<%= product.category %>">
+                <a href="/buy/<%= product._id %>" class="product-link">
+                    <div class="product-image">
+                    <% if (product.images && product.images.length > 0) { %>
+                        <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" alt="<%= product.name %>">
+                    <% } else { %>
+                        <img src="/images/default-product.jpg" alt="<%= product.name %>">
+                    <% } %>
+                    </div>
+                    <div class="product-info">
+                    <h3 class="product-name"><%= product.name %></h3>
+                    <p class="product-brand"><%= product.brand %></p>
+                    <div class="product-rating">
+                        <div class="stars">
+                        <% for(let i = 1; i <= 5; i++) { %>
+                            <i class="fa fa-star <%= i <= product.avgRating ? 'filled' : '' %>" style="<%= i <= product.avgRating ? 'color: #FFD700;' : 'color: #ddd;' %>"></i>
+                        <% } %>
+                        </div>
+                        <span class="review-count">(<%= product.reviewCount || 0 %>)</span>
+                    </div>
+                    <p class="product-description"><%= product.description %></p>
+                    <div class="product-price">
+                        <% if (product.discount > 0) { %>
+                        <span class="original-price">₹<%= product.price.toFixed(2) %></span>
+                        <span class="discounted-price">₹<%= (product.price * (1 - product.discount/100)).toFixed(2) %></span>
+                        <span class="discount-badge"><%= product.discount %>% OFF</span>
+                        <% } else { %>
+                        <span class="discounted-price">₹<%= product.price.toFixed(2) %></span>
+                        <% } %>
+                    </div>
+                    <div class="product-stock">
+                        <% if (product.stock === 0) { %>
+                        Out of Stock
+                        <% } else if (product.stock <= 5) { %>
+                        Only <%= product.stock %> left in stock!
+                        <% } else { %>
+                        In Stock
+                        <% } %>
+                    </div>
+                    </div>
+                </a>
+                <div class="product-action">
+                    <button class="add-to-cart" data-product-id="<%= product._id %>" <%= product.stock === 0 ? 'disabled' : '' %>>
+                    Add to Cart
+                    </button>
+                    <button class="wishlist-btn">
+                    <i class="far fa-heart"></i>
+                    </button>
+                </div>
+                </div>
+            <% }); %>
+            </div>
+        <% } else { %>
+            <p class="no-results">No products found.</p>
+        <% } %>
+        </div>
+
+        <!-- SERVICES SECTION -->
+        <div class="service-results">
+        <h2>Services</h2>
+        <% if (services && services.length > 0) { %>
+            <div class="services-container">
+            <% services.forEach(service => { %>
+                <div 
+                class="service-card" 
+                data-category="<%= service.serviceType.toLowerCase() %>" 
+                data-price="<%= service.price %>" 
+                data-rating="<%= service.rating || 0 %>"
+                >
+                <div class="service-image">
+                    <%
+                    let imagePath = '/images/services/service2.jpg'; // fallback
+                    switch (service.serviceType.toLowerCase()) {
+                        case 'veterinarian': imagePath = '/images/services/service1.jpg'; break;
+                        case 'groomer': imagePath = '/images/services/service7.jpg'; break;
+                        case 'pet sitter': imagePath = '/images/services/service11.jpg'; break;
+                        case 'trainer': imagePath = '/images/services/service6.jpg'; break;
+                        case 'breeder': imagePath = '/images/services/service12.jpg'; break;
+                    }
+                    %>
+                    <img src="<%= imagePath %>" alt="<%= service.name %>">
+                </div>
+                <div class="service-info">
+                    <h2 class="service-name"><%= service.fullName %></h2>
+                    <div class="service-meta">
+                    <p class="service-category"><%= service.serviceType %></p>
+                    </div>
+                    <p class="service-location"><%= service.serviceAddress %></p>
+                    <p class="service-contact">
+                    <i class="fa fa-phone"></i> <%= service.phone %> 
+                    <span class="service-email">
+                        <i class="fa fa-envelope"></i> <%= service.email %>
+                    </span>
+                    </p>
+                    <button class="btn view-details-btn" onclick="window.location.href='/services/<%= service._id %>'">
+                    View Details
+                    </button>
+                </div>
+                </div>
+            <% }); %>
+            </div>
+        <% } else { %>
+            <p class="no-results">No services found.</p>
+        <% } %>
+        </div>
+    </div>
+</body>
+</html>
