@@ -101,5 +101,21 @@ const cartManager = {
             console.error('Error removing from cart:', error);
             throw error;
         }
+    },
+
+    async updateCartItemQuantity(productId, quantity) {
+        try {
+            const response = await fetch('/cart/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ productId, quantity })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error updating cart:', error);
+            return { success: false, message: 'Failed to update cart' };
+        }
     }
-}; 
+};

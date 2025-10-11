@@ -74,56 +74,35 @@ router.post('/add', isAuthenticated, async (req, res) => {
 });
 
 // Update cart quantity
-router.post('/update', isAuthenticated, async (req, res) => {
+router.post('/update', async (req, res) => {
     try {
         const { productId, quantity } = req.body;
         
-        if (!productId || !quantity) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Product ID and quantity are required' 
-            });
-        }
+        // Update the cart in your database
+        const updatedCart = await Cart.findOneAndUpdate(
+            { userId: req.user._id, "items.productId": productId },
+            { $set: { "items.$.quantity": quantity } },
+            { new: true }
+        ).populate('items.productId');
 
-        let cart = await Cart.findOne({ userId: req.session.userId });
-        
-        if (!cart) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Cart not found' 
-            });
-        }
-
-        // Find the item in the cart
-        const itemIndex = cart.items.findIndex(item => 
-            item.productId.toString() === productId
+        // Calculate the updated price for this item
+        const cartItem = updatedCart.items.find(item => 
+            item.productId._id.toString() === productId
         );
         
-        if (itemIndex === -1) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'Item not found in cart' 
-            });
+        let price = cartItem.productId.price;
+        if (cartItem.itemType === 'Product' && cartItem.productId.discount > 0) {
+            price = price * (1 - cartItem.productId.discount/100);
         }
 
-        // Update quantity
-        cart.items[itemIndex].quantity = parseInt(quantity);
-        await cart.save();
-        
-        // Calculate total items in cart
-        const cartCount = cart.items.reduce((total, item) => total + item.quantity, 0);
-        
-        res.json({ 
-            success: true, 
-            message: 'Cart updated successfully',
-            cartCount
+        res.json({
+            success: true,
+            updatedPrice: price * quantity,
+            cartCount: updatedCart.items.reduce((sum, item) => sum + item.quantity, 0)
         });
     } catch (error) {
-        console.error('Error updating cart:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to update cart: ' + error.message
-        });
+        console.error('Cart update error:', error);
+        res.json({ success: false, message: 'Failed to update cart' });
     }
 });
 
@@ -172,4 +151,4 @@ router.post('/remove', isAuthenticated, async (req, res) => {
     }
 });
 
-module.exports = router; 
+module.exports = router;
