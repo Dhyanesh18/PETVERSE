@@ -4,7 +4,11 @@ const Wallet = require('../models/wallet');
 
 exports.getServices = async (req, res) => {
   try {
-    const providers = await User.find({ role: 'service_provider' });
+    // Only fetch providers with a valid serviceType
+    const providers = await User.find({ 
+      role: 'service_provider',
+      serviceType: { $exists: true, $ne: null, $ne: '' }
+    });
     console.log(`Found ${providers.length} service providers`);
 
     const categoryMap = {
@@ -20,10 +24,11 @@ exports.getServices = async (req, res) => {
     const services = await Promise.all(providers.map(async (provider) => {
       console.log(`Processing provider: ${provider._id}, Name: ${provider.fullName}`);
       
+      // Fetch reviews from MongoDB with user information populated
       const reviews = await Review.find({ 
         targetType: 'ServiceProvider', 
         targetId: provider._id 
-      });
+      }).populate('user', 'fullName username');
       
       console.log(`Found ${reviews.length} reviews for provider ${provider._id}`);
       
@@ -36,16 +41,30 @@ exports.getServices = async (req, res) => {
       const avgRating = reviewCount > 0 ? totalRating / reviewCount : 0;
       const formattedRating = parseFloat(avgRating.toFixed(1));
 
+      // Get top 2 most recent reviews with user data from MongoDB
       const topReviews = reviews
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 2);
+        .slice(0, 2)
+        .map(review => ({
+          rating: review.rating,
+          comment: review.comment,
+          createdAt: review.createdAt,
+          userName: review.user ? review.user.fullName : 'Anonymous'
+        }));
       
+      // Skip providers without serviceType (safety check)
+      if (!provider.serviceType) {
+        return null;
+      }
+      
+      // Calculate price based on service type
       let price;
-      if (provider.serviceType === 'veterinarian' || provider.serviceType === 'trainer') {
+      const serviceType = provider.serviceType.toLowerCase();
+      if (serviceType === 'veterinarian' || serviceType === 'trainer') {
         price = 500;
-      } else if (provider.serviceType === 'groomer') {
+      } else if (serviceType === 'groomer') {
         price = 300;
-      } else if (provider.serviceType === 'pet sitter' || provider.serviceType === 'breeder') {
+      } else if (serviceType === 'pet sitter' || serviceType === 'breeder') {
         price = 200;
       } else {
         price = 400;
@@ -60,7 +79,7 @@ exports.getServices = async (req, res) => {
         serviceType: provider.serviceType,
         serviceAddress: provider.serviceAddress,
         isApproved: provider.isApproved,
-        category: categoryMap[provider.serviceType] || 'Pet Service',
+        category: categoryMap[serviceType] || provider.serviceType,
         rating: formattedRating,
         reviewCount: reviewCount,
         price: price,
@@ -68,6 +87,9 @@ exports.getServices = async (req, res) => {
         image: provider.image ? `/images/provider/${provider._id}` : '/images/default-provider.jpg'
       };
     }));
+
+    // Filter out null values (providers without serviceType)
+    services = services.filter(service => service !== null);
 
     console.log(`Rendering services page with ${services.length} service providers`);
     
@@ -364,4 +386,123 @@ exports.filterBreedersByLocation = async (req, res) => {
             error: error.message 
         });
     }
+};
+
+// NEW FUNCTION - API endpoint for filtering services with reviews
+exports.filterServices = async (req, res) => {
+  try {
+    const { categories, minPrice, maxPrice, minRating } = req.query;
+    
+    let query = { 
+      role: 'service_provider',
+      serviceType: { $exists: true, $ne: null, $ne: '' }
+    };
+    
+    // Filter by categories
+    if (categories) {
+      const categoryArray = categories.split(',').map(c => c.trim().toLowerCase());
+      query.serviceType = { $in: categoryArray };
+    }
+    
+    const providers = await User.find(query);
+    
+    const categoryMap = {
+      'veterinarian': 'Veterinary Doctor',
+      'groomer': 'Pet Grooming',
+      'trainer': 'Dog Training',
+      'pet sitter': 'Pet Sitting',
+      'breeder': 'Breeding Services',
+      'walking': 'Dog Walking',
+      'sitting': 'Pet Sitting'
+    };
+
+    const services = await Promise.all(providers.map(async (provider) => {
+      // Fetch reviews from MongoDB with user information populated
+      const reviews = await Review.find({ 
+        targetType: 'ServiceProvider', 
+        targetId: provider._id 
+      }).populate('user', 'fullName username');
+      
+      const reviewCount = reviews.length;
+      const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+      const avgRating = reviewCount > 0 ? totalRating / reviewCount : 0;
+      const formattedRating = parseFloat(avgRating.toFixed(1));
+
+      // Get top 2 most recent reviews with user data
+      const topReviews = reviews
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 2)
+        .map(review => ({
+          rating: review.rating,
+          comment: review.comment,
+          createdAt: review.createdAt,
+          userName: review.user ? review.user.fullName : 'Anonymous'
+        }));
+      
+      // Skip providers without serviceType (safety check)
+      if (!provider.serviceType) {
+        return null;
+      }
+      
+      // Calculate price based on service type
+      let price;
+      const serviceType = provider.serviceType.toLowerCase();
+      if (serviceType === 'veterinarian' || serviceType === 'trainer') {
+        price = 500;
+      } else if (serviceType === 'groomer') {
+        price = 300;
+      } else if (serviceType === 'pet sitter' || serviceType === 'breeder') {
+        price = 200;
+      } else {
+        price = 400;
+      }
+
+      return {
+        id: provider._id,
+        fullName: provider.fullName || 'Service Provider',
+        username: provider.username,
+        email: provider.email,
+        phone: provider.phone,
+        serviceType: provider.serviceType,
+        serviceAddress: provider.serviceAddress || 'Location not specified',
+        isApproved: provider.isApproved,
+        category: categoryMap[serviceType] || provider.serviceType,
+        rating: formattedRating,
+        reviewCount: reviewCount,
+        price: price,
+        topReviews: topReviews || [],
+        image: provider.image ? `/images/provider/${provider._id}` : '/images/default-provider.jpg'
+      };
+    }));
+
+    // Filter out null values (providers without serviceType)
+    let filteredServices = services.filter(service => service !== null);
+    
+    if (minPrice) {
+      const min = parseFloat(minPrice);
+      filteredServices = filteredServices.filter(s => s && s.price >= min);
+    }
+    
+    if (maxPrice) {
+      const max = parseFloat(maxPrice);
+      filteredServices = filteredServices.filter(s => s && s.price <= max);
+    }
+    
+    if (minRating) {
+      const rating = parseFloat(minRating);
+      filteredServices = filteredServices.filter(s => s && s.rating >= rating);
+    }
+
+    res.json({
+      success: true,
+      services: filteredServices,
+      count: filteredServices.length
+    });
+  } catch (err) {
+    console.error('Error filtering services:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Error filtering services'
+    });
+  }
 };

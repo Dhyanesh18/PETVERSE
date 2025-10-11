@@ -11,6 +11,9 @@ const upload = multer({
 });
 const auth = require('../middleware/auth');
 
+// API route for filtering pets - must come before /mate route
+router.get('/mate/api/filter', mateController.filterPets);
+
 router.post('/mate/add', auth.isAuthenticated, upload.array('petImage', 4), mateController.addMateListing);
 router.get('/mate/image/:mateId/:index', mateController.getMateImage);
 
@@ -196,10 +199,6 @@ const petMateData = {
 };
 
 // Display mate listings page
-router.get('/mate', (req,res)=>{
-    res.render('mate',{
-        petMateData
-    });
-});
+router.get('/mate', mateController.showMatePage);
 
 module.exports = router;

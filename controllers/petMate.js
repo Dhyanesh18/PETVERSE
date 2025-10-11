@@ -5,7 +5,7 @@ exports.showMatePage = async (req, res) => {
     try {
         console.log('Fetching pets from database...');
         
-        // First try without any conditions to see if we can get ANY data
+        // Get all pets without filtering for initial page load
         const pets = await PetMate.find({}).lean();
         
         console.log('Number of pets fetched:', pets.length);
@@ -17,6 +17,7 @@ exports.showMatePage = async (req, res) => {
 
         const breeds = [
             { value: 'german-shepherd', label: 'German Shepherd' },
+            { value: 'asdasd', label: 'Asdasd' },
             { value: 'persian', label: 'Persian' },
             { value: 'siamese', label: 'Siamese' }
         ];
@@ -37,12 +38,86 @@ exports.showMatePage = async (req, res) => {
                 { value: 'telangana', label: 'Telangana' }
             ],
             breeds: breeds,
+            selectedFilters: {},
+            currentPage: 1,
+            totalPages: 1,
             formData: null,
             error: null
         });
     } catch (err) {
         console.error('Error loading mate page:', err);
         res.status(500).render('error', { message: 'Error loading page' });
+    }
+};
+
+// NEW FUNCTION - API endpoint for filtering pets dynamically
+exports.filterPets = async (req, res) => {
+    try {
+        const { petType, gender, breed, age, state, district } = req.query;
+        
+        let query = {
+            // Ensure required fields exist
+            breed: { $exists: true, $ne: null, $ne: '' }
+        };
+        
+        // Filter by pet type
+        if (petType) {
+            const types = petType.split(',').map(t => t.trim().toLowerCase());
+            query.petType = { $in: types };
+        }
+        
+        // Filter by gender
+        if (gender) {
+            const genders = gender.split(',').map(g => g.trim().toLowerCase());
+            query.gender = { $in: genders };
+        }
+        
+        // Filter by breed
+        if (breed) {
+            const breeds = breed.split(',').map(b => b.trim().toLowerCase());
+            // Use case-insensitive regex for breed matching
+            query.breed = { $in: breeds.map(b => new RegExp(`^${b}$`, 'i')) };
+        }
+        
+        // Filter by state
+        if (state) {
+            query['location.state'] = state;
+        }
+        
+        // Filter by district
+        if (district) {
+            query['location.district'] = new RegExp(district, 'i');
+        }
+        
+        console.log('Filter query:', JSON.stringify(query));
+        
+        const pets = await PetMate.find(query).lean();
+        
+        console.log(`Found ${pets.length} pets matching filters`);
+        
+        // Convert image buffers to base64 strings for JSON response
+        const petsWithBase64Images = pets.map(pet => {
+            if (pet.images && pet.images.length > 0) {
+                pet.images = pet.images.map(img => ({
+                    contentType: img.contentType,
+                    dataBase64: Buffer.from(img.data.buffer || img.data).toString('base64')
+                }));
+            }
+            return pet;
+        });
+        
+        res.json({
+            success: true,
+            pets: petsWithBase64Images,
+            count: petsWithBase64Images.length
+        });
+    } catch (err) {
+        console.error('Error filtering pets:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error filtering pets',
+            error: err.message
+        });
     }
 };
 

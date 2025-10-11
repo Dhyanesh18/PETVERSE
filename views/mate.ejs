@@ -63,8 +63,7 @@
                 <div class="filter-options">
                     <% petTypes.forEach(type => { %>
                         <div class="filter-option">
-                            <input type="checkbox" id="type-<%= type.value %>" name="petType" value="<%= type.value %>"
-                                <%= (selectedFilters.petType || []).includes(type.value) ? 'checked' : '' %>>
+                            <input type="checkbox" id="type-<%= type.value %>" name="petType" value="<%= type.value %>">
                             <label for="type-<%= type.value %>"><%= type.label %></label>
                         </div>
                     <% }); %>
@@ -76,13 +75,11 @@
                 <h3>Gender</h3>
                 <div class="filter-options">
                     <div class="filter-option">
-                        <input type="checkbox" id="gender-male" name="gender" value="male"
-                            <%= (selectedFilters.gender || []).includes('male') ? 'checked' : '' %>>
+                        <input type="checkbox" id="gender-male" name="gender" value="male">
                         <label for="gender-male">Male</label>
                     </div>
                     <div class="filter-option">
-                        <input type="checkbox" id="gender-female" name="gender" value="female"
-                            <%= (selectedFilters.gender || []).includes('female') ? 'checked' : '' %>>
+                        <input type="checkbox" id="gender-female" name="gender" value="female">
                         <label for="gender-female">Female</label>
                     </div>
                 </div>
@@ -94,8 +91,7 @@
                 <div class="filter-options">
                     <% breeds.forEach(breed => { %>
                         <div class="filter-option">
-                            <input type="checkbox" id="breed-<%= breed.value %>" name="breed" value="<%= breed.value %>"
-                                <%= (selectedFilters.breed || []).includes(breed.value) ? 'checked' : '' %>>
+                            <input type="checkbox" id="breed-<%= breed.value %>" name="breed" value="<%= breed.value %>">
                             <label for="breed-<%= breed.value %>"><%= breed.label %></label>
                         </div>
                     <% }); %>
@@ -107,8 +103,7 @@
                 <h3>Age</h3>
                 <div class="filter-options">
                     <div class="filter-option">
-                        <input type="checkbox" id="age-puppy" name="age" value="puppy"
-                            <%= (selectedFilters.age || []).includes('puppy') ? 'checked' : '' %>>
+                        <input type="checkbox" id="age-puppy" name="age" value="puppy">
                         <label for="age-puppy">Less than 1 year</label>
                     </div>
                     <!-- ... other age options ... -->
@@ -122,8 +117,7 @@
                     <select id="state-filter" name="state">
                         <option value="">Select State</option>
                         <% states.forEach(state => { %>
-                            <option value="<%= state.value %>"
-                                <%= state.value === selectedFilters.state ? 'selected' : '' %>>
+                            <option value="<%= state.value %>">
                                 <%= state.label %>
                             </option>
                         <% }); %>
@@ -136,16 +130,12 @@
                 <h3>District</h3>
                 <div class="filter-options">
                     <input type="text" id="district-filter" name="district" 
-                        placeholder="Enter district name" value="<%= selectedFilters.district || '' %>">
+                        placeholder="Enter district name" value="">
                 </div>
             </div>
             
-            <form id="filter-form" method="GET" action="/mate">
-                <!-- All filter inputs will be added here via JavaScript -->
-            </form>
             <div class="filter-btns">
-                <button type="submit" form="filter-form" class="filter-btn">Apply Filters</button>
-            <a id="clrfltr" href="/mate" class="filter-btn clear-btn">Clear All Filters</a>
+                <button id="clear-all-filters" class="filter-btn clear-btn" style="background-color: #ff4c4c; color: white; width: 100%; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Clear All Filters</button>
             </div>
             
         </div>
@@ -373,62 +363,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize cart count
 
-            const filterForm = document.getElementById('filter-form');
-            const filterParams = new URLSearchParams(window.location.search);
-            
-            // Add existing query parameters as hidden inputs
-            filterParams.forEach((value, key) => {
-                if (Array.isArray(value)) {
-                    value.forEach(val => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = key;
-                        input.value = val;
-                        filterForm.appendChild(input);
-                    });
-                } else {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = value;
-                    filterForm.appendChild(input);
-                }
-            });
-
-            // Handle checkbox changes
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const inputs = filterForm.querySelectorAll(`input[name="${this.name}"]`);
-                    inputs.forEach(input => input.remove());
-                    
-                    const checked = document.querySelectorAll(`input[name="${this.name}"]:checked`);
-                    checked.forEach(item => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = this.name;
-                        input.value = item.value;
-                        filterForm.appendChild(input);
-                    });
-                });
-            });
-
-            // Handle select and text inputs
-            ['select', 'input[type="text"]'].forEach(selector => {
-                document.querySelectorAll(selector).forEach(element => {
-                    element.addEventListener('change', function() {
-                        const existing = filterForm.querySelector(`input[name="${this.name}"]`);
-                        if (existing) existing.remove();
-                        
-                        if (this.value) {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = this.name;
-                            input.value = this.value;
-                            filterForm.appendChild(input);
-                        }
-                    });
-                });
-            });
+            // Old form-based filtering removed - now using async fetch
             if (typeof cartManager !== 'undefined') {
                 cartManager.initializeCart();
             } else {
@@ -446,10 +381,11 @@
                     })
                     .catch(error => console.error('Error fetching cart count:', error));
             }
-            // Filter functionality
-            const clearFiltersBtn = document.getElementById('clear-filters');
-            if (clearFiltersBtn) {
-                clearFiltersBtn.addEventListener('click', function() {
+            // Clear filters functionality
+            const clearAllFiltersBtn = document.getElementById('clear-all-filters');
+            if (clearAllFiltersBtn) {
+                clearAllFiltersBtn.addEventListener('click', async function() {
+                    // Uncheck all checkboxes
                     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                         checkbox.checked = false;
                     });
@@ -457,6 +393,9 @@
                     const districtFilter = document.getElementById('district-filter');
                     if (stateFilter) stateFilter.value = '';
                     if (districtFilter) districtFilter.value = '';
+                    
+                    // Reload all pets
+                    await applyFiltersAsync();
                 });
             }
 
@@ -516,6 +455,132 @@
                 hamburger.addEventListener('click', function() {
                     navLinks.classList.toggle('active');
                 });
+            }
+
+            // ============= ASYNC FILTER FUNCTIONALITY =============
+            const petsGrid = document.querySelector('.pets-grid');
+            const petTypeCheckboxes = document.querySelectorAll('input[name="petType"]');
+            const genderCheckboxes = document.querySelectorAll('input[name="gender"]');
+            const breedCheckboxes = document.querySelectorAll('input[name="breed"]');
+            const stateSelect = document.getElementById('state-filter');
+            const districtInput = document.getElementById('district-filter');
+
+            // Only add event listeners, don't trigger on page load
+            if (petsGrid) {
+                petTypeCheckboxes.forEach(cb => cb.addEventListener('change', applyFiltersAsync));
+                genderCheckboxes.forEach(cb => cb.addEventListener('change', applyFiltersAsync));
+                breedCheckboxes.forEach(cb => cb.addEventListener('change', applyFiltersAsync));
+                if (stateSelect) stateSelect.addEventListener('change', applyFiltersAsync);
+                if (districtInput) districtInput.addEventListener('input', debounce(applyFiltersAsync, 500));
+            }
+
+            async function applyFiltersAsync() {
+                if (!petsGrid) return;
+
+                const selectedPetTypes = Array.from(petTypeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+                const selectedGenders = Array.from(genderCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+                const selectedBreeds = Array.from(breedCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+                const selectedState = stateSelect ? stateSelect.value : '';
+                const selectedDistrict = districtInput ? districtInput.value : '';
+
+                const params = new URLSearchParams();
+                if (selectedPetTypes.length > 0) params.append('petType', selectedPetTypes.join(','));
+                if (selectedGenders.length > 0) params.append('gender', selectedGenders.join(','));
+                if (selectedBreeds.length > 0) params.append('breed', selectedBreeds.join(','));
+                if (selectedState) params.append('state', selectedState);
+                if (selectedDistrict) params.append('district', selectedDistrict);
+
+                petsGrid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><p>Loading pets...</p></div>';
+
+                try {
+                    const response = await fetch(`/pets/mate/api/filter?${params.toString()}`);
+                    const data = await response.json();
+
+                    if (data.success && data.pets.length > 0) {
+                        renderPets(data.pets);
+                    } else {
+                        petsGrid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1;"><p>No pets match your filters.</p></div>';
+                    }
+                } catch (error) {
+                    console.error('Error filtering pets:', error);
+                    petsGrid.innerHTML = '<div style="text-align: center; padding: 40px; grid-column: 1/-1; color: #f44336;"><p>Error loading pets. Please try again.</p></div>';
+                }
+            }
+
+            function renderPets(pets) {
+                petsGrid.innerHTML = pets.map(pet => {
+                    let imageHtml = '<img src="/images/default-pet.jpg" alt="Default pet image">';
+                    
+                    if (pet.images && pet.images.length > 0) {
+                        const image = pet.images[0];
+                        // Use pre-converted base64 string from backend
+                        if (image.dataBase64) {
+                            imageHtml = `<img src="data:${image.contentType};base64,${image.dataBase64}" alt="${pet.name}">`;
+                        }
+                    }
+                    
+                    return `
+                        <a href="/services/breeders">
+                            <div class="pet-card">
+                                <div class="pet-image">
+                                    ${imageHtml}
+                                    <div class="pet-badge ${pet.gender === 'male' ? 'male' : 'female'}">
+                                        <i class="fas ${pet.gender === 'male' ? 'fa-mars' : 'fa-venus'}"></i>
+                                    </div>
+                                </div>
+                                <div class="pet-info">
+                                    <h3 class="pet-name">${pet.name}</h3>
+                                    <div class="pet-details">
+                                        <p><i class="fas fa-paw"></i> <strong>Breed:</strong> ${pet.breed}</p>
+                                        <p><i class="fas fa-birthday-cake"></i> <strong>Age:</strong> ${pet.age.value} ${pet.age.unit}</p>
+                                        <p><i class="fas fa-map-marker-alt"></i> <strong>Location:</strong> ${pet.location.district}, ${pet.location.state}</p>
+                                        <p><i class="fas fa-phone"></i> <strong>Contact:</strong> ${pet.contact.phone}</p>
+                                        <p><i class="fas fa-envelope"></i> <strong>Email:</strong> ${pet.contact.email}</p>
+                                        ${pet.description ? `<p class="pet-description"><i class="fas fa-info-circle"></i> ${pet.description}</p>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+            }
+
+            function arrayBufferToBase64(buffer) {
+                if (!buffer) return '';
+                
+                // Handle array buffer
+                if (Array.isArray(buffer)) {
+                    const bytes = new Uint8Array(buffer);
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    return window.btoa(binary);
+                }
+                
+                // Handle Uint8Array or Buffer
+                if (buffer instanceof Uint8Array || buffer.buffer) {
+                    const bytes = new Uint8Array(buffer);
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    return window.btoa(binary);
+                }
+                
+                return '';
+            }
+
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
             }
         });
     </script>

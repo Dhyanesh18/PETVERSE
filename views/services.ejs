@@ -30,6 +30,31 @@
           justify-content: center;
           align-items: center;
       }
+      /* Dynamic Review Styles */
+      .review-header-small {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+      }
+      .review-header-small strong {
+          color: #333;
+          font-size: 0.9rem;
+      }
+      .review-date {
+          color: #999;
+          font-size: 0.75rem;
+          margin-top: 5px;
+          display: block;
+      }
+      .review-preview {
+          margin-bottom: 15px;
+          padding-bottom: 15px;
+          border-bottom: 1px solid #eee;
+      }
+      .review-preview:last-child {
+          border-bottom: none;
+      }
   </style>
 </head>
 <body data-user-logged-in="<%= locals.user ? 'true' : 'false' %>">
@@ -161,18 +186,22 @@
                 
                 
                 
-                <!-- Top Reviews Section -->
+                <!-- Top Reviews Section - Dynamic from MongoDB -->
                 <% if (service.topReviews && service.topReviews.length > 0) { %>
                   <div class="top-reviews">
                     <h4>Recent Reviews</h4>
                     <% service.topReviews.forEach(review => { %>
                       <div class="review-preview">
-                        <div class="review-stars">
-                          <% for (let i = 1; i <= 5; i++) { %>
-                            <i class="fas fa-star <%= i <= review.rating ? 'filled' : '' %>"></i>
-                          <% } %>
+                        <div class="review-header-small">
+                          <strong><%= review.userName || 'Anonymous' %></strong>
+                          <div class="review-stars">
+                            <% for (let i = 1; i <= 5; i++) { %>
+                              <i class="fas fa-star <%= i <= review.rating ? 'filled' : '' %>"></i>
+                            <% } %>
+                          </div>
                         </div>
                         <p class="review-text"><%= review.comment ? `"${review.comment.substring(0, 80)}${review.comment.length > 80 ? '...' : ''}"` : 'No comment provided' %></p>
+                        <small class="review-date"><%= new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></small>
                       </div>
                     <% }) %>
                   </div>
