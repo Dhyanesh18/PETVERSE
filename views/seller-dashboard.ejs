@@ -810,6 +810,97 @@
                 grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             }
         }
+
+        /* Profile Section Styles */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background-color: rgba(243, 244, 246, 0.5);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            background-color: rgba(243, 244, 246, 0.8);
+            transform: translateX(4px);
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 1.2rem;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            min-width: 300px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -866,6 +957,88 @@
         </div>
 
         <div class="dashboard-content">
+            <!-- Profile Information Section -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-user-circle"></i>
+                        Profile Information
+                    </h2>
+                </div>
+                <div class="profile-grid">
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Email Address</div>
+                                <div class="info-value">
+                                    <%= user.email || seller.email || 'N/A' %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Phone Number</div>
+                                <div class="info-value">
+                                    <%= user.phone || seller.phone || 'N/A' %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Business Name</div>
+                                <div class="info-value">
+                                    <%= seller.businessName || 'N/A' %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Business Address</div>
+                                <div class="info-value">
+                                    <%= seller.businessAddress || 'N/A' %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Average Rating</div>
+                                <div class="info-value">
+                                    <%= rating %>/5
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Total Products</div>
+                                <div class="info-value">
+                                    <%= products.length %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="content-section">
                 <div class="section-header">
                     <h2><i class="fas fa-box"></i> Product Management</h2>
@@ -985,7 +1158,7 @@
                         </thead>
                         <tbody>
                             <% sellerOrders.forEach(order => { %>
-                                <tr>
+                                <tr data-id="<%= order._id %>">
                                     <td>#<%= order.orderNumber || order._id %></td>
                                     <td><%= order.customer.name %></td>
                                     <td>
@@ -998,16 +1171,18 @@
                                     </td>
                                     <td>₹<%= order.total.toLocaleString() %></td>
                                     <td>
-                                        <span class="status-badge <%= order.status.toLowerCase() %>">
-                                            <%= order.status %>
-                                        </span>
+                                        <select class="order-status-select status-badge <%= order.status.toLowerCase() %>" style="border: none; background: transparent; font-weight: 500; cursor: pointer;">
+                                            <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                            <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                                            <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                                            <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                            <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                        </select>
                                     </td>
                                     <td class="actions">
-                                        <% if(order.status === 'pending') { %>
-                                            <button class="btn btn-primary btn-sm" onclick="processOrder('<%= order._id %>')">
-                                                <i class="fas fa-check"></i> Process
-                                            </button>
-                                        <% } %>
+                                        <button class="btn btn-primary btn-sm update-order-status">
+                                            <i class="fas fa-save"></i> Update
+                                        </button>
                                         <button class="btn btn-info btn-sm" onclick="viewOrderDetails('<%= order._id %>')">
                                             <i class="fas fa-eye"></i> Details
                                         </button>
@@ -1214,6 +1389,34 @@
         function viewOrderDetails(orderId) {
             window.location.href = `/seller/orders/${orderId}`;
         }
+
+        // Order status update handler
+        document.addEventListener('click', async function(e) {
+            if (e.target && e.target.classList.contains('update-order-status')) {
+                const row = e.target.closest('tr');
+                const orderId = row.getAttribute('data-id');
+                const statusSelect = row.querySelector('.order-status-select');
+                const newStatus = statusSelect.value;
+
+                try {
+                    const res = await fetch(`/seller/order/${orderId}/status`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        showNotification(data.error || 'Failed to update order status', 'error');
+                        return;
+                    }
+                    showNotification('Order status updated successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } catch (err) {
+                    console.error('Error:', err);
+                    showNotification('Network error updating order status', 'error');
+                }
+            }
+        });
 
         // Notification function
         function showNotification(message, type) {

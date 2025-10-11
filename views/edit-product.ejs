@@ -184,6 +184,93 @@
             align-items: center;
             justify-content: center;
         }
+
+        /* Validation Styles */
+        .form-input.invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 5px rgba(220, 53, 69, 0.3);
+        }
+
+        .form-input.valid {
+            border-color: #28a745;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .success-icon, .error-icon {
+            position: absolute;
+            right: 10px;
+            top: 12px;
+            font-size: 1.2rem;
+            display: none;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .success-icon {
+            color: #28a745;
+        }
+
+        .error-icon {
+            color: #dc3545;
+        }
+
+        textarea ~ .success-icon,
+        textarea ~ .error-icon {
+            top: 12px;
+        }
+
+        select ~ .success-icon,
+        select ~ .error-icon {
+            right: 40px;
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .char-count {
+            font-size: 0.875rem;
+            color: #666;
+            text-align: right;
+            margin-top: 0.25rem;
+        }
+
+        .char-count.warning {
+            color: #ffc107;
+        }
+
+        .char-count.danger {
+            color: #dc3545;
+        }
     </style>
 </head>
 <body>
@@ -232,43 +319,66 @@
         <h2 class="form-title">Edit Product</h2>
         <form class="product-form" action="/seller/products/<%= product._id %>/edit" method="POST" enctype="multipart/form-data">
             <div class="form-group">
-                <label class="form-label" for="name">Product Name</label>
-                <input class="form-input" type="text" id="name" name="name" value="<%= product.name %>" required>
+                <label class="form-label" for="name">Product Name <span style="color: red;">*</span></label>
+                <input class="form-input" type="text" id="name" name="name" value="<%= product.name %>" required minlength="3" maxlength="100">
+                <i class="fas fa-check-circle success-icon" id="name-success"></i>
+                <i class="fas fa-times-circle error-icon" id="name-error"></i>
+                <div class="error-message" id="name-error-msg"></div>
+                <div class="char-count" id="name-count">0/100</div>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="description">Description</label>
-                <textarea class="form-input" id="description" name="description" rows="4" required><%= product.description %></textarea>
+                <label class="form-label" for="description">Description <span style="color: red;">*</span></label>
+                <textarea class="form-input" id="description" name="description" rows="4" required minlength="10" maxlength="500"><%= product.description %></textarea>
+                <i class="fas fa-check-circle success-icon" id="description-success"></i>
+                <i class="fas fa-times-circle error-icon" id="description-error"></i>
+                <div class="error-message" id="description-error-msg"></div>
+                <div class="char-count" id="description-count">0/500</div>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="price">Price (₹)</label>
-                <input class="form-input" type="number" id="price" name="price" step="0.01" min="0" value="<%= product.price %>" required>
+                <label class="form-label" for="price">Price (₹) <span style="color: red;">*</span></label>
+                <input class="form-input" type="number" id="price" name="price" step="0.01" min="1" max="1000000" value="<%= product.price %>" required>
+                <i class="fas fa-check-circle success-icon" id="price-success"></i>
+                <i class="fas fa-times-circle error-icon" id="price-error"></i>
+                <div class="error-message" id="price-error-msg"></div>
             </div>
 
             <div class="form-group">
                 <label class="form-label" for="discount">Discount (%)</label>
                 <input class="form-input" type="number" id="discount" name="discount" min="0" max="100" value="<%= product.discount || 0 %>">
+                <i class="fas fa-check-circle success-icon" id="discount-success"></i>
+                <i class="fas fa-times-circle error-icon" id="discount-error"></i>
+                <div class="error-message" id="discount-error-msg"></div>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="category">Category</label>
+                <label class="form-label" for="category">Category <span style="color: red;">*</span></label>
                 <select class="form-input" id="category" name="category" required>
                     <option value="">Select Category</option>
                     <option value="Pet Food" <%= product.category === 'Pet Food' ? 'selected' : '' %>>Pet Food</option>
                     <option value="Toys" <%= product.category === 'Toys' ? 'selected' : '' %>>Toys</option>
                     <option value="Accessories" <%= product.category === 'Accessories' ? 'selected' : '' %>>Accessories</option>
                 </select>
+                <i class="fas fa-check-circle success-icon" id="category-success"></i>
+                <i class="fas fa-times-circle error-icon" id="category-error"></i>
+                <div class="error-message" id="category-error-msg"></div>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="brand">Brand</label>
-                <input class="form-input" type="text" id="brand" name="brand" value="<%= product.brand %>" required>
+                <label class="form-label" for="brand">Brand <span style="color: red;">*</span></label>
+                <input class="form-input" type="text" id="brand" name="brand" value="<%= product.brand %>" required minlength="2" maxlength="50">
+                <i class="fas fa-check-circle success-icon" id="brand-success"></i>
+                <i class="fas fa-times-circle error-icon" id="brand-error"></i>
+                <div class="error-message" id="brand-error-msg"></div>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="stock">Stock Quantity</label>
-                <input class="form-input" type="number" id="stock" name="stock" min="0" value="<%= product.stock %>" required>
+                <label class="form-label" for="stock">Stock Quantity <span style="color: red;">*</span></label>
+                <input class="form-input" type="number" id="stock" name="stock" min="1" max="10000" value="<%= product.stock %>" required>
+                <i class="fas fa-check-circle success-icon" id="stock-success"></i>
+                <i class="fas fa-times-circle error-icon" id="stock-error"></i>
+                <div class="error-message" id="stock-error-msg"></div>
             </div>
 
             <% if(product.images && product.images.length > 0) { %>
@@ -374,9 +484,150 @@
             document.querySelector(`.current-image-container:nth-child(${parseInt(index) + 1})`).style.opacity = "0.3";
         }
 
+        // Validation Functions (same as add-product)
+        const validators = {
+            name: (value) => {
+                if (!value || value.trim().length === 0) return 'Product name is required';
+                if (value.length < 3) return 'Product name must be at least 3 characters';
+                if (value.length > 100) return 'Product name must not exceed 100 characters';
+                if (!/^[a-zA-Z0-9\s\-&()]+$/.test(value)) return 'Product name contains invalid characters';
+                return null;
+            },
+            description: (value) => {
+                if (!value || value.trim().length === 0) return 'Description is required';
+                if (value.length < 10) return 'Description must be at least 10 characters';
+                if (value.length > 500) return 'Description must not exceed 500 characters';
+                return null;
+            },
+            price: (value) => {
+                if (!value || value === '') return 'Price is required';
+                const numValue = parseFloat(value);
+                if (isNaN(numValue)) return 'Price must be a valid number';
+                if (numValue < 1) return 'Price must be at least ₹1';
+                if (numValue > 1000000) return 'Price cannot exceed ₹10,00,000';
+                return null;
+            },
+            discount: (value) => {
+                if (value === '' || value === null) return null;
+                const numValue = parseInt(value);
+                if (isNaN(numValue)) return 'Discount must be a valid number';
+                if (numValue < 0) return 'Discount cannot be negative';
+                if (numValue > 100) return 'Discount cannot exceed 100%';
+                return null;
+            },
+            category: (value) => {
+                if (!value || value === '') return 'Please select a category';
+                return null;
+            },
+            brand: (value) => {
+                if (!value || value.trim().length === 0) return 'Brand name is required';
+                if (value.length < 2) return 'Brand name must be at least 2 characters';
+                if (value.length > 50) return 'Brand name must not exceed 50 characters';
+                return null;
+            },
+            stock: (value) => {
+                if (!value || value === '') return 'Stock quantity is required';
+                const numValue = parseInt(value);
+                if (isNaN(numValue)) return 'Stock must be a valid number';
+                if (numValue < 1) return 'Stock must be at least 1';
+                if (numValue > 10000) return 'Stock cannot exceed 10,000';
+                return null;
+            }
+        };
+
+        function validateField(fieldId, value) {
+            const validator = validators[fieldId];
+            if (!validator) return true;
+
+            const error = validator(value);
+            const input = document.getElementById(fieldId);
+            const errorMsg = document.getElementById(`${fieldId}-error-msg`);
+            const successIcon = document.getElementById(`${fieldId}-success`);
+            const errorIcon = document.getElementById(`${fieldId}-error`);
+
+            if (error) {
+                input.classList.add('invalid');
+                input.classList.remove('valid');
+                errorMsg.textContent = error;
+                errorMsg.classList.add('show');
+                if (successIcon) successIcon.style.display = 'none';
+                if (errorIcon) errorIcon.style.display = 'block';
+                return false;
+            } else {
+                input.classList.remove('invalid');
+                input.classList.add('valid');
+                errorMsg.classList.remove('show');
+                if (successIcon) successIcon.style.display = 'block';
+                if (errorIcon) errorIcon.style.display = 'none';
+                return true;
+            }
+        }
+
+        function updateCharCount(fieldId, maxLength) {
+            const input = document.getElementById(fieldId);
+            const counter = document.getElementById(`${fieldId}-count`);
+            if (!counter) return;
+
+            const length = input.value.length;
+            counter.textContent = `${length}/${maxLength}`;
+
+            counter.classList.remove('warning', 'danger');
+            if (length > maxLength * 0.9) {
+                counter.classList.add('danger');
+            } else if (length > maxLength * 0.7) {
+                counter.classList.add('warning');
+            }
+        }
+
+        // Add real-time validation
+        ['name', 'description', 'price', 'discount', 'category', 'brand', 'stock'].forEach(fieldId => {
+            const input = document.getElementById(fieldId);
+            if (!input) return;
+
+            input.addEventListener('input', () => {
+                validateField(fieldId, input.value);
+                if (fieldId === 'name') updateCharCount('name', 100);
+                if (fieldId === 'description') updateCharCount('description', 500);
+            });
+
+            input.addEventListener('blur', () => {
+                validateField(fieldId, input.value);
+            });
+
+            // Initialize char counts
+            if (fieldId === 'name') updateCharCount('name', 100);
+            if (fieldId === 'description') updateCharCount('description', 500);
+        });
+
+        function validateAllFields() {
+            let isValid = true;
+            ['name', 'description', 'price', 'discount', 'category', 'brand', 'stock'].forEach(fieldId => {
+                const input = document.getElementById(fieldId);
+                if (!validateField(fieldId, input.value)) {
+                    isValid = false;
+                }
+            });
+            return isValid;
+        }
+
         // Form submission and modal handling
         document.querySelector('.product-form').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Validate all fields before submission
+            if (!validateAllFields()) {
+                alert('Please fix all errors before submitting');
+                const firstError = document.querySelector('.form-input.invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+                return;
+            }
+
+            const submitBtn = this.querySelector('.submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating Product...';
             
             const formData = new FormData(this);
             
@@ -396,6 +647,9 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('An error occurred. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Update Product';
             }
         });
 
