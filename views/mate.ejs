@@ -213,22 +213,7 @@
                 <% }); %>
             </div>
 
-            <!-- Pagination -->
-            <% if (totalPages > 1) { %>
-                <div class="pagination">
-                    <% if (currentPage > 1) { %>
-                        <a href="?page=<%= currentPage - 1 %>"><i class="fas fa-chevron-left"></i></a>
-                    <% } %>
-                    
-                    <% for (let i = 1; i <= totalPages; i++) { %>
-                        <a href="?page=<%= i %>" class="<%= currentPage === i ? 'active' : '' %>"><%= i %></a>
-                    <% } %>
-                    
-                    <% if (currentPage < totalPages) { %>
-                        <a href="?page=<%= currentPage + 1 %>"><i class="fas fa-chevron-right"></i></a>
-                    <% } %>
-                </div>
-            <% } %>
+            
         </div>
     </div>
 
@@ -256,32 +241,32 @@
                     </select>
                 </div>
                 
-                <div class="form-group">
-                    <label for="pet-breed">Breed <span class="required">*</span></label>
-                    <input type="text" id="pet-breed" name="breed" required>
-                </div>
+                <div class="form-group"> <label for="pet-breed">Breed <span class="required">*</span></label> <input type="text" id="pet-breed" name="breed" required> </div>
                 
                 <div class="form-group">
-                    <label for="pet-age">Age <span class="required">*</span></label>
-                    <select id="pet-age" name="ageRange" required>
-                        <option value="">Select Age Range</option>
-                        <option value="puppy">Less than 1 year</option>
-                        <option value="young">1-3 years</option>
-                        <option value="adult">4-7 years</option>
-                        <option value="senior">8+ years</option>
-                    </select>
-                </div>
+    <label for="pet-age-value">Age <span class="required">*</span></label>
+    <div style="display: flex; gap: 10px;">
+        <input type="number" 
+               id="pet-age-value" 
+               name="ageValue" 
+               placeholder="Enter age" 
+               min="0" 
+               step="0.1" 
+               required
+               style="flex: 2;">
+        <select id="pet-age-unit" 
+                name="ageUnit" 
+                required
+                style="flex: 1;">
+            <option value="">Unit</option>
+            <option value="months">Months</option>
+            <option value="years">Years</option>
+        </select>
+    </div>
+</div>
                 
-                <div class="form-group">
-                    <label>Gender <span class="required">*</span></label>
-                    <div class="radio-group">
-                        <input type="radio" id="male" name="gender" value="male" required>
-                        <label for="male">Male</label>
-                        <input type="radio" id="female" name="gender" value="female">
-                        <label for="female">Female</label>
-                    </div>
-                </div>
-                
+                <div class="form-group"> <label>Gender <span class="required">*</span></label> <div class="radio-group"> <input type="radio" id="male" name="gender" value="male" required> <label for="male">Male</label> <input type="radio" id="female" name="gender" value="female"> <label for="female">Female</label> </div> </div>
+
                 <div class="form-group">
                     <label for="pet-registration">Registration Number (if any)</label>
                     <input type="text" id="pet-registration" name="registrationNumber">
@@ -381,15 +366,18 @@
     <script src="/js/script.js"></script>
     <script src="/js/cart-manager.js"></script>
     <script>
-        
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize cart count
+            initializeCart();
+            initializeFormValidation();
+            initializeFilters();
+            initializeNavigation();
+            handleUrlMessages();
+        });
 
-            // Old form-based filtering removed - now using async fetch
+        function initializeCart() {
             if (typeof cartManager !== 'undefined') {
                 cartManager.initializeCart();
             } else {
-                // Fallback if cart-manager.js is not loaded
                 fetch('/cart/count')
                     .then(response => response.json())
                     .then(data => {
@@ -403,102 +391,372 @@
                     })
                     .catch(error => console.error('Error fetching cart count:', error));
             }
-            // Clear filters functionality
-            const clearAllFiltersBtn = document.getElementById('clear-all-filters');
-            if (clearAllFiltersBtn) {
-                clearAllFiltersBtn.addEventListener('click', async function() {
-                    // Uncheck all checkboxes
-                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                        checkbox.checked = false;
-                    });
-                    const stateFilter = document.getElementById('state-filter');
-                    const districtFilter = document.getElementById('district-filter');
-                    if (stateFilter) stateFilter.value = '';
-                    if (districtFilter) districtFilter.value = '';
+        }
+
+        function initializeFormValidation() {
+            const mateForm = document.querySelector('.mate-submission-form');
+            if (!mateForm) return;
+
+            // Phone number validation
+            const phoneInput = document.getElementById('owner-contact');
+            if (phoneInput) {
+                phoneInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
                     
-                    // Reload all pets
-                    await applyFiltersAsync();
+                    if (value.length > 10) {
+                        value = value.slice(0, 10);
+                    }
+                    
+                    e.target.value = value;
+                    
+                    if (value.length === 10) {
+                        e.target.setCustomValidity('');
+                        e.target.classList.remove('invalid');
+                        e.target.classList.add('valid');
+                    } else if (value.length > 0) {
+                        e.target.setCustomValidity('Phone number must be 10 digits');
+                        e.target.classList.add('invalid');
+                        e.target.classList.remove('valid');
+                    } else {
+                        e.target.setCustomValidity('');
+                        e.target.classList.remove('invalid', 'valid');
+                    }
                 });
             }
 
-            // Contact button functionality
-            document.querySelectorAll('.contact-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const petCard = this.closest('.pet-card');
-                    const petName = petCard.querySelector('.pet-name').textContent;
-                    const contactInfo = petCard.querySelector('.pet-details p:nth-child(4)').textContent;
-                    alert(`Contact the owner of ${petName} at ${contactInfo.split(':')[1].trim()}`);
+            // Email validation
+            const emailInput = document.getElementById('owner-email');
+            if (emailInput) {
+                emailInput.addEventListener('blur', function(e) {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (e.target.value && !emailRegex.test(e.target.value)) {
+                        e.target.setCustomValidity('Please enter a valid email address');
+                        e.target.classList.add('invalid');
+                        e.target.classList.remove('valid');
+                    } else if (e.target.value) {
+                        e.target.setCustomValidity('');
+                        e.target.classList.remove('invalid');
+                        e.target.classList.add('valid');
+                    }
                 });
-            });
+            }
 
-            // Check if the form exists on the page
-            const mateForm = document.querySelector('.mate-submission-form');
-            if (mateForm) {
-                // File upload functionality
-                const fileInput = document.getElementById('pet-image');
-                const fileInfo = document.querySelector('.file-info');
-                
-                if (fileInput && fileInfo) {
-                    fileInput.addEventListener('change', function() {
-                        if (fileInput.files.length > 0) {
-                            fileInfo.textContent = `${fileInput.files.length} file(s) selected`;
-                        } else {
-                            fileInfo.textContent = 'No files chosen (Max 4 images)';
+            // Pet name validation
+            const petNameInput = document.getElementById('pet-name');
+            if (petNameInput) {
+                petNameInput.addEventListener('input', function(e) {
+                    const nameRegex = /^[a-zA-Z\s-]*$/;
+                    if (!nameRegex.test(e.target.value)) {
+                        e.target.value = e.target.value.replace(/[^a-zA-Z\s-]/g, '');
+                    }
+                    
+                    if (e.target.value.length > 0 && e.target.value.length < 2) {
+                        e.target.setCustomValidity('Pet name must be at least 2 characters');
+                        e.target.classList.add('invalid');
+                    } else if (e.target.value.length > 30) {
+                        e.target.setCustomValidity('Pet name must be less than 30 characters');
+                        e.target.classList.add('invalid');
+                    } else {
+                        e.target.setCustomValidity('');
+                        e.target.classList.remove('invalid');
+                        if (e.target.value.length >= 2) {
+                            e.target.classList.add('valid');
                         }
-                    });
+                    }
+                });
+            }
+
+            // Age validation
+            const ageValueInput = document.getElementById('pet-age-value');
+            const ageUnitSelect = document.getElementById('pet-age-unit');
+            
+            function validateAge() {
+                if (!ageValueInput || !ageUnitSelect) return;
+                
+                const value = parseFloat(ageValueInput.value);
+                const unit = ageUnitSelect.value;
+                
+                if (!value || !unit) return;
+                
+                let isValid = true;
+                let message = '';
+                
+                if (value <= 0) {
+                    isValid = false;
+                    message = 'Age must be greater than 0';
+                } else if (unit === 'months' && value > 120) {
+                    isValid = false;
+                    message = 'Maximum age is 120 months (10 years)';
+                } else if (unit === 'years' && value > 30) {
+                    isValid = false;
+                    message = 'Maximum age is 30 years';
+                } else if (unit === 'months' && value < 1) {
+                    isValid = false;
+                    message = 'Minimum age is 1 month';
                 }
                 
-                // Form validation
-                mateForm.addEventListener('submit', function(event) {
-                    // Basic validation example
-                    const fileInput = document.getElementById('pet-image');
-                    if (fileInput && fileInput.files.length > 4) {
-                        event.preventDefault();
-                        alert('Please select a maximum of 4 images');
+                if (!isValid) {
+                    ageValueInput.setCustomValidity(message);
+                    ageValueInput.classList.add('invalid');
+                    ageValueInput.classList.remove('valid');
+                } else {
+                    ageValueInput.setCustomValidity('');
+                    ageValueInput.classList.remove('invalid');
+                    ageValueInput.classList.add('valid');
+                }
+            }
+            
+            if (ageValueInput) ageValueInput.addEventListener('input', validateAge);
+            if (ageUnitSelect) ageUnitSelect.addEventListener('change', validateAge);
+
+            // District validation
+            const districtInput = document.getElementById('district');
+            if (districtInput) {
+                districtInput.addEventListener('input', function(e) {
+                    const districtRegex = /^[a-zA-Z\s-]*$/;
+                    if (!districtRegex.test(e.target.value)) {
+                        e.target.value = e.target.value.replace(/[^a-zA-Z\s-]/g, '');
+                    }
+                    
+                    if (e.target.value.length > 0 && e.target.value.length < 2) {
+                        e.target.setCustomValidity('District name must be at least 2 characters');
+                        e.target.classList.add('invalid');
+                    } else {
+                        e.target.setCustomValidity('');
+                        e.target.classList.remove('invalid');
+                        if (e.target.value.length >= 2) {
+                            e.target.classList.add('valid');
+                        }
+                    }
+                });
+            }
+
+            // File upload validation
+            const fileInput = document.getElementById('pet-image');
+            const fileInfo = document.querySelector('.file-info');
+            
+            if (fileInput && fileInfo) {
+                fileInput.addEventListener('change', function(e) {
+                    const files = e.target.files;
+                    let errorMessage = '';
+                    
+                    if (files.length > 4) {
+                        errorMessage = 'Maximum 4 images allowed';
+                        e.target.value = '';
+                        fileInfo.textContent = errorMessage;
+                        fileInfo.style.color = '#f44336';
+                        return;
+                    }
+                    
+                    const maxSize = 5 * 1024 * 1024; // 5MB
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                    
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        
+                        if (!allowedTypes.includes(file.type)) {
+                            errorMessage = `${file.name} is not a valid image format. Use JPG, PNG, or WebP.`;
+                            break;
+                        }
+                        
+                        if (file.size > maxSize) {
+                            errorMessage = `${file.name} is too large. Maximum size is 5MB.`;
+                            break;
+                        }
+                    }
+                    
+                    if (errorMessage) {
+                        e.target.value = '';
+                        fileInfo.textContent = errorMessage;
+                        fileInfo.style.color = '#f44336';
+                        e.target.setCustomValidity(errorMessage);
+                    } else {
+                        const totalSize = Array.from(files).reduce((sum, file) => sum + file.size, 0);
+                        const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+                        fileInfo.textContent = `${files.length} file(s) selected (${totalSizeMB} MB)`;
+                        fileInfo.style.color = '#4CAF50';
+                        e.target.setCustomValidity('');
+                    }
+                });
+            }
+
+            // Description character count
+            const descriptionTextarea = document.getElementById('pet-description');
+            if (descriptionTextarea) {
+                const maxChars = 500;
+                const counterDiv = document.createElement('div');
+                counterDiv.className = 'char-counter';
+                counterDiv.style.cssText = 'font-size: 0.9rem; color: #666; margin-top: 5px;';
+                descriptionTextarea.parentNode.appendChild(counterDiv);
+                
+                descriptionTextarea.addEventListener('input', function(e) {
+                    const length = e.target.value.length;
+                    counterDiv.textContent = `${length}/${maxChars} characters`;
+                    
+                    if (length > maxChars) {
+                        e.target.value = e.target.value.slice(0, maxChars);
+                        counterDiv.textContent = `${maxChars}/${maxChars} characters (limit reached)`;
+                        counterDiv.style.color = '#f44336';
+                    } else if (length > maxChars * 0.9) {
+                        counterDiv.style.color = '#ff9800';
+                    } else {
+                        counterDiv.style.color = '#666';
+                    }
+                    
+                    if (length < 20 && length > 0) {
+                        e.target.setCustomValidity('Description must be at least 20 characters');
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                });
+            }
+
+            // Registration number validation
+            const regNumberInput = document.getElementById('pet-registration');
+            if (regNumberInput) {
+                regNumberInput.addEventListener('input', function(e) {
+                    const regRegex = /^[a-zA-Z0-9-]*$/;
+                    if (!regRegex.test(e.target.value)) {
+                        e.target.value = e.target.value.replace(/[^a-zA-Z0-9-]/g, '');
+                    }
+                });
+            }
+
+            const breedInput = document.getElementById('pet-breed');
+            if (breedInput) {
+                breedInput.addEventListener('input', function(e) {
+                    const breedRegex = /^[a-zA-Z\s-]*$/;
+                    if (!breedRegex.test(e.target.value)) {
+                        e.target.value = e.target.value.replace(/[^a-zA-Z\s-]/g, '');
+                    }
+                    
+                    if (e.target.value.length > 0 && e.target.value.length < 2) {
+                        e.target.setCustomValidity('Breed must be at least 2 characters');
+                        e.target.classList.add('invalid');
+                        e.target.classList.remove('valid');
+                    } else if (e.target.value.length > 50) {
+                        e.target.setCustomValidity('Breed must be less than 50 characters');
+                        e.target.classList.add('invalid');
+                        e.target.classList.remove('valid');
+                    } else {
+                        e.target.setCustomValidity('');
+                        e.target.classList.remove('invalid');
+                        if (e.target.value.length >= 2) {
+                            e.target.classList.add('valid');
+                        }
+                    }
+                });
+            }
+
+            // State-district relationship
+            const stateSelect = document.getElementById('state');
+            if (stateSelect && districtInput) {
+                stateSelect.addEventListener('change', function() {
+                    if (this.value) {
+                        const stateName = this.options[this.selectedIndex].text;
+                        districtInput.placeholder = `Enter district in ${stateName}`;
+                    } else {
+                        districtInput.placeholder = 'Enter district name';
+                    }
+                });
+            }
+
+            // Form submission
+            mateForm.addEventListener('submit', function(event) {
+                let isValid = true;
+                const errors = [];
+                
+                const requiredFields = mateForm.querySelectorAll('[required]');
+                requiredFields.forEach(field => {
+                    if (!field.value || (field.type === 'checkbox' && !field.checked)) {
+                        isValid = false;
+                        field.classList.add('invalid');
+                        errors.push(`${field.name || field.id} is required`);
                     }
                 });
                 
-                // Optional: State-district relationship
-                const stateSelect = document.getElementById('state');
-                const districtInput = document.getElementById('district');
-                
-                if (stateSelect && districtInput) {
-                    stateSelect.addEventListener('change', function() {
-                        districtInput.placeholder = `Enter district in ${stateSelect.options[stateSelect.selectedIndex].text}`;
-                    });
+                if (fileInput && fileInput.files.length === 0) {
+                    isValid = false;
+                    errors.push('At least one image is required');
                 }
-            }
-            
-            // Hamburger menu functionality
-            const hamburger = document.querySelector('.hamburger');
-            const navLinks = document.querySelector('.nav-links');
-            
-            if (hamburger && navLinks) {
-                hamburger.addEventListener('click', function() {
-                    navLinks.classList.toggle('active');
-                });
-            }
+                
+                if (fileInput && fileInput.files.length > 4) {
+                    isValid = false;
+                    errors.push('Maximum 4 images allowed');
+                }
+                
+                if (phoneInput && phoneInput.value.length !== 10) {
+                    isValid = false;
+                    errors.push('Phone number must be exactly 10 digits');
+                }
+                
+                const termsCheckbox = document.getElementById('terms');
+                if (termsCheckbox && !termsCheckbox.checked) {
+                    isValid = false;
+                    errors.push('You must agree to the Terms & Conditions');
+                }
+                
+                const healthCheckbox = document.getElementById('health-check');
+                if (healthCheckbox && !healthCheckbox.checked) {
+                    isValid = false;
+                    errors.push('You must confirm your pet is healthy and vaccinated');
+                }
+                
+                if (!isValid) {
+                    event.preventDefault();
+                    
+                    let errorMessage = 'Please fix the following errors:\n\n';
+                    errors.slice(0, 5).forEach(error => {
+                        errorMessage += '• ' + error + '\n';
+                    });
+                    
+                    alert(errorMessage);
+                    
+                    const firstInvalid = mateForm.querySelector('.invalid, [required]:invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus();
+                    }
+                } else {
+                    const submitBtn = mateForm.querySelector('.submit-mate-btn');
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                    }
+                }
+            });
+        }
 
-            // ============= ASYNC FILTER FUNCTIONALITY =============
+        function initializeFilters() {
             const petsGrid = document.querySelector('.pets-grid');
+            if (!petsGrid) return;
+
             const petTypeCheckboxes = document.querySelectorAll('input[name="petType"]');
             const genderCheckboxes = document.querySelectorAll('input[name="gender"]');
             const breedCheckboxes = document.querySelectorAll('input[name="breed"]');
             const stateSelect = document.getElementById('state-filter');
             const districtInput = document.getElementById('district-filter');
 
-            // Only add event listeners, don't trigger on page load
-            if (petsGrid) {
-                petTypeCheckboxes.forEach(cb => cb.addEventListener('change', applyFiltersAsync));
-                genderCheckboxes.forEach(cb => cb.addEventListener('change', applyFiltersAsync));
-                breedCheckboxes.forEach(cb => cb.addEventListener('change', applyFiltersAsync));
-                if (stateSelect) stateSelect.addEventListener('change', applyFiltersAsync);
-                if (districtInput) districtInput.addEventListener('input', debounce(applyFiltersAsync, 500));
+            petTypeCheckboxes.forEach(cb => cb.addEventListener('change', applyFiltersAsync));
+            genderCheckboxes.forEach(cb => cb.addEventListener('change', applyFiltersAsync));
+            breedCheckboxes.forEach(cb => cb.addEventListener('change', applyFiltersAsync));
+            if (stateSelect) stateSelect.addEventListener('change', applyFiltersAsync);
+            if (districtInput) districtInput.addEventListener('input', debounce(applyFiltersAsync, 500));
+
+            // Clear filters button
+            const clearAllFiltersBtn = document.getElementById('clear-all-filters');
+            if (clearAllFiltersBtn) {
+                clearAllFiltersBtn.addEventListener('click', async function() {
+                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    if (stateSelect) stateSelect.value = '';
+                    if (districtInput) districtInput.value = '';
+                    await applyFiltersAsync();
+                });
             }
 
             async function applyFiltersAsync() {
-                if (!petsGrid) return;
-
                 const selectedPetTypes = Array.from(petTypeCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
                 const selectedGenders = Array.from(genderCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
                 const selectedBreeds = Array.from(breedCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
@@ -535,7 +793,6 @@
                     
                     if (pet.images && pet.images.length > 0) {
                         const image = pet.images[0];
-                        // Use pre-converted base64 string from backend
                         if (image.dataBase64) {
                             imageHtml = `<img src="data:${image.contentType};base64,${image.dataBase64}" alt="${pet.name}">`;
                         }
@@ -566,45 +823,96 @@
                     `;
                 }).join('');
             }
+        }
 
-            function arrayBufferToBase64(buffer) {
-                if (!buffer) return '';
-                
-                // Handle array buffer
-                if (Array.isArray(buffer)) {
-                    const bytes = new Uint8Array(buffer);
-                    let binary = '';
-                    for (let i = 0; i < bytes.length; i++) {
-                        binary += String.fromCharCode(bytes[i]);
-                    }
-                    return window.btoa(binary);
-                }
-                
-                // Handle Uint8Array or Buffer
-                if (buffer instanceof Uint8Array || buffer.buffer) {
-                    const bytes = new Uint8Array(buffer);
-                    let binary = '';
-                    for (let i = 0; i < bytes.length; i++) {
-                        binary += String.fromCharCode(bytes[i]);
-                    }
-                    return window.btoa(binary);
-                }
-                
-                return '';
+        function initializeNavigation() {
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+            
+            if (hamburger && navLinks) {
+                hamburger.addEventListener('click', function() {
+                    navLinks.classList.toggle('active');
+                });
             }
+        }
 
-            function debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
+        function handleUrlMessages() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // Success message
+            if (urlParams.get('success') === 'true') {
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success-message show';
+                successDiv.style.cssText = `
+                    background-color: #4CAF50;
+                    color: white;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                successDiv.innerHTML = `
+                    <i class="fas fa-check-circle" style="font-size: 1.5rem; margin-right: 10px;"></i>
+                    <strong>Success!</strong> Your pet has been listed for mating.
+                `;
+                
+                const submissionSection = document.querySelector('.mate-submission-section');
+                if (submissionSection) {
+                    submissionSection.insertBefore(successDiv, submissionSection.firstChild);
+                    successDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    setTimeout(() => {
+                        successDiv.style.opacity = '0';
+                        successDiv.style.transition = 'opacity 0.5s';
+                        setTimeout(() => successDiv.remove(), 500);
+                    }, 5000);
+                    
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+            
+            // Error message
+            const errorParam = urlParams.get('error');
+            if (errorParam) {
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    background-color: #f44336;
+                    color: white;
+                    padding: 15px;
+                    border-radius: 5px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                errorDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle" style="font-size: 1.5rem; margin-right: 10px;"></i>
+                    <strong>Error!</strong> ${decodeURIComponent(errorParam)}
+                `;
+                
+                const submissionSection = document.querySelector('.mate-submission-section');
+                if (submissionSection) {
+                    submissionSection.insertBefore(errorDiv, submissionSection.firstChild);
+                    errorDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
                     clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
+                    func(...args);
                 };
-            }
-        });
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
     </script>
 </body>
 </html>

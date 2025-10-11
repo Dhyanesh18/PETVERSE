@@ -234,3 +234,152 @@ exports.getMateImage = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
+exports.addMateListing = async (req, res) => {
+    try {
+        console.log('=== FORM SUBMISSION DEBUG ===');
+        console.log('Request body:', req.body);
+        console.log('Files received:', req.files ? req.files.length : 'none');
+        console.log('User authenticated:', req.user ? req.user._id : 'NO USER');
+        
+        // Check authentication
+        if (!req.user) {
+            return res.status(401).render('mate', {
+                error: 'You must be logged in to list a pet',
+                pets: await PetMate.find().lean(),
+                formData: req.body,
+                petTypes: [
+                    { value: 'dog', label: 'Dog' },
+                    { value: 'cat', label: 'Cat' },
+                    { value: 'bird', label: 'Bird' },
+                    { value: 'other', label: 'Other' }
+                ],
+                states: [
+                    { value: 'andhra-pradesh', label: 'Andhra Pradesh' },
+                    { value: 'kerala', label: 'Kerala' },
+                    { value: 'karnataka', label: 'Karnataka' },
+                    { value: 'tamil-nadu', label: 'Tamil Nadu' },
+                    { value: 'telangana', label: 'Telangana' }
+                ],
+                breeds: [
+                    { value: 'german-shepherd', label: 'German Shepherd' },
+                    { value: 'persian', label: 'Persian' },
+                    { value: 'siamese', label: 'Siamese' }
+                ],
+                selectedFilters: {},
+                currentPage: 1,
+                totalPages: 1
+            });
+        }
+        
+        // Validate required fields
+        if (!req.files || req.files.length === 0) {
+            throw new Error('At least one image is required');
+        }
+
+        // Convert age to number
+        const ageValue = parseFloat(req.body.ageValue);
+        if (isNaN(ageValue) || !req.body.ageValue) {
+            throw new Error('Age value is required and must be a number');
+        }
+
+        const ageUnit = req.body.ageUnit;
+        if (!ageUnit) {
+            throw new Error('Age unit (months/years) is required');
+        }
+
+        // Age validation
+        if (ageUnit === 'months' && ageValue > 120) {
+            throw new Error('Maximum age in months is 120 (10 years)');
+        }
+        if (ageUnit === 'years' && ageValue > 30) {
+            throw new Error('Maximum age in years is 30');
+        }
+
+        // Handle breed (including "other" option)
+        let breedValue = req.body.breed;
+        if (breedValue === 'other' && req.body.breedOther) {
+            breedValue = req.body.breedOther.toLowerCase().trim();
+        }
+
+        if (!breedValue) {
+            throw new Error('Breed is required');
+        }
+
+        const mateData = {
+            name: req.body.petName,
+            petType: req.body.petType,
+            breed: breedValue,
+            age: {
+                value: ageValue,
+                unit: ageUnit
+            },
+            gender: req.body.gender,
+            description: req.body.description,
+            location: {
+                state: req.body.state,
+                district: req.body.district
+            },
+            contact: {
+                phone: req.body.contactNumber,
+                email: req.body.email
+            },
+            images: req.files.map(file => ({
+                data: file.buffer,
+                contentType: file.mimetype
+            })),
+            registrationNumber: req.body.registrationNumber || '',
+            healthChecked: req.body.healthCheck === 'on',
+            termsAccepted: req.body.terms === 'on',
+            listedBy: req.user._id,
+            createdAt: new Date()
+        };
+
+        console.log('Creating new mate listing with data:', {
+            name: mateData.name,
+            petType: mateData.petType,
+            breed: mateData.breed,
+            age: mateData.age,
+            gender: mateData.gender
+        });
+
+        const newMate = await PetMate.create(mateData);
+        console.log('✅ Successfully created new mate listing with ID:', newMate._id);
+        
+        res.redirect('/pets/mate?success=true');
+    } catch (err) {
+        console.error('❌ Mate creation error:', err);
+        console.error('Error stack:', err.stack);
+        
+        // Get existing mates to maintain page state
+        const mates = await PetMate.find().sort({ createdAt: -1 }).lean();
+        
+        res.status(400).render('mate', {
+            error: err.message,
+            pets: mates,
+            formData: req.body,
+            petTypes: [
+                { value: 'dog', label: 'Dog' },
+                { value: 'cat', label: 'Cat' },
+                { value: 'bird', label: 'Bird' },
+                { value: 'other', label: 'Other' }
+            ],
+            states: [
+                { value: 'andhra-pradesh', label: 'Andhra Pradesh' },
+                { value: 'kerala', label: 'Kerala' },
+                { value: 'karnataka', label: 'Karnataka' },
+                { value: 'tamil-nadu', label: 'Tamil Nadu' },
+                { value: 'telangana', label: 'Telangana' }
+            ],
+            breeds: [
+                { value: 'german-shepherd', label: 'German Shepherd' },
+                { value: 'labrador', label: 'Labrador' },
+                { value: 'persian', label: 'Persian' },
+                { value: 'siamese', label: 'Siamese' }
+            ],
+            selectedFilters: {},
+            currentPage: 1,
+            totalPages: 1
+        });
+    }
+};
