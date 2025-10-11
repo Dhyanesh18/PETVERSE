@@ -214,7 +214,7 @@ body {
 }
 
 .create-event-btn {
-    background: linear-gradient(135deg, #16a3c3 0%, #4caf9d C 100%);
+    background-color: #14afaf;
     color: white;
     padding: 12px 25px;
     border-radius: 8px;
@@ -507,4 +507,25 @@ body {
     font-size: 1.1rem;
     font-weight: 500;
     color: #666;
+}
+
+.event-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%; /* Important: makes all cards the same height if container allows */
+}
+
+.event-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* ensures it expands to fill available height */
+}
+
+.event-footer {
+    margin-top: auto; /* pushes it to the bottom */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
 }

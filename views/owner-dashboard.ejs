@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="/css/homepage.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="icon" href="/images/icon.jpg">
-    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="/css/styles.css">
     <style>
         :root {
             --primary: rgb(0,180,180);
@@ -516,46 +516,6 @@
             animation: fadeIn 0.5s ease-out forwards;
         }
 
-        /* Navigation Bar Styles */
-        .navbar {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            width: 100%;
-            background-color: black;
-            padding: 1rem 2rem;
-        }
-
-        .nav-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-        }
-
-        .logo a {
-            color: white;
-            text-decoration: none;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .nav-icons {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            position: relative;
-        }
-
         .cart-count {
             position: absolute;
             top: -8px;
@@ -567,69 +527,7 @@
             font-size: 0.75rem;
         }
 
-        .search {
-            position: relative;
-    display: flex
-;
-    align-items: center;
-    gap: 0.5rem;
-            
-        }
-
-        .search-bar {
-            width: 100%;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            border: none;
-            font-size: 0.9rem;
-            width: clamp(150px, 30vw, 300px);
-            min-width: 100px;
-            max-width: 300px;
-            border-radius: 4px;
-            border: none;
-            padding: 5px 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-            transition: all 0.3s ease;
-
-        }
-
-        .search-btn {
-            border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
-    cursor: pointer;
-    transition: all 0.3s ease;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s ease;
-        }
-
-        .nav-links a:hover {
-            color: rgb(0,180,180);
-        }
-
-        .hamburger {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 1.5rem;
-        }
-
+    
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -1009,6 +907,10 @@
             font-style: italic;
         }
         
+        .dashboard-header {
+            margin-top: 40px;
+        }
+
         /* Real-time notification styles */
         .notification {
             position: fixed;
@@ -1111,42 +1013,7 @@
 </head>
 
 <body>
-    <!-- Main Navigation Header -->
-    <header class="header" id="header">
-        <nav id="navbar" class="navbar">
-            <div class="nav-content">
-                <div class="logo"><a href="/home"><i class="fa fa-paw"></i> PetVerse</a></div>
-                <div class="nav-icons">
-                    <button onclick="window.location.href='/cart'" class="icon-btn"><i class="fa fa-shopping-cart"></i></button>
-                    <button onclick="window.location.href='/owner-dashboard'" class="icon-btn"><i class="fa fa-user"></i></button>
-                </div>
-                <div class="search">
-                    <input class="search-bar" type="text" placeholder=" Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <% navLinks.forEach(function(link) { %>
-                        <% if (link.dropdown) { %>
-                            <li class="dropdown">
-                                <a href="<%= link.url %>" class="dropdown-toggle"><%= link.name %> <i class="fa fa-angle-down"></i></a>
-                                <ul class="dropdown-menu">
-                                    <% link.dropdownItems.forEach(function(item) { %>
-                                        <li><a href="<%= item.url %>"><%= item.name %></a></li>
-                                    <% }); %>
-                                </ul>
-                            </li>
-                        <% } else { %>
-                            <li><a href="<%= link.url %>"><%= link.name %></a></li>
-                        <% } %>
-                    <% }); %>
-                </ul>
-            </div>
-        </nav>
-    </header>
-
+    <%- include('partials/header') %>
     <div class="dashboard-container">
         <header class="dashboard-header">
             <h1 class="header-title">
@@ -1543,33 +1410,7 @@
             </div>
         </div>
     </div>
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-logo">
-                <h2>PetVerse</h2>
-                <p>Your one-stop destination for all pet needs</p>
-            </div>
-            <div class="footer-links">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="/about">About Us</a></li>
-                    <li><a href="/products">Shop</a></li>
-                    <li><a href="/services">Services</a></li>
-                    <li><a href="/pets">Pets</a></li>
-                    <li><a href="/home">Home</a></li>
-                </ul>
-            </div>
-            <div class="footer-social">
-                <h3>Follow Us</h3>
-                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
-                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
-                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
-        </div>
-    </footer>
+    <%- include('partials/footer') %>
     <script>
         // Update cart count on page load
         document.addEventListener('DOMContentLoaded', function () {
@@ -1587,44 +1428,7 @@
         }
     </script>
     <script>
-        // Get all dropdown toggles and menus
-        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
-
-        // Add click event to each dropdown toggle
-        dropdownToggles.forEach((toggle, index) => {
-            toggle.addEventListener('click', function(event) {
-                event.stopPropagation(); // Prevent this click from triggering the document click handler
-
-                // Close all other dropdown menus first
-                dropdownMenus.forEach((menu, menuIndex) => {
-                    if (menuIndex !== index) {
-                        menu.classList.remove('show');
-                    }
-                });
-        
-            // Toggle the current dropdown menu
-                const currentDropdownMenu = this.nextElementSibling;
-                currentDropdownMenu.classList.toggle('show');
-            });
-        });
-
-    // Close all dropdowns when clicking anywhere else on the page
-        document.addEventListener('click', function(event) {
-            // Check if click is outside of any dropdown
-            if (!event.target.closest('.dropdown')) {
-            // Close all dropdown menus
-                dropdownMenus.forEach(menu => {
-                    if (menu.classList.contains('show')) {
-                        menu.classList.remove('show');
-                    }
-                });
-            }
-        });
-    </script>
-    <script>
         window.addEventListener('pageshow', function(event) {
-            // If the page is loaded from bfcache, force a reload to check session
             if (event.persisted) {
                 window.location.reload();
             }
@@ -1632,7 +1436,6 @@
     </script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-    // Industrial-grade real-time order management system
     class RealTimeOrderManager {
         constructor() {
             this.socket = null;
@@ -1742,7 +1545,6 @@
         }
         
         handleOrderUpdate(data) {
-            // Update specific order in the UI
             const orderElement = document.querySelector(`[data-order-id="${data.orderId}"]`);
             if (orderElement) {
                 const statusElement = orderElement.querySelector('.order-status');

@@ -541,4 +541,28 @@ hr {
     position: relative;
 }
 
+/* 🧩 Fix uneven card footer alignment */
+.product-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* ensures consistent height within the grid */
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* allows info section to stretch */
+}
+
+.product-description {
+    flex-grow: 1; /* allows the text area to expand naturally */
+}
+
+.product-action {
+    margin-top: auto; /* pushes the buttons to the bottom */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 

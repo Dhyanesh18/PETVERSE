@@ -27,6 +27,58 @@
             justify-content: center;
             align-items: center;
         }
+        .product-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* ensures consistent height within the grid */
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* allows info section to stretch */
+}
+
+.product-description {
+    flex-grow: 1; /* allows the text area to expand naturally */
+}
+
+.product-action {
+    margin-top: auto; /* pushes the buttons to the bottom */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px;
+    margin-bottom: 5px
+}
+
+.product-info {
+    padding-top: 0px;  /* was 15px — reduces top space */
+    padding-right: 15px;
+    margin-right: 5px;     
+    margin-left: 5px
+}
+
+.product-price {
+    font-size: larger;
+    font-weight: 500;
+    color:#00a152;
+}
+
+.add-to-cart {
+    margin: 0px;
+    padding-left: 10px
+}
+
+.pet-details {
+    margin-bottom: 15px;
+}
+
+.product-name {
+    margin-top: -15px;      /* ensures no extra top gap */
+    margin-bottom: 10px; /* was 8px — tighter spacing below name */
+    font-size: large;
+}
     </style>
 </head>
 <body>
@@ -137,7 +189,7 @@
                             <% } %>
                         </div>
                         <div class="product-info">
-                            <h3 class="product-name"><%= pet.name %></h3>
+                            <h3 class="product-name"><%= pet.breed %></h3>
                             <p class="product-description"><%= pet.description %></p>
                             <div class="product-price">₹<%= pet.price.toFixed(2) %></div>
                             <div class="pet-details">

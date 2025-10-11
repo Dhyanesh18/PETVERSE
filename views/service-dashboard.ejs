@@ -387,117 +387,6 @@
             background: var(--primary-dark);
         }
 
-        /* Navigation Bar Styles */
-        .navbar {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            width: 100%;
-            background-color: black;
-            padding: 1rem 2rem;
-        }
-
-        .nav-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-        }
-
-        .logo a {
-            color: white;
-            text-decoration: none;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .nav-icons {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            position: relative;
-        }
-
-        .cart-count {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background-color: #FF6B01;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 50%;
-            font-size: 0.75rem;
-        }
-
-        .search {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .search-bar {
-            width: 100%;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            border: none;
-            font-size: 0.9rem;
-            width: clamp(150px, 30vw, 300px);
-            min-width: 100px;
-            max-width: 300px;
-            border-radius: 4px;
-            border: none;
-            padding: 5px 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-            transition: all 0.3s ease;
-        }
-
-        .search-btn {
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s ease;
-        }
-
-        .nav-links a:hover {
-            color: #FF6B01;
-        }
-
-        .hamburger {
-            display: none;
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 1.5rem;
-        }
-
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
@@ -582,35 +471,7 @@
 
 <body>
     <!-- Main Navigation Header -->
-    <header class="header" id="header">
-        <nav id="navbar" class="navbar" style="background-color: black;">
-            <div class="nav-content">
-                <div class="logo"><a href="#">PetVerse</a></div>
-                <div class="nav-icons">
-                    <button class="icon-btn cart-icon" id="cartIcon" onclick="window.location.href='/cart'">
-                        <i class="fa fa-shopping-cart"></i>
-                        <span class="cart-count" id="cartCount"
-                            style="font-size: small;background-color: #FF6B01;border-radius: 5px; width: 15px;">0</span>
-                    </button>
-                    <button class="icon-btn"><i class="fa fa-user"></i></button>
-                </div>
-                <div class="search">
-                    <input type="text" class="search-bar" placeholder="Search pets, products or services">
-                    <button class="search-btn"><i class="fa fa-search"></i></button>
-                </div>
-                <button class="hamburger" id="hamburger">
-                    <i class="fa fa-bars"></i>
-                </button>
-                <ul class="nav-links">
-                    <li><a href="/">Home</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#searchby-pet">Pets</a></li>
-                    <li><a href="#">Products</a></li>
-                    <li><a href="#">Services</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
 
     <div class="dashboard-container">
         <header class="dashboard-header">
@@ -804,33 +665,7 @@
             </div>
         </section>
     </div>
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-logo">
-                <h2>PetVerse</h2>
-                <p>Your one-stop destination for all pet needs</p>
-            </div>
-            <div class="footer-links">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Shop</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Events</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
-            </div>
-            <div class="footer-social">
-                <h3>Follow Us</h3>
-                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
-                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
-                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
-        </div>
-    </footer>
+    <%- include('partials/footer') %>
     <script src="/js/cart.js"></script>
     <script>
         // Appointment functions
