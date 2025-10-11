@@ -1,0 +1,211 @@
+.container {
+    margin: 40px;
+    margin-top: -10px;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+h2 {
+    color: #444;
+    margin-top: 50px;
+    margin-bottom: 20px;
+}
+
+
+.pet-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; 
+}
+
+.pet-description {
+    flex-grow: 1; 
+}
+
+.pet-action {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0px;
+    margin-bottom: 5px;
+    gap: 0.6rem;
+}
+
+.pet-info {
+    padding: 15px;
+    padding-top: 30px;
+    margin-right: 5px;     
+    margin-left: 5px
+}
+
+.product-price {
+    font-size: larger;
+    font-weight: 500;
+    color:#00a152;
+}
+
+.add-to-cart {
+    margin: 0px;
+    padding-left: 10px
+}
+
+.pet-details {
+    margin-bottom: 15px;
+}
+
+.pet-name {
+    margin-top: -15px;      
+    margin-bottom: 10px; 
+    font-size: large;
+    font-weight: 600;
+}
+
+/* Service Cards */
+.services-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.service-card {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 25px;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+.service-image {
+    height: 200px;
+    overflow: hidden;
+}
+
+.service-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.service-card:hover .service-image img {
+    transform: scale(1.1);
+}
+
+.service-info {
+    padding: 20px;
+}
+
+.service-name {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.provider-label {
+    font-size: 0.8rem;
+    background-color: #0f9fa4;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 15px;
+    font-weight: 400;
+    vertical-align: middle;
+}
+
+.rating-label {
+    font-weight: 500;
+    color: #555;
+    margin-right: 5px;
+}
+
+.service-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    align-items: center;
+}
+
+.service-category {
+    display: inline-block;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+}
+
+.service-location {
+    color: #666;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+
+.service-description {
+    color: #555;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+    display: -webkit-box;
+    line-clamp:3;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 3.6em;
+}
+
+.view-details-btn {
+    background: linear-gradient(135deg, #3b99c1 0%, #08a993 100%);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-top: 10px;
+    width: 100%
+}
+
+.view-details-btn:hover {
+    background-color: #13e0cf;
+    transform: scale(1.05);
+}
+
+.service-contact {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 15px;
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.service-contact i {
+    color: #0f9fa4;
+    margin-right: 5px;
+}
+
+.service-email {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.service-category {
+    background-color: #0f9fa4;
+}
+

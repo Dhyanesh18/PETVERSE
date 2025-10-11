@@ -541,25 +541,24 @@ hr {
     position: relative;
 }
 
-/* 🧩 Fix uneven card footer alignment */
-.product-card {
+.product-card, .pet-card {
     display: flex;
     flex-direction: column;
-    height: 100%; /* ensures consistent height within the grid */
+    height: 100%;
 }
 
-.product-info {
+.product-info, .pet-info {
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* allows info section to stretch */
+    flex-grow: 1; 
 }
 
-.product-description {
-    flex-grow: 1; /* allows the text area to expand naturally */
+.product-description, .pet-description{
+    flex-grow: 1;
 }
 
-.product-action {
-    margin-top: auto; /* pushes the buttons to the bottom */
+.product-action, .pet-action {
+    margin-top: auto; 
     display: flex;
     justify-content: space-between;
     align-items: center;

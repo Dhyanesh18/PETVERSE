@@ -59,7 +59,6 @@
     </nav>
 </header>
 
-<!-- Add JavaScript for dropdowns and hamburger menu if not already present globally -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('navbarSearchInput');
@@ -128,7 +127,8 @@
         // Pressing Enter redirects to full search page
         searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            window.location.href = `/search?q=${encodeURIComponent(searchInput.value)}`;
+            resultsDropdown.style.display = 'none';
+            window.location.href = `/search?q=${encodeURIComponent(searchInput.value.trim())}`;
         }
         });
 
@@ -158,7 +158,7 @@
             toggle.addEventListener('click', function(e) {
                 // Prevent default link behavior if it's just a toggle (#)
                 if (this.getAttribute('href') === '#') {
-                   e.preventDefault(); 
+                    e.preventDefault(); 
                 }
                 
                 // Get the current dropdown menu
