@@ -95,27 +95,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // ============= SERVICES FILTERING FUNCTIONALITY =============
   
-  const serviceCards = document.querySelectorAll('.service-card');
   const categoryCheckboxes = document.querySelectorAll('input[name="category"]');
   const ratingCheckboxes = document.querySelectorAll('input[name="rating"]');
+  const servicesContainer = document.querySelector('.services-container');
+  
+  // Store original services HTML on page load
+  let originalServicesHTML = servicesContainer ? servicesContainer.innerHTML : '';
+  let isFiltering = false;
   
   if (categoryCheckboxes.length > 0) {
     categoryCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', applyFilters);
+      checkbox.addEventListener('change', applyFiltersAsync);
     });
   }
   
   if (ratingCheckboxes.length > 0) {
     ratingCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', applyFilters);
+      checkbox.addEventListener('change', applyFiltersAsync);
     });
   }
   
   const applyPriceBtn = document.getElementById('apply-price');
   if (applyPriceBtn) {
-    applyPriceBtn.addEventListener('click', applyFilters);
+    applyPriceBtn.addEventListener('click', applyFiltersAsync);
   }
   
   const clearFiltersBtn = document.querySelector('.clear-filters');
@@ -123,8 +126,10 @@ document.addEventListener('DOMContentLoaded', function() {
     clearFiltersBtn.addEventListener('click', clearAllFilters);
   }
   
-  function applyFilters() {
-    if (!serviceCards.length) return;
+  async function applyFiltersAsync() {
+    if (!servicesContainer || isFiltering) return;
+    
+    isFiltering = true;
     
     const selectedCategories = Array.from(categoryCheckboxes)
       .filter(checkbox => checkbox.checked)
@@ -134,51 +139,145 @@ document.addEventListener('DOMContentLoaded', function() {
       .filter(checkbox => checkbox.checked)
       .map(checkbox => parseFloat(checkbox.value));
     
-    const minPrice = document.getElementById('min-price')?.value ? 
-      parseFloat(document.getElementById('min-price').value) : 0;
+    const minPrice = document.getElementById('min-price')?.value || '';
+    const maxPrice = document.getElementById('max-price')?.value || '';
     
-    const maxPrice = document.getElementById('max-price')?.value ? 
-      parseFloat(document.getElementById('max-price').value) : Infinity;
+    // Build query parameters
+    const params = new URLSearchParams();
     
-    serviceCards.forEach(card => {
-      const category = card.dataset.category.toLowerCase();
-      const rating = parseFloat(card.dataset.rating) || 0;
-      const price = parseFloat(card.dataset.price) || 0;
+    if (selectedCategories.length > 0) {
+      params.append('categories', selectedCategories.join(','));
+    }
+    
+    if (minPrice) {
+      params.append('minPrice', minPrice);
+    }
+    
+    if (maxPrice) {
+      params.append('maxPrice', maxPrice);
+    }
+    
+    if (selectedRatings.length > 0) {
+      const minRating = Math.min(...selectedRatings);
+      params.append('minRating', minRating);
+    }
+    
+    // Show loading state
+    servicesContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i><p>Loading services...</p></div>';
+    
+    try {
+      const response = await fetch(`/services/api/filter?${params.toString()}`);
       
-      const passesCategory = selectedCategories.length === 0 || selectedCategories.includes(category);
-      const passesRating = selectedRatings.length === 0 || selectedRatings.some(r => rating >= r);
-      const passesPrice = price >= minPrice && price <= maxPrice;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
-      if (passesCategory && passesRating && passesPrice) {
-        card.style.display = 'block';
+      const data = await response.json();
+      
+      if (data.success && data.services && data.services.length > 0) {
+        renderServices(data.services);
+      } else if (data.success && data.services && data.services.length === 0) {
+        servicesContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><p>No services match your filters. Please try different criteria.</p></div>';
       } else {
-        card.style.display = 'none';
+        throw new Error(data.message || 'Failed to load services');
       }
-    });
-    
-    const visibleCards = Array.from(serviceCards).filter(card => card.style.display !== 'none');
-    const servicesContainer = document.querySelector('.services-container');
-    let noResults = document.getElementById('no-results');
-    
-    if (visibleCards.length === 0 && servicesContainer) {
-      if (!noResults) {
-        noResults = document.createElement('div');
-        noResults.id = 'no-results';
-        noResults.innerHTML = '<p>No services match your filters. Please try different criteria.</p>';
-        noResults.style.textAlign = 'center';
-        noResults.style.width = '100%';
-        noResults.style.padding = '20px';
-        noResults.style.color = '#666';
-        servicesContainer.appendChild(noResults);
-      } else {
-        noResults.style.display = 'block';
-      }
-    } else if (noResults) {
-      noResults.style.display = 'none';
+    } catch (error) {
+      console.error('Error filtering services:', error);
+      servicesContainer.innerHTML = '<div style="text-align: center; padding: 40px; color: #f44336;"><p>Error loading services. Please try again.</p><small style="display: block; margin-top: 10px;">' + error.message + '</small></div>';
+    } finally {
+      isFiltering = false;
     }
   }
   
-  function clearAllFilters() {
+  function renderServices(services) {
+    if (!servicesContainer) return;
+    
+    servicesContainer.innerHTML = services.map(service => {
+      // Skip services without serviceType
+      if (!service.serviceType) return '';
+      
+      const serviceType = service.serviceType;
+      const imagePath = getServiceImage(serviceType);
+      const reviewsHtml = service.topReviews && service.topReviews.length > 0 
+        ? `<div class="top-reviews">
+            <h4>Recent Reviews</h4>
+            ${service.topReviews.map(review => `
+              <div class="review-preview">
+                <div class="review-header-small">
+                  <strong>${review.userName || 'Anonymous'}</strong>
+                  <div class="review-stars">
+                    ${generateStars(review.rating)}
+                  </div>
+                </div>
+                <p class="review-text">"${review.comment ? (review.comment.substring(0, 80) + (review.comment.length > 80 ? '...' : '')) : 'No comment provided'}"</p>
+                <small class="review-date">${formatDate(review.createdAt)}</small>
+              </div>
+            `).join('')}
+          </div>`
+        : '';
+      
+      return `
+        <div class="service-card" 
+          data-category="${serviceType.toLowerCase()}" 
+          data-price="${service.price || 0}" 
+          data-rating="${service.rating || 0}">
+          <div class="service-image">
+            <img src="${imagePath}" alt="${service.fullName || 'Service Provider'}">
+          </div>
+          <div class="service-info">
+            <h2 class="service-name">${service.fullName || 'Service Provider'}</h2>
+            <div class="service-meta">
+              <p class="service-category">${serviceType}</p>
+            </div>
+            <p class="service-location">${service.serviceAddress || 'Location not specified'}</p>
+            <p class="service-contact">
+              <i class="fa fa-phone"></i> ${service.phone || 'N/A'} 
+              <span class="service-email"><i class="fa fa-envelope"></i> ${service.email || 'N/A'}</span>
+            </p>
+            ${reviewsHtml}
+            <div class="service-buttons">
+              <button class="service-btn" onclick="bookService('${service.id}')">
+                Book Appointment
+              </button>
+              <a href="/services/${service.id}" class="service-btn details-btn">
+                View Details
+              </a>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  function getServiceImage(serviceType) {
+    if (!serviceType) return '/images/services/service2.jpg';
+    
+    const imageMap = {
+      'veterinarian': '/images/services/service1.jpg',
+      'groomer': '/images/services/service7.jpg',
+      'pet sitter': '/images/services/service11.jpg',
+      'trainer': '/images/services/service6.jpg',
+      'breeder': '/images/services/service12.jpg'
+    };
+    return imageMap[serviceType.toLowerCase()] || '/images/services/service2.jpg';
+  }
+  
+  function generateStars(rating) {
+    let starsHtml = '';
+    for (let i = 1; i <= 5; i++) {
+      starsHtml += `<i class="fas fa-star ${i <= rating ? 'filled' : ''}"></i>`;
+    }
+    return starsHtml;
+  }
+  
+  function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+  }
+  
+  async function clearAllFilters() {
     categoryCheckboxes.forEach(checkbox => {
       checkbox.checked = false;
     });
@@ -192,14 +291,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (minPriceInput) minPriceInput.value = '';
     if (maxPriceInput) maxPriceInput.value = '';
     
-    serviceCards.forEach(card => {
-      card.style.display = 'block';
-    });
-    
-    const noResults = document.getElementById('no-results');
-    if (noResults) {
-      noResults.style.display = 'none';
-    }
+    // Reload all services
+    await applyFiltersAsync();
   }
   
   // ============= BOOKING FUNCTIONALITY =============
