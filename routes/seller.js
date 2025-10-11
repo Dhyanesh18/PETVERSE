@@ -14,10 +14,10 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
         console.log('Dashboard route - User ID:', req.user._id);
         console.log('User role:', req.user.role);
         
-        // For regular user models, we need to check if it's a seller discriminator
-        const seller = req.user.role === 'seller' ? req.user : await Seller.findById(req.user._id);
+        // Allow admin to view seller dashboard; otherwise require seller
+        const seller = req.user.role === 'seller' ? req.user : (req.user.role === 'admin' ? await Seller.findOne({ _id: req.user._id }) : null);
         
-        if (!seller) {
+        if (!seller && req.user.role !== 'admin') {
             console.error('Seller not found for ID:', req.user._id);
             return res.status(404).render('error', { 
                 message: 'Seller not found. Make sure you are logged in with a seller account.' 
@@ -148,11 +148,15 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
         res.render('seller-dashboard', {
             user: {
                 name: seller.fullName || seller.businessName || 'Seller',
-                _id: seller._id
+                _id: seller._id,
+                email: seller.email || 'N/A',
+                phone: seller.phone || 'N/A'
             },
             seller: {
                 businessName: seller.businessName || 'Your Business',
-                businessAddress: seller.businessAddress || 'Your Address'
+                businessAddress: seller.businessAddress || 'Your Address',
+                email: seller.email || 'N/A',
+                phone: seller.phone || 'N/A'
             },
             orders: {
                 recent: recentOrders,
@@ -191,6 +195,27 @@ router.get('/orders', isAuthenticated, sellerAuth, async (req, res) => {
     }
 });
 
+// View single order details
+router.get('/orders/:orderId', isAuthenticated, sellerAuth, async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.orderId,
+            seller: req.user._id
+        })
+        .populate('customer', 'fullName email phone address')
+        .populate('items.product', 'name price images');
+
+        if (!order) {
+            return res.status(404).render('error', { message: 'Order not found' });
+        }
+
+        res.render('seller-order-details', { order });
+    } catch (error) {
+        console.error('Error fetching order details:', error);
+        res.status(500).render('error', { message: 'Error fetching order details' });
+    }
+});
+
 // Update order status
 router.post('/orders/:orderId/status', isAuthenticated, sellerAuth, async (req, res) => {
     try {
@@ -210,6 +235,29 @@ router.post('/orders/:orderId/status', isAuthenticated, sellerAuth, async (req, 
         res.redirect('/seller/orders');
     } catch (error) {
         res.status(500).render('error', { message: 'Error updating order status' });
+    }
+});
+
+// Update order status (API endpoint for AJAX)
+router.post('/order/:orderId/status', isAuthenticated, sellerAuth, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const order = await Order.findOne({
+            _id: req.params.orderId,
+            seller: req.user._id
+        });
+
+        if (!order) {
+            return res.status(404).json({ success: false, error: 'Order not found' });
+        }
+
+        order.status = status;
+        await order.save();
+
+        res.json({ success: true, message: 'Order status updated successfully' });
+    } catch (error) {
+        console.error('Error updating order status:', error);
+        res.status(500).json({ success: false, error: 'Error updating order status' });
     }
 });
 

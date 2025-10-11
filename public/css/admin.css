@@ -365,26 +365,17 @@ transform: scale(1.2);
 
 .stat-icon {
   font-size: 2rem;
-  padding: 15px;
-  border-radius: 50%;
-  color: white;
+  padding: 0;
+  color: inherit;
 }
 
-.pending-icon {
-  background-color: #f0ad4e;
-}
+.pending-icon { color: #f0ad4e; }
 
-.approved-icon {
-  background-color: #5cb85c;
-}
+.approved-icon { color: #5cb85c; }
 
-.rejected-icon {
-  background-color: #d9534f;
-}
+.rejected-icon { color: #d9534f; }
 
-.total-icon {
-  background-color: #5bc0de;
-}
+.total-icon { color: #5bc0de; }
 
 .stat-info h3 {
   font-size: 1rem;
@@ -443,6 +434,43 @@ transform: scale(1.2);
   color: #444;
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
+}
+
+/* Search + Filter bars */
+.search-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 16px;
+}
+
+.search-filter-bar .search-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-filter-bar input[type="text"] {
+  padding: 8px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  min-width: 220px;
+}
+
+.search-filter-bar button {
+  background: teal;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.search-filter-bar .filter-dropdown select,
+.search-filter-bar select {
+  padding: 8px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
 }
 
 /* Application Cards */
@@ -744,6 +772,26 @@ transform: scale(1.2);
   text-align: center;
 }
 
+/* Badges */
+.role-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.role-badge.owner { background: #e7f5fe; color: #0277bd; }
+.role-badge.seller { background: #fef3e7; color: #f57c00; }
+.role-badge.service_provider { background: #e8f5e9; color: #2e7d32; }
+.role-badge.admin { background: #ede7f6; color: #6a1b9a; }
+
+.status-badge.approved { background-color: #d4edda; color: #155724; }
+.status-badge.pending { background-color: #fff3cd; color: #856404; }
+.status-badge.rejected { background-color: #f8d7da; color: #721c24; }
+.status-badge.active { background-color: #e6f4ff; color: #0550ae; }
+
 /* Improved Admin Profile Section */
 .admin-profile-section {
   margin-top: 30px;
@@ -896,3 +944,290 @@ transform: scale(1.2);
     flex-wrap: wrap;
   }
 }
+
+/* Orders Management */
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.orders-table thead th {
+  background: #0f172a;
+  color: #fff;
+  border-bottom: none;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.orders-table tbody td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.orders-table tbody tr {
+  background: #fff;
+  transition: box-shadow 0.2s ease, transform 0.1s ease, background 0.2s ease;
+}
+
+.orders-table tbody tr:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+  background: #f9fafb;
+}
+
+.order-items { max-width: 260px; }
+.order-item { display: flex; justify-content: space-between; gap: 8px; font-size: 0.9rem; }
+.item-name { color: #374151; }
+.item-quantity { color: #6b7280; }
+
+.order-status-select {
+  padding: 6px 10px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.9rem;
+}
+
+.update-order-status {
+  background: teal;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.update-order-status:hover { background: #007f7f; }
+
+.status-badge.pending { background-color: #fff3cd; color: #856404; }
+.status-badge.processing { background-color: #d1ecf1; color: #0c5460; }
+.status-badge.completed { background-color: #d4edda; color: #155724; }
+.status-badge.cancelled { background-color: #f8d7da; color: #721c24; }
+
+/* Users table */
+.users-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.users-table thead th {
+  background: #0f172a;
+  color: #fff;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.users-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.users-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-buttons .view-btn,
+.action-buttons .edit-btn,
+.action-buttons .approve-btn,
+.action-buttons .delete-btn {
+  background: #f3f4f6;
+  border: none;
+  color: #111827;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.action-buttons .approve-btn { background: #e8f5e9; color: #2e7d32; }
+.action-buttons .delete-btn { background: #fdecea; color: #b91c1c; }
+.action-buttons .edit-btn { background: #fff7ed; color: #9a3412; }
+.action-buttons .view-btn { background: #e5f6ff; color: #0550ae; }
+
+.action-buttons button:hover { filter: brightness(0.95); }
+
+/* Product/Service/Pet lists tweaks */
+.products-grid .product-card,
+.services-grid .service-card,
+.pets-grid .pet-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 12px;
+}
+
+.product-actions button,
+.service-actions button,
+.pet-actions button {
+  background: #f3f4f6;
+  border: none;
+  color: #111827;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.product-actions button:hover,
+.service-actions button:hover,
+.pet-actions button:hover { filter: brightness(0.95); }
+
+/* Pagination controls */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.page-btn {
+  background: #0f172a;
+  color: #fff;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.page-info {
+  background: #f3f4f6;
+  color: #111827;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Pending Sellers/Providers - user cards */
+.user-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.user-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 16px;
+}
+
+.user-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.user-role {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #e5f6ff;
+  color: #0550ae;
+}
+.user-role.service_provider { background: #ede7f6; color: #6a1b9a; }
+.user-role.seller { background: #fef3e7; color: #9a3412; }
+
+.user-date { color: #6b7280; font-size: 0.9rem; }
+
+.user-body { display: flex; }
+.user-info { flex: 1; }
+.user-info h3.user-name { margin: 4px 0 6px; font-size: 1.1rem; }
+.user-email, .user-phone, .user-username { color: #4b5563; margin: 2px 0; font-size: 0.95rem; }
+.license-status, .certificate-status { color: #6b7280; font-size: 0.9rem; margin-top: 6px; }
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.user-actions .approve-btn,
+.user-actions .reject-btn,
+.user-actions .view-document-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.user-actions .approve-btn { background: #e8f5e9; color: #2e7d32; }
+.user-actions .reject-btn { background: #fdecea; color: #b91c1c; }
+.user-actions .view-document-btn { background: #e5f6ff; color: #0550ae; }
+.user-actions .view-document-btn.disabled { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; }
+
+@media (min-width: 900px) {
+  .user-list { grid-template-columns: repeat(2, 1fr); }
+}
+/* Content Management grids */
+.products-grid,
+.services-grid,
+.pets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.product-card .product-image img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.product-card .product-info h3 { margin: 8px 0 6px; font-size: 1.05rem; }
+.product-card .product-seller { color: #6b7280; font-size: 0.9rem; }
+.product-card .product-price { font-weight: 600; margin-top: 4px; }
+.product-card .product-stock { color: #6b7280; font-size: 0.9rem; }
+.product-card .product-status { margin: 6px 0; display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; }
+.product-card .product-status.approved { background: #e8f5e9; color: #2e7d32; }
+.product-card .product-status.pending { background: #fff3cd; color: #856404; }
+
+.service-card .service-info h3 { margin: 4px 0 6px; font-size: 1.05rem; }
+.service-card .service-provider,
+.service-card .service-type,
+.service-card .service-location,
+.service-card .service-description { color: #4b5563; font-size: 0.93rem; margin: 2px 0; }
+.service-card .service-status { margin: 6px 0; display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; }
+.service-card .service-status.approved { background: #e8f5e9; color: #2e7d32; }
+.service-card .service-status.pending { background: #fff3cd; color: #856404; }
+
+.pet-card .pet-image img, .pet-card .pet-image .no-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #f3f4f6;
+  display: block;
+}
+.pet-card .pet-info h3 { margin: 8px 0 6px; font-size: 1.05rem; }
+.pet-card .pet-breed, .pet-card .pet-category, .pet-card .pet-age { color: #6b7280; font-size: 0.9rem; }
+.pet-card .pet-price { font-weight: 600; margin-top: 4px; }
+.pet-card .pet-status { margin: 6px 0; display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; }
+.pet-card .pet-status.available { background: #e8f5e9; color: #2e7d32; }
+.pet-card .pet-status.unavailable { background: #fdecea; color: #b91c1c; }

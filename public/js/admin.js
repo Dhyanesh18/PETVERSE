@@ -18,8 +18,19 @@ document.addEventListener('DOMContentLoaded', function() {
           const tabId = this.getAttribute('data-tab');
           document.getElementById(`${tabId}-tab`).classList.add('active');
           
-          // Update the page title
-          document.querySelector('.page-title').textContent = `${tabId.charAt(0).toUpperCase() + tabId.slice(1)} Applications`;
+          // Update the page title with special cases
+          const titleMap = {
+              dashboard: 'Admin Dashboard',
+              pending: 'Pending Applications',
+              approved: 'Approved Applications',
+              rejected: 'Rejected Applications',
+              all: 'All Applications',
+              products: 'Product Management',
+              services: 'Service Management',
+              pets: 'Pet Management',
+              orders: 'Order Management'
+          };
+          document.querySelector('.page-title').textContent = titleMap[tabId] || `${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`;
       });
   });
   
@@ -236,6 +247,212 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Initialize counters on page load
   updateCounters();
+
+  // Orders tab: update status handler
+  document.addEventListener('click', async function(e) {
+      if (e.target && e.target.classList.contains('update-order-status')) {
+          const row = e.target.closest('tr');
+          const orderId = row.getAttribute('data-id');
+          const statusSelect = row.querySelector('.order-status-select');
+          const newStatus = statusSelect.value;
+
+          try {
+              const res = await fetch(`/admin/order/${orderId}/status`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: newStatus })
+              });
+              const data = await res.json();
+              if (!res.ok || !data.success) {
+                  alert(data.error || 'Failed to update order status');
+                  return;
+              }
+              showSuccessMessage('Order status updated');
+          } catch (err) {
+              alert('Network error updating order status');
+          }
+      }
+  });
+
+  // All Users: search and role filter
+  const userSearchInput = document.getElementById('user-search');
+  const userSearchBtn = document.getElementById('search-user-btn');
+  const userRoleFilter = document.getElementById('user-role-filter');
+  const usersTableBody = document.getElementById('users-table-body');
+
+  function filterUsers() {
+      if (!usersTableBody) return;
+      const query = (userSearchInput?.value || '').toLowerCase().trim();
+      const role = (userRoleFilter?.value || 'all');
+
+      const rows = Array.from(usersTableBody.querySelectorAll('tr'));
+      rows.forEach(row => {
+          const name = row.children[0]?.textContent?.toLowerCase() || '';
+          const username = row.children[1]?.textContent?.toLowerCase() || '';
+          const email = row.children[2]?.textContent?.toLowerCase() || '';
+          const roleBadge = row.querySelector('.role-badge')?.textContent?.toLowerCase() || '';
+
+          const matchesQuery = !query || name.includes(query) || username.includes(query) || email.includes(query);
+          const matchesRole = role === 'all' || roleBadge === role.replace('_', ' ');
+
+          row.style.display = (matchesQuery && matchesRole) ? '' : 'none';
+      });
+  }
+
+  userSearchBtn?.addEventListener('click', filterUsers);
+  userSearchInput?.addEventListener('input', () => {
+      // simple debounce
+      clearTimeout(window.__userSearchDebounce);
+      window.__userSearchDebounce = setTimeout(filterUsers, 200);
+  });
+  userRoleFilter?.addEventListener('change', filterUsers);
+
+  // Expose view/edit/delete user handlers
+  window.viewUserDetails = function(userId) {
+      const row = document.querySelector(`tr[data-id="${userId}"]`);
+      const roleText = row?.querySelector('.role-badge')?.textContent?.trim().toLowerCase();
+      let path = '/';
+      if (roleText === 'owner') path = '/owner-dashboard';
+      else if (roleText === 'seller') path = '/seller-dashboard';
+      else if (roleText === 'service_provider' || roleText === 'service provider') path = '/service-provider-dashboard';
+      else if (roleText === 'admin') path = '/admin';
+      try {
+          window.open(path, '_blank');
+      } catch (_) {
+          alert('Cannot open dashboard page.');
+      }
+  };
+
+  window.editUser = function(userId) {
+      console.log('Edit user', userId);
+      alert('Edit user not implemented yet.');
+  };
+
+  window.deleteUser = function(userId) {
+      if (!confirm('Delete this user?')) return;
+      console.log('Delete user', userId);
+      alert('Delete user not implemented yet.');
+  };
+
+  // Products: search + category filter (client-side fallback)
+  const productSearch = document.getElementById('product-search');
+  const productSearchBtn = document.getElementById('search-product-btn');
+  const productCategoryFilter = document.getElementById('product-category-filter');
+  const productsGrid = document.querySelector('.products-grid');
+
+  function normalizeCategory(value) {
+      const v = (value || '').toString().toLowerCase().replace(/[^a-z]/g, '');
+      if (v.includes('food')) return 'food';
+      if (v.includes('toy')) return 'toys';
+      if (v.includes('accessor')) return 'accessories';
+      if (v.includes('health')) return 'health';
+      return v;
+  }
+
+  function filterProducts() {
+      if (!productsGrid) return;
+      const query = (productSearch?.value || '').toLowerCase().trim();
+      const category = (productCategoryFilter?.value || 'all').toLowerCase();
+      const cards = Array.from(productsGrid.querySelectorAll('.product-card'));
+      cards.forEach(card => {
+          const name = card.getAttribute('data-name')?.toLowerCase() || '';
+          const cat = normalizeCategory(card.getAttribute('data-category')) || '';
+          const seller = card.getAttribute('data-seller')?.toLowerCase() || '';
+          const matchesQuery = !query || name.includes(query) || seller.includes(query);
+          const matchesCat = category === 'all' || cat === normalizeCategory(category);
+          card.style.display = (matchesQuery && matchesCat) ? '' : 'none';
+      });
+  }
+
+  productSearchBtn?.addEventListener('click', filterProducts);
+  productSearch?.addEventListener('input', () => {
+      clearTimeout(window.__prodSearchDebounce);
+      window.__prodSearchDebounce = setTimeout(filterProducts, 200);
+  });
+  productCategoryFilter?.addEventListener('change', filterProducts);
+
+  // Pets: search + category filter
+  const petSearch = document.getElementById('pet-search');
+  const petSearchBtn = document.getElementById('search-pet-btn');
+  const petCategoryFilter = document.getElementById('pet-category-filter');
+  const petsGrid = document.querySelector('.pets-grid');
+
+  function filterPets() {
+      if (!petsGrid) return;
+      const query = (petSearch?.value || '').toLowerCase().trim();
+      const category = (petCategoryFilter?.value || 'all');
+      const cards = Array.from(petsGrid.querySelectorAll('.pet-card'));
+      cards.forEach(card => {
+          const name = card.getAttribute('data-name') || '';
+          const breed = card.getAttribute('data-breed') || '';
+          const cat = card.getAttribute('data-category') || '';
+          const matchesQuery = !query || name.includes(query) || breed.includes(query);
+          const matchesCat = category === 'all' || cat === category;
+          card.style.display = (matchesQuery && matchesCat) ? '' : 'none';
+      });
+  }
+
+  petSearchBtn?.addEventListener('click', filterPets);
+  petSearch?.addEventListener('input', () => {
+      clearTimeout(window.__petSearchDebounce);
+      window.__petSearchDebounce = setTimeout(filterPets, 200);
+  });
+  petCategoryFilter?.addEventListener('change', filterPets);
+
+  // Services: search + type filter
+  const serviceSearch = document.getElementById('service-search');
+  const serviceSearchBtn = document.getElementById('search-service-btn');
+  const serviceTypeFilter = document.getElementById('service-type-filter');
+  const servicesGrid = document.querySelector('.services-grid');
+
+  function filterServices() {
+      if (!servicesGrid) return;
+      const query = (serviceSearch?.value || '').toLowerCase().trim();
+      const type = (serviceTypeFilter?.value || 'all').toLowerCase();
+      const cards = Array.from(servicesGrid.querySelectorAll('.service-card'));
+      cards.forEach(card => {
+          const name = card.getAttribute('data-name') || '';
+          const provider = card.getAttribute('data-provider') || '';
+          const serviceType = card.getAttribute('data-type') || '';
+          const matchesQuery = !query || name.includes(query) || provider.includes(query);
+          const matchesType = type === 'all' || serviceType.includes(type);
+          card.style.display = (matchesQuery && matchesType) ? '' : 'none';
+      });
+  }
+
+  serviceSearchBtn?.addEventListener('click', filterServices);
+  serviceSearch?.addEventListener('input', () => {
+      clearTimeout(window.__serviceSearchDebounce);
+      window.__serviceSearchDebounce = setTimeout(filterServices, 200);
+  });
+  serviceTypeFilter?.addEventListener('change', filterServices);
+
+  // Product view handler (eye icon)
+  window.viewProduct = function(productId) {
+      try {
+          window.open(`/buy/${productId}`, '_blank');
+      } catch (_) {
+          alert('Unable to open product view');
+      }
+  };
+
+  // Pet view handler (eye icon)
+  window.viewPet = function(petId) {
+      try {
+          window.open(`/seller/detail/${petId}`, '_blank');
+      } catch (_) {
+          alert('Unable to open pet view');
+      }
+  };
+
+  // Service view handler (eye icon)
+  window.viewService = function(serviceId) {
+      try {
+          window.open(`/services/${serviceId}`, '_blank');
+      } catch (_) {
+          alert('Unable to open service view');
+      }
+  };
 });
 
 // Expose viewCredentials function to show a credentials modal
@@ -265,4 +482,62 @@ window.clearAllFilters = function() {
   });
   document.getElementById('min-price').value = '';
   document.getElementById('max-price').value = '';
+};
+
+// Product approval/rejection handlers
+window.approveProduct = function(productId) {
+  if (!confirm('Approve this product?')) return;
+  console.log('Approve product', productId);
+  alert('Product approval not implemented yet. Please contact the developer.');
+};
+
+window.rejectProduct = function(productId) {
+  if (!confirm('Reject this product?')) return;
+  console.log('Reject product', productId);
+  alert('Product rejection not implemented yet. Please contact the developer.');
+};
+
+// Pet availability handlers
+window.markPetAvailable = function(petId) {
+  if (!confirm('Mark this pet as available?')) return;
+  console.log('Mark pet available', petId);
+  alert('Pet availability toggle not implemented yet. Please contact the developer.');
+};
+
+window.markPetUnavailable = function(petId) {
+  if (!confirm('Mark this pet as unavailable?')) return;
+  console.log('Mark pet unavailable', petId);
+  alert('Pet availability toggle not implemented yet. Please contact the developer.');
+};
+
+// Service approval/rejection handlers
+window.approveService = function(serviceId) {
+  if (!confirm('Approve this service?')) return;
+  console.log('Approve service', serviceId);
+  alert('Service approval not implemented yet. Please contact the developer.');
+};
+
+window.rejectService = function(serviceId) {
+  if (!confirm('Reject this service?')) return;
+  console.log('Reject service', serviceId);
+  alert('Service rejection not implemented yet. Please contact the developer.');
+};
+
+// Delete handlers
+window.deletePet = function(petId) {
+  if (!confirm('Delete this pet? This action cannot be undone.')) return;
+  console.log('Delete pet', petId);
+  alert('Pet deletion not implemented yet. Please contact the developer.');
+};
+
+window.deleteService = function(serviceId) {
+  if (!confirm('Delete this service? This action cannot be undone.')) return;
+  console.log('Delete service', serviceId);
+  alert('Service deletion not implemented yet. Please contact the developer.');
+};
+
+window.deactivateService = function(serviceId) {
+  if (!confirm('Deactivate this service?')) return;
+  console.log('Deactivate service', serviceId);
+  alert('Service deactivation not implemented yet. Please contact the developer.');
 };

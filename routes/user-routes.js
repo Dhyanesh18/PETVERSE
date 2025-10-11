@@ -99,7 +99,7 @@ router.get('/home', isAuthenticated, async (req, res) => {
 router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
     try {
         // Check if user is an owner
-        if (req.user.role !== 'owner') {
+        if (req.user.role !== 'owner' && req.user.role !== 'admin') {
             return res.status(403).render('error', {
                 message: 'Access denied. This dashboard is for pet owners only.'
             });

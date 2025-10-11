@@ -146,18 +146,74 @@
         }
         
         .form-control {
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
         }
         
         .form-control:focus {
             outline: none;
             border-color: #FF6B01;
+            box-shadow: 0 0 5px rgba(255, 107, 1, 0.3);
+        }
+
+        .form-control.invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 5px rgba(220, 53, 69, 0.3);
+        }
+
+        .form-control.valid {
+            border-color: #28a745;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.3);
         }
         
         .error-message {
             margin-top: 5px;
-            color: red;
-            font-size: 12px;
+            color: #dc3545;
+            font-size: 0.875rem;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-icon, .error-icon {
+            position: absolute;
+            right: 10px;
+            top: 38px;
+            font-size: 1.2rem;
+            display: none;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .success-icon {
+            color: #28a745;
+        }
+
+        .error-icon {
+            color: #dc3545;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        label span.required {
+            color: #dc3545;
+            margin-left: 2px;
         }
     </style>
 </head>
@@ -222,31 +278,49 @@
                 <h2 class="section-title">Shipping Information</h2>
                 <div class="checkout-form">
                     <div class="form-group">
-                        <label for="fullName">Full Name</label>
-                        <input type="text" id="fullName" name="fullName" class="form-control" required>
+                        <label for="fullName">Full Name <span class="required">*</span></label>
+                        <input type="text" id="fullName" name="fullName" class="form-control" required minlength="2" maxlength="50" placeholder="Enter your full name">
+                        <i class="fa fa-check-circle success-icon" id="fullName-success"></i>
+                        <i class="fa fa-times-circle error-icon" id="fullName-error"></i>
+                        <div class="error-message" id="fullName-error-msg"></div>
                     </div>
                     <div class="form-group">
-                        <label for="address">Address</label>
-                        <input type="text" id="address" name="address" class="form-control" required>
+                        <label for="address">Address <span class="required">*</span></label>
+                        <input type="text" id="address" name="address" class="form-control" required minlength="10" maxlength="200" placeholder="Enter your complete address">
+                        <i class="fa fa-check-circle success-icon" id="address-success"></i>
+                        <i class="fa fa-times-circle error-icon" id="address-error"></i>
+                        <div class="error-message" id="address-error-msg"></div>
                     </div>
                     <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div class="form-group">
-                            <label for="city">City</label>
-                            <input type="text" id="city" name="city" class="form-control" required>
+                            <label for="city">City <span class="required">*</span></label>
+                            <input type="text" id="city" name="city" class="form-control" required minlength="2" maxlength="50" placeholder="City">
+                            <i class="fa fa-check-circle success-icon" id="city-success"></i>
+                            <i class="fa fa-times-circle error-icon" id="city-error"></i>
+                            <div class="error-message" id="city-error-msg"></div>
                         </div>
                         <div class="form-group">
-                            <label for="state">State</label>
-                            <input type="text" id="state" name="state" class="form-control" required>
+                            <label for="state">State <span class="required">*</span></label>
+                            <input type="text" id="state" name="state" class="form-control" required minlength="2" maxlength="50" placeholder="State">
+                            <i class="fa fa-check-circle success-icon" id="state-success"></i>
+                            <i class="fa fa-times-circle error-icon" id="state-error"></i>
+                            <div class="error-message" id="state-error-msg"></div>
                         </div>
                     </div>
                     <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div class="form-group">
-                            <label for="zipCode">Zip Code</label>
-                            <input type="text" id="zipCode" name="zipCode" class="form-control" required>
+                            <label for="zipCode">Zip Code <span class="required">*</span></label>
+                            <input type="text" id="zipCode" name="zipCode" class="form-control" required pattern="[0-9]{6}" maxlength="6" placeholder="6-digit PIN code">
+                            <i class="fa fa-check-circle success-icon" id="zipCode-success"></i>
+                            <i class="fa fa-times-circle error-icon" id="zipCode-error"></i>
+                            <div class="error-message" id="zipCode-error-msg"></div>
                         </div>
                         <div class="form-group">
-                            <label for="phone">Phone</label>
-                            <input type="tel" id="phone" name="phone" class="form-control" required>
+                            <label for="phone">Phone <span class="required">*</span></label>
+                            <input type="tel" id="phone" name="phone" class="form-control" required pattern="[6-9][0-9]{9}" maxlength="10" placeholder="10-digit mobile number">
+                            <i class="fa fa-check-circle success-icon" id="phone-success"></i>
+                            <i class="fa fa-times-circle error-icon" id="phone-error"></i>
+                            <div class="error-message" id="phone-error-msg"></div>
                         </div>
                     </div>
                     <!-- Hidden fields for cart data -->
@@ -364,7 +438,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Server-side cart data (from EJS)
+            // Server-side cart data
             const cartData = {
                 subtotal: parseFloat(<%= cart.subtotal %>) || 0,
                 shipping: parseFloat(<%= cart.shipping %>) || 0,
@@ -372,146 +446,116 @@
                 total: parseFloat(<%= cart.total %>) || 0
             };
 
-            // Update display with proper formatting
-            document.getElementById('subtotal').textContent = 
-                `₹${cartData.subtotal.toFixed(2)}`;
-            document.getElementById('shipping').textContent = 
-                cartData.shipping === 0 ? 'Free' : `₹${cartData.shipping.toFixed(2)}`;
-            document.getElementById('tax').textContent = 
-                `₹${cartData.tax.toFixed(2)}`;
-            document.getElementById('total').textContent = 
-                `₹${cartData.total.toFixed(2)}`;
-        
-            // Form submission handler
-            document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-                if (!validateShippingInfo()) {
-                    e.preventDefault();
+            // Update display
+            document.getElementById('subtotal').textContent = `₹${cartData.subtotal.toFixed(2)}`;
+            document.getElementById('shipping').textContent = cartData.shipping === 0 ? 'Free' : `₹${cartData.shipping.toFixed(2)}`;
+            document.getElementById('tax').textContent = `₹${cartData.tax.toFixed(2)}`;
+            document.getElementById('total').textContent = `₹${cartData.total.toFixed(2)}`;
+
+            // Validation rules
+            const validators = {
+                fullName: (value) => {
+                    if (!value || value.trim().length === 0) return 'Full name is required';
+                    if (value.length < 2) return 'Name must be at least 2 characters';
+                    if (value.length > 50) return 'Name must not exceed 50 characters';
+                    if (!/^[a-zA-Z\s]+$/.test(value)) return 'Name should contain only letters';
+                    return null;
+                },
+                address: (value) => {
+                    if (!value || value.trim().length === 0) return 'Address is required';
+                    if (value.length < 10) return 'Address must be at least 10 characters';
+                    if (value.length > 200) return 'Address must not exceed 200 characters';
+                    return null;
+                },
+                city: (value) => {
+                    if (!value || value.trim().length === 0) return 'City is required';
+                    if (!/^[a-zA-Z\s]+$/.test(value)) return 'City should contain only letters';
+                    return null;
+                },
+                state: (value) => {
+                    if (!value || value.trim().length === 0) return 'State is required';
+                    if (!/^[a-zA-Z\s]+$/.test(value)) return 'State should contain only letters';
+                    return null;
+                },
+                zipCode: (value) => {
+                    if (!value || value.trim().length === 0) return 'ZIP code is required';
+                    if (!/^\d{6}$/.test(value)) return 'Please enter a valid 6-digit PIN code';
+                    return null;
+                },
+                phone: (value) => {
+                    if (!value || value.trim().length === 0) return 'Phone number is required';
+                    if (!/^[6-9]\d{9}$/.test(value)) return 'Please enter a valid 10-digit Indian mobile number';
+                    return null;
                 }
-                // Form will submit normally if validation passes
+            };
+
+            function validateField(fieldId, value) {
+                const validator = validators[fieldId];
+                if (!validator) return true;
+
+                const error = validator(value);
+                const input = document.getElementById(fieldId);
+                const errorMsg = document.getElementById(`${fieldId}-error-msg`);
+                const successIcon = document.getElementById(`${fieldId}-success`);
+                const errorIcon = document.getElementById(`${fieldId}-error`);
+
+                if (error) {
+                    input.classList.add('invalid');
+                    input.classList.remove('valid');
+                    errorMsg.textContent = error;
+                    errorMsg.classList.add('show');
+                    if (successIcon) successIcon.style.display = 'none';
+                    if (errorIcon) errorIcon.style.display = 'block';
+                    return false;
+                } else {
+                    input.classList.remove('invalid');
+                    input.classList.add('valid');
+                    errorMsg.classList.remove('show');
+                    if (successIcon) successIcon.style.display = 'block';
+                    if (errorIcon) errorIcon.style.display = 'none';
+                    return true;
+                }
+            }
+
+            // Add real-time validation
+            ['fullName', 'address', 'city', 'state', 'zipCode', 'phone'].forEach(fieldId => {
+                const input = document.getElementById(fieldId);
+                if (!input) return;
+
+                input.addEventListener('input', () => validateField(fieldId, input.value));
+                input.addEventListener('blur', () => validateField(fieldId, input.value));
             });
-        
-            function validateShippingInfo() {
+
+            function validateAllFields() {
                 let isValid = true;
                 ['fullName', 'address', 'city', 'state', 'zipCode', 'phone'].forEach(fieldId => {
-                    const field = document.getElementById(fieldId);
-                    if (!field.value.trim()) {
-                        field.style.borderColor = 'red';
+                    const input = document.getElementById(fieldId);
+                    if (!validateField(fieldId, input.value)) {
                         isValid = false;
-                    } else {
-                        field.style.borderColor = '#ddd';
                     }
                 });
-                if (!isValid) alert('Please fill all required fields');
                 return isValid;
             }
-        });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const cartData = {
-                subtotal: parseFloat(<%= cart.subtotal %>) || 0,
-                shipping: parseFloat(<%= cart.shipping %>) || 0,
-                tax: parseFloat(<%= cart.tax %>) || 0,
-                total: parseFloat(<%= cart.total %>) || 0
-            };
-
-            const form = document.getElementById('checkoutForm');
-            const fields = {
-                fullName: {
-                    regex: /^[a-zA-Z\s]{2,50}$/,
-                    error: 'Name should be 2-50 characters long and contain only letters'
-                },
-                address: {
-                    regex: /^[\w\s,.-]{5,100}$/,
-                    error: 'Please enter a valid address (5-100 characters)'
-                },
-                city: {
-                    regex: /^[a-zA-Z\s]{2,50}$/,
-                    error: 'City should contain only letters'
-                },
-                state: {
-                    regex: /^[a-zA-Z\s]{2,50}$/,
-                    error: 'State should contain only letters'
-                },
-                zipCode: {
-                    regex: /^\d{6}$/,
-                    error: 'Please enter a valid 6-digit zip code'
-                },
-                phone: {
-                    regex: /^[6-9]\d{9}$/,
-                    error: 'Please enter a valid 10-digit Indian phone number'
-                }
-            };
-
-            // Add error message containers after each input
-            Object.keys(fields).forEach(fieldId => {
-                const input = document.getElementById(fieldId);
-                const errorDiv = document.createElement('div');
-                errorDiv.id = `${fieldId}Error`;
-                errorDiv.className = 'error-message';
-                errorDiv.style.color = 'red';
-                errorDiv.style.fontSize = '12px';
-                errorDiv.style.marginTop = '5px';
-                errorDiv.style.display = 'none';
-                input.parentNode.appendChild(errorDiv);
-            });
-
-            // Real-time validation
-            Object.keys(fields).forEach(fieldId => {
-                const input = document.getElementById(fieldId);
-                input.addEventListener('input', () => validateField(fieldId));
-                input.addEventListener('blur', () => validateField(fieldId));
-            });
-
-            function validateField(fieldId) {
-                const input = document.getElementById(fieldId);
-                const errorDiv = document.getElementById(`${fieldId}Error`);
-                const field = fields[fieldId];
-                
-                if (!input.value.trim()) {
-                    showError(input, errorDiv, 'This field is required');
-                    return false;
-                }
-                
-                if (!field.regex.test(input.value.trim())) {
-                    showError(input, errorDiv, field.error);
-                    return false;
-                }
-                
-                hideError(input, errorDiv);
-                return true;
-            }
-
-            function showError(input, errorDiv, message) {
-                input.style.borderColor = 'red';
-                errorDiv.textContent = message;
-                errorDiv.style.display = 'block';
-            }
-
-            function hideError(input, errorDiv) {
-                input.style.borderColor = '#ddd';
-                errorDiv.style.display = 'none';
-            }
-
-            // Form submission handler
-            form.addEventListener('submit', function(e) {
+            // Form submission
+            document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                let isValid = true;
-                Object.keys(fields).forEach(fieldId => {
-                    if (!validateField(fieldId)) {
-                        isValid = false;
-                    }
-                });
-
-                if (isValid) {
-                    form.submit();
-                } else {
-                    // Scroll to the first error
-                    const firstError = document.querySelector('.error-message[style="display: block;"]');
+                if (!validateAllFields()) {
+                    alert('Please fix all errors before continuing');
+                    const firstError = document.querySelector('.form-control.invalid');
                     if (firstError) {
                         firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstError.focus();
                     }
+                    return;
                 }
+
+                const submitBtn = document.getElementById('continueBtn');
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Processing...';
+                
+                this.submit();
             });
         });
     </script>

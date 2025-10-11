@@ -10,13 +10,13 @@ module.exports = (req, res, next) => {
         return res.redirect('/login');
     }
     
-    // Check if user is a seller
-    if (req.user.role === 'seller') {
-        console.log('Seller authenticated:', req.user.email);
+    // Check if user is a seller or admin
+    if (req.user.role === 'seller' || req.user.role === 'admin') {
+        console.log('Seller/Admin authenticated:', req.user.email);
         return next();
     }
     
-    console.log('Not a seller:', req.user.role);
+    console.log('Not a seller or admin:', req.user.role);
     res.status(403).render('error', { 
         message: 'Seller access required. Please ensure your account is approved.' 
     });
