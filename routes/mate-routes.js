@@ -1,5 +1,3 @@
-// mate-routes.js - VERIFY THIS ORDER IS CORRECT
-
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');

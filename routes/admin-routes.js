@@ -4,6 +4,7 @@ const adminAuth = require('../middleware/admin-auth');
 const User = require('../models/users');
 const mongoose = require('mongoose');
 const fs = require('fs');
+const Wallet = require('../models/wallet');
 
 // Admin dashboard route
 router.get('/dashboard', adminAuth, async (req, res) => {
@@ -34,8 +35,6 @@ router.get('/dashboard', adminAuth, async (req, res) => {
             isApproved: true 
         });
         
-        // Generate application data based on user data
-        // For each pending seller/provider, create an "application"
         const pendingApplications = await generateApplicationsFromUsers(
             await User.find({
                 role: { $in: ['seller', 'service_provider'] },
@@ -43,32 +42,19 @@ router.get('/dashboard', adminAuth, async (req, res) => {
             })
         );
         
-        // For each approved seller/provider, create an "application"
         const approvedApplications = await generateApplicationsFromUsers(
             await User.find({
                 role: { $in: ['seller', 'service_provider'] },
                 isApproved: true
             })
         );
-        
-        // For any rejected users (we'll simulate this for now)
-        // In a real system, you'd have a rejection flag or reason field
+
         const rejectedApplications = [];
         
-        // Combine all applications
-        const allApplications = [...pendingApplications, ...approvedApplications, ...rejectedApplications];
-        
-        // Get products data - in a real app, adjust this to use your actual Product model
+
         let products = [];
-        try {
-            // Try to require the Product model if it exists
-            const Product = require('../models/products'); // Use correct path (plural 'products')
-            products = await Product.find().populate('seller').sort({ createdAt: -1 }).limit(10);
-        } catch (err) {
-            console.log('Product model not available, using mock data');
-            // Generate mock product data
-            products = generateMockProducts(10);
-        }
+        const Product = require('../models/products');
+        products = await Product.find().populate('seller').sort({ createdAt: -1 }).limit(10);
         
         // Get pets data using the actual Pet model
         let pets = [];
@@ -118,7 +104,7 @@ router.get('/dashboard', adminAuth, async (req, res) => {
         const productCategoriesData = generateProductCategoriesData(products);
         
         // Monthly revenue data (for the revenue chart) - replace with real data in production
-        const revenueData = generateMonthlyRevenue();
+        const revenueData = await generateMonthlyRevenue();
 
         // Orders and order statistics for the dashboard
         let orders = [];
@@ -172,7 +158,6 @@ router.get('/dashboard', adminAuth, async (req, res) => {
             pendingApplications,
             approvedApplications,
             rejectedApplications,
-            allApplications,
             products,
             services,
             pets,
@@ -195,7 +180,6 @@ router.get('/dashboard', adminAuth, async (req, res) => {
                 serviceProviders: approvedServiceProviders.length,
                 totalProducts: products.length,
                 petsListed: pets.length,
-                monthlyRevenue: calculateTotalRevenue(revenueData)
             }
         });
     } catch (err) {
@@ -204,113 +188,6 @@ router.get('/dashboard', adminAuth, async (req, res) => {
     }
 });
 
-// Helper functions for generating mock data
-function generateMockProducts(count) {
-    const products = [];
-    const categories = ['food', 'toys', 'accessories', 'health', 'clothing'];
-    const names = [
-        'Premium Pet Food', 'Chew Toy', 'Pet Collar', 'Vitamins', 
-        'Dog Sweater', 'Cat Treats', 'Bird Cage', 'Fish Tank', 
-        'Hamster Wheel', 'Pet Shampoo', 'Dental Treats', 'Pet Bed'
-    ];
-    
-    for (let i = 0; i < count; i++) {
-        products.push({
-            _id: new mongoose.Types.ObjectId(),
-            name: names[Math.floor(Math.random() * names.length)],
-            description: 'High-quality product for your pet',
-            price: Math.floor(Math.random() * 2000) + 100,
-            stock: Math.floor(Math.random() * 50) + 1,
-            category: categories[Math.floor(Math.random() * categories.length)],
-            image: `/images/products/product${i + 1}.jpg`,
-            isApproved: Math.random() > 0.3,
-            createdAt: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000),
-            seller: {
-                _id: new mongoose.Types.ObjectId(),
-                fullName: `Seller ${i + 1}`,
-                businessName: `Pet Shop ${i + 1}`
-            }
-        });
-    }
-    
-    return products;
-}
-
-function generateMockServices(count) {
-    const services = [];
-    const types = ['grooming', 'veterinary', 'training', 'boarding', 'walking'];
-    const names = [
-        'Pet Grooming', 'Veterinary Check-up', 'Training Session', 
-        'Pet Boarding', 'Dog Walking', 'Pet Sitting', 'Dental Cleaning', 
-        'Nail Trimming'
-    ];
-    
-    for (let i = 0; i < count; i++) {
-        services.push({
-            _id: new mongoose.Types.ObjectId(),
-            name: names[Math.floor(Math.random() * names.length)],
-            description: 'Professional service for your pet',
-            price: Math.floor(Math.random() * 1000) + 200,
-            type: types[Math.floor(Math.random() * types.length)],
-            duration: `${Math.floor(Math.random() * 3) + 1} hours`,
-            image: `/images/services/service${i + 1}.jpg`,
-            isApproved: Math.random() > 0.3,
-            createdAt: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000),
-            provider: {
-                _id: new mongoose.Types.ObjectId(),
-                fullName: `Provider ${i + 1}`
-            }
-        });
-    }
-    
-    return services;
-}
-
-function generateMockPets(count) {
-    const pets = [];
-    const categories = ['Dog', 'Cat', 'Bird', 'Fish', 'Other'];
-    const breeds = {
-        'Dog': ['Labrador', 'German Shepherd', 'Bulldog', 'Golden Retriever', 'Poodle'],
-        'Cat': ['Persian', 'Siamese', 'Maine Coon', 'Bengal', 'Ragdoll'],
-        'Bird': ['Parrot', 'Canary', 'Finch', 'Cockatiel', 'Lovebird'],
-        'Fish': ['Goldfish', 'Betta', 'Guppy', 'Angelfish', 'Tetra'],
-        'Other': ['Hamster', 'Rabbit', 'Guinea Pig', 'Turtle', 'Ferret']
-    };
-    const names = ['Max', 'Luna', 'Charlie', 'Bella', 'Buddy', 'Lucy', 'Cooper', 'Daisy'];
-    const genders = ['male', 'female'];
-    
-    for (let i = 0; i < count; i++) {
-        const category = categories[Math.floor(Math.random() * categories.length)];
-        const breedOptions = breeds[category];
-        const breed = breedOptions[Math.floor(Math.random() * breedOptions.length)];
-        
-        pets.push({
-            _id: new mongoose.Types.ObjectId(),
-            name: names[Math.floor(Math.random() * names.length)],
-            category,
-            breed,
-            age: `${Math.floor(Math.random() * 10) + 1} ${Math.random() > 0.5 ? 'years' : 'months'}`,
-            gender: genders[Math.floor(Math.random() * genders.length)],
-            description: 'Lovely pet looking for a new home',
-            price: Math.floor(Math.random() * 5000) + 500,
-            images: [
-                {
-                    data: Buffer.from('Mock image data'),
-                    contentType: 'image/jpeg',
-                    uploadedAt: new Date()
-                }
-            ],
-            available: true,
-            createdAt: new Date(Date.now() - Math.floor(Math.random() * 90) * 24 * 60 * 60 * 1000),
-            addedBy: {
-                _id: new mongoose.Types.ObjectId(),
-                fullName: `Pet Owner ${i + 1}`
-            }
-        });
-    }
-    
-    return pets;
-}
 
 // Function to generate applications from actual user data
 async function generateApplicationsFromUsers(users) {
@@ -378,7 +255,6 @@ async function generateUserGrowthFromDb() {
         adjustedMonths.push(months[(currentMonth - 11 + i) % 12]);
     }
     
-    // Calculate cumulative growth
     const cumulativeData = [];
     let runningTotal = 0;
     for (const monthCount of monthlyData) {
@@ -402,35 +278,31 @@ function generateProductCategoriesData(products) {
         categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
     });
     
-    // If there are no products or very few categories, add some defaults
     if (categoryMap.size < 3) {
         if (!categoryMap.has('Pet Food')) categoryMap.set('Pet Food', 0);
         if (!categoryMap.has('Toys')) categoryMap.set('Toys', 0);
         if (!categoryMap.has('Accessories')) categoryMap.set('Accessories', 0);
-        if (!categoryMap.has('Health')) categoryMap.set('Health', 0);
-        if (!categoryMap.has('Clothing')) categoryMap.set('Clothing', 0);
     }
     
-    // Convert Map to arrays for chart data
     const labels = Array.from(categoryMap.keys());
     const data = Array.from(categoryMap.values());
     
     return { labels, data };
 }
 
-function generateMonthlyRevenue() {
+async function generateMonthlyRevenue() {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const revenues = [];
-    
-    let baseRevenue = 100000; // Start at 100,000
+    const userWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
+    let baseRevenue = 0;
     for (let i = 0; i < 12; i++) {
-        // Add some random variation (between -10% and +20%)
-        const variation = baseRevenue * (Math.random() * 0.3 - 0.1);
-        const revenue = Math.round(baseRevenue + variation);
-        revenues.push(revenue);
         
-        // Increase base revenue slightly for next month
-        baseRevenue += baseRevenue * 0.05;
+        if (i===10){
+            revenues.push(userWallet.balance - 10000);
+        }
+        else {
+            revenues.push(baseRevenue);
+        }
     }
     
     return {
@@ -439,11 +311,7 @@ function generateMonthlyRevenue() {
     };
 }
 
-function calculateTotalRevenue(revenueData) {
-    // Sum of last 3 months as current MTD (Month to Date)
-    const lastThreeMonths = revenueData.data.slice(-3);
-    return lastThreeMonths.reduce((total, month) => total + month, 0);
-}
+
 
 router.get('/users', adminAuth, async (req, res) => {
     try {

@@ -344,11 +344,11 @@ exports.addMateListing = async (req, res) => {
         });
 
         const newMate = await PetMate.create(mateData);
-        console.log('✅ Successfully created new mate listing with ID:', newMate._id);
+        console.log('Successfully created new mate listing with ID:', newMate._id);
         
         res.redirect('/pets/mate?success=true');
     } catch (err) {
-        console.error('❌ Mate creation error:', err);
+        console.error('Mate creation error:', err);
         console.error('Error stack:', err.stack);
         
         // Get existing mates to maintain page state
@@ -366,11 +366,35 @@ exports.addMateListing = async (req, res) => {
             ],
             states: [
                 { value: 'andhra-pradesh', label: 'Andhra Pradesh' },
-                { value: 'kerala', label: 'Kerala' },
+                { value: 'arunachal-pradesh', label: 'Arunachal Pradesh' },
+                { value: 'assam', label: 'Assam' },
+                { value: 'bihar', label: 'Bihar' },
+                { value: 'chhattisgarh', label: 'Chhattisgarh' },
+                { value: 'goa', label: 'Goa' },
+                { value: 'gujarat', label: 'Gujarat' },
+                { value: 'haryana', label: 'Haryana' },
+                { value: 'himachal-pradesh', label: 'Himachal Pradesh' },
+                { value: 'jharkhand', label: 'Jharkhand' },
                 { value: 'karnataka', label: 'Karnataka' },
+                { value: 'kerala', label: 'Kerala' },
+                { value: 'madhya-pradesh', label: 'Madhya Pradesh' },
+                { value: 'maharashtra', label: 'Maharashtra' },
+                { value: 'manipur', label: 'Manipur' },
+                { value: 'meghalaya', label: 'Meghalaya' },
+                { value: 'mizoram', label: 'Mizoram' },
+                { value: 'nagaland', label: 'Nagaland' },
+                { value: 'odisha', label: 'Odisha' },
+                { value: 'punjab', label: 'Punjab' },
+                { value: 'rajasthan', label: 'Rajasthan' },
+                { value: 'sikkim', label: 'Sikkim' },
                 { value: 'tamil-nadu', label: 'Tamil Nadu' },
-                { value: 'telangana', label: 'Telangana' }
+                { value: 'telangana', label: 'Telangana' },
+                { value: 'tripura', label: 'Tripura' },
+                { value: 'uttar-pradesh', label: 'Uttar Pradesh' },
+                { value: 'uttarakhand', label: 'Uttarakhand' },
+                { value: 'west-bengal', label: 'West Bengal' }
             ],
+
             breeds: [
                 { value: 'german-shepherd', label: 'German Shepherd' },
                 { value: 'labrador', label: 'Labrador' },

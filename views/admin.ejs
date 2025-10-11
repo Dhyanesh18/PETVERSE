@@ -5,166 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>PetVerse Admin Panel</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <!-- Link to CSS -->
     <link rel="stylesheet" href="/css/admin.css">
-    
-    <!-- Font Awesome (for icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
-    <!-- Chart.js for dashboard analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <style>
-        /* Orders Section Styles */
-        .dashboard-section {
-            margin: 2rem 0;
-            padding: 1.5rem;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .orders-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .stat-card {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid #007bff;
-        }
-        
-        .stat-card i {
-            font-size: 2rem;
-            color: #007bff;
-            margin-right: 1rem;
-        }
-        
-        .stat-info {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .stat-number {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: #666;
-        }
-        
-        .orders-table-container {
-            overflow-x: auto;
-        }
-        
-        .orders-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-        
-        .orders-table th,
-        .orders-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        .orders-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
-        }
-        
-        .orders-table tr:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .customer-info,
-        .seller-info {
-            font-size: 0.9rem;
-        }
-        
-        .order-items {
-            max-width: 200px;
-        }
-        
-        .order-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.25rem;
-            font-size: 0.85rem;
-        }
-        
-        .item-name {
-            flex: 1;
-            margin-right: 0.5rem;
-        }
-        
-        .item-quantity {
-            color: #666;
-        }
-        
-        .status-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        
-        .status-badge.pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-badge.processing {
-            background-color: #d1ecf1;
-            color: #0c5460;
-        }
-        
-        .status-badge.completed {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .status-badge.confirmed {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #666;
-        }
-        
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: #ccc;
-        }
-    </style>
 </head>
 <body>
-    <!-- Hidden data elements for charts -->
-    <!-- <div id="chart-data" 
-        data-user-growth='<%= JSON.stringify(userGrowthData) %>'
-        data-user-distribution='<%= JSON.stringify(userDistributionData) %>'
-        data-product-categories='<%= JSON.stringify(productCategoriesData) %>'
-        data-revenue='<%= JSON.stringify(revenueData) %>'
-        style="display: none;">
-    </div> -->
-    <!-- Header -->
     <header class="header" id="header">
         <nav id="navbar" class="navbar">
             <div class="nav-content">
@@ -204,9 +50,8 @@
             </div>
         </nav>
     </header>
-    <!-- Main Admin content -->
+
     <div class="main-container">
-        <!-- Sidebar -->
         <div class="admin-sidebar">
             <h2>Dashboard</h2>
             <ul class="admin-menu">
@@ -214,12 +59,9 @@
                 <li data-tab="pending"><i class="fas fa-clock"></i> Pending Applications</li>
                 <li data-tab="approved"><i class="fas fa-check-circle"></i> Approved</li>
                 <li data-tab="rejected"><i class="fas fa-times-circle"></i> Rejected</li>
-                <li data-tab="all"><i class="fas fa-list"></i> All Applications</li>
-            </ul>
             
             <h2>User Management</h2>
             <ul class="admin-menu">
-                <li data-tab="pending-users"><i class="fas fa-user-clock"></i> Pending Sellers/Providers</li>
                 <li data-tab="all-users"><i class="fas fa-users"></i> All Users</li>
             </ul>
             
@@ -269,66 +111,66 @@
             <!-- Success Message Container -->
             <div id="success-message-container"></div>
             
-             <!-- Dashboard Cards Grid -->
-             <div class="dashboard-cards-grid">
-                 <div class="dashboard-card green-card">
-                     <div class="card-icon">
-                         <i class="fas fa-check-circle"></i>
+            <!-- Dashboard Cards Grid -->
+            <div class="dashboard-cards-grid">
+                <div class="dashboard-card green-card">
+                    <div class="card-icon">
+                        <i class="fas fa-check-circle"></i>
                     </div>
-                     <div class="card-content">
+                    <div class="card-content">
                         <h3>Approved</h3>
-                         <p class="card-value" id="approved-count">0</p>
+                        <p class="card-value" id="approved-count">0</p>
                     </div>
                 </div>
-                 
-                 <div class="dashboard-card orange-card">
-                     <div class="card-icon">
-                         <i class="fas fa-list"></i>
+                
+                <div class="dashboard-card orange-card">
+                        <div class="card-icon">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Total Pending</h3>
+                            <p class="card-value" id="total-pending-count">22</p>
                     </div>
-                     <div class="card-content">
-                         <h3>Total Pending</h3>
-                         <p class="card-value" id="total-pending-count">22</p>
-                </div>
+                        </div>
+                    
+                    <div class="dashboard-card purple-card">
+                        <div class="card-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Seller</h3>
+                            <p class="card-value" id="seller-count">5</p>
+                        </div>
                     </div>
-                 
-                 <div class="dashboard-card purple-card">
-                     <div class="card-icon">
-                         <i class="fas fa-store"></i>
-                     </div>
-                     <div class="card-content">
-                         <h3>Seller</h3>
-                         <p class="card-value" id="seller-count">5</p>
-                     </div>
-                 </div>
-                 
-                 <div class="dashboard-card light-green-card">
-                     <div class="card-icon">
-                         <i class="fas fa-bell"></i>
-                     </div>
-                     <div class="card-content">
-                         <h3>Upcoming Renewals</h3>
-                         <p class="card-value" id="upcoming-renewals">16</p>
-                     </div>
-                 </div>
-                 
-                 <div class="dashboard-card dark-teal-card">
-                     <div class="card-icon">
-                         <i class="fas fa-user-check"></i>
-                     </div>
-                     <div class="card-content">
-                         <h3>Active Members</h3>
-                         <p class="card-value" id="active-members">11</p>
-                     </div>
-                 </div>
-                 
-                 <div class="dashboard-card pink-card">
-                     <div class="card-icon">
-                         <i class="fas fa-user-times"></i>
-                     </div>
-                     <div class="card-content">
-                         <h3>Inactive Members</h3>
-                         <p class="card-value" id="inactive-members">0</p>
-                     </div>
+                    
+                    <div class="dashboard-card light-green-card">
+                        <div class="card-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Upcoming Renewals</h3>
+                            <p class="card-value" id="upcoming-renewals">16</p>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card dark-teal-card">
+                        <div class="card-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Active Members</h3>
+                            <p class="card-value" id="active-members">1</p>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-card pink-card">
+                        <div class="card-icon">
+                            <i class="fas fa-user-times"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Inactive Members</h3>
+                            <p class="card-value" id="inactive-members">0</p>
+                        </div>
                 </div>
             </div>
             
@@ -412,13 +254,7 @@
                                     <p class="summary-value"><%= platformSummary.petsListed %></p>
                                 </div>
                             </div>
-                            <div class="summary-item">
-                                <i class="fas fa-dollar-sign"></i>
-                                <div class="summary-info">
-                                    <p class="summary-label">Revenue (MTD)</p>
-                                    <p class="summary-value">₹<%= platformSummary.monthlyRevenue.toLocaleString() %></p>
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -429,6 +265,9 @@
                 <div class="tab-pane" id="pending-tab">
                     <h2 class="tab-title">Pending Applications</h2>
                     <div class="applications-list">
+                        <% if (pendingApplications.length === 0) { %>
+                            <p>No pending applications</p>
+                        <% } %>
                         <% pendingApplications.forEach(application => { %>
                             <div class="application-card" data-id="<%= application.id %>" data-type="<%= application.type %>">
                                 <div class="application-header">
@@ -500,19 +339,6 @@
                             </div>
                         <% }) %>
                     </div>
-                    
-                    <!-- Improved Admin Profile Section (without image) -->
-                    <div class="admin-profile-section">
-                        <div class="admin-profile-card">
-                            <div class="admin-profile-info">
-                                <h2>John Doe</h2>
-                                <p><strong>Username:</strong> johndoe</p>
-                                <p><strong>Email:</strong> john.doe@example.com</p>
-                                <p><strong>Phone:</strong> 123-456-7890</p>
-                                <p><strong>Role:</strong> Administrator</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 
                 <!-- Approved Applications Tab -->
@@ -556,6 +382,9 @@
                 <div class="tab-pane" id="rejected-tab">
                     <h2 class="tab-title">Rejected Applications</h2>
                     <div class="applications-list">
+                        <% if (rejectedApplications.length === 0) { %>
+                            <p>No pending applications</p>
+                        <% } %>
                         <% rejectedApplications.forEach(application => { %>
                             <div class="application-card" data-id="<%= application.id %>" data-type="<%= application.type %>">
                                 <div class="application-header">
@@ -586,135 +415,6 @@
                                 </div>
                             </div>
                         <% }) %>
-                    </div>
-                </div>
-                
-                <!-- All Applications Tab -->
-                <div class="tab-pane" id="all-tab">
-                    <h2 class="tab-title">All Applications</h2>
-                    <div class="applications-list">
-                        <% allApplications.forEach(application => { %>
-                            <div class="application-card" data-id="<%= application.id %>" data-type="<%= application.type %>">
-                                <div class="application-header">
-                                    <span class="application-type <%= application.type %>"><%= application.type %></span>
-                                    <span class="application-status <%= application.status.toLowerCase() %>">
-                                        <i class="fas fa-<%= application.status === 'Pending' ? 'clock' : (application.status === 'Approved' ? 'check-circle' : 'times-circle') %>"></i>
-                                        <%= application.status %>
-                                    </span>
-                                    <span class="application-date"><%= application.date %></span>
-                                </div>
-                                <div class="application-body">
-                                    <div class="application-info">
-                                        <h3 class="application-name"><%= application.name %></h3>
-                                        <p class="application-provider">
-                                            <i class="fa fa-user"></i> <%= application.provider.name %>
-                                        </p>
-                                        <p class="application-description"><%= application.description %></p>
-                                        
-                                        <div class="application-actions">
-                                            <% if (application.status === 'Pending') { %>
-                                                <button class="approve-btn" onclick="approveApplication('<%= application.id %>')">
-                                                    <i class="fas fa-check"></i> Approve
-                                                </button>
-                                                <button class="reject-btn" onclick="rejectApplication('<%= application.id %>')">
-                                                    <i class="fas fa-times"></i> Reject
-                                                </button>
-                                            <% } else if (application.status === 'Approved') { %>
-                                                <button class="revoke-btn" onclick="revokeApproval('<%= application.id %>')">
-                                                    <i class="fas fa-undo"></i> Revoke Approval
-                                                </button>
-                                            <% } else { %>
-                                                <button class="reconsider-btn" onclick="reconsiderApplication('<%= application.id %>')">
-                                                    <i class="fas fa-redo"></i> Reconsider
-                                                </button>
-                                            <% } %>
-                                            <button class="view-details-btn" onclick="viewApplicationDetails('<%= application.id %>')">
-                                                <i class="fas fa-eye"></i> View Details
-                                            </button>
-                                            <button class="view-credentials-btn" onclick="viewCredentials('<%= application.provider.id %>')">
-                                                <i class="fas fa-id-card"></i> View Credentials
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <% }) %>
-                    </div>
-                </div>
-                
-                <!-- Pending Sellers/Providers Tab -->
-                <div class="tab-pane" id="pending-users-tab">
-                    <h2 class="tab-title">Pending Sellers & Service Providers</h2>
-                    <div class="user-list">
-                        <% if (pendingUsers && pendingUsers.length > 0) { %>
-                            <% pendingUsers.forEach(user => { %>
-                                <div class="user-card" data-id="<%= user._id %>" data-role="<%= user.role %>">
-                                    <div class="user-header">
-                                        <span class="user-role <%= user.role %>"><%= user.role === 'seller' ? 'Seller' : 'Service Provider' %></span>
-                                        <span class="user-date">Registered: <%= new Date(user.createdAt).toLocaleDateString() %></span>
-                                    </div>
-                                    <div class="user-body">
-                                        <div class="user-info">
-                                            <h3 class="user-name"><%= user.fullName %></h3>
-                                            <p class="user-email"><i class="fas fa-envelope"></i> <%= user.email %></p>
-                                            <p class="user-phone"><i class="fas fa-phone"></i> <%= user.phone %></p>
-                                            <p class="user-username"><i class="fas fa-user"></i> @<%= user.username %></p>
-                                            
-                                            <% if (user.role === 'seller') { %>
-                                                <div class="user-details">
-                                                    <p><strong>Business Name:</strong> <%= user.businessName || 'Not provided' %></p>
-                                                    <p><strong>Business Address:</strong> <%= user.businessAddress || 'Not provided' %></p>
-                                                    <p><strong>Tax ID:</strong> <%= user.taxId || 'Not provided' %></p>
-                                                    <p class="license-status">
-                                                        <% if (user.license && user.license.data) { %>
-                                                            <i class="fas fa-file-alt"></i> License Document Available
-                                                        <% } else { %>
-                                                            <i class="fas fa-exclamation-triangle"></i> No License Document
-                                                        <% } %>
-                                                    </p>
-                                                </div>
-                                            <% } else if (user.role === 'service_provider') { %>
-                                                <div class="user-details">
-                                                    <p><strong>Service Type:</strong> <%= user.serviceType || 'Not provided' %></p>
-                                                    <p><strong>Service Address:</strong> <%= user.serviceAddress || 'Not provided' %></p>
-                                                    <p class="certificate-status">
-                                                        <% if (user.certificate && user.certificate.data) { %>
-                                                            <i class="fas fa-certificate"></i> Certificate Document Available
-                                                        <% } else { %>
-                                                            <i class="fas fa-exclamation-triangle"></i> No Certificate Document
-                                                        <% } %>
-                                                    </p>
-                                                </div>
-                                            <% } %>
-                                            
-                                            <div class="user-actions">
-                                                <button class="approve-btn" onclick="approveUser('<%= user._id %>')">
-                                                    <i class="fas fa-check"></i> Approve
-                                                </button>
-                                                <button class="reject-btn" onclick="rejectUser('<%= user._id %>')">
-                                                    <i class="fas fa-times"></i> Reject
-                                                </button>
-                                                <% if ((user.role === 'seller' && user.license && user.license.data) || 
-                                                      (user.role === 'service_provider' && user.certificate && user.certificate.data)) { %>
-                                                    <button class="view-document-btn" onclick="viewUserDocument('<%= user._id %>', '<%= user.role %>')">
-                                                        <i class="fas fa-file"></i> View Document
-                                                    </button>
-                                                <% } else { %>
-                                                    <button class="view-document-btn disabled" disabled>
-                                                        <i class="fas fa-file"></i> No Document
-                                                    </button>
-                                                <% } %>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            <% }) %>
-                        <% } else { %>
-                            <div class="empty-state">
-                                <i class="fas fa-check-circle"></i>
-                                <p>No pending sellers or service providers.</p>
-                            </div>
-                        <% } %>
                     </div>
                 </div>
                 
@@ -1157,37 +857,7 @@
             </div>
         </div>
     </div>
-
-    <!-- Footer -->
-    <footer id="footer">
-        <div class="footer-container">
-            <div class="footer-logo">
-                <h2>PetVerse</h2>
-                <p>Your one-stop destination for all pet needs</p>
-            </div>
-            <div class="footer-links">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="#">About Us</a></li>
-                    <li><a href="#">Shop</a></li>
-                    <li><a href="#">Services</a></li>
-                    <li><a href="#">Events</a></li>
-                    <li><a href="#">Contact Us</a></li>
-                </ul>
-            </div>
-            <div class="footer-social">
-                <h3>Follow Us</h3>
-                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
-                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
-                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2025 PetVerse. All Rights Reserved</p>
-        </div>
-    </footer>
-
-    <!-- JS -->
+    <%- include('partials/footer') %>
     <script src="/js/admin.js"></script>
     <script>
       // Get all dropdown toggles and menus
@@ -1384,156 +1054,156 @@
         // User Growth Chart (Line chart)
         const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
         const userGrowthChart = new Chart(userGrowthCtx, {
-          type: 'line',
-          data: {
-            labels: userGrowthData.labels,
-            datasets: [{
-              label: 'New Users',
-              data: userGrowthData.data,
-              borderColor: '#4CAF50',
-              backgroundColor: 'rgba(76, 175, 80, 0.1)',
-              tension: 0.3,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
-              }
+            type: 'line',
+            data: {
+                labels: userGrowthData.labels,
+                datasets: [{
+                label: 'New Users',
+                data: userGrowthData.data,
+                borderColor: '#4CAF50',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                tension: 0.3,
+                fill: true
+                }]
             },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Number of Users'
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                legend: {
+                    display: false
                 }
-              },
-              x: {
-                title: {
-                  display: true,
-                  text: 'Month'
+                },
+                scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                    display: true,
+                    text: 'Number of Users'
+                    }
+                },
+                x: {
+                    title: {
+                    display: true,
+                    text: 'Month'
+                    }
                 }
-              }
+                }
             }
-          }
         });
         
         // User Distribution Chart (Pie chart)
         const userDistributionCtx = document.getElementById('userDistributionChart').getContext('2d');
         const userDistributionChart = new Chart(userDistributionCtx, {
-          type: 'pie',
-          data: {
-            labels: userDistributionData.labels,
-            datasets: [{
-              data: userDistributionData.data,
-              backgroundColor: [
-                '#2196F3',
-                '#FFC107',
-                '#9C27B0',
-                '#F44336'
-              ]
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: 'right'
-              }
+            type: 'pie',
+            data: {
+                labels: userDistributionData.labels,
+                datasets: [{
+                data: userDistributionData.data,
+                backgroundColor: [
+                    '#2196F3',
+                    '#FFC107',
+                    '#9C27B0',
+                    '#F44336'
+                ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                legend: {
+                    position: 'right'
+                }
+                }
             }
-          }
         });
         
         // Product Categories Chart (Bar chart)
         const productCategoriesCtx = document.getElementById('productCategoriesChart').getContext('2d');
         const productCategoriesChart = new Chart(productCategoriesCtx, {
-          type: 'bar',
-          data: {
-            labels: productCategoriesData.labels,
-            datasets: [{
-              label: 'Number of Products',
-              data: productCategoriesData.data,
-              backgroundColor: '#3F51B5'
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
-              }
+            type: 'bar',
+            data: {
+                labels: productCategoriesData.labels,
+                datasets: [{
+                label: 'Number of Products',
+                data: productCategoriesData.data,
+                backgroundColor: '#3F51B5'
+                }]
             },
-            scales: {
-              y: {
-                beginAtZero: true
-              }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                legend: {
+                    display: false
+                }
+                },
+                scales: {
+                y: {
+                    beginAtZero: true
+                }
+                }
             }
-          }
         });
         
         // Revenue Chart (Line chart)
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
         const revenueChart = new Chart(revenueCtx, {
-          type: 'line',
-          data: {
-            labels: revenueData.labels,
-            datasets: [{
-              label: 'Monthly Revenue',
-              data: revenueData.data,
-              borderColor: '#FF5722',
-              backgroundColor: 'rgba(255, 87, 34, 0.1)',
-              tension: 0.3,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: false
-              }
+            type: 'line',
+            data: {
+                labels: revenueData.labels,
+                datasets: [{
+                label: 'Monthly Revenue',
+                data: revenueData.data,
+                borderColor: '#FF5722',
+                backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                tension: 0.3,
+                fill: true
+                }]
             },
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Revenue (₹)'
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                legend: {
+                    display: false
                 }
-              },
-              x: {
-                title: {
-                  display: true,
-                  text: 'Month'
+                },
+                scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                    display: true,
+                    text: 'Revenue (₹)'
+                    }
+                },
+                x: {
+                    title: {
+                    display: true,
+                    text: 'Month'
+                    }
                 }
-              }
+                }
             }
-          }
-        });
-      }
+            });
+        }
     </script>
     <!-- Script data for charts -->
     <script type="application/json" id="chart-user-growth">
-      <%- JSON.stringify(userGrowthData || {}) %>
+        <%- JSON.stringify(userGrowthData || {}) %>
     </script>
     
     <script type="application/json" id="chart-user-distribution">
-      <%- JSON.stringify(userDistributionData || {}) %>
+        <%- JSON.stringify(userDistributionData || {}) %>
     </script>
     
     <script type="application/json" id="chart-product-categories">
-      <%- JSON.stringify(productCategoriesData || {}) %>
+        <%- JSON.stringify(productCategoriesData || {}) %>
     </script>
     
     <script type="application/json" id="chart-revenue">
-      <%- JSON.stringify(revenueData || {}) %>
+        <%- JSON.stringify(revenueData || {}) %>
     </script>
 </body>
 </html>

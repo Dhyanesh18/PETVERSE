@@ -832,6 +832,21 @@ transform: scale(1.2);
   gap: 5px;
 }
 
+.summary-item, .summary-info{
+  display: flex;
+  flex-direction: row;
+  gap: 0.6rem;
+  font-size: larger;
+}
+
+.summary-label, .summary-value {
+    font-size: medium;
+}
+
+h2 {
+  margin-top: 10px;
+}
+
 /* Success Message Card */
 .success-card {
   background-color: #5cb85c;
