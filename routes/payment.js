@@ -67,19 +67,7 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
             return res.status(400).json({ error: 'Cart is empty' });
         }
 
-        for (const item of cart.items) {
-            if (item.productId) {
-                if (item.itemType === 'Product') {
-                    await item.productId.populate('seller');
-                } else if (item.itemType === 'Pet') {
-                    await item.productId.populate('addedBy');
-                }
-            }
-        }
-
-        let totalAmount = 0;
-        const orderItems = [];
-
+        // Validate stock for products
         for (const item of cart.items) {
             const productDoc = item.productId;
             if (!productDoc) continue;
@@ -91,60 +79,34 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
                         error: `${productDoc.name} is out of stock`
                     });
                 }
-                productDoc.stock -= item.quantity;
-                await productDoc.save();
             }
-
-            const price = productDoc.price * item.quantity;
-            totalAmount += price;
-
-            orderItems.push({
-                product: productDoc._id,
-                quantity: item.quantity,
-                price: productDoc.price
-            });
         }
 
+        // Calculate total for wallet validation
+        let subtotal = 0;
+        cart.items.forEach(item => {
+            const product = item.productId;
+            if (!product) return;
+            const price = product.discount > 0
+                ? product.price * (1 - product.discount / 100)
+                : product.price;
+            subtotal += price * item.quantity;
+        });
+
+        const shipping = subtotal >= 500 ? 0 : 50;
+        const tax = subtotal * 0.10;
+        const total = subtotal + shipping + tax;
+
         const userWallet = await Wallet.findOne({ user: userId });
-        if (!userWallet || userWallet.balance < totalAmount) {
+        if (!userWallet || userWallet.balance < total) {
             return res.status(400).render('checkout', {
                 cart,
                 error: 'Insufficient balance. Please add funds to your wallet.'
             });
         }
 
-        const firstItem = cart.items[0];
-        const sellerId = firstItem.itemType === 'Product'
-            ? firstItem.productId.seller
-            : firstItem.productId.addedBy;
-
-        const order = new Order({
-            customer: userId,
-            seller: sellerId,
-            items: orderItems,
-            totalAmount,
-            shippingAddress: { fullName, address, city, state, zipCode, phone },
-            status: 'processing'
-        });
-
-        await order.save();
-
-        cart.items = [];
-        cart.updatedAt = Date.now();
-        await cart.save();
-
-        const sellerWallet = await Wallet.findOne({ user: sellerId });
-        const adminWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
-
-        const commission = totalAmount * 0.05;
-        const sellerRevenue = totalAmount - commission;
-
-        await userWallet.deductFunds(totalAmount);
-        if (sellerWallet) await sellerWallet.addFunds(sellerRevenue);
-        if (adminWallet) await adminWallet.addFunds(commission);
-
-        await new Transaction({ from: userId, to: sellerId, amount: sellerRevenue }).save();
-        await new Transaction({ from: userId, to: "6807e4424877bcd9980c7e00", amount: commission }).save();
+        // Store shipping info in session for payment page
+        req.session.shippingInfo = { fullName, address, city, state, zipCode, phone };
 
         res.redirect('/payment');
     } catch (err) {
@@ -235,6 +197,16 @@ router.post('/payment', isAuthenticated, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Cart is empty' });
         }
 
+        // Get shipping info from session
+        const shippingInfo = req.session.shippingInfo || {
+            fullName: req.user.username || 'N/A',
+            address: req.user.address || 'N/A',
+            city: 'N/A',
+            state: 'N/A',
+            zipCode: 'N/A',
+            phone: req.user.phone || 'N/A'
+        };
+
         let subtotal = 0;
         cart.items.forEach(item => {
             const product = item.productId;
@@ -253,19 +225,49 @@ router.post('/payment', isAuthenticated, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Insufficient wallet balance' });
         }
 
+        // Deduct stock for products
+        for (const item of cart.items) {
+            const productDoc = item.productId;
+            if (!productDoc) continue;
+
+            if (item.itemType === 'Product') {
+                if (productDoc.stock < item.quantity) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: `${productDoc.name} is out of stock` 
+                    });
+                }
+                productDoc.stock -= item.quantity;
+                await productDoc.save();
+            }
+        }
+
         await customerWallet.deductFunds(total);
 
         const adminWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
         const commission = total * 0.05;
 
+        // Prepare order items in the correct format for Order model
+        const orderItems = [];
+        let primarySellerId = null;
+
         for (const item of cart.items) {
             const sellerId = item.productId.seller;
+            if (!primarySellerId) primarySellerId = sellerId; // Use first seller as primary
+
             const sellerWallet = await Wallet.findOne({ user: sellerId });
             const itemPrice = item.productId.price * item.quantity;
             const itemSellerShare = itemPrice * 0.95;
             if (sellerWallet) await sellerWallet.addFunds(itemSellerShare);
 
             await new Transaction({ from: req.user._id, to: sellerId, amount: itemSellerShare }).save();
+
+            // Add to order items with correct field name
+            orderItems.push({
+                product: item.productId._id,
+                quantity: item.quantity,
+                price: item.productId.price
+            });
         }
 
         if (adminWallet) await adminWallet.addFunds(commission);
@@ -273,12 +275,17 @@ router.post('/payment', isAuthenticated, async (req, res) => {
 
         const order = new Order({
             customer: req.user._id,
-            items: cart.items,
+            seller: primarySellerId,
+            items: orderItems,
             totalAmount: total,
             status: 'completed',
+            shippingAddress: shippingInfo,
             paymentMethod
         });
         await order.save();
+
+        // Clear shipping info from session
+        delete req.session.shippingInfo;
 
         cart.items = [];
         await cart.save();
