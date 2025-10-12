@@ -1144,7 +1144,7 @@ router.post('/payment', isAuthenticated, async (req, res) => {
       seller: items[0]?.seller || null, // main seller for order record
       items: items,
       totalAmount: totalAmount,
-      status: 'completed',
+      status: 'pending',
       paymentStatus: 'paid',
       paymentMethod,
       shippingAddress: shippingInfo
