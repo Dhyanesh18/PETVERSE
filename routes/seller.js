@@ -57,17 +57,27 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
         ]);
 
         // Format products for display
-        const formattedProducts = products.map(product => ({
-            _id: product._id,
-            title: product.name,
-            price: product.price,
-            stock: product.stock,
-            status: product.stock > 0 ? 'active' : 'inactive',
-            image_url: product.images && product.images.length > 0 ? 
-                `data:${product.images[0].contentType};base64,${product.images[0].data.toString('base64')}` : 
-                'default-product.jpg',
-            dis: product.discount ? `${product.discount}%` : '0%'
-        }));
+        const formattedProducts = products.map(product => {
+            let imageUrl = '/images/default-product.jpg';
+
+            if (product.images && product.images.length > 0) {
+                const img = product.images[0];
+                const base64Data = Buffer.from(img.data?.data || img.data).toString('base64');
+                imageUrl = `data:${img.contentType};base64,${base64Data}`;
+            }
+
+            return {
+                _id: product._id,
+                title: product.name,
+                price: product.price,
+                stock: product.stock,
+                status: product.stock > 0 ? 'active' : 'inactive',
+                image_url: imageUrl,
+                dis: product.discount ? `${product.discount}%` : '0%'
+            };
+        });
+        console.log('First product image_url:', formattedProducts[0]?.image_url?.slice(0, 100));
+
 
         // Get recent orders for display
         const sellerOrders = await Order.find({ seller: seller._id })
