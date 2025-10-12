@@ -264,6 +264,18 @@ router.get('/orders/:orderId', isAuthenticated, sellerAuth, async (req, res) => 
     }
 });
 
+// Edit order route (redirect to details for now)
+router.get('/order/:orderId/edit', isAuthenticated, sellerAuth, async (req, res) => {
+    try {
+        // For now, redirect to order details
+        // In the future, this could show an edit form
+        res.redirect(`/seller/orders/${req.params.orderId}`);
+    } catch (error) {
+        console.error('Error accessing order edit:', error);
+        res.status(500).render('error', { message: 'Error accessing order edit page' });
+    }
+});
+
 // Update order status
 router.post('/orders/:orderId/status', isAuthenticated, sellerAuth, async (req, res) => {
     try {

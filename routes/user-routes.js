@@ -140,8 +140,8 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
         const wallet = await Wallet.findOne({ user: req.user._id });
         const walletAmount = wallet ? wallet.balance : 0;  
 
-        // Calculate total spent based on initial balance (10000) minus remaining balance
-        const totalSpent = 10000 - walletAmount;  // This is the key change
+        // Calculate total spent by summing all valid order amounts
+        const totalSpent = validOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
         const userData = {
             username: req.user.username,
@@ -1041,13 +1041,24 @@ router.get('/payment', isAuthenticated, async (req, res) => {
                 const itemTotal = price * item.quantity;
                 subtotal += itemTotal;
 
+                // Convert image to base64 if it exists
+                let image_url = '/images/default-product.jpg';
+                if (product.images && product.images.length > 0) {
+                    const img = product.images[0];
+                    if (img.data && img.contentType) {
+                        const base64Data = Buffer.from(img.data?.data || img.data).toString('base64');
+                        image_url = `data:${img.contentType};base64,${base64Data}`;
+                    }
+                }
+
                 cartData.items.push({
                     _id: product._id,
                     name: product.name,
                     price: price,
                     quantity: item.quantity,
-                    image_url: product.image_url || '/images/default-product.jpg',
-                    itemType: item.itemType
+                    image_url: image_url,
+                    itemType: item.itemType,
+                    brand: product.brand || 'N/A'
                 });
             });
 
@@ -1466,6 +1477,18 @@ router.get('/order-details/:orderId', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Error fetching order details:', error);
         res.status(500).render('error', { message: 'Failed to fetch order details' });
+    }
+});
+
+// Edit order route - redirect to order details (editing orders after placement is not typically allowed)
+router.get('/order/:orderId/edit', isAuthenticated, async (req, res) => {
+    try {
+        // Redirect to order details page instead
+        // Orders typically cannot be edited after placement
+        res.redirect(`/order-details/${req.params.orderId}`);
+    } catch (error) {
+        console.error('Error accessing order edit:', error);
+        res.status(500).render('error', { message: 'Error accessing order' });
     }
 });
 
