@@ -28,11 +28,13 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('🐾 PetVerse Booking Validation Initialized');
     },
     
-    // Setup date picker with minimum date
+    // Setup date picker with minimum date (2 days from today)
     setupDatePicker: function() {
       if (this.datePicker) {
-        const today = new Date().toISOString().split('T')[0];
-        this.datePicker.min = today;
+        const today = new Date();
+        const minDate = new Date(today);
+        minDate.setDate(today.getDate() + 2); // 2 days from today
+        this.datePicker.min = minDate.toISOString().split('T')[0];
       }
     },
     
@@ -173,9 +175,17 @@ document.addEventListener('DOMContentLoaded', function() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
-      // Check if date is in the past
-      if (selectedDate < today) {
-        this.showFieldError('date', 'Please select a future date');
+      // Check if date is at least 2 days from today
+      const minBookingDate = new Date(today);
+      minBookingDate.setDate(today.getDate() + 2);
+      if (selectedDate < minBookingDate) {
+        this.showFieldError('date', 'Booking must be made at least 2 days in advance. Please select a date from ' + minBookingDate.toLocaleDateString());
+        return false;
+      }
+      
+      // Check if selected date is Saturday (day 6) - show as holiday
+      if (selectedDate.getDay() === 6) {
+        this.showFieldError('date', 'Sorry, we are closed on Saturdays (Holiday). Please select another date');
         return false;
       }
       
