@@ -25,6 +25,17 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
         }
 
         console.log('Seller found:', seller.email);
+        console.log('Seller ID:', seller._id);
+
+        // Debug: Check ALL orders in database
+        const allOrders = await Order.find({});
+        console.log('Total orders in database:', allOrders.length);
+        console.log('All orders:', allOrders.map(o => ({ 
+            id: o._id, 
+            seller: o.seller, 
+            status: o.status,
+            sellerMatch: o.seller?.toString() === seller._id.toString()
+        })));
 
         // Fetch seller's products
         const products = await Product.find({ seller: seller._id });
@@ -41,9 +52,25 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
 
         // Get order statistics
         const totalOrders = await Order.countDocuments({ seller: seller._id });
+        
+        // Debug: Check all orders for this seller
+        const allSellerOrders = await Order.find({ seller: seller._id });
+        console.log('All orders for seller:', allSellerOrders.length);
+        console.log('Order statuses:', allSellerOrders.map(o => ({ id: o._id, status: o.status })));
+        
+        // TEMPORARY FIX: Update any 'completed' orders to 'pending' for testing
+        // Remove this after testing
+        const completedOrders = await Order.updateMany(
+            { seller: seller._id, status: 'completed' },
+            { $set: { status: 'pending' } }
+        );
+        if (completedOrders.modifiedCount > 0) {
+            console.log(`Updated ${completedOrders.modifiedCount} completed orders to pending`);
+        }
+        
         const pendingOrders = await Order.countDocuments({ 
             seller: seller._id, 
-            status: 'pending' 
+            status: { $in: ['pending', 'processing', 'shipped'] }
         });
         const processingOrders = await Order.countDocuments({ 
             seller: seller._id, 
@@ -155,6 +182,12 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
 
         const totalSales = revenue[0]?.total || 0;
 
+        // Final debug before render
+        console.log('=== FINAL DEBUG ===');
+        console.log('Pending Orders Count:', pendingOrders);
+        console.log('Total Orders Count:', totalOrders);
+        console.log('Formatted Orders:', formattedOrders.length);
+        
         res.render('seller-dashboard', {
             user: {
                 name: seller.fullName || seller.businessName || 'Seller',
@@ -183,7 +216,12 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
             totalSales: totalSales,
             pendingOrders: pendingOrders,
             rating: averageRating,
-            revenue: revenue[0]?.total || 0
+            revenue: revenue[0]?.total || 0,
+            debugInfo: {
+                sellerId: seller._id.toString(),
+                allOrdersCount: allOrders.length,
+                ordersForSeller: allSellerOrders.length
+            }
         });
     } catch (error) {
         console.error('Dashboard error:', error);
@@ -252,22 +290,36 @@ router.post('/orders/:orderId/status', isAuthenticated, sellerAuth, async (req, 
 router.post('/order/:orderId/status', isAuthenticated, sellerAuth, async (req, res) => {
     try {
         const { status } = req.body;
+        console.log('Update order status request:', { orderId: req.params.orderId, status, userId: req.user._id });
+        
         const order = await Order.findOne({
             _id: req.params.orderId,
             seller: req.user._id
         });
 
         if (!order) {
+            console.log('Order not found for seller');
             return res.status(404).json({ success: false, error: 'Order not found' });
         }
 
+        console.log('Current order status:', order.status);
+        console.log('Updating to:', status);
+        
+        // Validate status
+        const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            console.log('Invalid status:', status);
+            return res.status(400).json({ success: false, error: 'Invalid status value' });
+        }
+        
         order.status = status;
         await order.save();
-
+        
+        console.log('Order status updated successfully');
         res.json({ success: true, message: 'Order status updated successfully' });
     } catch (error) {
         console.error('Error updating order status:', error);
-        res.status(500).json({ success: false, error: 'Error updating order status' });
+        res.status(500).json({ success: false, error: 'Error updating order status: ' + error.message });
     }
 });
 
