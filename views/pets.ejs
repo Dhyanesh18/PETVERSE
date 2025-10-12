@@ -179,7 +179,7 @@
                          data-breed="<%= pet.breed || '' %>"
                          data-age="<%= pet.age || '' %>"
                          data-price="<%= pet.price %>"
-                         onclick="window.location.href='/seller/detail/<%= pet._id %>'">
+                         data-pet-id="<%= pet._id %>">
                          <div class="product-image">
                             <% if (pet.images && pet.images.length > 0) { %>
                                 <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
@@ -350,6 +350,96 @@
             document.getElementById('max-price').value = '';
             filterCards();
         });
+
+        // Handle pet card clicks (navigate to detail page)
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Don't navigate if clicking on buttons
+                if (e.target.closest('.product-action')) {
+                    return;
+                }
+                
+                const petId = this.getAttribute('data-pet-id');
+                if (petId) {
+                    window.location.href = `/seller/detail/${petId}`;
+                }
+            });
+        });
+
+        // Handle wishlist button clicks
+        document.querySelectorAll('.wishlist-btn').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const card = this.closest('.product-card');
+                const petId = card ? card.getAttribute('data-pet-id') : null;
+                
+                if (!petId) {
+                    console.error('Pet ID not found');
+                    return;
+                }
+                
+                // Toggle heart icon
+                const heartIcon = this.querySelector('i');
+                heartIcon.classList.toggle('far');
+                heartIcon.classList.toggle('fas');
+                
+                // Send request to backend
+                try {
+                    const response = await fetch(`/wishlist/pet/${petId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log(data.wishlisted ? 'Added to wishlist' : 'Removed from wishlist');
+                    } else {
+                        // Revert icon if failed
+                        heartIcon.classList.toggle('far');
+                        heartIcon.classList.toggle('fas');
+                        console.error('Failed to update wishlist');
+                    }
+                } catch (error) {
+                    // Revert icon if error
+                    heartIcon.classList.toggle('far');
+                    heartIcon.classList.toggle('fas');
+                    console.error('Error updating wishlist:', error);
+                }
+            });
+        });
+
+        // Load wishlist state on page load
+        async function loadWishlistState() {
+            try {
+                const response = await fetch('/wishlist');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const wishlistedPetIds = data.wishlistedPets.map(p => p._id.toString());
+                    
+                    // Update wishlist buttons
+                    document.querySelectorAll('.product-card').forEach(card => {
+                        const petId = card.getAttribute('data-pet-id');
+                        
+                        if (petId && wishlistedPetIds.includes(petId)) {
+                            const wishlistBtn = card.querySelector('.wishlist-btn i');
+                            if (wishlistBtn) {
+                                wishlistBtn.classList.remove('far');
+                                wishlistBtn.classList.add('fas');
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading wishlist state:', error);
+            }
+        }
+
+        // Load wishlist state
+        loadWishlistState();
     });
     </script>
 </body>

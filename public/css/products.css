@@ -332,6 +332,14 @@ body {
     color: #e41749;
 }
 
+.wishlist-btn .fas {
+    color: #e41749;
+}
+
+.wishlist-btn .far {
+    color: #666;
+}
+
 .pagination {
     display: flex;
     justify-content: center;

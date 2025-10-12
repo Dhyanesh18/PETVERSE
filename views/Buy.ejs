@@ -167,6 +167,67 @@
                 </div>
             </div>
         </div>
+
+        <!-- Similar Products Section -->
+        <% if (locals.similarProducts && similarProducts.length > 0) { %>
+        <div class="details-section">
+            <h2 class="section-title">Similar Products</h2>
+            <div class="similar-products-grid">
+                <% similarProducts.forEach(function(similarProduct) { %>
+                    <div class="product-card">
+                        <a href="/buy/<%= similarProduct._id %>" class="product-link">
+                            <div class="product-image">
+                                <% if (similarProduct.images && similarProduct.images.length > 0) { %>
+                                    <img src="data:<%= similarProduct.images[0].contentType %>;base64,<%= similarProduct.images[0].data.toString('base64') %>" alt="<%= similarProduct.name %>">
+                                <% } else { %>
+                                    <img src="/images/default-product.jpg" alt="<%= similarProduct.name %>">
+                                <% } %>
+                            </div>
+                            <div class="product-info">
+                                <h3 class="product-name"><%= similarProduct.name %></h3>
+                                <p class="product-brand"><%= similarProduct.brand %></p>
+                                <div class="product-rating">
+                                    <div class="stars">
+                                        <% for(let i = 1; i <= 5; i++) { %>
+                                            <i class="fa fa-star <%= i <= similarProduct.avgRating ? 'filled' : '' %>" style="<%= i <= similarProduct.avgRating ? 'color: #FFD700;' : 'color: #ddd;' %>"></i>
+                                        <% } %>
+                                    </div>
+                                    <span class="review-count">(<%= similarProduct.reviewCount || 0 %>)</span>
+                                </div>
+                                <p class="product-description"><%= similarProduct.description %></p>
+                                <div class="product-price">
+                                    <% if (similarProduct.discount > 0) { %>
+                                        <span class="original-price">₹<%= similarProduct.price.toFixed(2) %></span>
+                                        <span class="discounted-price">₹<%= (similarProduct.price * (1 - similarProduct.discount/100)).toFixed(2) %></span>
+                                        <span class="discount-badge"><%= similarProduct.discount %>% OFF</span>
+                                    <% } else { %>
+                                        <span class="discounted-price">₹<%= similarProduct.price.toFixed(2) %></span>
+                                    <% } %>
+                                </div>
+                                <div class="product-stock">
+                                    <% if (similarProduct.stock === 0) { %>
+                                        Out of Stock
+                                    <% } else if (similarProduct.stock <= 5) { %>
+                                        Only <%= similarProduct.stock %> left in stock!
+                                    <% } else { %>
+                                        In Stock
+                                    <% } %>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="product-action">
+                            <button class="add-to-cart-similar" data-product-id="<%= similarProduct._id %>" <%= similarProduct.stock === 0 ? 'disabled' : '' %>>
+                                Add to Cart
+                            </button>
+                            <button class="wishlist-btn">
+                                <i class="far fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        </div>
+        <% } %>
     </div>
 
     <%- include('partials/footer') %>
@@ -177,6 +238,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize cart manager
             cartManager.initializeCart();
+            
+            // Load and initialize wishlist state
+            loadWishlistState();
             
             // Add to Cart Button
             const addToCartBtn = document.querySelector('.add-to-cart-btn');
@@ -272,6 +336,131 @@
                 document.getElementById('form-rating-value').value = rating;
                 document.getElementById('form-comment-value').value = feedback;
                 document.getElementById('review-form').submit();
+            });
+
+            // Similar Products - Add to Cart
+            const similarAddToCartBtns = document.querySelectorAll('.add-to-cart-similar');
+            similarAddToCartBtns.forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    
+                    if (this.disabled) return;
+                    
+                    const productId = this.getAttribute('data-product-id');
+                    if (productId) {
+                        try {
+                            this.disabled = true;
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Adding...';
+                            
+                            const result = await cartManager.addToCart(productId, 1);
+                            if (result.success) {
+                                this.innerHTML = '<i class="fa fa-check"></i> Added!';
+                                this.style.backgroundColor = "#4CAF50";
+                                setTimeout(() => {
+                                    this.disabled = false;
+                                    this.innerHTML = originalText;
+                                    this.style.backgroundColor = "";
+                                }, 2000);
+                            }
+                        } catch (error) {
+                            console.error('Failed to add to cart:', error);
+                            this.innerHTML = '<i class="fa fa-times"></i> Failed';
+                            this.style.backgroundColor = "#dc3545";
+                            
+                            setTimeout(() => {
+                                this.disabled = false;
+                                this.innerHTML = originalText;
+                                this.style.backgroundColor = "";
+                            }, 1500);
+                        }
+                    }
+                });
+            });
+
+            // Function to load wishlist state from backend
+            async function loadWishlistState() {
+                try {
+                    const response = await fetch('/wishlist');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const wishlistedProductIds = data.wishlistedProducts.map(p => p._id.toString());
+                        
+                        // Update all wishlist buttons based on backend data
+                        document.querySelectorAll('.similar-products-grid .wishlist-btn').forEach(btn => {
+                            const productCard = btn.closest('.product-card');
+                            const addToCartBtn = productCard.querySelector('.add-to-cart-similar');
+                            const productId = addToCartBtn ? addToCartBtn.getAttribute('data-product-id') : null;
+                            
+                            if (productId && wishlistedProductIds.includes(productId)) {
+                                // Product is in wishlist - show filled heart
+                                const heartIcon = btn.querySelector('i');
+                                heartIcon.classList.remove('far');
+                                heartIcon.classList.add('fas');
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading wishlist state:', error);
+                }
+            }
+
+            // Similar Products - Wishlist functionality with async/fetch
+            const similarWishlistBtns = document.querySelectorAll('.similar-products-grid .wishlist-btn');
+            similarWishlistBtns.forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    
+                    // Get product ID from the sibling button
+                    const productCard = this.closest('.product-card');
+                    const addToCartBtn = productCard.querySelector('.add-to-cart-similar');
+                    const productId = addToCartBtn ? addToCartBtn.getAttribute('data-product-id') : null;
+                    
+                    if (!productId) {
+                        console.error('Product ID not found');
+                        return;
+                    }
+                    
+                    // Toggle heart icon immediately for better UX
+                    const heartIcon = this.querySelector('i');
+                    const wasWishlisted = heartIcon.classList.contains('fas');
+                    
+                    heartIcon.classList.toggle('far');
+                    heartIcon.classList.toggle('fas');
+                    
+                    // Send request to backend
+                    try {
+                        const response = await fetch(`/wishlist/product/${productId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            // Show feedback
+                            if (data.wishlisted) {
+                                console.log('Added to wishlist');
+                                // Optional: Show a toast notification
+                            } else {
+                                console.log('Removed from wishlist');
+                            }
+                        } else {
+                            // Revert the icon if API call failed
+                            heartIcon.classList.toggle('far');
+                            heartIcon.classList.toggle('fas');
+                            console.error('Failed to update wishlist:', data.message);
+                        }
+                    } catch (error) {
+                        // Revert the icon if request failed
+                        heartIcon.classList.toggle('far');
+                        heartIcon.classList.toggle('fas');
+                        console.error('Error updating wishlist:', error);
+                    }
+                });
             });
         });
     </script>

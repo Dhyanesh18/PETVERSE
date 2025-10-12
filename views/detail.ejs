@@ -28,6 +28,15 @@
         justify-content: center;
         align-items: center;
     }
+    /* Wishlist button styles */
+    .wishlist-btn-main .fas,
+    .wishlist-btn .fas {
+        color: #e41749;
+    }
+    .wishlist-btn-main .far,
+    .wishlist-btn .far {
+        color: #666;
+    }
   </style>
 </head>
 <body>
@@ -112,7 +121,7 @@
                   data-product-id="<%= typeof product._id !== 'undefined' ? product._id : (typeof req !== 'undefined' && req.params ? req.params.id : '') %>">
             <i class="fas fa-shopping-cart mr-2"></i> Add to Cart
           </button>
-          <button class="wishlist-btn px-4 py-3 rounded">
+          <button class="wishlist-btn-main px-4 py-3 rounded" data-item-id="" data-item-type="<%= product.isPet ? 'pet' : 'product' %>">
             <i class="far fa-heart"></i>
           </button>
         </div>
@@ -220,7 +229,7 @@
                 <button onclick="window.location.href='<%= product.isPet ? `/seller/detail/${similar._id}` : `/buy/${similar._id}` %>'" class="view-details bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm flex-1">
                   View Details
                 </button>
-                <button class="wishlist-btn px-2 py-2 rounded">
+                <button class="wishlist-btn px-2 py-2 rounded" data-item-id="<%= similar._id %>" data-item-type="<%= product.isPet ? 'pet' : 'product' %>">
                   <i class="far fa-heart"></i>
                 </button>
               </div>
@@ -407,6 +416,138 @@
                     }
                 });
             }
+
+            // Wishlist functionality - unified handler
+            function handleWishlistClick(btn) {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const itemId = this.getAttribute('data-item-id');
+                    const itemType = this.getAttribute('data-item-type');
+                    
+                    if (!itemId || !itemType) {
+                        console.error('Item ID or type not found');
+                        return;
+                    }
+                    
+                    // Toggle heart icon
+                    const heartIcon = this.querySelector('i');
+                    heartIcon.classList.toggle('far');
+                    heartIcon.classList.toggle('fas');
+                    
+                    // Send request to backend
+                    try {
+                        const endpoint = itemType === 'pet' ? `/wishlist/pet/${itemId}` : `/wishlist/product/${itemId}`;
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            console.log(data.wishlisted ? 'Added to wishlist' : 'Removed from wishlist');
+                        } else {
+                            // Revert icon if failed
+                            heartIcon.classList.toggle('far');
+                            heartIcon.classList.toggle('fas');
+                            console.error('Failed to update wishlist');
+                        }
+                    } catch (error) {
+                        // Revert icon if error
+                        heartIcon.classList.toggle('far');
+                        heartIcon.classList.toggle('fas');
+                        console.error('Error updating wishlist:', error);
+                    }
+                });
+            }
+
+            // Apply to main wishlist button and set item ID from URL
+            const mainWishlistBtn = document.querySelector('.wishlist-btn-main');
+            if (mainWishlistBtn) {
+                // Get item ID from URL
+                const pathSegments = window.location.pathname.split('/');
+                const itemId = pathSegments[pathSegments.length - 1];
+                
+                // Set the item ID
+                mainWishlistBtn.setAttribute('data-item-id', itemId);
+                console.log('Set main button item ID from URL:', itemId);
+                
+                handleWishlistClick(mainWishlistBtn);
+            }
+
+            // Apply to similar items wishlist buttons
+            document.querySelectorAll('.similar-products .wishlist-btn').forEach(btn => {
+                handleWishlistClick(btn);
+            });
+
+            // Load wishlist state for all wishlist buttons
+            async function loadWishlistState() {
+                try {
+                    const response = await fetch('/wishlist');
+                    const data = await response.json();
+                    
+                    console.log('Wishlist data:', data);
+                    
+                    if (data.success) {
+                        const wishlistedPetIds = data.wishlistedPets.map(p => p._id.toString());
+                        const wishlistedProductIds = data.wishlistedProducts.map(p => p._id.toString());
+                        
+                        console.log('Wishlisted Pet IDs:', wishlistedPetIds);
+                        console.log('Wishlisted Product IDs:', wishlistedProductIds);
+                        
+                        // Update main wishlist button
+                        const mainWishlistBtn = document.querySelector('.wishlist-btn-main');
+                        console.log('Main wishlist button found:', mainWishlistBtn);
+                        
+                        if (mainWishlistBtn) {
+                            const itemId = mainWishlistBtn.getAttribute('data-item-id');
+                            const itemType = mainWishlistBtn.getAttribute('data-item-type');
+                            
+                            console.log('Main button - Item ID:', itemId, 'Type:', itemType);
+                            
+                            if (itemId) {
+                                const isWishlisted = itemType === 'pet' 
+                                    ? wishlistedPetIds.includes(itemId)
+                                    : wishlistedProductIds.includes(itemId);
+                                
+                                console.log('Is wishlisted:', isWishlisted);
+                                
+                                if (isWishlisted) {
+                                    const heartIcon = mainWishlistBtn.querySelector('i');
+                                    heartIcon.classList.remove('far');
+                                    heartIcon.classList.add('fas');
+                                    console.log('Updated main button to filled heart');
+                                }
+                            }
+                        }
+                        
+                        // Update wishlist buttons for similar items
+                        document.querySelectorAll('.similar-products .wishlist-btn').forEach(btn => {
+                            const itemId = btn.getAttribute('data-item-id');
+                            const itemType = btn.getAttribute('data-item-type');
+                            
+                            if (itemId) {
+                                const isWishlisted = itemType === 'pet' 
+                                    ? wishlistedPetIds.includes(itemId)
+                                    : wishlistedProductIds.includes(itemId);
+                                
+                                if (isWishlisted) {
+                                    const heartIcon = btn.querySelector('i');
+                                    heartIcon.classList.remove('far');
+                                    heartIcon.classList.add('fas');
+                                }
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading wishlist state:', error);
+                }
+            }
+
+            // Load wishlist state
+            loadWishlistState();
 
         });
     </script>

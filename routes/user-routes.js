@@ -191,13 +191,20 @@ router.get('/owner-dashboard', isAuthenticated, async (req, res) => {
             serviceDate: new Date(booking.serviceDate).toLocaleDateString('en-IN')
         }));
 
+        // Fetch user's wishlist
+        const user = await User.findById(req.user._id).lean();
+        const [wishlistedPets, wishlistedProducts] = await Promise.all([
+            Pet.find({ _id: { $in: user.wishlistPets || [] } }).lean(),
+            Product.find({ _id: { $in: user.wishlistProducts || [] } }).lean()
+        ]);
+
         res.render('owner-dashboard', {
             user: userData,
             orders: ordersForView.filter(o => !['cancelled', 'pending_payment'].includes(o.status)), // Only show valid orders
             bookings: formattedBookings,
             navLinks: navLinksData,
-            wishlistedPets: [],
-            wishlistedProducts: [],
+            wishlistedPets: wishlistedPets,
+            wishlistedProducts: wishlistedProducts,
             registeredEvents
         });
     } catch (err) {
