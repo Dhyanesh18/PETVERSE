@@ -128,13 +128,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (eventDate < oneMonthFromNow) {
                 isValid = false;
                 message = 'Event must be at least 1 month in advance';
-                notificationMessage = '❌ Event must be at least 1 month in advance';
+                notificationMessage = 'Event must be at least 1 month in advance';
             } else if (eventDate > sixMonthsFromNow) {
                 isValid = false;
                 message = 'Event cannot be more than 6 months in advance';
-                notificationMessage = '❌ Event cannot be more than 6 months in advance';
+                notificationMessage = 'Event cannot be more than 6 months in advance';
             } else {
-                notificationMessage = '✅ Event date is valid (1-6 months in advance)';
+                notificationMessage = 'Event date is valid (1-6 months in advance)';
             }
 
             this.showFieldValidation('eventDate', isValid, message);
@@ -276,19 +276,19 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (!email.includes('@')) {
                 isValid = false;
                 message = 'Email must contain @ symbol';
-                noticeMessage = '❌ Email must contain @ symbol';
+                noticeMessage = 'Email must contain @ symbol';
             } else if (!email.includes('.')) {
                 isValid = false;
                 message = 'Email must contain a domain (e.g., .com, .org)';
-                noticeMessage = '❌ Email must contain a domain (e.g., .com, .org)';
+                noticeMessage = 'Email must contain a domain (e.g., .com, .org)';
             } else if (!emailRegex.test(email)) {
                 isValid = false;
                 message = 'Please enter a valid email format (e.g., user@example.com)';
-                noticeMessage = '❌ Please enter a valid email format (e.g., user@example.com)';
+                noticeMessage = 'Please enter a valid email format (e.g., user@example.com)';
             } else {
                 isValid = true;
                 message = '';
-                noticeMessage = '✅ Email address is valid';
+                noticeMessage = 'Email address is valid';
             }
 
             this.showFieldValidation('contactEmail', isValid, message);
@@ -313,15 +313,15 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (hasNonNumeric) {
                 isValid = false;
                 message = 'Phone number can only contain digits (0-9)';
-                noticeMessage = '❌ Phone number can only contain digits (0-9)';
+                noticeMessage = 'Phone number can only contain digits (0-9)';
             } else if (!phoneRegex.test(phone)) {
                 isValid = false;
                 message = 'Phone number must be exactly 10 digits';
-                noticeMessage = '❌ Phone number must be exactly 10 digits';
+                noticeMessage = 'Phone number must be exactly 10 digits';
             } else {
                 isValid = true;
                 message = '';
-                noticeMessage = '✅ Phone number is valid';
+                noticeMessage = 'Phone number is valid';
             }
 
             this.showFieldValidation('contactPhone', isValid, message);
@@ -380,10 +380,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const isContactPhoneValid = this.validateContactPhone();
 
             return isTitleValid && isCategoryValid && isDescriptionValid && 
-                   isEventDateValid && isStartTimeValid && isEndTimeValid && 
-                   isVenueValid && isAddressValid && isCityValid && 
-                   isMaxAttendeesValid && isPermissionDocumentValid && 
-                   isContactEmailValid && isContactPhoneValid;
+                    isEventDateValid && isStartTimeValid && isEndTimeValid && 
+                    isVenueValid && isAddressValid && isCityValid && 
+                    isMaxAttendeesValid && isPermissionDocumentValid && 
+                    isContactEmailValid && isContactPhoneValid;
         }
     };
 

@@ -198,7 +198,10 @@ body {
     background-image: url('../images/hero.jpg');
     background-size: cover;
     background-position: center top;
+    background-attachment: fixed; /* Makes the background sticky */
+    z-index: 0;
 }
+
 
 .hero::before {
     content: '';
@@ -208,7 +211,9 @@ body {
     height: 100%;
     width: 100%;
     background: rgba(0,0,0,0.4);
+    z-index: 1; /* Below content */
 }
+
 
 .hero-content {
     position: relative;
@@ -223,6 +228,12 @@ body {
     padding: 0;
     padding-bottom: 30px;
 }
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
 
 .hero-content span{
     font-size: 1.8rem;
@@ -421,14 +432,14 @@ body {
     border-radius: 5px;
     width: 95%;
     color: white;
-    background-color: rgb(0,180,180);
+    background: linear-gradient(135deg, #3b99c1 0%, #2bbca9 100%);
     border: none;
-    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     transition: all 0.3s ease;
 }
 
 .card-button:hover {
-    box-shadow: 0 0 8px rgba(0,0,0,0.8);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
     transform: scale(1.05);
 }
 

@@ -338,7 +338,7 @@ body {
 }
   
 #apply-price {
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #3b99c1 0%, #2bbca9 100%);
   color: white;
   border: none;
   padding: 8px 15px;
@@ -423,7 +423,7 @@ body {
   
 .provider-label {
   font-size: 0.8rem;
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #3b99c1 0%, #2bbca9 100%);
   color: white;
   padding: 3px 8px;
   border-radius: 15px;
@@ -447,7 +447,7 @@ body {
 
 .service-category {
   display: inline-block;
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #3b99c1 0%, #2bbca9 100%);
   color: white;
   padding: 3px 10px;
   border-radius: 15px;
@@ -461,7 +461,7 @@ body {
 }
 
 .service-location i {
-  color: #4CAF50;
+  background: linear-gradient(135deg, #3b99c1 0%, #2bbca9 100%);
   margin-right: 5px;
 }
 
@@ -470,6 +470,7 @@ body {
   margin-bottom: 15px;
   font-size: 0.95rem;
   display: -webkit-box;
+  line-clamp:3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -514,7 +515,7 @@ body {
 }
   
 .service-btn, .details-btn {
-  background-color: #4CAF50;
+  background-color: #3b99c1;
   color: white;
   border: none;
   padding: 10px 15px;
@@ -527,8 +528,12 @@ body {
   text-decoration: none;
 }
   
+.service-btn {
+  background-color: #2bbca9;
+}
+
 .service-btn:hover {
-  background-color: #388E3C;
+  background-color: #039985;
 }
   
 .details-btn {
@@ -536,7 +541,9 @@ body {
 }
   
 .details-btn:hover {
-  background-color: #0b7dda;
+  background-color: #0965b1;
+  color: white;
+  text-decoration: none;
 }
   
 /* Footer Styles */
