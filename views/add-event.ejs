@@ -65,7 +65,10 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="eventDate">Event Date *</label>
-                        <input type="date" id="eventDate" name="eventDate" required min="<%= new Date().toISOString().split('T')[0] %>">
+                        <input type="date" id="eventDate" name="eventDate" required>
+                        <div id="dateValidationNotice" class="date-validation-notice">
+                            <i class="fas fa-info-circle"></i> Event must be scheduled 1-6 months in advance
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -121,12 +124,18 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="contactEmail">Contact Email</label>
-                        <input type="email" id="contactEmail" name="contactEmail" placeholder="Your email (optional)">
+                        <input type="email" id="contactEmail" name="contactEmail" placeholder="your.email@example.com (optional)">
+                        <div id="contactEmailNotice" class="contact-validation-notice info">
+                            <i class="fas fa-info-circle"></i> Optional - Leave blank to use your account email
+                        </div>
                     </div>
                     
                     <div class="form-group">
                         <label for="contactPhone">Contact Phone</label>
-                        <input type="tel" id="contactPhone" name="contactPhone" placeholder="10 digit number">
+                        <input type="tel" id="contactPhone" name="contactPhone" placeholder="9876543210 (optional)">
+                        <div id="contactPhoneNotice" class="contact-validation-notice info">
+                            <i class="fas fa-info-circle"></i> Optional - Leave blank to use your account phone
+                        </div>
                     </div>
                 </div>
                 
