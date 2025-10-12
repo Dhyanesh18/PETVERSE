@@ -207,6 +207,9 @@
         // Initialize cart manager
         cartManager.initializeCart();
 
+        // Load wishlist state on page load
+        loadWishlistState();
+
         // Add to cart button click handler - use event delegation
         document.querySelector('.products-grid').addEventListener('click', async (e) => {
             const addToCartBtn = e.target.closest('.add-to-cart');
@@ -228,6 +231,34 @@
             }
         });
 
+        // Function to load wishlist state from backend
+        async function loadWishlistState() {
+            try {
+                const response = await fetch('/wishlist');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const wishlistedProductIds = data.wishlistedProducts.map(p => p._id.toString());
+                    
+                    // Update all wishlist buttons based on backend data
+                    document.querySelectorAll('.products-grid .wishlist-btn').forEach(btn => {
+                        const productCard = btn.closest('.product-card');
+                        const addToCartBtn = productCard.querySelector('.add-to-cart');
+                        const productId = addToCartBtn ? addToCartBtn.getAttribute('data-product-id') : null;
+                        
+                        if (productId && wishlistedProductIds.includes(productId)) {
+                            // Product is in wishlist - show filled heart
+                            const heartIcon = btn.querySelector('i');
+                            heartIcon.classList.remove('far');
+                            heartIcon.classList.add('fas');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading wishlist state:', error);
+            }
+        }
+
         // Wishlist button click handler
         document.querySelector('.products-grid').addEventListener('click', async (e) => {
             const wishlistBtn = e.target.closest('.wishlist-btn');
@@ -235,26 +266,38 @@
                 e.preventDefault();
                 const productCard = wishlistBtn.closest('.product-card');
                 const productId = productCard.querySelector('.add-to-cart').getAttribute('data-product-id');
-                // Toggle heart icon (visual feedback)
+                
+                if (!productId) {
+                    console.error('Product ID not found');
+                    return;
+                }
+                
+                // Toggle heart icon immediately for better UX
                 const heartIcon = wishlistBtn.querySelector('i');
                 heartIcon.classList.toggle('far');
                 heartIcon.classList.toggle('fas');
-                heartIcon.classList.toggle('wishlist-active');
-                // Optionally, send to backend
+                
+                // Send request to backend using correct endpoint
                 try {
-                    const response = await fetch('/wishlist/toggle', {
+                    const response = await fetch(`/wishlist/product/${productId}`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ productId })
+                        headers: { 'Content-Type': 'application/json' }
                     });
                     const data = await response.json();
-                    // Removed alert for wishlist error
-                    // if (!data.success) {
-                    //     alert('Failed to update wishlist');
-                    // }
+                    
+                    if (data.success) {
+                        console.log(data.wishlisted ? 'Added to wishlist' : 'Removed from wishlist');
+                    } else {
+                        // Revert the icon if API call failed
+                        heartIcon.classList.toggle('far');
+                        heartIcon.classList.toggle('fas');
+                        console.error('Failed to update wishlist:', data.message);
+                    }
                 } catch (err) {
-                    // Removed alert for wishlist error
-                    // alert('Error updating wishlist');
+                    // Revert the icon if request failed
+                    heartIcon.classList.toggle('far');
+                    heartIcon.classList.toggle('fas');
+                    console.error('Error updating wishlist:', err);
                 }
             }
         });
