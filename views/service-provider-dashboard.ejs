@@ -80,6 +80,7 @@
             font-weight: 700;
             background: linear-gradient(to right, var(--primary), var(--secondary));
             -webkit-background-clip: text;
+            background-clip: text;
             color: transparent;
         }
 
@@ -137,6 +138,7 @@
             margin-bottom: var(--spacing-sm);
             background: linear-gradient(45deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
+            background-clip: text;
             color: transparent;
         }
 
@@ -364,6 +366,60 @@
             overflow-x: auto;
         }
 
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background-color: rgba(243, 244, 246, 0.5);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            background-color: rgba(243, 244, 246, 0.8);
+            transform: translateX(4px);
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 1.2rem;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
         @media (max-width: 768px) {
             .dashboard-header {
                 flex-direction: column;
@@ -414,7 +470,7 @@
                 <span class="dashboard-text">Service Provider Dashboard</span>
             </h1>
             <div class="user-info">
-                <span class="user-name">Welcome, <%= (typeof user !== 'undefined' && user && user.name) ? user.name : 'Provider' %></span>
+                <span class="user-name">Welcome, <%= (typeof user !== 'undefined' && user && user.fullName) ? user.fullName : 'Provider' %></span>
                 <% if (user && user.role === 'service_provider') { %>
                 <a href="/events/add/new" class="nav-btn">
                     <i class="fas fa-plus-circle"></i>
@@ -450,6 +506,92 @@
                 <div class="stat-label">Past Bookings</div>
             </div>
         </div>
+
+        <!-- Profile Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-user-circle"></i>
+                    Profile Information
+                </h2>
+            </div>
+            <div class="profile-grid">
+                <div class="profile-info">
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Name</div>
+                            <div class="info-value">
+                                <%= (typeof user !== 'undefined' && user && user.fullName) ? user.fullName : 'N/A' %>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Email Address</div>
+                            <div class="info-value">
+                                <%= (typeof user !== 'undefined' && user && user.email) ? user.email : 'N/A' %>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Username</div>
+                            <div class="info-value">
+                                <%= (typeof user !== 'undefined' && user && user.username) ? user.username : 'N/A' %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-info">
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Role</div>
+                            <div class="info-value">
+                                Service Provider
+                            </div>
+                        </div>
+                    </div>
+                    <% if (user && user.phone) { %>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Phone Number</div>
+                            <div class="info-value">
+                                <%= user.phone %>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+                    <% if (user && user.joinedDate) { %>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-calendar"></i>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-label">Member Since</div>
+                            <div class="info-value">
+                                <%= user.joinedDate %>
+                            </div>
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </section>
 
         <!-- Future Bookings Section -->
         <section class="section">
