@@ -71,7 +71,6 @@ body {
     padding: 20px;
     background: #f8f9fa;
     border-radius: 10px;
-    border-left: 4px solid #2bbca9;
     transition: all 0.3s;
 }
 
@@ -155,7 +154,6 @@ body {
     background: #f8f9fa;
     padding: 25px;
     border-radius: 10px;
-    border-left: 4px solid #21cdf3;
 }
 
 .event-contact h4 {
