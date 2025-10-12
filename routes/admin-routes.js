@@ -391,7 +391,6 @@ router.post('/order/:orderId/status', adminAuth, async (req, res) => {
     }
 });
 
-// Route to get user document (certificate or license)
 router.get('/user-document/:userId', adminAuth, async (req, res) => {
     try {
         const user = await User.findById(req.params.userId);
