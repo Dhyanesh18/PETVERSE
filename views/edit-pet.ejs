@@ -3,56 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Pet - PetVerse</title>
+    <title>Edit Pet - PetVerse</title>
     <link rel="stylesheet" href="/css/homepage.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/css/homepage.css">
     <style>
-    .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-}
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
 
-.modal-content {
-    background-color: #fff;
-    margin: 15% auto;
-    padding: 2rem;
-    border-radius: 8px;
-    width: 80%;
-    max-width: 400px;
-    position: relative;
-    text-align: center;
-}
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+            position: relative;
+            text-align: center;
+        }
 
-.close-modal {
-    position: absolute;
-    right: 1rem;
-    top: 0.5rem;
-    font-size: 2rem;
-    cursor: pointer;
-}
+        .close-modal {
+            position: absolute;
+            right: 1rem;
+            top: 0.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+        }
 
-.modal-ok-btn {
-    background: rgb(0, 180, 180);
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 5px;
-    margin-top: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
+        .modal-ok-btn {
+            background: rgb(0, 180, 180);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
 
-.modal-ok-btn:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 8px rgba(0, 180, 180, 0.5);
-}
+        .modal-ok-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 8px rgba(0, 180, 180, 0.5);
+        }
 
         .navbar{
             background-color: #222;
@@ -75,7 +75,8 @@
         }
 
         .form-group {
-            margin-bottom: 1rem;
+            position: relative;
+            margin-bottom: 1.5rem;
         }
 
         .form-label {
@@ -132,6 +133,45 @@
             box-shadow: 0 0 10px rgba(0, 180, 180, 0.5);
         }
 
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .current-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .current-image-container {
+            position: relative;
+        }
+
+        .current-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 5px;
+            border: 2px solid #ddd;
+        }
+
+        .delete-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+
         .image-preview {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
@@ -139,11 +179,24 @@
             margin-top: 1rem;
         }
 
+        .preview-item {
+            text-align: center;
+        }
+
         .preview-image {
             width: 100px;
             height: 100px;
             object-fit: cover;
             border-radius: 5px;
+            border: 2px solid #ddd;
+        }
+
+        .preview-name {
+            display: block;
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 0.25rem;
+            word-break: break-all;
         }
 
         .error-message {
@@ -214,7 +267,7 @@
     </style>
 </head>
 <body>
-    <!-- Same Header Section -->
+    <!-- Header Section -->
     <header class="header" id="header">
         <nav id="navbar" class="navbar">
             <div class="nav-content">
@@ -256,11 +309,11 @@
 
     <!-- Main Content -->
     <div class="product-form-container">
-        <h2 class="form-title">Add New Pet Listing</h2>
-        <form class="product-form" action="/pets/add" method="POST" enctype="multipart/form-data">
+        <h2 class="form-title">Edit Pet Listing</h2>
+        <form class="product-form" action="/seller/pets/<%= pet._id %>/edit" method="POST" enctype="multipart/form-data">
             <div class="form-group">
                 <label class="form-label" for="name">Pet Name <span style="color: red;">*</span></label>
-                <input class="form-input" type="text" id="name" name="name" required minlength="2" maxlength="50">
+                <input class="form-input" type="text" id="name" name="name" value="<%= pet.name %>" required minlength="2" maxlength="50">
                 <i class="fas fa-check-circle success-icon" id="name-success"></i>
                 <i class="fas fa-times-circle error-icon" id="name-error"></i>
                 <div class="error-message" id="name-error-msg"></div>
@@ -271,11 +324,11 @@
                 <label class="form-label" for="category">Category <span style="color: red;">*</span></label>
                 <select class="form-input" id="category" name="category" required>
                     <option value="">Select Category</option>
-                    <option value="Dog">Dog</option>
-                    <option value="Cat">Cat</option>
-                    <option value="Bird">Bird</option>
-                    <option value="Fish">Fish</option>
-                    <option value="Other">Other</option>
+                    <option value="Dog" <%= pet.category === 'Dog' ? 'selected' : '' %>>Dog</option>
+                    <option value="Cat" <%= pet.category === 'Cat' ? 'selected' : '' %>>Cat</option>
+                    <option value="Bird" <%= pet.category === 'Bird' ? 'selected' : '' %>>Bird</option>
+                    <option value="Fish" <%= pet.category === 'Fish' ? 'selected' : '' %>>Fish</option>
+                    <option value="Other" <%= pet.category === 'Other' ? 'selected' : '' %>>Other</option>
                 </select>
                 <i class="fas fa-check-circle success-icon" id="category-success"></i>
                 <i class="fas fa-times-circle error-icon" id="category-error"></i>
@@ -284,7 +337,7 @@
 
             <div class="form-group">
                 <label class="form-label" for="breed">Breed <span style="color: red;">*</span></label>
-                <input class="form-input" type="text" id="breed" name="breed" required minlength="2" maxlength="50">
+                <input class="form-input" type="text" id="breed" name="breed" value="<%= pet.breed %>" required minlength="2" maxlength="50">
                 <i class="fas fa-check-circle success-icon" id="breed-success"></i>
                 <i class="fas fa-times-circle error-icon" id="breed-error"></i>
                 <div class="error-message" id="breed-error-msg"></div>
@@ -292,21 +345,21 @@
 
             <div class="form-group">
                 <label class="form-label" for="age">Age <span style="color: red;">*</span></label>
-                <input class="form-input" type="text" id="age" name="age" placeholder="E.g., 2 years" required minlength="1" maxlength="20">
+                <input class="form-input" type="text" id="age" name="age" value="<%= pet.age %>" placeholder="E.g., 2 years" required minlength="1" maxlength="20">
                 <i class="fas fa-check-circle success-icon" id="age-success"></i>
                 <i class="fas fa-times-circle error-icon" id="age-error"></i>
                 <div class="error-message" id="age-error-msg"></div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Gender</label>
+                <label class="form-label">Gender <span style="color: red;">*</span></label>
                 <div class="radio-group">
                     <label>
-                        <input type="radio" name="gender" value="male" required>
+                        <input type="radio" name="gender" value="male" <%= pet.gender === 'male' ? 'checked' : '' %> required>
                         Male
                     </label>
                     <label>
-                        <input type="radio" name="gender" value="female">
+                        <input type="radio" name="gender" value="female" <%= pet.gender === 'female' ? 'checked' : '' %>>
                         Female
                     </label>
                 </div>
@@ -314,7 +367,7 @@
 
             <div class="form-group">
                 <label class="form-label" for="price">Price (₹) <span style="color: red;">*</span></label>
-                <input class="form-input" type="number" id="price" name="price" min="1" max="10000000" required>
+                <input class="form-input" type="number" id="price" name="price" value="<%= pet.price %>" min="1" max="10000000" required>
                 <i class="fas fa-check-circle success-icon" id="price-success"></i>
                 <i class="fas fa-times-circle error-icon" id="price-error"></i>
                 <div class="error-message" id="price-error-msg"></div>
@@ -322,28 +375,42 @@
 
             <div class="form-group">
                 <label class="form-label" for="description">Description <span style="color: red;">*</span></label>
-                <textarea class="form-input" id="description" name="description" rows="4" required minlength="10" maxlength="500"></textarea>
+                <textarea class="form-input" id="description" name="description" rows="4" required minlength="10" maxlength="500"><%= pet.description %></textarea>
                 <i class="fas fa-check-circle success-icon" id="description-success"></i>
                 <i class="fas fa-times-circle error-icon" id="description-error"></i>
                 <div class="error-message" id="description-error-msg"></div>
                 <div class="char-count" id="description-count">0/500</div>
             </div>
 
+            <% if(pet.images && pet.images.length > 0) { %>
             <div class="form-group">
-                <label class="form-label">Pet Images (Max 5) <span style="color: red;">*</span></label>
+                <label class="form-label">Current Images</label>
+                <div class="current-images">
+                    <% pet.images.forEach((image, index) => { %>
+                    <div class="current-image-container">
+                        <img src="data:<%= image.contentType %>;base64,<%= image.data.toString('base64') %>" alt="Pet image" class="current-image">
+                        <button type="button" class="delete-image" onclick="deleteImage('<%= index %>')">×</button>
+                        <input type="hidden" name="keepImages[]" id="keepImage<%= index %>" value="true">
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+            <% } %>
+
+            <div class="form-group">
+                <label class="form-label">Add New Images (Max 5)</label>
                 <label class="file-input-label" for="images">
-                    <i class="fas fa-cloud-upload-alt"></i> Click to upload images
-                    <input type="file" id="images" name="images" multiple accept="image/*" hidden required>
+                    <i class="fas fa-cloud-upload-alt"></i> Click to upload new images
+                    <input type="file" id="images" name="images" multiple accept="image/*" hidden>
                 </label>
-                <div class="error-message" id="images-error-msg"></div>
                 <div class="image-preview" id="imagePreview"></div>
             </div>
 
-            <button type="submit" class="submit-btn">List Pet</button>
+            <button type="submit" class="submit-btn">Update Pet</button>
         </form>
     </div>
 
-    <!-- Same Footer Section -->
+    <!-- Footer Section -->
     <footer id="footer">
         <div class="footer-container">
             <div class="footer-logo">
@@ -372,100 +439,85 @@
         </div>
     </footer>
 
-    <!-- Success Modal (Update text) -->
+    <!-- Success Modal -->
     <div id="successModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>✅ Pet Listed Successfully!</h2>
-            <p>Your pet is now visible in our marketplace.</p>
-            <button onclick="window.location.href='/pets'" class="modal-ok-btn">OK</button>
+            <span class="close-modal" onclick="closeSuccessModal()">&times;</span>
+            <h2>✅ Pet Updated Successfully!</h2>
+            <p>Your pet listing has been updated.</p>
+            <button onclick="redirectToDashboard()" class="modal-ok-btn">OK</button>
         </div>
     </div>
 
     <script>
-        let selectedFiles = [];
-        const maxFiles = 5;
-        const imageInput = document.getElementById('images');
-        const previewContainer = document.getElementById('imagePreview');
+        // Image preview for new images
+        document.getElementById('images').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const previewContainer = document.getElementById('imagePreview');
+            previewContainer.innerHTML = '';
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'preview-item';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview" class="preview-image">
+                        <span class="preview-name">${file.name}</span>
+                    `;
+                    previewContainer.appendChild(preview);
+                }
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // Delete existing image
+        function deleteImage(index) {
+            document.getElementById(`keepImage${index}`).value = "false";
+            document.querySelector(`.current-image-container:nth-child(${parseInt(index) + 1})`).style.opacity = "0.3";
+        }
 
         // Validation Functions
         const validators = {
             name: (value) => {
-                if (!value || value.trim().length === 0) {
-                    return 'Pet name is required';
-                }
-                if (value.length < 2) {
-                    return 'Pet name must be at least 2 characters';
-                }
-                if (value.length > 50) {
-                    return 'Pet name must not exceed 50 characters';
-                }
-                if (!/^[a-zA-Z0-9\s\-]+$/.test(value)) {
-                    return 'Pet name contains invalid characters';
-                }
+                if (!value || value.trim().length === 0) return 'Pet name is required';
+                if (value.length < 2) return 'Pet name must be at least 2 characters';
+                if (value.length > 50) return 'Pet name must not exceed 50 characters';
+                if (!/^[a-zA-Z0-9\s\-]+$/.test(value)) return 'Pet name contains invalid characters';
                 return null;
             },
             category: (value) => {
-                if (!value || value === '') {
-                    return 'Please select a category';
-                }
+                if (!value || value === '') return 'Please select a category';
                 return null;
             },
             breed: (value) => {
-                if (!value || value.trim().length === 0) {
-                    return 'Breed is required';
-                }
-                if (value.length < 2) {
-                    return 'Breed must be at least 2 characters';
-                }
-                if (value.length > 50) {
-                    return 'Breed must not exceed 50 characters';
-                }
+                if (!value || value.trim().length === 0) return 'Breed is required';
+                if (value.length < 2) return 'Breed must be at least 2 characters';
+                if (value.length > 50) return 'Breed must not exceed 50 characters';
                 return null;
             },
             age: (value) => {
-                if (!value || value.trim().length === 0) {
-                    return 'Age is required';
-                }
-                if (value.length < 1) {
-                    return 'Age must be at least 1 character';
-                }
-                if (value.length > 20) {
-                    return 'Age must not exceed 20 characters';
-                }
+                if (!value || value.trim().length === 0) return 'Age is required';
+                if (value.length < 1) return 'Age must be at least 1 character';
+                if (value.length > 20) return 'Age must not exceed 20 characters';
                 return null;
             },
             price: (value) => {
-                if (!value || value === '') {
-                    return 'Price is required';
-                }
+                if (!value || value === '') return 'Price is required';
                 const numValue = parseFloat(value);
-                if (isNaN(numValue)) {
-                    return 'Price must be a valid number';
-                }
-                if (numValue < 1) {
-                    return 'Price must be at least ₹1';
-                }
-                if (numValue > 10000000) {
-                    return 'Price cannot exceed ₹1,00,00,000';
-                }
+                if (isNaN(numValue)) return 'Price must be a valid number';
+                if (numValue < 1) return 'Price must be at least ₹1';
+                if (numValue > 10000000) return 'Price cannot exceed ₹1,00,00,000';
                 return null;
             },
             description: (value) => {
-                if (!value || value.trim().length === 0) {
-                    return 'Description is required';
-                }
-                if (value.length < 10) {
-                    return 'Description must be at least 10 characters';
-                }
-                if (value.length > 500) {
-                    return 'Description must not exceed 500 characters';
-                }
+                if (!value || value.trim().length === 0) return 'Description is required';
+                if (value.length < 10) return 'Description must be at least 10 characters';
+                if (value.length > 500) return 'Description must not exceed 500 characters';
                 return null;
             }
         };
 
-        // Validate field
         function validateField(fieldId, value) {
             const validator = validators[fieldId];
             if (!validator) return true;
@@ -494,7 +546,6 @@
             }
         }
 
-        // Update character count
         function updateCharCount(fieldId, maxLength) {
             const input = document.getElementById(fieldId);
             const counter = document.getElementById(`${fieldId}-count`);
@@ -511,7 +562,7 @@
             }
         }
 
-        // Add real-time validation to all fields
+        // Add real-time validation
         ['name', 'category', 'breed', 'age', 'price', 'description'].forEach(fieldId => {
             const input = document.getElementById(fieldId);
             if (!input) return;
@@ -525,9 +576,12 @@
             input.addEventListener('blur', () => {
                 validateField(fieldId, input.value);
             });
+
+            // Initialize char counts
+            if (fieldId === 'name') updateCharCount('name', 50);
+            if (fieldId === 'description') updateCharCount('description', 500);
         });
 
-        // Validate all fields
         function validateAllFields() {
             let isValid = true;
             ['name', 'category', 'breed', 'age', 'price', 'description'].forEach(fieldId => {
@@ -536,28 +590,16 @@
                     isValid = false;
                 }
             });
-
-            // Validate images
-            if (selectedFiles.length === 0) {
-                const errorMsg = document.getElementById('images-error-msg');
-                errorMsg.textContent = 'Please upload at least one pet image';
-                errorMsg.classList.add('show');
-                isValid = false;
-            } else {
-                const errorMsg = document.getElementById('images-error-msg');
-                errorMsg.classList.remove('show');
-            }
-
             return isValid;
         }
 
-        document.querySelector('.product-form').addEventListener('submit', async (e) => {
+        // Form submission
+        document.querySelector('.product-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             // Validate all fields before submission
             if (!validateAllFields()) {
                 alert('Please fix all errors before submitting');
-                // Scroll to first error
                 const firstError = document.querySelector('.form-input.invalid');
                 if (firstError) {
                     firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -566,86 +608,42 @@
                 return;
             }
 
-            const submitBtn = e.target.querySelector('.submit-btn');
+            const submitBtn = this.querySelector('.submit-btn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Listing Pet...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating Pet...';
             
-            const formData = new FormData(e.target);
-
+            const formData = new FormData(this);
+            
             try {
-                const response = await fetch('/seller/pets/add', {
+                const response = await fetch(this.action, {
                     method: 'POST',
                     body: formData
                 });
-
-                if (response.ok) {
-                    // Show success modal
+                
+                const result = await response.json();
+                
+                if(result.success) {
                     document.getElementById('successModal').style.display = 'block';
-                    // Clear form after success
-                    e.target.reset();
-                    selectedFiles = [];
-                    updatePreview();
-                    // Reset validation states
-                    document.querySelectorAll('.form-input').forEach(input => {
-                        input.classList.remove('valid', 'invalid');
-                    });
-                    document.querySelectorAll('.success-icon, .error-icon').forEach(icon => {
-                        icon.style.display = 'none';
-                    });
                 } else {
-                    const errorData = await response.json();
-                    alert(errorData.message || 'Error submitting pet listing');
+                    alert('Error: ' + (result.message || 'Failed to update pet'));
                 }
-            }
-            catch (error) {
+            } catch (error) {
                 console.error('Error:', error);
-                alert('An error occurred while submitting the form');
+                alert('An error occurred. Please try again.');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = 'List Pet';
+                submitBtn.innerHTML = 'Update Pet';
             }
         });
 
-        imageInput?.addEventListener('change', function() {
-            const newFiles = Array.from(this.files);
-            const remainingSlots = maxFiles - selectedFiles.length;
-            selectedFiles = [...selectedFiles, ...newFiles].slice(0, maxFiles);
-            updatePreview();
-            const dataTransfer = new DataTransfer();
-            selectedFiles.forEach(file => dataTransfer.items.add(file));
-            this.files = dataTransfer.files;
-        });
-    
-        function updatePreview() {
-            previewContainer.innerHTML = '';
-            selectedFiles.forEach(file => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'preview-image';
-                    previewContainer.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
+        function closeSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
         }
-    
-        // Image removal
-        previewContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('preview-image')) {
-                const index = Array.from(previewContainer.children).indexOf(e.target);
-                selectedFiles.splice(index, 1);
-                updatePreview();
-                imageInput.files = createNewFileList(selectedFiles);
-            }
-        });
-    
-        function createNewFileList(files) {
-            const dataTransfer = new DataTransfer();
-            files.forEach(file => dataTransfer.items.add(file));
-            return dataTransfer.files;
+
+        function redirectToDashboard() {
+            window.location.href = '/seller/dashboard';
         }
-    
+
         // Dropdown menu functionality
         document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
             toggle.addEventListener('click', function(e) {
@@ -654,7 +652,7 @@
                 menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
             });
         });
-    
+
         // Close dropdowns when clicking outside
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.dropdown')) {
@@ -663,33 +661,10 @@
                 });
             }
         });
-    
+
         // Hamburger menu functionality
         document.getElementById('hamburger').addEventListener('click', function() {
             document.querySelector('.nav-links').classList.toggle('active');
-        });
-    
-        // Modal handling
-        document.querySelector('.close-modal').addEventListener('click', () => {
-            document.getElementById('successModal').style.display = 'none';
-            window.location.href = '/about';
-        });
-    
-        // Close modal when clicking outside
-        window.onclick = (event) => {
-            const modal = document.getElementById('successModal');
-            if (event.target === modal) {
-                modal.style.display = 'none';
-                window.location.href = '/about';
-            }
-        };
-    
-        // Auto-redirect after 5 seconds
-        const successModal = document.getElementById('successModal');
-        successModal.addEventListener('shown', () => {
-            setTimeout(() => {
-                window.location.href = '/about';
-            }, 5000);
         });
     </script>
 </body>

@@ -279,6 +279,7 @@ router.post('/payment', isAuthenticated, async (req, res) => {
             items: orderItems,
             totalAmount: total,
             status: 'completed',
+            paymentStatus: 'paid',
             shippingAddress: shippingInfo,
             paymentMethod
         });

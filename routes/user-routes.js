@@ -1269,7 +1269,6 @@ router.get('/buy/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// Submit review route
 router.post('/submit-review', isAuthenticated, async (req, res) => {
     try {
         const { productId, rating, comment } = req.body;

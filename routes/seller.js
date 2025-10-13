@@ -56,16 +56,53 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
         // Debug: Check all orders for this seller
         const allSellerOrders = await Order.find({ seller: seller._id });
         console.log('All orders for seller:', allSellerOrders.length);
-        console.log('Order statuses:', allSellerOrders.map(o => ({ id: o._id, status: o.status })));
+        console.log('Order details:', allSellerOrders.map(o => ({ 
+            id: o._id, 
+            status: o.status, 
+            paymentStatus: o.paymentStatus,
+            paymentMethod: o.paymentMethod,
+            totalAmount: o.totalAmount
+        })));
         
-        // TEMPORARY FIX: Update any 'completed' orders to 'pending' for testing
-        // Remove this after testing
-        const completedOrders = await Order.updateMany(
-            { seller: seller._id, status: 'completed' },
-            { $set: { status: 'pending' } }
+        // Update paymentStatus for delivered/completed orders
+        // For online payments: mark as paid immediately
+        // For COD: mark as paid only when delivered/completed
+        // Also handle orders without paymentMethod (assume wallet/online payment)
+        const updatePaymentStatus = await Order.updateMany(
+            { 
+                seller: seller._id,
+                $or: [
+                    // Online payments that are not COD should be marked paid
+                    { 
+                        paymentMethod: { $in: ['online', 'card', 'upi', 'wallet'] },
+                        $or: [
+                            { paymentStatus: { $exists: false } },
+                            { paymentStatus: 'pending' }
+                        ]
+                    },
+                    // COD orders marked as paid only when delivered/completed
+                    {
+                        paymentMethod: 'cod',
+                        status: { $in: ['delivered', 'completed'] },
+                        $or: [
+                            { paymentStatus: { $exists: false } },
+                            { paymentStatus: 'pending' }
+                        ]
+                    },
+                    // Orders without paymentMethod - assume online payment
+                    {
+                        paymentMethod: { $exists: false },
+                        $or: [
+                            { paymentStatus: { $exists: false } },
+                            { paymentStatus: 'pending' }
+                        ]
+                    }
+                ]
+            },
+            { $set: { paymentStatus: 'paid', paymentMethod: 'wallet' } }
         );
-        if (completedOrders.modifiedCount > 0) {
-            console.log(`Updated ${completedOrders.modifiedCount} completed orders to pending`);
+        if (updatePaymentStatus.modifiedCount > 0) {
+            console.log(`Updated ${updatePaymentStatus.modifiedCount} orders to paymentStatus: 'paid'`);
         }
         
         const pendingOrders = await Order.countDocuments({ 
@@ -82,6 +119,9 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
             { $match: { seller: seller._id, paymentStatus: 'paid' } },
             { $group: { _id: null, total: { $sum: '$totalAmount' } } }
         ]);
+        
+        console.log('Revenue calculation result:', revenue);
+        console.log('Total Sales:', revenue[0]?.total || 0);
 
         // Format products for display
         const formattedProducts = products.map(product => {

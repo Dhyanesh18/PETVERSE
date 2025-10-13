@@ -43,6 +43,63 @@ router.post('/pets/add', sellerAuth, upload.array('images'), async (req, res) =>
     }
 });
 
+// Edit pet page - MUST come before generic :id route
+router.get('/pets/:id/edit', sellerAuth, async (req, res) => {
+    try {
+        const pet = await Pet.findOne({ _id: req.params.id, addedBy: req.user._id });
+        if (!pet) {
+            return res.status(404).render('error', { message: 'Pet not found or you do not have permission to edit it' });
+        }
+        res.render('edit-pet', { pet });
+    } catch (err) {
+        console.error('Error loading pet for edit:', err);
+        res.status(500).render('error', { message: 'Error loading pet' });
+    }
+});
+
+// Handle pet update - MUST come before generic :id route
+router.post('/pets/:id/edit', sellerAuth, upload.array('images'), async (req, res) => {
+    try {
+        const pet = await Pet.findOne({ _id: req.params.id, addedBy: req.user._id });
+        if (!pet) {
+            return res.status(404).json({ success: false, message: 'Pet not found or you do not have permission to edit it' });
+        }
+
+        // Update basic fields
+        pet.name = req.body.name;
+        pet.category = req.body.category;
+        pet.breed = req.body.breed;
+        pet.age = req.body.age;
+        pet.gender = req.body.gender;
+        pet.price = req.body.price;
+        pet.description = req.body.description;
+
+        // Handle image deletion
+        if (req.body.keepImages) {
+            const keepImages = Array.isArray(req.body.keepImages) ? req.body.keepImages : [req.body.keepImages];
+            pet.images = pet.images.filter((img, index) => keepImages[index] === 'true');
+        }
+
+        // Add new images
+        if (req.files && req.files.length > 0) {
+            const newImages = req.files.map(file => ({
+                data: file.buffer,
+                contentType: file.mimetype
+            }));
+            pet.images = [...pet.images, ...newImages];
+        }
+
+        await pet.save();
+        res.json({ success: true, message: 'Pet updated successfully' });
+    } catch (err) {
+        console.error('Pet update error:', err);
+        res.status(400).json({
+            success: false,
+            message: 'Error updating pet: ' + err.message
+        });
+    }
+});
+
 // Get pets by category
 router.get('/pets/:category', async (req, res) => {
     try {
