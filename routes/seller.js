@@ -7,6 +7,8 @@ const Review = require('../models/reviews');
 const { isAuthenticated } = require('../middleware/auth');
 const sellerAuth = require('../middleware/sellerAuth');
 const Pet = require('../models/pets');
+const Wallet = require('../models/wallet');
+const Transaction = require('../models/transaction');
 
 // Dashboard view
 router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
@@ -56,16 +58,53 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
         // Debug: Check all orders for this seller
         const allSellerOrders = await Order.find({ seller: seller._id });
         console.log('All orders for seller:', allSellerOrders.length);
-        console.log('Order statuses:', allSellerOrders.map(o => ({ id: o._id, status: o.status })));
+        console.log('Order details:', allSellerOrders.map(o => ({ 
+            id: o._id, 
+            status: o.status, 
+            paymentStatus: o.paymentStatus,
+            paymentMethod: o.paymentMethod,
+            totalAmount: o.totalAmount
+        })));
         
-        // TEMPORARY FIX: Update any 'completed' orders to 'pending' for testing
-        // Remove this after testing
-        const completedOrders = await Order.updateMany(
-            { seller: seller._id, status: 'completed' },
-            { $set: { status: 'pending' } }
+        // Update paymentStatus for delivered/completed orders
+        // For online payments: mark as paid immediately
+        // For COD: mark as paid only when delivered/completed
+        // Also handle orders without paymentMethod (assume wallet/online payment)
+        const updatePaymentStatus = await Order.updateMany(
+            { 
+                seller: seller._id,
+                $or: [
+                    // Online payments that are not COD should be marked paid
+                    { 
+                        paymentMethod: { $in: ['online', 'card', 'upi', 'wallet'] },
+                        $or: [
+                            { paymentStatus: { $exists: false } },
+                            { paymentStatus: 'pending' }
+                        ]
+                    },
+                    // COD orders marked as paid only when delivered/completed
+                    {
+                        paymentMethod: 'cod',
+                        status: { $in: ['delivered', 'completed'] },
+                        $or: [
+                            { paymentStatus: { $exists: false } },
+                            { paymentStatus: 'pending' }
+                        ]
+                    },
+                    // Orders without paymentMethod - assume online payment
+                    {
+                        paymentMethod: { $exists: false },
+                        $or: [
+                            { paymentStatus: { $exists: false } },
+                            { paymentStatus: 'pending' }
+                        ]
+                    }
+                ]
+            },
+            { $set: { paymentStatus: 'paid', paymentMethod: 'wallet' } }
         );
-        if (completedOrders.modifiedCount > 0) {
-            console.log(`Updated ${completedOrders.modifiedCount} completed orders to pending`);
+        if (updatePaymentStatus.modifiedCount > 0) {
+            console.log(`Updated ${updatePaymentStatus.modifiedCount} orders to paymentStatus: 'paid'`);
         }
         
         const pendingOrders = await Order.countDocuments({ 
@@ -77,11 +116,20 @@ router.get('/dashboard', isAuthenticated, sellerAuth, async (req, res) => {
             status: 'processing' 
         });
 
-        // Calculate total revenue
+        // Calculate total revenue (exclude cancelled and refunded orders)
         const revenue = await Order.aggregate([
-            { $match: { seller: seller._id, paymentStatus: 'paid' } },
+            { 
+                $match: { 
+                    seller: seller._id, 
+                    paymentStatus: 'paid',
+                    status: { $ne: 'cancelled' }
+                } 
+            },
             { $group: { _id: null, total: { $sum: '$totalAmount' } } }
         ]);
+        
+        console.log('Revenue calculation result:', revenue);
+        console.log('Total Sales:', revenue[0]?.total || 0);
 
         // Format products for display
         const formattedProducts = products.map(product => {
@@ -307,7 +355,7 @@ router.post('/order/:orderId/status', isAuthenticated, sellerAuth, async (req, r
         const order = await Order.findOne({
             _id: req.params.orderId,
             seller: req.user._id
-        });
+        }).populate('customer');
 
         if (!order) {
             console.log('Order not found for seller');
@@ -322,6 +370,66 @@ router.post('/order/:orderId/status', isAuthenticated, sellerAuth, async (req, r
         if (!validStatuses.includes(status)) {
             console.log('Invalid status:', status);
             return res.status(400).json({ success: false, error: 'Invalid status value' });
+        }
+        
+        const oldStatus = order.status;
+        
+        // Handle cancellation - refund customer and deduct from seller
+        if (status === 'cancelled' && oldStatus !== 'cancelled') {
+            console.log('Processing cancellation refund...');
+            
+            // Get wallets
+            const customerWallet = await Wallet.findOne({ user: order.customer._id });
+            const sellerWallet = await Wallet.findOne({ user: req.user._id });
+            
+            if (!customerWallet) {
+                return res.status(400).json({ success: false, error: 'Customer wallet not found' });
+            }
+            
+            if (!sellerWallet) {
+                return res.status(400).json({ success: false, error: 'Seller wallet not found' });
+            }
+            
+            const refundAmount = order.totalAmount;
+            const sellerShare = refundAmount * 0.95; // Seller received 95% of the order
+            const adminCommission = refundAmount * 0.05; // Admin received 5%
+            
+            // Refund customer
+            await customerWallet.addFunds(refundAmount);
+            console.log(`Refunded ₹${refundAmount} to customer`);
+            
+            // Deduct from seller (only their share)
+            try {
+                await sellerWallet.deductFunds(sellerShare);
+                console.log(`Deducted ₹${sellerShare} from seller`);
+            } catch (err) {
+                // If seller has insufficient balance, still process cancellation but log it
+                console.error('Seller has insufficient balance for refund:', err.message);
+                // You might want to handle this differently in production
+            }
+            
+            // Deduct from admin wallet
+            const adminWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
+            if (adminWallet) {
+                try {
+                    await adminWallet.deductFunds(adminCommission);
+                    console.log(`Deducted ₹${adminCommission} commission from admin`);
+                } catch (err) {
+                    console.error('Admin has insufficient balance for refund:', err.message);
+                }
+            }
+            
+            // Create refund transaction records
+            await new Transaction({
+                from: req.user._id,
+                to: order.customer._id,
+                amount: refundAmount,
+                type: 'refund'
+            }).save();
+            
+            // Update payment status to refunded
+            order.paymentStatus = 'refunded';
+            console.log('Refund completed successfully');
         }
         
         order.status = status;

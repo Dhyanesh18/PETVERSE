@@ -1134,7 +1134,7 @@
                                             <div class="product-title"><%= pet.category %></div>
                                             <div class="product-title"><%= pet.breed %></div>
                                         </div>
-                                        <button class="btn btn-icon btn-edit" data-tooltip="Edit Product" onclick="editProduct('<%= pet._id %>')">
+                                        <button class="btn btn-icon btn-edit" data-tooltip="Edit Pet" onclick="editPet('<%= pet._id %>')">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         
@@ -1346,6 +1346,11 @@
         // Product management functions
         async function editProduct(productId) {
             window.location.href = `/seller/products/${productId}/edit`;
+        }
+
+        // Pet management functions
+        async function editPet(petId) {
+            window.location.href = `/seller/pets/${petId}/edit`;
         }
 
         async function toggleProductStatus(productId) {
