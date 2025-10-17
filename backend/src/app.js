@@ -115,7 +115,6 @@ app.listen(port, () => {
   console.log(`PetVerse app listening at http://localhost:${port}`);
 });
 
-
 // Add this at the top with other route imports
 const eventRoutes = require('./routes/event-routes');
 
