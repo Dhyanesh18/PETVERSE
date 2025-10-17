@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "type": "module",
     "description": "Your one-stop destination for all pet needs",
-    "main": "src/server.js",
+    "main": "src/app.js",
     "scripts": {
         "start": "node src/server.js",
         "dev": "nodemon src/server.js"
