@@ -619,9 +619,9 @@
                                             <button onclick="viewPet('<%= pet._id %>')" title="View Details">
                                                 <i class="fas fa-eye"></i>
                                             </button>
-                                            <button onclick="<%= pet.available ? 'markPetUnavailable' : 'markPetAvailable' %>('<%= pet._id %>')" title="<%= pet.available ? 'Mark Unavailable' : 'Mark Available' %>">
+                                            <!-- <button onclick="<%= pet.available ? 'markPetUnavailable' : 'markPetAvailable' %>('<%= pet._id %>')" title="<%= pet.available ? 'Mark Unavailable' : 'Mark Available' %>">
                                                 <i class="fas fa-<%= pet.available ? 'ban' : 'check' %>"></i>
-                                            </button>
+                                            </button> -->
                                             <button onclick="deletePet('<%= pet._id %>')" title="Delete Pet">
                                                 <i class="fas fa-trash"></i>
                                             </button>

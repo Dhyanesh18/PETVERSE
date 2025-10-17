@@ -36,6 +36,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            margin-top: -20px;  
         }
         .services-container {
             display: grid;
@@ -51,13 +52,14 @@
     <div class="main-container">
         <!-- Services Content -->
         <div class="services-content">
-            <div class="search-container mb-4">
+            <div class="search-container mb-4" style="display: flex; flex-direction: row; justify-content: center; align-items: center;">
+                <p style="margin:0; font-size:x-large; font-weight: 500; color: #333">Enter your location : </p>
                 <input 
                     type="text" 
                     id="locationFilter" 
                     class="form-control" 
                     placeholder="Search by location..."
-                    style="max-width: 300px; border: 1px solid black; box-shadow:  0 0 10px 1px rgba(0,0,0,0.2)  ;margin: 0 auto;"
+                    style="max-width: 400px; border: 1px solid black; box-shadow:  0 0 10px 1px rgba(0,0,0,0.2)  ;margin: 0 10px;"
                 >
             </div>
             <h1 class="page-title">Breeding Services</h1>

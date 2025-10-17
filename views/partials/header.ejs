@@ -66,47 +66,47 @@
         const resultsDropdown = document.getElementById('searchResultsDropdown');
 
         async function performSearch(query) {
-        if (!query.trim()) {
-            resultsDropdown.style.display = 'none';
-            resultsDropdown.innerHTML = '';
-            return;
-        }
-
-        try {
-            const res = await fetch(`/search/api?term=${encodeURIComponent(query)}`);
-            const data = await res.json();
-
-            const { pets, products, services } = data;
-
-            if (pets.length === 0 && products.length === 0 && services.length === 0) {
-            resultsDropdown.innerHTML = '<p class="no-results">No results found.</p>';
-            resultsDropdown.style.display = 'block';
-            return;
+            if (!query.trim()) {
+                resultsDropdown.style.display = 'none';
+                resultsDropdown.innerHTML = '';
+                return;
             }
 
-            // Create dropdown HTML
-            let html = '';
+            try {
+                const res = await fetch(`/search/api?term=${encodeURIComponent(query)}`);
+                const data = await res.json();
 
-            if (pets.length > 0) {
-            html += `<h4>Pets</h4>`;
-            pets.forEach(p => {
-                html += `<a href="/seller/detail/${p._id}" class="result-item">${p.name} (${p.breed})</a>`;
-            });
-            }
+                const { pets, products, services } = data;
 
-            if (products.length > 0) {
-            html += `<h4>Products</h4>`;
-            products.forEach(p => {
-                html += `<a href="/buy/${p._id}" class="result-item">${p.name} (${p.brand})</a>`;
-            });
-            }
+                if (pets.length === 0 && products.length === 0 && services.length === 0) {
+                resultsDropdown.innerHTML = '<p class="no-results">No results found.</p>';
+                resultsDropdown.style.display = 'block';
+                return;
+                }
 
-            if (services.length > 0) {
-            html += `<h4>Services</h4>`;
-            services.forEach(s => {
-                html += `<a href="/services/${s._id}" class="result-item">${s.serviceType}</a>`;
-            });
-            }
+                // Create dropdown HTML
+                let html = '';
+
+                if (pets.length > 0) {
+                html += `<h4>Pets</h4>`;
+                pets.forEach(p => {
+                    html += `<a href="/seller/detail/${p._id}" class="result-item">${p.name} (${p.breed})</a>`;
+                });
+                }
+
+                if (products.length > 0) {
+                html += `<h4>Products</h4>`;
+                products.forEach(p => {
+                    html += `<a href="/buy/${p._id}" class="result-item">${p.name} (${p.brand})</a>`;
+                });
+                }
+
+                if (services.length > 0) {
+                html += `<h4>Services</h4>`;
+                services.forEach(s => {
+                    html += `<a href="/services/${s._id}" class="result-item">${s.serviceType}</a>`;
+                });
+                }
 
             resultsDropdown.innerHTML = html;
             resultsDropdown.style.display = 'block';
@@ -121,7 +121,7 @@
         clearTimeout(debounceTimeout);
         debounceTimeout = setTimeout(() => {
             performSearch(searchInput.value);
-        }, 200);
+        }, 400);
         });
 
         // Pressing Enter redirects to full search page

@@ -896,7 +896,6 @@ router.get('/checkout', isAuthenticated, async (req, res) => {
 // POST checkout route - handle form submission
 router.post('/checkout', isAuthenticated, async (req, res) => {
     try {
-        // 1️⃣ Fetch cart
         const cart = await Cart.findOne({ userId: req.session.userId })
             .populate({
                 path: 'items.productId',
@@ -911,10 +910,8 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
             });
         }
 
-        // 2️⃣ Extract shipping form data
         const { fullName, address, city, state, zipCode, phone } = req.body;
 
-        // 3️⃣ Validate shipping fields
         const errors = [];
         if (!fullName?.trim()) errors.push('Full name is required');
         if (!address?.trim()) errors.push('Address is required');
@@ -935,7 +932,6 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
             });
         }
 
-        // 4️⃣ Calculate totals entirely on backend
         const subtotal = cart.items.reduce((sum, item) => {
             const price = parseFloat(item.productId?.price) || 0;
             const quantity = parseInt(item.quantity) || 1;
@@ -946,7 +942,6 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
         const tax = subtotal * 0.10; // 10% GST
         const total = subtotal + shipping + tax;
 
-        // 5️⃣ Store pending order in session
         req.session.pendingOrder = {
             items: cart.items.map(item => ({
                 product: item.productId._id,
@@ -958,7 +953,6 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
             seller: cart.items[0]?.productId.seller || null
         };
 
-        // 6️⃣ Store shipping info in session
         req.session.shippingInfo = {
             fullName: fullName.trim(),
             address: address.trim(),
@@ -968,7 +962,6 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
             phone: phone.trim()
         };
 
-        // 7️⃣ Redirect to payment page (wallet payment)
         res.redirect('/payment');
 
     } catch (err) {
@@ -1102,11 +1095,11 @@ router.post('/payment', isAuthenticated, async (req, res) => {
     // Only wallet is supported
     const paymentMethod = 'wallet';
 
-    // 1️⃣ Fetch user wallet
+    //  Fetch user wallet
     const userWallet = await Wallet.findOne({ user: userId });
     if (!userWallet) return res.status(400).send('User wallet not found');
 
-    // 2️⃣ Calculate totals
+    //  Calculate totals
     let subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     let shipping = subtotal >= 500 ? 0 : 50;
     let totalAmount = subtotal + shipping;
@@ -1115,10 +1108,10 @@ router.post('/payment', isAuthenticated, async (req, res) => {
       return res.status(400).send('Insufficient wallet balance');
     }
 
-    // 3️⃣ Deduct from user wallet
+    // Deduct from user wallet
     await userWallet.deductFunds(totalAmount);
 
-    // 4️⃣ Admin wallet
+    // Admin wallet
     const adminWalletId = '68e927a3cdb7fb04ad6b53bb';
     const adminWallet = await Wallet.findById(adminWalletId);
     if (!adminWallet) throw new Error('Admin wallet not found');
@@ -1126,62 +1119,62 @@ router.post('/payment', isAuthenticated, async (req, res) => {
     const adminShare = subtotal >= 500 ? subtotal * 0.10 : subtotal * 0.10 + shipping;
     await adminWallet.addFunds(adminShare);
 
-    // 5️⃣ Record transaction for admin
+    // Record transaction for admin
     await Transaction.create({
-      from: userId,
-      to: adminWallet.user,
-      amount: adminShare
+        from: userId,
+        to: adminWallet.user,
+        amount: adminShare
     });
 
-    // 6️⃣ Pay each seller
+    // Pay each seller
     for (const item of items) {
-      const sellerWallet = await Wallet.findOne({ user: item.seller });
-      if (!sellerWallet) continue; // skip missing wallet
+        const sellerWallet = await Wallet.findOne({ user: item.seller });
+        if (!sellerWallet) continue; // skip missing wallet
 
-      const sellerShare = item.price * item.quantity * 0.90;
-      await sellerWallet.addFunds(sellerShare);
+        const sellerShare = item.price * item.quantity * 0.90;
+        await sellerWallet.addFunds(sellerShare);
 
-      // Record transaction for seller
-      await Transaction.create({
-        from: userId,
-        to: sellerWallet.user,
-        amount: sellerShare
-      });
+        // Record transaction for seller
+        await Transaction.create({
+            from: userId,
+            to: sellerWallet.user,
+            amount: sellerShare
+        });
     }
 
-    // 7️⃣ Create order
+    // Create order
     const order = new Order({
-      customer: userId,
-      seller: items[0]?.seller || null, // main seller for order record
-      items: items,
-      totalAmount: totalAmount,
-      status: 'pending',
-      paymentStatus: 'paid',
-      paymentMethod,
-      shippingAddress: shippingInfo
+        customer: userId,
+        seller: items[0]?.seller || null, // main seller for order record
+        items: items,
+        totalAmount: totalAmount,
+        status: 'pending',
+        paymentStatus: 'paid',
+        paymentMethod,
+        shippingAddress: shippingInfo
     });
     await order.save();
 
-    // 8️⃣ Clear cart
+    // Clear cart
     const cart = await Cart.findOne({ userId });
     if (cart) {
-      cart.items = [];
-      await cart.save();
+        cart.items = [];
+        await cart.save();
     }
 
-    // 9️⃣ Clear session
+    // Clear session
     delete req.session.pendingOrder;
     delete req.session.shippingInfo;
 
-    //  🔟 Redirect to order confirmation
+    //  Redirect to order confirmation
     res.json({ 
     success: true, 
     redirectUrl: `/order-confirmation/${order._id}`
     });
-  } catch (error) {
-    console.error('Payment processing failed:', error);
-    res.status(500).send('Payment processing failed. Please try again.');
-  }
+    } catch (error) {
+        console.error('Payment processing failed:', error);
+        res.status(500).send('Payment processing failed. Please try again.');
+    }
 });
 
 
