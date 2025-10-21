@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const dotenv = require('dotenv');
 const path = require('path');
+const cors = require('cors');
 
 dotenv.config();
 
@@ -13,6 +14,13 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secret',
@@ -114,6 +122,7 @@ const port = process.env.PORT || 8080;
 app.listen(port, () => {
   console.log(`PetVerse app listening at http://localhost:${port}`);
 });
+
 
 // Add this at the top with other route imports
 const eventRoutes = require('./routes/event-routes');

@@ -1,7 +1,7 @@
 import './App.css'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-// import { CartProvider } from './contexts/CartContext';
+import { CartProvider } from './context/CartContext';
 import Homepage from './pages/Homepage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -32,7 +32,7 @@ import OrderDetails from './pages/OrderDetails';
 function App() {
   return (
     <AuthProvider>
-      {/* <CartProvider> */}
+      <CartProvider>
         <BrowserRouter>
           <Routes>
             {/* Public Routes */}
@@ -79,7 +79,7 @@ function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
           </Routes>
         </BrowserRouter>
-      {/* </CartProvider> */}
+      </CartProvider>
     </AuthProvider>
   );
 };
