@@ -113,4 +113,9 @@ export const addMateRequest = (mateData) => apiClient.post('/api/mate/add', mate
 export const getUserProfile = () => apiClient.get('/api/user/profile');
 export const updateUserProfile = (userData) => apiClient.put('/api/user/profile', userData);
 
+// Wishlist APIs
+export const getWishlist = () => apiClient.get('/wishlist');
+export const toggleProductWishlist = (productId) => apiClient.post(`/wishlist/product/${productId}`);
+export const togglePetWishlist = (petId) => apiClient.post(`/wishlist/pet/${petId}`);
+
 export default apiClient;

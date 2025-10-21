@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import { getProducts } from '../services/api';
+import { getProducts, getWishlist, toggleProductWishlist } from '../services/api';
 import { useCart } from '../context/CartContext';
 
 const Products = () => {
@@ -22,6 +22,7 @@ const Products = () => {
 
     useEffect(() => {
         fetchProducts();
+        fetchWishlist();
     }, []);
 
     const fetchProducts = async () => {
@@ -35,6 +36,20 @@ const Products = () => {
             setProducts([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchWishlist = async () => {
+        try {
+            const response = await getWishlist();
+            if (response.data.success) {
+                const wishlistedProductIds = response.data.wishlistedProducts.map(product => product._id);
+                setWishlist(wishlistedProductIds);
+            }
+        } catch (error) {
+            console.error('Failed to fetch wishlist:', error);
+            // If user is not logged in, just continue with empty wishlist
+            setWishlist([]);
         }
     };
 
@@ -62,12 +77,20 @@ const Products = () => {
         });
     };
 
-    const toggleWishlist = (productId) => {
-        setWishlist(prev => 
-            prev.includes(productId) 
-                ? prev.filter(id => id !== productId)
-                : [...prev, productId]
-        );
+    const toggleWishlist = async (productId) => {
+        try {
+            const response = await toggleProductWishlist(productId);
+            if (response.data.success) {
+                setWishlist(prev => 
+                    prev.includes(productId) 
+                        ? prev.filter(id => id !== productId)
+                        : [...prev, productId]
+                );
+            }
+        } catch (error) {
+            console.error('Failed to toggle wishlist:', error);
+            alert('Please login to add items to wishlist');
+        }
     };
 
     const handleAddToCart = async (productId, e) => {

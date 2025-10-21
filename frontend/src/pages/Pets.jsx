@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import { getPets } from '../services/api';
+import { getPets, getWishlist, togglePetWishlist } from '../services/api';
 
 const Pets = () => {
     const [pets, setPets] = useState([]);
@@ -20,6 +20,7 @@ const Pets = () => {
 
     useEffect(() => {
         fetchPets();
+        fetchWishlist();
     }, []);
 
     const fetchPets = async () => {
@@ -33,6 +34,20 @@ const Pets = () => {
             setPets([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchWishlist = async () => {
+        try {
+            const response = await getWishlist();
+            if (response.data.success) {
+                const wishlistedPetIds = response.data.wishlistedPets.map(pet => pet._id);
+                setWishlist(wishlistedPetIds);
+            }
+        } catch (error) {
+            console.error('Failed to fetch wishlist:', error);
+            // If user is not logged in, just continue with empty wishlist
+            setWishlist([]);
         }
     };
 
@@ -60,12 +75,20 @@ const Pets = () => {
         });
     };
 
-    const toggleWishlist = (petId) => {
-        setWishlist(prev => 
-            prev.includes(petId) 
-                ? prev.filter(id => id !== petId)
-                : [...prev, petId]
-        );
+    const toggleWishlist = async (petId) => {
+        try {
+            const response = await togglePetWishlist(petId);
+            if (response.data.success) {
+                setWishlist(prev => 
+                    prev.includes(petId) 
+                        ? prev.filter(id => id !== petId)
+                        : [...prev, petId]
+                );
+            }
+        } catch (error) {
+            console.error('Failed to toggle wishlist:', error);
+            alert('Please login to add items to wishlist');
+        }
     };
 
     const filteredPets = pets.filter(pet => {
