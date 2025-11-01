@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { checkUserSession, logout as logoutAPI } from '../services/api';
 
 const AuthContext = createContext();
-
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) {

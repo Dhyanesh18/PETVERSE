@@ -302,7 +302,7 @@ const Pets = () => {
                             />
                             <button 
                                 onClick={() => {/* Apply price filter */}}
-                                className="px-3 py-1 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm rounded hover:from-teal-600 hover:to-teal-700"
+                                className="px-3 py-1 bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm rounded hover:from-teal-600 hover:to-teal-700"
                             >
                                 Apply
                             </button>
@@ -411,9 +411,9 @@ const Pets = () => {
                                             }}
                                         />
                                     </div>
-                                    <div className="p-4 flex flex-col flex-grow">
+                                    <div className="p-4 flex flex-col grow">
                                         <h3 className="text-lg font-semibold text-gray-800 mb-2 -mt-4">{pet.breed}</h3>
-                                        <p className="text-gray-600 text-sm mb-3 flex-grow line-clamp-2">{pet.description}</p>
+                                        <p className="text-gray-600 text-sm mb-3 grow line-clamp-2">{pet.description}</p>
                                         <div className="text-lg font-medium text-green-600 mb-3">
                                             ₹{pet.price.toFixed(2)}
                                         </div>
@@ -432,7 +432,7 @@ const Pets = () => {
                                         <div className="product-action flex justify-between items-center mt-auto">
                                             <button 
                                                 onClick={() => navigate(`/seller/detail/${pet._id}`)}
-                                                className="flex-1 bg-gradient-to-r from-teal-500 to-teal-600 text-white py-2 px-3 rounded hover:from-teal-600 hover:to-teal-700 transition mr-2"
+                                                className="flex-1 bg-linear-to-r from-teal-500 to-teal-600 text-white py-2 px-3 rounded hover:from-teal-600 hover:to-teal-700 transition mr-2"
                                             >
                                                 View Details
                                             </button>
