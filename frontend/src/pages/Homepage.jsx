@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPaw, FaShoppingCart, FaHeart, FaStar, FaArrowRight } from 'react-icons/fa';
+import { FaPaw, FaShoppingCart, FaStar } from 'react-icons/fa';
 import api from '../utils/api';
 
 const Homepage = () => {
@@ -17,7 +17,6 @@ const Homepage = () => {
         fetchHomeData();
     }, []);
 
-    // Auto-rotate slides
     useEffect(() => {
         if (slides.length > 0) {
             const timer = setInterval(() => {
@@ -62,301 +61,286 @@ const Homepage = () => {
         }
     };
 
+    const changeSlide = (direction) => {
+        if (slides.length === 0) return;
+        setCurrentSlide((prev) => {
+            const newSlide = prev + direction;
+            if (newSlide < 0) return slides.length - 1;
+            if (newSlide >= slides.length) return 0;
+            return newSlide;
+        });
+    };
+
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-blue-100">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
-                    <FaPaw className="text-6xl text-cyan-500 animate-bounce mx-auto mb-4" />
-                    <p className="text-xl text-gray-700">Loading PetVerse...</p>
+                    <FaPaw className="text-6xl text-secondary-500 animate-bounce mx-auto mb-4" />
+                    <p className="text-xl text-gray-700 font-poppins font-semibold">Loading PetVerse...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="bg-gradient-to-br from-cyan-50 to-blue-100 min-h-screen">
-            {/* Hero Slider Section */}
-            <section className="relative h-[500px] md:h-[600px] overflow-hidden">
-                {slides.map((slide, index) => (
-                    <div
-                        key={index}
-                        className={`absolute inset-0 transition-opacity duration-1000 ${
-                            index === currentSlide ? 'opacity-100' : 'opacity-0'
-                        }`}
+        <div className="bg-gray-50">
+            {/* Hero Section */}
+            <section 
+                className="relative h-screen w-full bg-cover bg-center bg-fixed"
+                style={{
+                    backgroundImage: "url('/images/hero.jpg')",
+                }}
+            >
+                {/* Dark Overlay */}
+                <div className="absolute inset-0 bg-black/60 z-1"></div>
+                
+                {/* Hero Content */}
+                <div className="relative z-2 h-full flex flex-col justify-center items-center text-white text-center px-4 pt-20 pb-10">
+                    <h1 
+                        className="text-5xl md:text-6xl lg:text-7xl font-bold mb-4 animate-fadeInUp font-poppins"
+                        style={{ textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)' }}
                     >
-                        <div
-                            className="w-full h-full bg-cover bg-center"
-                            style={{
-                                backgroundImage: `url(${slide.image || '/images/default-slide.jpg'})`,
-                            }}
-                        >
-                            <div className="w-full h-full bg-black bg-opacity-40 flex items-center justify-center">
-                                <div className="text-center text-white px-4">
-                                    <h1 className="text-4xl md:text-6xl font-bold mb-4 animate-fade-in">
-                                        {slide.caption || 'Welcome to PetVerse'}
-                                    </h1>
-                                    <p className="text-xl md:text-2xl mb-8">
-                                        Your one-stop destination for all pet needs
-                                    </p>
-                                    <Link
-                                        to="/pets"
-                                        className="inline-block bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105"
-                                    >
-                                        Explore Pets
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-
-                {/* Slide Indicators */}
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {slides.map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={() => setCurrentSlide(index)}
-                            className={`w-3 h-3 rounded-full transition-all ${
-                                index === currentSlide
-                                    ? 'bg-white w-8'
-                                    : 'bg-white bg-opacity-50'
-                            }`}
-                        />
-                    ))}
+                        Find your <span className="text-teal-400 text-6xl md:text-7xl lg:text-8xl" style={{ textShadow: `0 0 20px rgba(20, 184, 166, 0.2), 0 0 40px rgba(20, 184, 166, 0.1)`}}>Perfect Pet</span>
+                    </h1>
+                    <p 
+                        className="text-xl md:text-2xl mb-8 animate-fadeInUp font-poppins font-medium"
+                        style={{ 
+                            textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
+                            animationDelay: '0.3s',
+                            animationFillMode: 'both'
+                        }}
+                    >
+                        Find your furry friend and everything they need
+                    </p>
+                    <button 
+                        onClick={() => window.location.href = '/pets'}
+                        className="font-bold text-lg px-10 py-4 my-5 bg-teal-500 rounded-lg text-white text-shadow-teal-600 text-shadow-md shadow-[0_4px_15px_rgba(43,188,169,0.4)] hover:scale-105 hover:-translate-y-1 hover:shadow-[0_6px_20px_rgba(43,188,169,0.6)] transition-all duration-300 animate-fadeInUp font-poppins"
+                        style={{ animationDelay: '0.6s', animationFillMode: 'both' }}
+                    >
+                        Adopt Now
+                    </button>
                 </div>
             </section>
 
-            {/* Pet Categories Section */}
-            <section className="py-16 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-800">
-                        Browse by Category
-                    </h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        {petCategories.map((category, index) => (
-                            <Link
+            {/* Slideshow Section */}
+            {slides.length > 0 && (
+                <section className="py-20 px-4 md:px-10">
+                    <div className="relative max-w-full mx-auto mb-5 overflow-hidden rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+                        {slides.map((slide, index) => (
+                            <div
                                 key={index}
-                                to={category.url}
-                                className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all transform hover:scale-105"
+                                className={`${index === currentSlide ? 'block' : 'hidden'} relative transition-opacity duration-1000`}
                             >
-                                <img
-                                    src={category.image || '/images/default-category.jpg'}
-                                    alt={category.name}
-                                    className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
+                                <img 
+                                    src={slide.image} 
+                                    alt={`slide${index + 1}`}
+                                    className="w-full h-[400px] object-cover"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent flex items-end">
-                                    <h3 className="text-white text-xl font-bold p-4 w-full text-center">
-                                        {category.name}
-                                    </h3>
+                                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-black/70 text-white px-6 py-3 text-lg rounded-lg text-center font-semibold font-poppins">
+                                    {slide.caption}
                                 </div>
-                            </Link>
+                            </div>
+                        ))}
+                        
+                        <button 
+                            onClick={() => changeSlide(-1)}
+                            className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/50 text-white border-none px-5 py-3 text-xl cursor-pointer z-10 rounded-full hover:bg-black/80 hover:scale-110 transition-all duration-300"
+                        >
+                            &#10094;
+                        </button>
+                        <button 
+                            onClick={() => changeSlide(1)}
+                            className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/50 text-white border-none px-5 py-3 text-xl cursor-pointer z-10 rounded-full hover:bg-black/80 hover:scale-110 transition-all duration-300"
+                        >
+                            &#10095;
+                        </button>
+                    </div>
+
+                    <div className="flex justify-center gap-2.5 mt-4">
+                        {slides.map((_, index) => (
+                            <span
+                                key={index}
+                                onClick={() => setCurrentSlide(index)}
+                                className={`h-3 rounded-full cursor-pointer transition-all duration-300 ${
+                                    index === currentSlide 
+                                        ? 'bg-secondary-500 w-8 rounded-md' 
+                                        : 'bg-gray-300 w-3 hover:bg-primary-500'
+                                }`}
+                            />
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* Search by Pet Categories */}
+            <section id="searchby-pet" className="searchby-pet pt-0">
+                <div className="searchby-pet-content">
+                    <h1 className="section-title">Search by Pet</h1>
+                    <div className="pet-grid">
+                        {petCategories.map((pet, index) => (
+                            <div key={index} className="pet-card">
+                                <img src={pet.image} alt={pet.name.toLowerCase()} />
+                                <h2 className="card-text">{pet.name}</h2>
+                                <button
+                                    className="card-button"
+                                    onClick={() => (window.location.href = '/pets')}
+                                >
+                                    Explore
+                                </button>
+                            </div>
                         ))}
                     </div>
                 </div>
             </section>
 
+            <hr />
+
             {/* Featured Pets Section */}
-            <section className="py-16 px-4 bg-white">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex justify-between items-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
-                            Featured Pets
-                        </h2>
-                        <Link
-                            to="/pets"
-                            className="text-cyan-500 hover:text-cyan-600 font-semibold flex items-center space-x-2"
-                        >
-                            <span>View All</span>
-                            <FaArrowRight />
-                        </Link>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <section className="feature-pets">
+                <div className="feature-pets-content">
+                    <h1 className="section-title">Featured Pets</h1>
+                    <div className="pet-grid">
                         {featuredPets.map((pet) => (
-                            <div
-                                key={pet._id}
-                                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all transform hover:-translate-y-2"
-                            >
+                            <div key={pet._id} className="pet-card feature-pets-card">
                                 <Link to={`/pets/${pet._id}`}>
                                     <img
                                         src={pet.thumbnail || '/images/default-pet.jpg'}
                                         alt={pet.name}
-                                        className="w-full h-48 object-cover"
                                     />
                                 </Link>
-                                <div className="p-4">
-                                    <Link to={`/pets/${pet._id}`}>
-                                        <h3 className="font-bold text-lg mb-2 text-gray-800 hover:text-cyan-500">
-                                            {pet.name}
-                                        </h3>
-                                    </Link>
-                                    <p className="text-sm text-gray-600 mb-2">
-                                        {pet.breed} • {pet.age} • {pet.gender}
-                                    </p>
-                                    <p className="text-gray-700 text-sm mb-3 line-clamp-2">
-                                        {pet.description}
-                                    </p>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-cyan-500 font-bold text-xl">
-                                            ₹{pet.price?.toLocaleString()}
-                                        </span>
-                                        <button
-                                            onClick={() => addToCart(pet._id, 'Pet')}
-                                            className="bg-cyan-500 hover:bg-cyan-600 text-white p-2 rounded-lg transition-colors"
-                                        >
-                                            <FaShoppingCart />
-                                        </button>
-                                    </div>
-                                </div>
+                                <Link to={`/pets/${pet._id}`}>
+                                    <h2 className="card-text">{pet.name}</h2>
+                                </Link>
+                                <p className="text-sm text-gray-600 mb-2 font-poppins">
+                                    {pet.breed} • {pet.age} • {pet.gender}
+                                </p>
+                                <p className="price">
+                                    <strong>₹ {pet.price?.toLocaleString()}</strong>
+                                </p>
+                                <button
+                                    className="card-button"
+                                    onClick={() => addToCart(pet._id, 'Pet')}
+                                >
+                                    Buy Now
+                                </button>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
+            <hr />
+
             {/* Featured Products Section */}
-            <section className="py-16 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex justify-between items-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
-                            Top Products
-                        </h2>
-                        <Link
-                            to="/products"
-                            className="text-cyan-500 hover:text-cyan-600 font-semibold flex items-center space-x-2"
-                        >
-                            <span>View All</span>
-                            <FaArrowRight />
-                        </Link>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+            <section className="feature-prod">
+                <div className="feature-pdts-content">
+                    <h1 className="section-title">Featured Products</h1>
+                    <div className="product-grid">
                         {featuredProducts.map((product) => (
-                            <div
-                                key={product._id}
-                                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all transform hover:-translate-y-2"
-                            >
+                            <div key={product._id} className="product-card feature-pdts-card">
                                 <Link to={`/products/${product._id}`}>
                                     <img
                                         src={product.thumbnail || '/images/default-product.jpg'}
                                         alt={product.name}
-                                        className="w-full h-48 object-cover"
                                     />
                                 </Link>
-                                <div className="p-4">
-                                    <Link to={`/products/${product._id}`}>
-                                        <h3 className="font-bold text-lg mb-2 text-gray-800 hover:text-cyan-500">
-                                            {product.name}
-                                        </h3>
-                                    </Link>
-                                    <div className="flex items-center mb-2">
-                                        <div className="flex text-yellow-400 text-sm mr-2">
-                                            {[...Array(5)].map((_, i) => (
-                                                <FaStar
-                                                    key={i}
-                                                    className={
-                                                        i < Math.floor(product.avgRating || 0)
-                                                            ? 'text-yellow-400'
-                                                            : 'text-gray-300'
-                                                    }
-                                                />
-                                            ))}
-                                        </div>
-                                        <span className="text-gray-600 text-sm">
-                                            ({product.reviewCount || 0})
-                                        </span>
+                                <Link to={`/products/${product._id}`}>
+                                    <h2 className="card-text">{product.name}</h2>
+                                </Link>
+                                <div className="flex items-center justify-center mb-2">
+                                    <div className="flex text-amber-400 text-sm mr-2">
+                                        {[...Array(5)].map((_, i) => (
+                                            <FaStar
+                                                key={i}
+                                                className={
+                                                    i < Math.floor(product.avgRating || 0)
+                                                        ? 'text-amber-400'
+                                                        : 'text-gray-300'
+                                                }
+                                            />
+                                        ))}
                                     </div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        {product.discount > 0 ? (
-                                            <div className="flex items-center space-x-2">
-                                                <span className="text-cyan-500 font-bold text-xl">
-                                                    ₹{product.discountedPrice}
-                                                </span>
-                                                <span className="text-gray-400 line-through text-sm">
-                                                    ₹{product.price}
-                                                </span>
-                                            </div>
-                                        ) : (
-                                            <span className="text-cyan-500 font-bold text-xl">
-                                                ₹{product.price?.toLocaleString()}
-                                            </span>
-                                        )}
-                                        {product.discount > 0 && (
-                                            <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">
-                                                {product.discount}% OFF
-                                            </span>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={() => addToCart(product._id, 'Product')}
-                                        className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                                    >
-                                        <FaShoppingCart />
-                                        <span>Add to Cart</span>
-                                    </button>
+                                    <span className="text-gray-600 text-sm font-poppins">
+                                        ({product.reviewCount || 0})
+                                    </span>
                                 </div>
+                                <p className="price">
+                                    <strong>₹ {product.price?.toLocaleString()}</strong>
+                                </p>
+                                {product.discount > 0 && (
+                                    <span className="bg-linear-to-r from-red-500 to-pink-600 text-white text-xs font-bold px-2 py-1 rounded font-poppins inline-block mb-2">
+                                        {product.discount}% OFF
+                                    </span>
+                                )}
+                                <button
+                                    className="card-button"
+                                    onClick={() => addToCart(product._id, 'Product')}
+                                >
+                                    Buy Now
+                                </button>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Features Section */}
-            <section className="py-16 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white">
-                <div className="max-w-7xl mx-auto">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-                        Why Choose PetVerse?
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* About Section */}
+            <section id="about" className="about">
+                <div className="container">
+                    <h2 className="section-title">About Petverse</h2>
+                    <p className="about-text">
+                        Welcome to PetVerse, your one-stop destination for all things pets!
+                    </p>
+                    <p className="about-text">
+                        We are dedicated to helping you find the perfect pet and providing
+                        everything they need to live a happy and healthy life.
+                    </p>
+                    <h3 className="features-title">Why Choose Us</h3>
+                    <ul className="features-list">
                         {features.map((feature, index) => (
-                            <div key={index} className="text-center">
-                                <div className="text-6xl mb-4">{feature.icon}</div>
-                                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                                <p className="text-cyan-100">{feature.description}</p>
-                            </div>
+                            <li key={index}>
+                                <span className="point">✔ &nbsp;</span>
+                                <strong>{feature.title}:</strong> {feature.description}
+                            </li>
                         ))}
-                    </div>
+                    </ul>
                 </div>
             </section>
 
             {/* Testimonials Section */}
-            <section className="py-16 px-4 bg-white">
-                <div className="max-w-7xl mx-auto">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-800">
-                        What Our Customers Say
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <section className="testimonials">
+                <div className="testimonial-section">
+                    <h2>What Our Customers Say</h2>
+                    <div className="testimonial-cards">
                         {testimonials.map((testimonial, index) => (
-                            <div
-                                key={index}
-                                className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all"
-                            >
-                                <div className="flex text-yellow-400 mb-4">
-                                    {[...Array(testimonial.rating)].map((_, i) => (
-                                        <FaStar key={i} />
-                                    ))}
-                                </div>
-                                <p className="text-gray-700 mb-4 italic">"{testimonial.text}"</p>
-                                <p className="text-cyan-600 font-bold">- {testimonial.author}</p>
+                            <div key={index} className="testimonial">
+                                <p>"{testimonial.text}"</p>
+                                <span>- {testimonial.author}</span>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className="py-16 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-3xl md:text-5xl font-bold mb-6">
-                        Ready to Find Your Perfect Pet?
-                    </h2>
-                    <p className="text-xl mb-8 opacity-90">
-                        Join thousands of happy pet owners who found their companions on PetVerse
-                    </p>
-                    <Link
-                        to="/register"
-                        className="inline-block bg-white text-purple-600 font-bold py-3 px-8 rounded-full hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg"
+            {/* Call to Action Section */}
+            <section className="call-to-action">
+                <h2>Ready to Find Your Perfect Pet?</h2>
+                <p>Join our community of pet lovers today</p>
+                <div className="cta-buttons">
+                    <button
+                        id="adopt"
+                        onClick={() => (window.location.href = '/pets')}
+                        className="cta-btn"
                     >
-                        Get Started Today
-                    </Link>
+                        Adopt a Pet
+                    </button>
+                    <button
+                        id="shop"
+                        onClick={() => (window.location.href = '/products')}
+                        className="cta-btn"
+                    >
+                        Shop Products
+                    </button>
                 </div>
             </section>
         </div>

@@ -9,8 +9,8 @@ const Footer = () => {
                     {/* Logo Section */}
                     <div>
                         <div className="flex items-center space-x-2 mb-4">
-                            <FaPaw className="text-3xl text-cyan-700" />
-                            <h2 className="text-2xl font-bold text-cyan-700">PetVerse</h2>
+                            <FaPaw className="text-3xl text-teal-500" />
+                            <h2 className="text-2xl font-bold text-teal-500">PetVerse</h2>
                         </div>
                         <p className="text-gray-400 text-sm leading-relaxed">
                             Your one-stop destination for all pet needs. Find pets, products, and services all in one place.
@@ -22,27 +22,27 @@ const Footer = () => {
                         <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
                         <ul className="space-y-2">
                             <li>
-                                <Link to="/pets" className="text-cyan-700 hover:text-white transition-colors">
+                                <Link to="/pets" className="text-teal-500 hover:text-teal-300 transition-colors">
                                     Pets
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/products" className="text-cyan-700 hover:text-white transition-colors">
+                                <Link to="/products" className="text-teal-500 hover:text-teal-300 transition-colors">
                                     Products
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/services" className="text-cyan-700 hover:text-white transition-colors">
+                                <Link to="/services" className="text-teal-500 hover:text-teal-300 transition-colors">
                                     Services
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/events" className="text-cyan-700 hover:text-white transition-colors">
+                                <Link to="/events" className="text-teal-500 hover:text-teal-300 transition-colors">
                                     Events
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/about" className="text-cyan-700 hover:text-white transition-colors">
+                                <Link to="/about" className="text-teal-500 hover:text-teal-300 transition-colors">
                                     About Us
                                 </Link>
                             </li>
@@ -57,7 +57,7 @@ const Footer = () => {
                                 href="https://facebook.com"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center space-x-2 text-cyan-700 hover:text-white transition-colors"
+                                className="flex items-center space-x-2 text-teal-500 hover:text-teal-300 transition-colors"
                             >
                                 <FaFacebook className="text-xl" />
                                 <span>Facebook</span>
@@ -66,7 +66,7 @@ const Footer = () => {
                                 href="https://twitter.com"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center space-x-2 text-cyan-700 hover:text-white transition-colors"
+                                className="flex items-center space-x-2 text-teal-500 hover:text-teal-300 transition-colors"
                             >
                                 <FaTwitter className="text-xl" />
                                 <span>Twitter</span>
@@ -75,7 +75,7 @@ const Footer = () => {
                                 href="https://instagram.com"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center space-x-2 text-cyan-700 hover:text-white transition-colors"
+                                className="flex items-center space-x-2 text-teal-500 hover:text-teal-300 transition-colors"
                             >
                                 <FaInstagram className="text-xl" />
                                 <span>Instagram</span>
@@ -84,7 +84,7 @@ const Footer = () => {
                                 href="https://linkedin.com"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center space-x-2 text-cyan-700 hover:text-white transition-colors"
+                                className="flex items-center space-x-2 text-teal-500 hover:text-teal-300 transition-colors"
                             >
                                 <FaLinkedin className="text-xl" />
                                 <span>LinkedIn</span>
