@@ -10,7 +10,10 @@ dotenv.config();
 const app = express();
 
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // React dev server
+    origin: [
+        process.env.FRONTEND_URL || 'http://localhost:3000', // React dev server
+        'http://localhost:5173' // Vite dev server
+    ],
     credentials: true, // Allow cookies/session
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -77,7 +80,9 @@ const serviceRoutes = require('./routes/service.routes');
 const paymentRoutes = require('./routes/payments.routes');
 const searchRoutes = require('./routes/search.routes');
 const eventRoutes = require('./routes/event.routes');
+const apiRoutes = require('./routes/apiRoutes');
 
+app.use('/api', apiRoutes);
 // Mount routes under /api prefix
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);

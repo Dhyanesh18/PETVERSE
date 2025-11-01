@@ -1,40 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
+import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
+import Header from './components/Header';
 import Homepage from './pages/Homepage';
+import SearchResults from './pages/SearchResults';
 import Pets from './pages/Pets';
-import api from './utils/api';
+import PetDetail from './pages/PetDetail';
+import Products from './pages/Products';
+import ProductDetail from './pages/ProductDetail';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import AddPet from './pages/AddPet';
+import EditPet from './pages/EditPet';
+import AddProduct from './pages/AddProduct';
+import EditProduct from './pages/EditProduct';
+import Wishlist from './pages/Wishlist';
 
 function App() {
-    const [user, setUser] = useState(null);
+  return (
+    <AuthProvider>
+      <CartProvider>
+        <BrowserRouter>
+          <Header />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route path="/home" element={<Homepage />} />
+            
+            {/* Search */}
+            <Route path="/search" element={<SearchResults />} />
+            
+            {/* Pets */}
+            <Route path="/pets" element={<Pets />} />
+            <Route path="/seller/detail/:id" element={<PetDetail />} />
+            <Route path="/seller/add-pet" element={<AddPet />} />
+            <Route path="/seller/edit-pet/:id" element={<EditPet />} />
+            
+            {/* Products */}
+            <Route path="/products" element={<Products />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            
+            {/* Wishlist */}
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/seller/add-product" element={<AddProduct />} />
+            <Route path="/seller/edit-product/:id" element={<EditProduct />} />
+            
+            {/* Cart & Checkout */}
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+          </Routes>
+        </BrowserRouter>
+      </CartProvider>
+    </AuthProvider>
+  );
+};
 
-    useEffect(() => {
-        // Fetch user session
-        const fetchUser = async () => {
-            try {
-                const response = await api.get('/auth/session');
-                if (response.data.success) {
-                    setUser(response.data.data.user);
-                }
-            } catch (error) {
-                console.error('Error fetching user:', error);
-            }
-        };
-        fetchUser();
-    }, []);
-
-    return (
-        <Router>
-            <Layout user={user}>
-                <Routes>
-                    <Route path="/" element={<Homepage />} />
-                    <Route path="/home" element={<Homepage />} />
-                    <Route path="/pets" element={<Pets />} />
-                    {/* Add more routes */}
-                </Routes>
-            </Layout>
-        </Router>
-    );
-}
-
-export default App;
+export default App
