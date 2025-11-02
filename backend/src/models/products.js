@@ -40,7 +40,7 @@ const productSchema = new mongoose.Schema({
     },
     seller: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference base User model
+        ref: 'User',
         required: true
     },
     images: {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPets } from '../services/api';
+import { getPets, togglePetWishlist, getWishlist } from '../services/api';
 
 const Pets = () => {
     const [pets, setPets] = useState([]);
@@ -19,10 +19,26 @@ const Pets = () => {
 
     useEffect(() => {
         fetchPets();
-        // Load wishlist from localStorage
-        const savedWishlist = JSON.parse(localStorage.getItem('petWishlist')) || [];
-        setWishlist(savedWishlist);
+        loadWishlistStatus();
     }, []);
+
+    const loadWishlistStatus = async () => {
+        try {
+            // Get user's wishlist from backend
+            const response = await getWishlist();
+            const wishlistData = response.data.data || {};
+            
+            // Extract pet IDs from user's wishlist
+            const wishlistPetIds = (wishlistData.pets || []).map(pet => pet._id);
+            
+            setWishlist(wishlistPetIds);
+            console.log('Loaded wishlist pet IDs:', wishlistPetIds);
+        } catch (error) {
+            console.error('Error loading wishlist status:', error);
+            // If user is not logged in or error occurs, set empty wishlist
+            setWishlist([]);
+        }
+    };
 
     const fetchPets = async () => {
         try {
@@ -62,16 +78,32 @@ const Pets = () => {
         });
     };
 
-    const toggleWishlist = (petId) => {
-        setWishlist(prev => {
-            const newWishlist = prev.includes(petId) 
-                ? prev.filter(id => id !== petId)
-                : [...prev, petId];
+    const toggleWishlist = async (petId) => {
+        try {
+            const response = await togglePetWishlist(petId);
+            console.log('Toggle wishlist response:', response.data);
             
-            // Save to localStorage
-            localStorage.setItem('petWishlist', JSON.stringify(newWishlist));
-            return newWishlist;
-        });
+            if (response.data.success) {
+                // Check if pet is now in wishlist based on backend response
+                const isInWishlist = response.data.data?.isInWishlist || response.data.data?.wishlist;
+                
+                // Update local state based on actual backend state
+                setWishlist(prev => {
+                    if (isInWishlist && !prev.includes(petId)) {
+                        return [...prev, petId];
+                    } else if (!isInWishlist && prev.includes(petId)) {
+                        return prev.filter(id => id !== petId);
+                    }
+                    return prev;
+                });
+                
+                // Show notification
+                const message = isInWishlist ? 'Added to wishlist' : 'Removed from wishlist';
+                console.log(message, petId);
+            }
+        } catch (error) {
+            console.error('Error toggling wishlist:', error);
+        }
     };
 
     const filteredPets = pets.filter(pet => {

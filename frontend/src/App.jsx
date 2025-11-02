@@ -4,8 +4,6 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
-
-// Import all your pages
 import Homepage from './pages/Homepage';
 import Login from './pages/Login';
 import Unauthorized from './pages/Unauthorized';
@@ -18,6 +16,7 @@ import ProductDetail from './pages/ProductDetail';
 import AddProduct from './pages/AddProduct';
 import EditProduct from './pages/EditProduct';
 import Wishlist from './pages/Wishlist';
+import OwnerDashboard from './pages/OwnerDashboard';
 
 function App() {
     return (
@@ -32,33 +31,14 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<Navigate to="/home" replace />} />
 
-                {/* Protected Routes */}
-                <Route
-                    path="/home"
-                    element={
-                    <ProtectedRoute>
-                        <Homepage />
-                    </ProtectedRoute>
-                    }
-                />
+                {/* Public Routes - No Authentication Required */}
+                <Route path="/home" element={<Homepage />} />
+                <Route path="/pets" element={<Pets />} />
+                <Route path="/seller/detail/:id" element={<PetDetail />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
 
-                {/* Pets */}
-                <Route
-                    path="/pets"
-                    element={
-                    <ProtectedRoute>
-                        <Pets />
-                    </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/seller/detail/:id"
-                    element={
-                    <ProtectedRoute>
-                        <PetDetail />
-                    </ProtectedRoute>
-                    }
-                />
+                {/* Protected Routes - Seller Only */}
                 <Route
                     path="/seller/add-pet"
                     element={
@@ -72,24 +52,6 @@ function App() {
                     element={
                     <ProtectedRoute allowedRoles={['seller']}>
                         <EditPet />
-                    </ProtectedRoute>
-                    }
-                />
-
-                {/* Products */}
-                <Route
-                    path="/products"
-                    element={
-                    <ProtectedRoute>
-                        <Products />
-                    </ProtectedRoute>
-                    }
-                />
-                <Route
-                    path="/product/:id"
-                    element={
-                    <ProtectedRoute>
-                        <ProductDetail />
                     </ProtectedRoute>
                     }
                 />
@@ -110,7 +72,7 @@ function App() {
                     }
                 />
 
-                {/* Wishlist */}
+                {/* Wishlist - Requires Login */}
                 <Route
                     path="/wishlist"
                     element={
@@ -125,15 +87,15 @@ function App() {
                 <Route
                     path="/dashboard"
                     element={
-                    <ProtectedRoute allowedRoles={['owner']}>
-                        <div>Owner Dashboard</div>
+                    <ProtectedRoute allowedRoles={['owner', 'admin']}>
+                        <OwnerDashboard />
                     </ProtectedRoute>
                     }
                 />
                 <Route
                     path="/seller/dashboard"
                     element={
-                    <ProtectedRoute allowedRoles={['seller']}>
+                    <ProtectedRoute allowedRoles={['seller','admin']}>
                         <div>Seller Dashboard</div>
                     </ProtectedRoute>
                     }

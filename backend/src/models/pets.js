@@ -53,10 +53,7 @@ const petSchema = new mongoose.Schema({
         default: false
     }
 });
-
-// Validation for 1-5 images
 function arrayLimit(val) {
     return val.length >= 1 && val.length <= 5;
 }
-
 module.exports = mongoose.model('Pet', petSchema);
