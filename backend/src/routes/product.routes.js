@@ -62,8 +62,11 @@ router.get('/', async (req, res) => {
         if (category) {
             const categoryMap = {
                 'petfood': 'Pet Food',
+                'pet-food': 'Pet Food',
                 'toys': 'Toys',
-                'accessories': 'Accessories'
+                'accessories': 'Accessories',
+                'healthcare': 'Healthcare',
+                'grooming': 'Grooming'
             };
             query.category = categoryMap[category.toLowerCase()] || category;
         }

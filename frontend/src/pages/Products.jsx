@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProducts, toggleProductWishlist, getWishlist } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 const Products = () => {
     const [products, setProducts] = useState([]);
@@ -18,16 +19,24 @@ const Products = () => {
     const [itemsPerPage] = useState(6); // 6 items per page (2 rows of 3)
     const navigate = useNavigate();
     const { addToCart } = useCart();
+    const { isAuthenticated } = useAuth();
 
     useEffect(() => {
         fetchProducts();
-        loadWishlistStatus();
-    }, []);
+        if (isAuthenticated) {
+            loadWishlistStatus();
+        } else {
+            // Clear wishlist when user logs out
+            setWishlist([]);
+        }
+    }, [isAuthenticated]);
 
     const loadWishlistStatus = async () => {
         try {
+            console.log('Loading wishlist for authenticated user...');
             // Get user's wishlist from backend
             const response = await getWishlist();
+            console.log('Wishlist API response:', response.data);
             const wishlistData = response.data.data || {};
             
             // Extract product IDs from user's wishlist
@@ -35,8 +44,10 @@ const Products = () => {
             
             setWishlist(wishlistProductIds);
             console.log('Loaded wishlist product IDs:', wishlistProductIds);
+            console.log('Wishlist state updated successfully');
         } catch (error) {
             console.error('Error loading wishlist status:', error);
+            console.error('Error details:', error.response?.data);
             // If user is not logged in or error occurs, set empty wishlist
             setWishlist([]);
         }
@@ -81,27 +92,43 @@ const Products = () => {
     };
 
     const toggleWishlist = async (productId) => {
+        if (!isAuthenticated) {
+            alert('Please login to add items to wishlist');
+            return;
+        }
+        
         try {
             const response = await toggleProductWishlist(productId);
             console.log('Toggle wishlist response:', response.data);
             
             if (response.data.success) {
+                console.log('Toggle response data:', response.data.data);
                 // Check if product is now in wishlist based on backend response
                 const isInWishlist = response.data.data?.isInWishlist || response.data.data?.wishlist;
+                console.log('Product is in wishlist:', isInWishlist);
                 
                 // Update local state based on actual backend state
                 setWishlist(prev => {
+                    console.log('Previous wishlist state:', prev);
                     if (isInWishlist && !prev.includes(productId)) {
+                        console.log('Adding product to wishlist');
                         return [...prev, productId];
                     } else if (!isInWishlist && prev.includes(productId)) {
+                        console.log('Removing product from wishlist');
                         return prev.filter(id => id !== productId);
                     }
+                    console.log('No change to wishlist state');
                     return prev;
                 });
                 
                 // Show notification
                 const message = isInWishlist ? 'Added to wishlist' : 'Removed from wishlist';
                 console.log(message, productId);
+                
+                // Optionally refresh wishlist from server to ensure consistency
+                setTimeout(() => {
+                    loadWishlistStatus();
+                }, 500);
             }
         } catch (error) {
             console.error('Error toggling wishlist:', error);
@@ -407,7 +434,7 @@ const Products = () => {
                                     className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200 flex flex-col h-full"
                                     onClick={(e) => {
                                         if (!e.target.closest('.product-action')) {
-                                            navigate(`/buy/${product._id}`);
+                                            navigate(`/product/${product._id}`);
                                         }
                                     }}
                                 >
@@ -502,11 +529,21 @@ const Products = () => {
                                             <button 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
+                                                    if (!isAuthenticated) {
+                                                        alert('Please login to add items to wishlist');
+                                                        return;
+                                                    }
                                                     toggleWishlist(product._id);
                                                 }}
-                                                className="w-10 h-10 border border-gray-300 rounded hover:border-red-500 hover:text-red-500 transition flex items-center justify-center"
+                                                className={`w-10 h-10 border border-gray-300 rounded transition flex items-center justify-center ${
+                                                    isAuthenticated 
+                                                        ? 'hover:border-red-500 hover:text-red-500' 
+                                                        : 'cursor-not-allowed opacity-50'
+                                                }`}
                                             >
-                                                <i className={`${wishlist.includes(product._id) ? 'fas' : 'far'} fa-heart ${wishlist.includes(product._id) ? 'text-red-500' : 'text-gray-600'}`}></i>
+                                                <i className={`${isAuthenticated && wishlist.includes(product._id) ? 'fas' : 'far'} fa-heart ${
+                                                    isAuthenticated && wishlist.includes(product._id) ? 'text-red-500' : 'text-gray-600'
+                                                }`}></i>
                                             </button>
                                         </div>
                                     </div>

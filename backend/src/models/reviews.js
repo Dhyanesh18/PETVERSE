@@ -19,7 +19,7 @@ const reviewSchema = new mongoose.Schema({
     targetType: {
         type: String,
         required: true,
-        enum: ['Product', 'Seller', 'ServiceProvider']
+        enum: ['Product', 'Seller', 'ServiceProvider', 'Pet']
     },
     targetId: {
         type: mongoose.Schema.Types.ObjectId,

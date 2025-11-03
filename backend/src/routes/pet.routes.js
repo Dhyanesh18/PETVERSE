@@ -200,7 +200,6 @@ router.get('/filter-options', async (req, res) => {
     }
 });
 
-// Get single pet details by ID
 router.get('/:id', async (req, res) => {
     try {
         const pet = await Pet.findById(req.params.id)

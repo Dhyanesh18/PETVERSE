@@ -120,7 +120,16 @@ router.post('/add', isAuthenticated, async (req, res) => {
     try {
         const { productId, quantity, itemType } = req.body;
         
+        console.log('Cart add request received:', {
+            productId,
+            quantity,
+            itemType,
+            userId: req.session.userId,
+            body: req.body
+        });
+        
         if (!productId || !quantity) {
+            console.log('Validation failed: Missing productId or quantity');
             return res.status(400).json({ 
                 success: false, 
                 error: 'Product ID and quantity are required' 
@@ -129,14 +138,26 @@ router.post('/add', isAuthenticated, async (req, res) => {
 
         // Validate quantity
         if (quantity <= 0) {
+            console.log('Validation failed: Invalid quantity', quantity);
             return res.status(400).json({
                 success: false,
                 error: 'Quantity must be greater than 0'
             });
         }
 
+        // Validate ObjectId format
+        const mongoose = require('mongoose');
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            console.log('Validation failed: Invalid ObjectId format', productId);
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid product ID format'
+            });
+        }
+
         // Default to Product type if not specified
         const type = itemType || 'Product';
+        console.log('Using item type:', type);
         
         // Verify the product exists and has enough stock
         let item;
@@ -162,8 +183,18 @@ router.post('/add', isAuthenticated, async (req, res) => {
             });
         }
 
+        // Check product availability flag (mirror pet availability check)
+        if (type === 'Product' && item.available === false) {
+            console.log('Product availability check failed:', { available: item.available });
+            return res.status(400).json({
+                success: false,
+                error: 'This product is no longer available'
+            });
+        }
+
         // Check if pet is available
-        if (type === 'Pet' && item.status !== 'available') {
+        if (type === 'Pet' && !item.available) {
+            console.log('Pet availability check failed:', { available: item.available });
             return res.status(400).json({
                 success: false,
                 error: 'This pet is no longer available'

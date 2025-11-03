@@ -109,6 +109,9 @@ export const getWalletBalance = () => apiClient.get('/api/wallet');
 
 // Review APIs
 export const getReviews = (type, itemId) => apiClient.get(`/api/reviews/${type}/${itemId}`);
-export const addReview = (reviewData) => apiClient.post('/api/reviews/add', reviewData);
+export const getUserReview = (type, itemId) => apiClient.get(`/api/reviews/user/${type}/${itemId}`);
+export const addReview = (reviewData) => apiClient.post('/api/reviews', reviewData);
+export const deleteReview = (reviewId) => apiClient.delete(`/api/reviews/${reviewId}`);
+export const canUserReview = (type, itemId) => apiClient.get(`/api/reviews/can-review/${type}/${itemId}`);
 
 export default apiClient;
