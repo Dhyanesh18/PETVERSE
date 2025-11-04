@@ -35,7 +35,7 @@ apiClient.interceptors.response.use(
 export const login = (credentials) => apiClient.post('/api/auth/login', credentials);
 export const signup = (userData) => apiClient.post('/api/auth/register', userData);
 export const logout = () => apiClient.post('/api/auth/logout');
-export const checkUserSession = () => apiClient.get('/api/check-session');
+export const checkUserSession = () => apiClient.get('/api/auth/check-session');
 
 // Search APIs
 export const searchAll = (query) => apiClient.get(`/api/search?q=${encodeURIComponent(query)}`);
@@ -71,6 +71,25 @@ export const removeFromCart = (itemId) => apiClient.delete(`/api/cart/remove/${i
 export const clearCart = () => apiClient.delete('/api/cart/clear');
 
 // Event APIs
+export const getEvents = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiClient.get(`/api/events${queryString ? `?${queryString}` : ''}`);
+};
+export const getEventById = (id) => apiClient.get(`/api/events/${id}`);
+export const addEvent = (eventData) => {
+    return apiClient.post('/api/events/add', eventData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+};
+export const registerForEvent = (registrationData) => apiClient.post('/api/events/register', registrationData);
+export const unregisterFromEvent = (eventId) => apiClient.delete(`/api/events/${eventId}/unregister`);
+export const getEventPaymentData = (eventId) => apiClient.get(`/api/events/${eventId}/payment`);
+export const processEventPayment = (eventId, paymentData) => apiClient.post(`/api/events/${eventId}/pay`, paymentData);
+export const getEventTicket = (eventId) => apiClient.get(`/api/events/${eventId}/ticket`);
+export const getMyRegisteredEvents = () => apiClient.get('/api/events/my/registered');
+export const getMyOrganizedEvents = () => apiClient.get('/api/events/my/organized');
 
 // Order APIs
 // Checkout APIs
