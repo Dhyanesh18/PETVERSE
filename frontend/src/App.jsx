@@ -16,6 +16,11 @@ import ProductDetail from './pages/ProductDetail';
 import AddProduct from './pages/AddProduct';
 import EditProduct from './pages/EditProduct';
 import Wishlist from './pages/Wishlist';
+import Events from './pages/Events';
+import EventDetail from './pages/EventDetail';
+import AddEvent from './pages/AddEvent';
+import EventPayment from './pages/EventPayment';
+import EventTicket from './pages/EventTicket';
 import OwnerDashboard from './pages/OwnerDashboard';
 
 function App() {
@@ -82,6 +87,47 @@ function App() {
                     }
                 />
 
+                {/* Events */}
+                <Route
+                    path="/events"
+                    element={
+                    <ProtectedRoute>
+                        <Events />
+                    </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/events/:id"
+                    element={
+                    <ProtectedRoute>
+                        <EventDetail />
+                    </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/events/add"
+                    element={
+                    <ProtectedRoute allowedRoles={['service_provider']}>
+                        <AddEvent />
+                    </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/events/:id/payment"
+                    element={
+                    <ProtectedRoute allowedRoles={['owner']}>
+                        <EventPayment />
+                    </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/events/:id/ticket"
+                    element={
+                    <ProtectedRoute allowedRoles={['owner']}>
+                        <EventTicket />
+                    </ProtectedRoute>
+                    }
+                />
 
                 {/* Role-based Dashboards */}
                 <Route
@@ -117,10 +163,6 @@ function App() {
                     }
                 />
 
-                {/* The catch-all route should redirect to /home if authenticated,
-                    or /login if not. Your <ProtectedRoute> on /home
-                    will handle this automatically.
-                */}
                 <Route path="*" element={<Navigate to="/home" replace />} />
                 </Routes>
             </Layout>
