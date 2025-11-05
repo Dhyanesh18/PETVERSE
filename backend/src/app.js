@@ -11,7 +11,7 @@ const app = express();
 
 const corsOptions = {
     origin: [
-        process.env.FRONTEND_URL || 'http://localhost:3000', // React dev server
+        process.env.FRONTEND_URL || 'http://localhost:3000', 
         'http://localhost:5173' // Vite dev server
     ],
     credentials: true, // Allow cookies/session
@@ -59,9 +59,26 @@ app.use(async (req, res, next) => {
     next();
 });
 
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.error('MongoDB connection failed:', err));
+mongoose.connect(process.env.MONGODB_URI, {
+    maxPoolSize: 10, // Maintain up to 10 socket connections
+    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+})
+.then(() => console.log('MongoDB connected'))
+.catch(err => console.error('MongoDB connection failed:', err));
+
+// Handle MongoDB connection errors
+mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB disconnected');
+});
+
+mongoose.connection.on('reconnected', () => {
+    console.log('MongoDB reconnected');
+});
 
 // API Routes
 const authRoutes = require('./routes/auth.routes');
@@ -80,6 +97,7 @@ const serviceRoutes = require('./routes/service.routes');
 const paymentRoutes = require('./routes/payments.routes');
 const searchRoutes = require('./routes/search.routes');
 const eventRoutes = require('./routes/event.routes');
+const wishlistRoutes = require('./routes/wishlist.routes');
 const apiRoutes = require('./routes/apiRoutes');
 
 app.use('/api', apiRoutes);
@@ -99,9 +117,9 @@ app.use('/api/booking', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/images', imageRoutes);
 
-// Health Check & Root Endpoints
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,

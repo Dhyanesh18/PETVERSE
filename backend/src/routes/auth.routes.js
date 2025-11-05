@@ -18,10 +18,15 @@ router.get('/check-session', (req, res) => {
             userRole: req.user ? req.user.role : null,
             user: {
                 id: req.user._id,
+                _id: req.user._id,
                 fullName: req.user.fullName,
+                username: req.user.username,
                 email: req.user.email,
+                phone: req.user.phone,
                 role: req.user.role,
-                isApproved: req.user.isApproved
+                isApproved: req.user.isApproved,
+                createdAt: req.user.createdAt,
+                updatedAt: req.user.updatedAt
             }
         });
     } else {
@@ -69,10 +74,15 @@ router.post('/login', async (req, res) => {
                 message: 'Login successful',
                 user: {
                     id: req.user._id,
+                    _id: req.user._id,
                     fullName: req.user.fullName,
+                    username: req.user.username,
                     email: req.user.email,
+                    phone: req.user.phone,
                     role: req.user.role,
-                    isApproved: req.user.isApproved
+                    isApproved: req.user.isApproved,
+                    createdAt: req.user.createdAt,
+                    updatedAt: req.user.updatedAt
                 },
                 redirectPath
             });

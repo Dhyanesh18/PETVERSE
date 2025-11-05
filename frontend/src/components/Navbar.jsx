@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaShoppingCart, FaUser, FaSearch, FaBars, FaTimes, FaPaw, FaAngleDown } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import api from '../utils/api';
 
-const Navbar = ({ user }) => {
+const Navbar = () => {
+    const { user, isAuthenticated, logout } = useAuth();
+    const { cartCount } = useCart();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState({ pets: [], products: [], services: [] });
     const [showSearchResults, setShowSearchResults] = useState(false);
-    const [cartCount, setCartCount] = useState(0);
     const [openDropdown, setOpenDropdown] = useState(null);
     
     const searchRef = useRef(null);
@@ -43,22 +46,7 @@ const Navbar = ({ user }) => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    useEffect(() => {
-        const updateCartCount = () => {
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            setCartCount(totalItems);
-        };
-
-        updateCartCount();
-        window.addEventListener('storage', updateCartCount);
-        window.addEventListener('cartUpdated', updateCartCount);
-        
-        return () => {
-            window.removeEventListener('storage', updateCartCount);
-            window.removeEventListener('cartUpdated', updateCartCount);
-        };
-    }, []);
+    // Cart count is now handled by CartContext
 
     useEffect(() => {
         const debounceTimeout = setTimeout(() => {
@@ -191,7 +179,7 @@ const Navbar = ({ user }) => {
                                                 {searchResults.pets.map((pet) => (
                                                     <Link
                                                         key={pet._id}
-                                                        to={`/pets/${pet._id}`}
+                                                        to={`/seller/detail/${pet._id}`}
                                                         onClick={() => setShowSearchResults(false)}
                                                         className="block py-3 px-4 text-gray-800 rounded-lg my-1 hover:bg-linear-to-r hover:from-primary-50 hover:to-secondary-50 hover:text-secondary-600 hover:translate-x-1 transition-all duration-300 no-underline font-medium"
                                                     >
@@ -207,7 +195,7 @@ const Navbar = ({ user }) => {
                                                 {searchResults.products.map((product) => (
                                                     <Link
                                                         key={product._id}
-                                                        to={`/products/${product._id}`}
+                                                        to={`/product/${product._id}`}
                                                         onClick={() => setShowSearchResults(false)}
                                                         className="block py-3 px-4 text-gray-800 rounded-lg my-1 hover:bg-linear-to-r hover:from-primary-50 hover:to-secondary-50 hover:text-secondary-600 hover:translate-x-1 transition-all duration-300 no-underline font-medium"
                                                     >

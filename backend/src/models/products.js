@@ -27,7 +27,7 @@ const productSchema = new mongoose.Schema({
     category: {
         type: String,
         required: true,
-        enum: ['Pet Food', 'Toys', 'Accessories']
+        enum: ['Pet Food', 'Toys', 'Accessories', 'Healthcare', 'Grooming']
     },
     brand: {
         type: String,
@@ -38,9 +38,13 @@ const productSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
+    available: {
+        type: Boolean,
+        default: true
+    },
     seller: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference base User model
+        ref: 'User',
         required: true
     },
     images: {

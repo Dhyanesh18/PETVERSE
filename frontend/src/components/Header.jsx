@@ -13,6 +13,9 @@ const Header = () => {
     const navigate = useNavigate();
     const { user, isAuthenticated, logout } = useAuth();
     const { cartCount } = useCart();
+    
+    // Debug cart count
+    console.log('Header cartCount:', cartCount);
     const searchRef = useRef(null);
     const debounceTimeout = useRef(null);
 
@@ -176,7 +179,7 @@ const Header = () => {
                                                     {searchResults.products.slice(0, 3).map((product) => (
                                                         <Link
                                                             key={product._id}
-                                                            to={`/buy/${product._id}`}
+                                                            to={`/product/${product._id}`}
                                                             className="block px-4 py-2 hover:bg-indigo-50 rounded"
                                                             onClick={() => setShowDropdown(false)}
                                                         >

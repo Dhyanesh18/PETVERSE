@@ -26,13 +26,26 @@ router.get('/featured-products', async (req, res) => {
 });
 
 router.get('/check-session', (req, res) => {
-    if (req.session && req.session.user) { 
+    if (req.session && req.session.userId && req.user) { 
         res.json({
+            success: true,
             isLoggedIn: true,
-            isAdmin: req.session.user.role === 'admin'
+            user: {
+                _id: req.user._id,
+                username: req.user.username,
+                fullName: req.user.fullName,
+                email: req.user.email,
+                role: req.user.role,
+                phoneNo: req.user.phoneNo,
+                address: req.user.address,
+                profilePicture: req.user.profilePicture
+            }
         });
     } else {
-        res.json({ isLoggedIn: false });
+        res.json({ 
+            success: false,
+            isLoggedIn: false 
+        });
     }
 });
 
@@ -78,7 +91,12 @@ router.get('/products/:id', async (req, res) => {
         if (!product) {
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
-        res.json({ success: true, data: product });
+        res.json({ 
+            success: true, 
+            data: { 
+                product: product 
+            } 
+        });
     } catch (err) {
         console.error('Error fetching product:', err);
         res.status(500).json({ success: false, message: 'Error fetching product' });

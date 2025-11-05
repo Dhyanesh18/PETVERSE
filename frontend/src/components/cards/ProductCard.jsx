@@ -11,7 +11,7 @@ const ProductCard = ({ product, onAddToCart, variant = 'default' }) => {
                 isFeature ? 'h-[440px]' : 'h-[380px]'
             } flex flex-col`}
         >
-            <Link to={`/products/${product._id}`} className="block">
+            <Link to={`/product/${product._id}`} className="block">
                 <img 
                     src={product.thumbnail || product.images?.[0] || '/images/default-product.jpg'} 
                     alt={product.name}
@@ -20,7 +20,7 @@ const ProductCard = ({ product, onAddToCart, variant = 'default' }) => {
             </Link>
             
             <div className="p-5 flex flex-col grow">
-                <Link to={`/products/${product._id}`} className="no-underline">
+                <Link to={`/product/${product._id}`} className="no-underline">
                     <h2 className={`text-center font-semibold text-gray-800 hover:text-secondary-500 transition-colors mb-2 ${
                         isFeature ? 'text-xl' : 'text-lg'
                     }`}>

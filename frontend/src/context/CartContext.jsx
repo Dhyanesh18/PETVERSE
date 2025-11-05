@@ -21,11 +21,22 @@ export const CartProvider = ({ children }) => {
             setLoading(true);
             const response = await getCart();
             const cartData = response.data;
-            setCart(cartData.items || []);
-            const count = cartData.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+            console.log('Cart API response:', cartData);
+            
+            // Handle different response structures
+            const items = cartData.data?.items || cartData.items || [];
+            console.log('Cart items:', items);
+            console.log('Cart items length:', items?.length);
+            
+            setCart(items);
+            const count = items.reduce((sum, item) => sum + item.quantity, 0);
+            console.log('Calculated cart count:', count);
             setCartCount(count);
         } catch (error) {
-            console.error('Failed to fetch cart:', error);
+            // If it's an authentication error (401), don't log it as an error
+            if (error.response?.status !== 401) {
+                console.error('Failed to fetch cart:', error);
+            }
             // Fallback to localStorage
             const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
             setCart(localCart);
@@ -37,13 +48,26 @@ export const CartProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        fetchCart();
+        // Only fetch cart if we're not on the login/signup pages
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
+            fetchCart();
+        } else {
+            // For login/signup pages, just load from localStorage
+            const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+            setCart(localCart);
+            const count = localCart.reduce((sum, item) => sum + item.quantity, 0);
+            setCartCount(count);
+        }
     }, []);
 
     const addToCart = async (itemData) => {
         try {
+            console.log('CartContext: Adding item to cart:', itemData);
             const response = await addToCartAPI(itemData);
+            console.log('CartContext: Add to cart API response:', response.data);
             await fetchCart();
+            console.log('CartContext: After fetchCart, cartCount is:', cartCount);
             return response.data;
         } catch (error) {
             console.error('Failed to add to cart:', error);

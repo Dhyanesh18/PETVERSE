@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPets } from '../services/api';
+import { getPets, togglePetWishlist, getWishlist } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const Pets = () => {
     const [pets, setPets] = useState([]);
@@ -16,13 +17,39 @@ const Pets = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(6); // 6 items per page (2 rows of 3)
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
 
     useEffect(() => {
         fetchPets();
-        // Load wishlist from localStorage
-        const savedWishlist = JSON.parse(localStorage.getItem('petWishlist')) || [];
-        setWishlist(savedWishlist);
-    }, []);
+        if (isAuthenticated) {
+            loadWishlistStatus();
+        } else {
+            // Clear wishlist when user logs out
+            setWishlist([]);
+        }
+    }, [isAuthenticated]);
+
+    const loadWishlistStatus = async () => {
+        try {
+            console.log('Loading wishlist for authenticated user...');
+            // Get user's wishlist from backend
+            const response = await getWishlist();
+            console.log('Wishlist API response:', response.data);
+            const wishlistData = response.data.data || {};
+            
+            // Extract pet IDs from user's wishlist
+            const wishlistPetIds = (wishlistData.pets || []).map(pet => pet._id);
+            
+            setWishlist(wishlistPetIds);
+            console.log('Loaded wishlist pet IDs:', wishlistPetIds);
+            console.log('Wishlist state updated successfully');
+        } catch (error) {
+            console.error('Error loading wishlist status:', error);
+            console.error('Error details:', error.response?.data);
+            // If user is not logged in or error occurs, set empty wishlist
+            setWishlist([]);
+        }
+    };
 
     const fetchPets = async () => {
         try {
@@ -62,16 +89,48 @@ const Pets = () => {
         });
     };
 
-    const toggleWishlist = (petId) => {
-        setWishlist(prev => {
-            const newWishlist = prev.includes(petId) 
-                ? prev.filter(id => id !== petId)
-                : [...prev, petId];
+    const toggleWishlist = async (petId) => {
+        if (!isAuthenticated) {
+            alert('Please login to add items to wishlist');
+            return;
+        }
+        
+        try {
+            const response = await togglePetWishlist(petId);
+            console.log('Toggle wishlist response:', response.data);
             
-            // Save to localStorage
-            localStorage.setItem('petWishlist', JSON.stringify(newWishlist));
-            return newWishlist;
-        });
+            if (response.data.success) {
+                console.log('Toggle response data:', response.data.data);
+                // Check if pet is now in wishlist based on backend response
+                const isInWishlist = response.data.data?.isInWishlist || response.data.data?.wishlist;
+                console.log('Pet is in wishlist:', isInWishlist);
+                
+                // Update local state based on actual backend state
+                setWishlist(prev => {
+                    console.log('Previous wishlist state:', prev);
+                    if (isInWishlist && !prev.includes(petId)) {
+                        console.log('Adding pet to wishlist');
+                        return [...prev, petId];
+                    } else if (!isInWishlist && prev.includes(petId)) {
+                        console.log('Removing pet from wishlist');
+                        return prev.filter(id => id !== petId);
+                    }
+                    console.log('No change to wishlist state');
+                    return prev;
+                });
+                
+                // Show notification
+                const message = isInWishlist ? 'Added to wishlist' : 'Removed from wishlist';
+                console.log(message, petId);
+                
+                // Optionally refresh wishlist from server to ensure consistency
+                setTimeout(() => {
+                    loadWishlistStatus();
+                }, 500);
+            }
+        } catch (error) {
+            console.error('Error toggling wishlist:', error);
+        }
     };
 
     const filteredPets = pets.filter(pet => {
@@ -439,11 +498,21 @@ const Pets = () => {
                                             <button 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
+                                                    if (!isAuthenticated) {
+                                                        alert('Please login to add items to wishlist');
+                                                        return;
+                                                    }
                                                     toggleWishlist(pet._id);
                                                 }}
-                                                className="w-10 h-10 border border-gray-300 rounded-full hover:border-red-500 hover:text-red-500 transition flex items-center justify-center"
+                                                className={`w-10 h-10 border border-gray-300 rounded-full transition flex items-center justify-center ${
+                                                    isAuthenticated 
+                                                        ? 'hover:border-red-500 hover:text-red-500' 
+                                                        : 'cursor-not-allowed opacity-50'
+                                                }`}
                                             >
-                                                <i className={`${wishlist.includes(pet._id) ? 'fas' : 'far'} fa-heart ${wishlist.includes(pet._id) ? 'text-red-500' : 'text-gray-600'}`}></i>
+                                                <i className={`${isAuthenticated && wishlist.includes(pet._id) ? 'fas' : 'far'} fa-heart ${
+                                                    isAuthenticated && wishlist.includes(pet._id) ? 'text-red-500' : 'text-gray-600'
+                                                }`}></i>
                                             </button>
                                         </div>
                                     </div>

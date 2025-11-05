@@ -7,6 +7,7 @@ const apiClient = axios.create({
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json'
     }
 });
 
@@ -64,6 +65,33 @@ export const deleteProduct = (id) => apiClient.delete(`/api/products/${id}`);
 export const getFeaturedProducts = () => apiClient.get('/api/featured-products');
 
 // Service APIs
+export const getServices = () => apiClient.get('/api/services');
+export const getServiceById = (id) => apiClient.get(`/api/services/${id}`);
+
+// User Stats APIs
+export const getUserStats = () => apiClient.get('/api/user/stats');
+export const getUserDashboard = () => apiClient.get('/api/user/dashboard');
+
+// Wishlist APIs
+export const getWishlist = () => apiClient.get('/api/wishlist');
+export const togglePetWishlist = (petId) => apiClient.post(`/api/wishlist/pet/${petId}/toggle`);
+export const toggleProductWishlist = (productId) => apiClient.post(`/api/wishlist/product/${productId}/toggle`);
+export const getWishlistStatus = (type, id) => apiClient.get(`/api/wishlist/status/${type}/${id}`);
+
+// Events APIs
+export const getEvents = () => apiClient.get('/api/events');
+export const getEventById = (id) => apiClient.get(`/api/events/${id}`);
+export const getRegisteredEvents = () => apiClient.get('/api/events/registered');
+export const registerForEvent = (eventId) => apiClient.post(`/api/events/${eventId}/register`);
+
+// Booking APIs
+export const getBookings = () => apiClient.get('/api/bookings');
+export const createBooking = (bookingData) => apiClient.post('/api/bookings', bookingData);
+
+// Order APIs
+export const getOrders = () => apiClient.get('/api/orders');
+export const getOrderById = (id) => apiClient.get(`/api/orders/${id}`);
+
 // Cart APIs
 export const getCart = () => apiClient.get('/api/cart');
 export const addToCart = (itemData) => apiClient.post('/api/cart/add', itemData);
@@ -100,6 +128,9 @@ export const getWalletBalance = () => apiClient.get('/api/wallet');
 
 // Review APIs
 export const getReviews = (type, itemId) => apiClient.get(`/api/reviews/${type}/${itemId}`);
-export const addReview = (reviewData) => apiClient.post('/api/reviews/add', reviewData);
+export const getUserReview = (type, itemId) => apiClient.get(`/api/reviews/user/${type}/${itemId}`);
+export const addReview = (reviewData) => apiClient.post('/api/reviews', reviewData);
+export const deleteReview = (reviewId) => apiClient.delete(`/api/reviews/${reviewId}`);
+export const canUserReview = (type, itemId) => apiClient.get(`/api/reviews/can-review/${type}/${itemId}`);
 
 export default apiClient;

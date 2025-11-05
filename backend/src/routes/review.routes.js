@@ -3,6 +3,48 @@ const router = express.Router();
 const Review = require('../models/reviews');
 const Product = require('../models/products');
 const User = require('../models/users');
+const Pet = require('../models/pets');
+const Order = require('../models/order');
+
+// Function to check if user has purchased the specific item
+async function hasPurchased(userId, targetType, targetId) {
+    try {
+        if (targetType === 'Pet' || targetType === 'Product') {
+            // First try exact match
+            let order = await Order.findOne({
+                customer: userId,
+                'items.product': targetId,
+                'items.itemType': targetType,
+                status: { 
+                    $in: ['pending', 'processing', 'shipped', 'delivered', 'completed'] 
+                }
+            });
+            
+            // If not found and it's a Product, try legacy orders (without itemType)
+            if (!order && targetType === 'Product') {
+                order = await Order.findOne({
+                    customer: userId,
+                    'items.product': targetId,
+                    $or: [
+                        { 'items.itemType': { $exists: false } },
+                        { 'items.itemType': null },
+                        { 'items.itemType': '' }
+                    ],
+                    status: { 
+                        $in: ['pending', 'processing', 'shipped', 'delivered', 'completed'] 
+                    }
+                });
+            }
+            
+            return !!order;
+        }
+        // For Seller and ServiceProvider, allow reviews (services don't have purchase history)
+        return true;
+    } catch (error) {
+        console.error('Error checking purchase history:', error);
+        return false;
+    }
+}
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
@@ -23,7 +65,7 @@ router.get('/:targetType/:targetId', async (req, res) => {
         const { page = 1, limit = 10, sortBy = 'newest' } = req.query;
 
         // Validate targetType
-        const validTypes = ['Product', 'Seller', 'ServiceProvider'];
+        const validTypes = ['Product', 'Seller', 'ServiceProvider', 'Pet'];
         if (!validTypes.includes(targetType)) {
             return res.status(400).json({
                 success: false,
@@ -116,7 +158,7 @@ router.get('/user/:targetType/:targetId', isAuthenticated, async (req, res) => {
         const userId = req.user._id;
 
         // Validate targetType
-        const validTypes = ['Product', 'Seller', 'ServiceProvider'];
+        const validTypes = ['Product', 'Seller', 'ServiceProvider', 'Pet'];
         if (!validTypes.includes(targetType)) {
             return res.status(400).json({
                 success: false,
@@ -178,7 +220,7 @@ router.post('/', isAuthenticated, async (req, res) => {
         }
 
         // Validate targetType
-        const validTypes = ['Product', 'Seller', 'ServiceProvider'];
+        const validTypes = ['Product', 'Seller', 'ServiceProvider', 'Pet'];
         if (!validTypes.includes(targetType)) {
             return res.status(400).json({
                 success: false,
@@ -194,6 +236,19 @@ router.post('/', isAuthenticated, async (req, res) => {
                 success: false,
                 error: 'Rating must be between 1 and 5'
             });
+        }
+
+        // Check if user has purchased the specific item (only for Products and Pets)
+        if (targetType === 'Product' || targetType === 'Pet') {
+            const purchased = await hasPurchased(userId, targetType, targetId);
+            if (!purchased) {
+                return res.status(403).json({
+                    success: false,
+                    error: `You can only review ${targetType.toLowerCase()}s you have purchased`,
+                    message: `You must place an order for this ${targetType.toLowerCase()} to write a review`,
+                    code: 'PURCHASE_REQUIRED'
+                });
+            }
         }
 
         console.log('Creating/Updating review:', {
@@ -220,6 +275,10 @@ router.post('/', isAuthenticated, async (req, res) => {
             const provider = await User.findById(targetId);
             targetExists = !!provider && provider.role === 'service_provider';
             targetName = provider ? provider.fullName : '';
+        } else if (targetType === 'Pet') {
+            const pet = await Pet.findById(targetId);
+            targetExists = !!pet;
+            targetName = pet ? pet.name : '';
         }
 
         if (!targetExists) {
@@ -382,7 +441,7 @@ router.get('/:targetType/:targetId/stats', async (req, res) => {
         const { targetType, targetId } = req.params;
 
         // Validate targetType
-        const validTypes = ['Product', 'Seller', 'ServiceProvider'];
+        const validTypes = ['Product', 'Seller', 'ServiceProvider', 'Pet'];
         if (!validTypes.includes(targetType)) {
             return res.status(400).json({
                 success: false,
@@ -450,5 +509,112 @@ function getTimeAgo(date) {
     
     return Math.floor(seconds) + ' second' + (Math.floor(seconds) > 1 ? 's' : '') + ' ago';
 }
+
+// Check if user can review a specific item (GET /api/reviews/can-review/:targetType/:targetId)
+router.get('/can-review/:targetType/:targetId', isAuthenticated, async (req, res) => {
+    try {
+        const { targetType, targetId } = req.params;
+        const userId = req.user._id;
+
+        console.log(`\n=== Can Review Check ===`);
+        console.log(`URL params - targetType: ${targetType}, targetId: ${targetId}`);
+        console.log(`User ID: ${userId}`);
+
+        // Validate targetType
+        const validTypes = ['Product', 'Seller', 'ServiceProvider', 'Pet'];
+        if (!validTypes.includes(targetType)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid target type',
+                validTypes
+            });
+        }
+
+        let canReview = true;
+        let reason = '';
+        let orderInfo = null;
+
+        // Check purchase requirement for Products and Pets
+        if (targetType === 'Product' || targetType === 'Pet') {
+            // First try exact match with itemType
+            let order = await Order.findOne({
+                customer: userId,
+                'items.product': targetId,
+                'items.itemType': targetType,
+                status: { 
+                    $in: ['pending', 'processing', 'shipped', 'delivered', 'completed'] 
+                }
+            }).populate('items.product').lean();
+            
+            // If not found and it's a Product, try legacy orders (without itemType or null itemType)
+            if (!order && targetType === 'Product') {
+                order = await Order.findOne({
+                    customer: userId,
+                    'items.product': targetId,
+                    $or: [
+                        { 'items.itemType': { $exists: false } },
+                        { 'items.itemType': null },
+                        { 'items.itemType': '' }
+                    ],
+                    status: { 
+                        $in: ['pending', 'processing', 'shipped', 'delivered', 'completed'] 
+                    }
+                }).populate('items.product').lean();
+            }
+            
+            if (order) {
+                canReview = true;
+                const orderItem = order.items.find(item => 
+                    item.product && item.product._id.toString() === targetId
+                );
+                
+                orderInfo = {
+                    orderId: order._id,
+                    orderNumber: order.orderNumber || order._id.toString().slice(-8).toUpperCase(),
+                    status: order.status,
+                    createdAt: order.createdAt,
+                    itemName: orderItem?.product?.name || `${targetType}`
+                };
+                reason = `Review unlocked - you purchased this ${targetType.toLowerCase()}`;
+            } else {
+                canReview = false;
+                reason = `You must purchase this ${targetType.toLowerCase()} first to write a review`;
+            }
+        } else {
+            // Services, sellers can be reviewed without purchase
+            reason = `You can review this ${targetType.toLowerCase()}`;
+        }
+
+        // Check if user already has a review
+        const existingReview = await Review.findOne({
+            user: userId,
+            targetType,
+            targetId
+        }).lean();
+
+        res.json({
+            success: true,
+            data: {
+                canReview,
+                reason,
+                orderInfo,
+                hasExistingReview: !!existingReview,
+                existingReview: existingReview ? {
+                    _id: existingReview._id,
+                    rating: existingReview.rating,
+                    comment: existingReview.comment,
+                    createdAt: existingReview.createdAt
+                } : null
+            }
+        });
+    } catch (err) {
+        console.error('Error checking review eligibility:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Error checking review eligibility',
+            message: err.message
+        });
+    }
+});
 
 module.exports = router;
