@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { FaPaw, FaExclamationCircle } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
 const Login = () => {
@@ -22,6 +23,7 @@ const Login = () => {
     
     const navigate = useNavigate();
     const location = useLocation();
+    const { login: loginUser } = useAuth();
     
     // Get the page user was trying to access before login
     const from = location.state?.from?.pathname || null;
@@ -32,23 +34,29 @@ const Login = () => {
             try {
                 const response = await api.get('/auth/check-session');
                 if (response.data.success && response.data.isLoggedIn) {
-                    // Redirect based on user role
+                    // If user is already logged in and there's a 'from' location, go there
+                    // Otherwise redirect based on user role
+                    if (from && from !== '/login') {
+                        navigate(from, { replace: true });
+                        return;
+                    }
+                    
                     const role = response.data.userRole;
                     switch(role) {
                         case 'owner':
-                            navigate('/dashboard');
+                            navigate('/dashboard', { replace: true });
                             break;
                         case 'seller':
-                            navigate('/seller/dashboard');
+                            navigate('/seller/dashboard', { replace: true });
                             break;
                         case 'service_provider':
-                            navigate('/service-provider/dashboard');
+                            navigate('/service-provider/dashboard', { replace: true });
                             break;
                         case 'admin':
-                            navigate('/admin/dashboard');
+                            navigate('/admin/dashboard', { replace: true });
                             break;
                         default:
-                            navigate('/');
+                            navigate('/home', { replace: true });
                     }
                 }
             } catch (error) {
@@ -56,7 +64,7 @@ const Login = () => {
             }
         };
         checkSession();
-    }, [navigate]);
+    }, [navigate, from]);
 
     // Email validation
     const isValidEmail = (email) => {
@@ -176,6 +184,9 @@ const Login = () => {
             });
 
             if (response.data.success) {
+                // Update AuthContext with user data
+                loginUser(response.data.user);
+
                 // Store user data if needed
                 if (formData.rememberMe) {
                     localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -201,7 +212,7 @@ const Login = () => {
                             redirectPath = '/admin/dashboard';
                             break;
                         default:
-                            redirectPath = '/';
+                            redirectPath = '/home';
                     }
                 }
                 

@@ -184,13 +184,41 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
             sum + (order.totalAmount || 0), 0
         );
 
-        // Get bookings
-        const bookings = await Booking.find({ user: req.user._id })
-            .populate('service', 'fullName serviceType')
+        // Get bookings - try both Service model and direct User reference
+        console.log('Fetching bookings for user:', req.user._id);
+        
+        let bookings = await Booking.find({ user: req.user._id })
+            .populate({
+                path: 'service',
+                select: 'serviceType description rate provider fullName email phoneNo serviceAddress',
+                populate: {
+                    path: 'provider',
+                    select: 'fullName email phoneNo serviceType serviceAddress'
+                }
+            })
             .sort({ createdAt: -1 })
+            .limit(15)
             .lean();
 
-        // Get registered events
+        console.log('Found bookings:', bookings.length);
+        
+        // If no bookings found with Service model, try direct User reference
+        if (bookings.length === 0) {
+            console.log('No bookings with Service model, trying direct User reference');
+            bookings = await Booking.find({ user: req.user._id })
+                .populate('service', 'fullName email phoneNo serviceType serviceAddress')
+                .sort({ createdAt: -1 })
+                .limit(15)
+                .lean();
+            console.log('Found bookings with User reference:', bookings.length);
+        }
+
+        console.log('Sample booking:', bookings[0]);
+
+        // Filter out bookings with missing service data and limit to 10
+        const validBookings = bookings.filter(booking => booking.service).slice(0, 10);
+        console.log('Valid bookings after filtering:', validBookings.length);
+
         const events = await Event.find({ 'attendees.user': req.user._id })
             .sort({ eventDate: 1 })
             .lean();
@@ -248,19 +276,45 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                     createdAt: order.createdAt,
                     orderDate: new Date(order.createdAt).toLocaleDateString('en-IN')
                 })),
-                bookings: bookings.map(booking => ({
-                    _id: booking._id,
-                    service: {
-                        _id: booking.service?._id,
-                        name: booking.service?.fullName || 'Service Provider',
-                        type: booking.service?.serviceType
-                    },
-                    date: booking.date,
-                    time: booking.time,
-                    status: booking.status,
-                    createdAt: booking.createdAt,
-                    bookingDate: new Date(booking.createdAt).toLocaleDateString('en-IN')
-                })),
+                bookings: validBookings.map(booking => {
+                    // Handle both Service model and direct User reference
+                    const isDirectUserRef = booking.service?.fullName && !booking.service?.provider;
+                    const serviceType = isDirectUserRef 
+                        ? booking.service?.serviceType 
+                        : (booking.service?.serviceType || booking.service?.provider?.serviceType);
+                    
+                    const providerName = isDirectUserRef 
+                        ? booking.service?.fullName 
+                        : booking.service?.provider?.fullName;
+                    
+                    const formatServiceType = (type) => {
+                        const typeMap = {
+                            'veterinarian': 'Veterinary Care',
+                            'groomer': 'Pet Grooming',
+                            'pet sitter': 'Pet Sitting',
+                            'trainer': 'Pet Training', 
+                            'breeder': 'Pet Breeding',
+                            'walking': 'Dog Walking',
+                            'sitting': 'Pet Sitting'
+                        };
+                        return typeMap[type?.toLowerCase()] || (type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Pet Service');
+                    };
+                    
+                    return {
+                        _id: booking._id,
+                        service: {
+                            _id: booking.service?._id,
+                            name: formatServiceType(serviceType),
+                            providerName: providerName || 'Service Provider',
+                            type: serviceType || 'Unknown Service'
+                        },
+                        date: booking.date,
+                        time: booking.slot || booking.time,
+                        status: booking.status || 'pending',
+                        createdAt: booking.createdAt,
+                        bookingDate: new Date(booking.createdAt).toLocaleDateString('en-IN')
+                    };
+                }),
                 events: events.map(event => ({
                     _id: event._id,
                     title: event.title,
@@ -301,6 +355,167 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error loading dashboard',
+            message: err.message
+        });
+    }
+});
+
+// Get user statistics
+router.get('/stats', isAuthenticated, async (req, res) => {
+    try {
+        if (req.user.role !== 'owner' && req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied. This endpoint is for pet owners only.'
+            });
+        }
+
+        // Fetch orders
+        const orders = await Order.find({ customer: req.user._id }).lean();
+        const validOrders = orders.filter(o => 
+            !['cancelled', 'pending_payment'].includes(o.status)
+        );
+
+        // Get wallet
+        const wallet = await Wallet.findOne({ user: req.user._id });
+        const walletAmount = wallet ? wallet.balance : 0;
+
+        const totalOrders = validOrders.length;
+        const activeOrders = orders.filter(o => 
+            ['pending', 'processing'].includes(o.status)
+        ).length;
+        const totalSpent = validOrders.reduce((sum, order) => 
+            sum + (order.totalAmount || 0), 0
+        );
+
+        res.json({
+            success: true,
+            data: {
+                totalOrders,
+                activeOrders,
+                totalSpent,
+                walletAmount
+            }
+        });
+    } catch (err) {
+        console.error('Error loading stats:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Error loading stats',
+            message: err.message
+        });
+    }
+});
+
+// Get wishlist
+router.get('/wishlist', isAuthenticated, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).lean();
+        const [wishlistedPets, wishlistedProducts] = await Promise.all([
+            Pet.find({ _id: { $in: user.wishlistPets || [] } }).lean(),
+            Product.find({ _id: { $in: user.wishlistProducts || [] } }).lean()
+        ]);
+
+        res.json({
+            success: true,
+            products: wishlistedProducts,
+            pets: wishlistedPets
+        });
+    } catch (err) {
+        console.error('Error loading wishlist:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Error loading wishlist',
+            message: err.message
+        });
+    }
+});
+
+// Get registered events
+router.get('/events/registered', isAuthenticated, async (req, res) => {
+    try {
+        const events = await Event.find({ 'attendees.user': req.user._id })
+            .sort({ eventDate: 1 })
+            .lean();
+
+        res.json({
+            success: true,
+            data: events.map(event => ({
+                id: event._id,
+                title: event.title,
+                date: event.eventDate,
+                startTime: event.startTime,
+                endTime: event.endTime,
+                city: event.location,
+                category: event.category
+            }))
+        });
+    } catch (err) {
+        console.error('Error loading registered events:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Error loading registered events',
+            message: err.message
+        });
+    }
+});
+
+// Get orders
+router.get('/orders', isAuthenticated, async (req, res) => {
+    try {
+        const orders = await Order.find({ customer: req.user._id })
+            .populate({
+                path: 'items.product',
+                select: 'name images price description seller'
+            })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const cleanedOrders = orders
+            .map(o => ({
+                ...o,
+                items: (o.items || []).filter(item => item.product)
+            }))
+            .filter(o => o.items && o.items.length > 0);
+
+        res.json({
+            success: true,
+            orders: cleanedOrders
+        });
+    } catch (err) {
+        console.error('Error loading orders:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Error loading orders',
+            message: err.message
+        });
+    }
+});
+
+// Get bookings
+router.get('/bookings', isAuthenticated, async (req, res) => {
+    try {
+        const bookings = await Booking.find({ user: req.user._id })
+            .populate('service', 'fullName serviceType')
+            .sort({ createdAt: -1 })
+            .lean();
+
+        res.json({
+            success: true,
+            data: bookings.map(booking => ({
+                id: booking._id,
+                serviceName: booking.service?.fullName || 'Service Provider',
+                serviceType: booking.service?.serviceType || 'Service',
+                date: booking.date,
+                time: booking.time,
+                status: booking.status
+            }))
+        });
+    } catch (err) {
+        console.error('Error loading bookings:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Error loading bookings',
             message: err.message
         });
     }

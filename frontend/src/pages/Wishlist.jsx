@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPetById } from '../services/api';
+import { getWishlist, togglePetWishlist, toggleProductWishlist } from '../services/api';
 
 const Wishlist = () => {
     const [wishlistPets, setWishlistPets] = useState([]);
@@ -14,25 +14,11 @@ const Wishlist = () => {
     const loadWishlistItems = async () => {
         try {
             setLoading(true);
+            const response = await getWishlist();
             
-            // Load pets wishlist
-            const petWishlistIds = JSON.parse(localStorage.getItem('petWishlist')) || [];
-            
-            if (petWishlistIds.length === 0) {
-                setWishlistPets([]);
-                setLoading(false);
-                return;
+            if (response.data.success) {
+                setWishlistPets(response.data.data.pets || []);
             }
-
-            const petPromises = petWishlistIds.map(id => getPetById(id));
-            const petResponses = await Promise.allSettled(petPromises);
-            
-            const pets = petResponses
-                .filter(response => response.status === 'fulfilled')
-                .map(response => response.value.data.data || response.value.data)
-                .filter(pet => pet);
-
-            setWishlistPets(pets);
         } catch (error) {
             console.error('Failed to load wishlist:', error);
             setWishlistPets([]);
@@ -41,16 +27,24 @@ const Wishlist = () => {
         }
     };
 
-    const removeFromWishlist = (petId) => {
-        const wishlistIds = JSON.parse(localStorage.getItem('petWishlist')) || [];
-        const updatedIds = wishlistIds.filter(id => id !== petId);
-        localStorage.setItem('petWishlist', JSON.stringify(updatedIds));
-        setWishlistPets(prev => prev.filter(pet => pet._id !== petId));
+    const removeFromWishlist = async (petId) => {
+        try {
+            await togglePetWishlist(petId);
+            setWishlistPets(prev => prev.filter(pet => pet._id !== petId));
+        } catch (error) {
+            console.error('Error removing from wishlist:', error);
+        }
     };
 
-    const clearWishlist = () => {
-        localStorage.removeItem('petWishlist');
-        setWishlistPets([]);
+    const clearWishlist = async () => {
+        try {
+            // Remove all pets from wishlist individually
+            const removePromises = wishlistPets.map(pet => togglePetWishlist(pet._id));
+            await Promise.all(removePromises);
+            setWishlistPets([]);
+        } catch (error) {
+            console.error('Error clearing wishlist:', error);
+        }
     };
 
     if (loading) {

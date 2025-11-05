@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProducts } from '../services/api';
+import { getProducts, toggleProductWishlist, getWishlist } from '../services/api';
 import { useCart } from '../context/CartContext';
 
 const Products = () => {
@@ -21,10 +21,26 @@ const Products = () => {
 
     useEffect(() => {
         fetchProducts();
-        // Load wishlist from localStorage
-        const savedWishlist = JSON.parse(localStorage.getItem('productWishlist')) || [];
-        setWishlist(savedWishlist);
+        loadWishlistStatus();
     }, []);
+
+    const loadWishlistStatus = async () => {
+        try {
+            // Get user's wishlist from backend
+            const response = await getWishlist();
+            const wishlistData = response.data.data || {};
+            
+            // Extract product IDs from user's wishlist
+            const wishlistProductIds = (wishlistData.products || []).map(product => product._id);
+            
+            setWishlist(wishlistProductIds);
+            console.log('Loaded wishlist product IDs:', wishlistProductIds);
+        } catch (error) {
+            console.error('Error loading wishlist status:', error);
+            // If user is not logged in or error occurs, set empty wishlist
+            setWishlist([]);
+        }
+    };
 
     const fetchProducts = async () => {
         try {
@@ -64,16 +80,32 @@ const Products = () => {
         });
     };
 
-    const toggleWishlist = (productId) => {
-        setWishlist(prev => {
-            const newWishlist = prev.includes(productId) 
-                ? prev.filter(id => id !== productId)
-                : [...prev, productId];
+    const toggleWishlist = async (productId) => {
+        try {
+            const response = await toggleProductWishlist(productId);
+            console.log('Toggle wishlist response:', response.data);
             
-            // Save to localStorage
-            localStorage.setItem('productWishlist', JSON.stringify(newWishlist));
-            return newWishlist;
-        });
+            if (response.data.success) {
+                // Check if product is now in wishlist based on backend response
+                const isInWishlist = response.data.data?.isInWishlist || response.data.data?.wishlist;
+                
+                // Update local state based on actual backend state
+                setWishlist(prev => {
+                    if (isInWishlist && !prev.includes(productId)) {
+                        return [...prev, productId];
+                    } else if (!isInWishlist && prev.includes(productId)) {
+                        return prev.filter(id => id !== productId);
+                    }
+                    return prev;
+                });
+                
+                // Show notification
+                const message = isInWishlist ? 'Added to wishlist' : 'Removed from wishlist';
+                console.log(message, productId);
+            }
+        } catch (error) {
+            console.error('Error toggling wishlist:', error);
+        }
     };
 
     const handleAddToCart = async (productId, e) => {

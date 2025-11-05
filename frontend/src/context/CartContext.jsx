@@ -25,7 +25,10 @@ export const CartProvider = ({ children }) => {
             const count = cartData.items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
             setCartCount(count);
         } catch (error) {
-            console.error('Failed to fetch cart:', error);
+            // If it's an authentication error (401), don't log it as an error
+            if (error.response?.status !== 401) {
+                console.error('Failed to fetch cart:', error);
+            }
             // Fallback to localStorage
             const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
             setCart(localCart);
@@ -37,7 +40,17 @@ export const CartProvider = ({ children }) => {
     };
 
     useEffect(() => {
-        fetchCart();
+        // Only fetch cart if we're not on the login/signup pages
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
+            fetchCart();
+        } else {
+            // For login/signup pages, just load from localStorage
+            const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+            setCart(localCart);
+            const count = localCart.reduce((sum, item) => sum + item.quantity, 0);
+            setCartCount(count);
+        }
     }, []);
 
     const addToCart = async (itemData) => {

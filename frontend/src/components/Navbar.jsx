@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaShoppingCart, FaUser, FaSearch, FaBars, FaTimes, FaPaw, FaAngleDown } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import api from '../utils/api';
 
-const Navbar = ({ user }) => {
+const Navbar = () => {
+    const { user, isAuthenticated, logout } = useAuth();
+    const { cartCount } = useCart();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState({ pets: [], products: [], services: [] });
     const [showSearchResults, setShowSearchResults] = useState(false);
-    const [cartCount, setCartCount] = useState(0);
     const [openDropdown, setOpenDropdown] = useState(null);
     
     const searchRef = useRef(null);
@@ -43,22 +46,7 @@ const Navbar = ({ user }) => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    useEffect(() => {
-        const updateCartCount = () => {
-            const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            setCartCount(totalItems);
-        };
-
-        updateCartCount();
-        window.addEventListener('storage', updateCartCount);
-        window.addEventListener('cartUpdated', updateCartCount);
-        
-        return () => {
-            window.removeEventListener('storage', updateCartCount);
-            window.removeEventListener('cartUpdated', updateCartCount);
-        };
-    }, []);
+    // Cart count is now handled by CartContext
 
     useEffect(() => {
         const debounceTimeout = setTimeout(() => {

@@ -1,52 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import api from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [userRole, setUserRole] = useState(null);
+    const { user, loading, isAuthenticated } = useAuth();
     const location = useLocation();
 
-    useEffect(() => {
-        checkAuth();
-    }, []);
-
-    const checkAuth = async () => {
-        try {
-            const response = await api.get('/auth/check-session');
-            if (response.data.success && response.data.isLoggedIn) {
-                setIsAuthenticated(true);
-                setUserRole(response.data.userRole);
-            } else {
-                setIsAuthenticated(false);
-            }
-        } catch (error) {
-            console.error('Auth check error:', error);
-            setIsAuthenticated(false);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    if (isLoading) {
+    // Show loading spinner while checking authentication
+    if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading...</p>
+                    <p className="text-gray-600">Checking authentication...</p>
                 </div>
             </div>
         );
     }
 
+    // Redirect to login if not authenticated
     if (!isAuthenticated) {
-        // Redirect to login while saving the attempted location
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
     // Check if user has required role (if specified)
-    if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+    if (allowedRoles.length > 0 && !allowedRoles.includes(user?.role)) {
         return <Navigate to="/unauthorized" replace />;
     }
 
