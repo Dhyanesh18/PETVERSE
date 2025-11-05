@@ -91,7 +91,12 @@ router.get('/products/:id', async (req, res) => {
         if (!product) {
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
-        res.json({ success: true, data: product });
+        res.json({ 
+            success: true, 
+            data: { 
+                product: product 
+            } 
+        });
     } catch (err) {
         console.error('Error fetching product:', err);
         res.status(500).json({ success: false, message: 'Error fetching product' });

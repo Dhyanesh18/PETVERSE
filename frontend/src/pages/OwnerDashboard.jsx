@@ -105,7 +105,7 @@ const OwnerDashboard = () => {
     // Memoized Product Card Component for performance
     const ProductCard = memo(({ product, onRemove, type = 'product' }) => (
         <div key={product._id} className="product-card">
-            <a href={type === 'pet' ? `/seller/detail/${produc/t._id}` : `/buy/${product._id}`} className="product-link">
+            <a href={type === 'pet' ? `/seller/detail/${product._id}` : `/product/${product._id}`} className="product-link">
                 <div className="product-image-wrapper">
                     <SmartImage 
                         item={product}
@@ -546,7 +546,7 @@ const OwnerDashboard = () => {
                     {/* Wishlisted Products */}
                     {dashboardData.wishlistedProducts.map(product => (
                         <div key={product._id} className="product-card">
-                            <a href={`/buy/${product._id}`} className="product-link">
+                            <a href={`/product/${product._id}`} className="product-link">
                                 <div className="product-image-wrapper">
                                     <SmartImage 
                                         item={product}

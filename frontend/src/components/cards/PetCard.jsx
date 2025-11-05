@@ -11,7 +11,7 @@ const PetCard = ({ pet, onAddToCart, variant = 'default' }) => {
                 isFeature ? 'h-[440px]' : 'h-[380px]'
             } flex flex-col`}
         >
-            <Link to={`/pets/${pet._id}`} className="block">
+            <Link to={`/seller/detail/${pet._id}`} className="block">
                 <img 
                     src={pet.thumbnail || pet.images?.[0] || '/images/default-pet.jpg'} 
                     alt={pet.name}
@@ -20,7 +20,7 @@ const PetCard = ({ pet, onAddToCart, variant = 'default' }) => {
             </Link>
             
             <div className="p-5 flex flex-col grow">
-                <Link to={`/pets/${pet._id}`} className="no-underline">
+                <Link to={`/seller/detail/${pet._id}`} className="no-underline">
                     <h2 className={`text-center font-semibold text-gray-800 hover:text-secondary-500 transition-colors mb-2 ${
                         isFeature ? 'text-xl' : 'text-lg'
                     }`}>

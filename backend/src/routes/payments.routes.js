@@ -377,6 +377,21 @@ router.post('/payment', isAuthenticated, async (req, res) => {
             }
         }
 
+        // For any purchased pets, mark them as unavailable so others cannot buy
+        for (const item of cart.items) {
+            if (item.itemType === 'Pet') {
+                try {
+                    const petDoc = await Pet.findById(item.productId._id || item.productId);
+                    if (petDoc) {
+                        petDoc.available = false;
+                        await petDoc.save();
+                    }
+                } catch (e) {
+                    console.error('Failed to mark pet unavailable after purchase:', e);
+                }
+            }
+        }
+
         // Deduct funds from customer wallet
         await customerWallet.deductFunds(total);
 
@@ -405,6 +420,7 @@ router.post('/payment', isAuthenticated, async (req, res) => {
             // Add to order items with correct field name
             orderItems.push({
                 product: item.productId._id,
+                itemType: item.itemType || 'Product',
                 quantity: item.quantity,
                 price: item.productId.price
             });
