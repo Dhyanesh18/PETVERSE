@@ -75,7 +75,7 @@ const EventTicket = () => {
             <div className="max-w-4xl mx-auto px-4">
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                     {/* Ticket Header */}
-                    <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white p-6">
+                    <div className="bg-linear-to-r from-teal-500 to-teal-600 text-white p-6">
                         <div className="flex justify-between items-center">
                             <div>
                                 <div className="text-sm opacity-90 mb-1">Event Ticket</div>

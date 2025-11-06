@@ -267,7 +267,7 @@ const EventDetail = () => {
                     </div>
 
                     {/* Registration Sidebar */}
-                    <div className="lg:w-96 flex-shrink-0">
+                    <div className="lg:w-96 shrink-0">
                         <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
                             {!user ? (
                                 <div className="text-center py-8">

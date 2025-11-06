@@ -69,7 +69,13 @@ const Events = () => {
     return (
         <div className="bg-gray-50 min-h-screen pt-20">
             {/* Hero Section */}
-            <section className="bg-gradient-to-r from-teal-500 to-teal-600 text-white py-16">
+            <section 
+                className="text-white py-20 px-5 text-center mt-0 relative overflow-hidden bg-cover bg-center"
+                style={{
+                    background: `linear-gradient(135deg, rgba(102, 201, 234, 0.5) 0%, rgba(75, 162, 162, 0.3) 100%), url('/images/dog-event.png') no-repeat center center`,
+                    backgroundSize: 'cover'
+                }}
+            >
                 <div className="max-w-7xl mx-auto px-4 text-center">
                     <h1 className="text-4xl md:text-5xl font-bold mb-4">Pet Events & Activities</h1>
                     <p className="text-xl text-teal-50">Join exciting pet events, workshops, and meetups in your city</p>
@@ -80,7 +86,7 @@ const Events = () => {
             <div className="max-w-7xl mx-auto px-4 py-8">
                 <div className="flex flex-col lg:flex-row gap-6">
                     {/* Filters Sidebar */}
-                    <div className="lg:w-64 flex-shrink-0">
+                    <div className="lg:w-64 shrink-0">
                         <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
                             <h2 className="text-xl font-bold mb-4 text-gray-800">Filters</h2>
                             

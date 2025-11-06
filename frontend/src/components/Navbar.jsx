@@ -109,7 +109,7 @@ const Navbar = () => {
                 className={`w-full px-15 py-5 transition-all duration-300 ${
                     isHomepage && !isScrolled && !openDropdown
                         ? 'bg-transparent' 
-                        : 'bg-[#111] shadow-[0_2px_20px_rgba(0,0,0,0.5)]'
+                        : 'bg-[#111] shadow-[0_2px_5px_rgba(0,0,0,0.5)]'
                 }`}
             >
                 <div className="max-w-screen-2xl mx-auto flex items-center gap-8">

@@ -12,6 +12,7 @@ import {
 } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { Truck, XCircle, Wallet, Stethoscope, ShoppingCart, Heart, Star, MessageSquare } from 'lucide-react';
 
 const ProductDetail = () => {
     const { id } = useParams();
@@ -72,7 +73,6 @@ const ProductDetail = () => {
             console.log('Reviews API response data:', reviewsData);
             setReviews(reviewsData.reviews || []);
             
-            // Fix: statistics are nested under 'statistics' in the API response
             const stats = reviewsData.statistics || {};
             setReviewStats({
                 avgRating: stats.avgRating || 0,
@@ -86,7 +86,6 @@ const ProductDetail = () => {
                 distribution: stats.ratingDistribution
             });
             
-            // Check if user can review this product AND load wishlist status (after product is loaded)
             if (isAuthenticated && productData) {
                 try {
                     console.log('Checking review eligibility and wishlist status for product:', id);
@@ -107,7 +106,6 @@ const ProductDetail = () => {
                     
                     const userReviewData = userReviewRes.data.data?.review || null;
                     
-                    // Check if current product is in user's wishlist
                     const wishlistData = wishlistRes.data.data || {};
                     const wishlistProductIds = (wishlistData.products || []).map(product => product._id);
                     const productInWishlist = wishlistProductIds.includes(productData._id);
@@ -130,17 +128,14 @@ const ProductDetail = () => {
                     });
                 }
             } else {
-                // User not authenticated - clear wishlist state
                 setIsInWishlist(false);
             }
             
-            // Fetch similar products from the same category (like PetDetail does)
             if (productData && productData.category) {
                 console.log('Current product category:', productData.category);
                 console.log('Current product ID:', productData._id);
                 try {
-                    // Fetch all products and filter by category on frontend to ensure accuracy
-                    const similarRes = await getProducts({ limit: 100 }); // Get ALL products to filter from
+                    const similarRes = await getProducts({ limit: 100 });
                     
                     console.log('Similar products API response:', similarRes.data);
                     
@@ -151,13 +146,12 @@ const ProductDetail = () => {
                         
                         console.log('All products fetched:', allProducts.length);
                         
-                        // Filter products by exact category match and exclude current product
                         const categoryProducts = allProducts
                             .filter(p => {
                                 const isSameCategory = p.category && p.category === productData.category;
                                 const isNotCurrentProduct = p._id !== productData._id;
                                 return isSameCategory && isNotCurrentProduct;
-                            }); // Show ALL similar products from same category
+                            });
                         
                         console.log(`Found ${categoryProducts.length} similar ${productData.category} products`);
                         setSimilarProducts(categoryProducts);
@@ -170,7 +164,6 @@ const ProductDetail = () => {
                     setSimilarProducts([]);
                 }
             } else {
-                // If no category, set empty array
                 setSimilarProducts([]);
             }
             
@@ -192,7 +185,6 @@ const ProductDetail = () => {
         }
         
         try {
-            // Add product to cart with proper data structure
             const cartItem = {
                 productId: product._id,
                 itemType: 'Product',
@@ -201,7 +193,6 @@ const ProductDetail = () => {
             
             console.log('Adding to cart:', cartItem);
             
-            // Use the CartContext addToCart function which handles API call and updates count
             await addToCart(cartItem);
             
             alert(`${product.name} has been added to your cart!`);
@@ -213,7 +204,6 @@ const ProductDetail = () => {
                 message: error.message
             });
             
-            // Show the specific error message from server
             const serverError = error.response?.data?.error || error.message;
             console.error('Server error message:', serverError);
             
@@ -251,6 +241,7 @@ const ProductDetail = () => {
             alert('Review submitted successfully!');
             setReviewRating(0);
             setReviewComment('');
+            setShowReviewForm(false);
             fetchProductDetails();
         } catch (error) {
             console.error('Failed to submit review:', error);
@@ -292,49 +283,45 @@ const ProductDetail = () => {
         );
     }
 
-
-
     return (
         <div className="min-h-screen bg-gray-50 pt-20">
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto px-4 py-8 max-w-7xl">
                 <div className="bg-white rounded-lg shadow-lg overflow-hidden">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
                         {/* Image Gallery */}
-                        <div>
-                            <div className="mb-4 rounded-lg overflow-hidden bg-white border border-gray-200">
-                                <div className="relative w-full pb-[75%]"> {/* 4:3 Aspect Ratio */}
-                                    <img
-                                        src={
-                                            product.imageUrls?.[selectedImage] ||
-                                            `/api/products/image/${product._id}/${selectedImage}` ||
-                                            `/api/products/image/${product._id}/0`
-                                        }
-                                        alt={product.name}
-                                        className="absolute top-0 left-0 w-full h-full object-contain"
-                                        onError={(e) => {
-                                            if (!e.target.dataset.fallbackAttempted) {
-                                                e.target.dataset.fallbackAttempted = 'true';
-                                                // Category-specific fallback images
-                                                const category = product.category?.toLowerCase() || '';
-                                                const name = product.name?.toLowerCase() || '';
-                                                
-                                                if (category.includes('food') || name.includes('food')) {
-                                                    e.target.src = 'https://images.unsplash.com/photo-1589924691995-400dc9ecc119?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
-                                                } else if (category.includes('toy') || name.includes('toy')) {
-                                                    e.target.src = 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
-                                                } else if (category.includes('health') || name.includes('health')) {
-                                                    e.target.src = 'https://images.unsplash.com/photo-1559181567-c3190ca9959b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
-                                                } else if (category.includes('grooming') || name.includes('grooming')) {
-                                                    e.target.src = 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
-                                                } else {
-                                                    e.target.src = 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
-                                                }
+                        <div className="flex flex-col">
+                            <div className="mb-4 rounded-lg overflow-hidden aspect-square">
+                                <img
+                                    src={
+                                        product.imageUrls?.[selectedImage] ||
+                                        `/api/products/image/${product._id}/${selectedImage}` ||
+                                        `/api/products/image/${product._id}/0`
+                                    }
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        if (!e.target.dataset.fallbackAttempted) {
+                                            e.target.dataset.fallbackAttempted = 'true';
+                                            const category = product.category?.toLowerCase() || '';
+                                            const name = product.name?.toLowerCase() || '';
+                                            
+                                            if (category.includes('food') || name.includes('food')) {
+                                                e.target.src = 'https://images.unsplash.com/photo-1589924691995-400dc9ecc119?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
+                                            } else if (category.includes('toy') || name.includes('toy')) {
+                                                e.target.src = 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
+                                            } else if (category.includes('health') || name.includes('health')) {
+                                                e.target.src = 'https://images.unsplash.com/photo-1559181567-c3190ca9959b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
+                                            } else if (category.includes('grooming') || name.includes('grooming')) {
+                                                e.target.src = 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
+                                            } else {
+                                                e.target.src = 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
                                             }
-                                        }}
-                                    />
-                                </div>
+                                        }
+                                    }}
+                                />
                             </div>
                             
+                            {/* Thumbnail Gallery */}
                             {((product.imageUrls && product.imageUrls.length > 1) || 
                               (product.images && product.images.length > 1)) && (
                                 <div className="grid grid-cols-4 gap-2">
@@ -345,40 +332,37 @@ const ProductDetail = () => {
                                         <button
                                             key={index}
                                             onClick={() => setSelectedImage(index)}
-                                            className={`rounded-lg overflow-hidden border-2 bg-white ${
+                                            className={`rounded-lg overflow-hidden border-2 aspect-square ${
                                                 selectedImage === index ? 'border-indigo-600' : 'border-gray-200'
                                             }`}
                                         >
-                                            <div className="relative w-full pb-[100%]"> {/* Square aspect ratio */}
-                                                <img
-                                                    src={
-                                                        product.imageUrls?.[index] ||
-                                                        `/api/products/image/${product._id}/${index}`
-                                                    }
-                                                    alt={`${product.name} ${index + 1}`}
-                                                    className="absolute top-0 left-0 w-full h-full object-contain bg-white"
-                                                    onError={(e) => {
-                                                        if (!e.target.dataset.fallbackAttempted) {
-                                                            e.target.dataset.fallbackAttempted = 'true';
-                                                            // Category-specific fallback images for thumbnails
-                                                            const category = product.category?.toLowerCase() || '';
-                                                            const name = product.name?.toLowerCase() || '';
-                                                            
-                                                            if (category.includes('food') || name.includes('food')) {
-                                                                e.target.src = 'https://images.unsplash.com/photo-1589924691995-400dc9ecc119?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
-                                                            } else if (category.includes('toy') || name.includes('toy')) {
-                                                                e.target.src = 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
-                                                            } else if (category.includes('health') || name.includes('health')) {
-                                                                e.target.src = 'https://images.unsplash.com/photo-1559181567-c3190ca9959b?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
-                                                            } else if (category.includes('grooming') || name.includes('grooming')) {
-                                                                e.target.src = 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
-                                                            } else {
-                                                                e.target.src = 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
-                                                            }
+                                            <img
+                                                src={
+                                                    product.imageUrls?.[index] ||
+                                                    `/api/products/image/${product._id}/${index}`
+                                                }
+                                                alt={`${product.name} ${index + 1}`}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    if (!e.target.dataset.fallbackAttempted) {
+                                                        e.target.dataset.fallbackAttempted = 'true';
+                                                        const category = product.category?.toLowerCase() || '';
+                                                        const name = product.name?.toLowerCase() || '';
+                                                        
+                                                        if (category.includes('food') || name.includes('food')) {
+                                                            e.target.src = 'https://images.unsplash.com/photo-1589924691995-400dc9ecc119?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
+                                                        } else if (category.includes('toy') || name.includes('toy')) {
+                                                            e.target.src = 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
+                                                        } else if (category.includes('health') || name.includes('health')) {
+                                                            e.target.src = 'https://images.unsplash.com/photo-1559181567-c3190ca9959b?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
+                                                        } else if (category.includes('grooming') || name.includes('grooming')) {
+                                                            e.target.src = 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
+                                                        } else {
+                                                            e.target.src = 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&q=80';
                                                         }
-                                                    }}
-                                                />
-                                            </div>
+                                                    }
+                                                }}
+                                            />
                                         </button>
                                     ))}
                                 </div>
@@ -386,22 +370,20 @@ const ProductDetail = () => {
                         </div>
 
                         {/* Product Information */}
-                        <div>
-                            <h1 className="text-4xl font-bold text-gray-800 mb-4">{product.name}</h1>
+                        <div className="flex flex-col">
+                            <h1 className="text-4xl font-bold text-gray-800 mb-2">{product.name}</h1>
                             
                             {/* Rating */}
                             <div className="flex items-center gap-2 mb-4">
                                 <div className="flex">
                                     {[1, 2, 3, 4, 5].map((star) => (
-                                        <span
+                                        <Star
                                             key={star}
-                                            className={`text-2xl ${star <= reviewStats.avgRating ? 'text-yellow-400' : 'text-gray-300'}`}
-                                        >
-                                            ★
-                                        </span>
+                                            className={`w-5 h-5 ${star <= reviewStats.avgRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                                        />
                                     ))}
                                 </div>
-                                <span className="text-gray-600">
+                                <span className="text-gray-600 text-sm">
                                     {reviewStats.avgRating.toFixed(1)} ({reviewStats.totalReviews} reviews)
                                 </span>
                             </div>
@@ -418,12 +400,12 @@ const ProductDetail = () => {
                                                 {product.discount}% OFF
                                             </span>
                                         </div>
-                                        <div className="text-4xl font-bold text-indigo-600">
+                                        <div className="text-4xl font-bold text-green-600">
                                             ₹{(product.price * (1 - product.discount / 100)).toLocaleString()}
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="text-4xl font-bold text-indigo-600">
+                                    <div className="text-4xl font-bold text-green-600">
                                         ₹{product.price.toLocaleString()}
                                     </div>
                                 )}
@@ -434,7 +416,7 @@ const ProductDetail = () => {
                                 {product.stock > 0 ? (
                                     <div className="flex items-center gap-2 text-green-600">
                                         <span className="text-2xl">✓</span>
-                                        <span className="font-semibold">In Stock</span>
+                                        <span className="font-semibold">In Stock ({product.stock} available)</span>
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-2 text-red-600">
@@ -444,27 +426,54 @@ const ProductDetail = () => {
                                 )}
                             </div>
 
+                            {/* Product Details */}
+                            <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                                <h2 className="text-xl font-bold text-gray-800 mb-4">Product Details</h2>
+                                <div className="space-y-3">
+                                    {product.brand && (
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold text-gray-700 mb-1">Brand:</span>
+                                            <span className="text-gray-600">{product.brand}</span>
+                                        </div>
+                                    )}
+                                    {product.category && (
+                                        <div className="flex flex-col">
+                                            <span className="font-semibold text-gray-700 mb-1">Category:</span>
+                                            <span className="text-gray-600 capitalize">{product.category}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Description */}
+                            {product.description && (
+                                <div className="mb-6">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-3">Description</h2>
+                                    <p className="text-gray-600 leading-relaxed">{product.description}</p>
+                                </div>
+                            )}
+
                             {/* Delivery Info */}
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-2xl">🚚</span>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Truck className="w-5 h-5 text-blue-600" />
                                     <span className="font-semibold text-blue-900">Free Delivery</span>
                                 </div>
-                                <p className="text-blue-700 text-sm">Estimated delivery: 2-4 days</p>
+                                <p className="text-blue-700 text-sm ml-7">Estimated delivery: 2-4 days</p>
                             </div>
 
                             {/* Action Buttons */}
-                            <div className="flex gap-4 mb-6">
+                            <div className="flex gap-4 mt-auto">
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={product.stock === 0}
                                     className={`flex-1 px-6 py-4 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
                                         product.stock === 0
                                             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                            : 'bg-teal-600 hover:bg-teal-700 text-white'
                                     }`}
                                 >
-                                    <span>🛒</span>
+                                    <ShoppingCart className="w-5 h-5" />
                                     Add to Cart
                                 </button>
                                 <button 
@@ -478,12 +487,10 @@ const ProductDetail = () => {
                                             .then(response => {
                                                 console.log('Wishlist toggle response:', response.data);
                                                 if (response.data.success) {
-                                                    // Get the actual state from backend response
                                                     const nowInWishlist = response.data.data?.isInWishlist || response.data.data?.wishlist;
                                                     setIsInWishlist(nowInWishlist);
                                                     alert(nowInWishlist ? 'Added to wishlist' : 'Removed from wishlist');
                                                     
-                                                    // Optional: Refresh from backend to ensure consistency
                                                     setTimeout(() => {
                                                         loadWishlistStatus();
                                                     }, 500);
@@ -497,91 +504,97 @@ const ProductDetail = () => {
                                     className={`px-6 py-4 border-2 rounded-lg transition ${
                                         isInWishlist 
                                             ? 'border-red-500 bg-red-50 text-red-500' 
-                                            : 'border-gray-300 hover:bg-gray-50'
+                                            : 'border-gray-300 hover:bg-gray-50 text-gray-600'
                                     }`}
                                 >
-                                    <span className="text-2xl">{isInWishlist ? '❤️' : '🤍'}</span>
+                                    <Heart className={`w-6 h-6 ${isInWishlist ? 'fill-current' : ''}`} />
                                 </button>
-                            </div>
-
-                            {/* Product Details */}
-                            <div className="bg-gray-50 rounded-lg p-6">
-                                <h2 className="text-xl font-bold text-gray-800 mb-4">Product Details</h2>
-                                <div className="space-y-2">
-                                    {product.brand && (
-                                        <div className="flex">
-                                            <span className="font-semibold text-gray-700 w-32">Brand:</span>
-                                            <span className="text-gray-600">{product.brand}</span>
-                                        </div>
-                                    )}
-                                    {product.category && (
-                                        <div className="flex">
-                                            <span className="font-semibold text-gray-700 w-32">Category:</span>
-                                            <span className="text-gray-600">{product.category}</span>
-                                        </div>
-                                    )}
-                                    {product.description && (
-                                        <div className="mt-4">
-                                            <span className="font-semibold text-gray-700">Description:</span>
-                                            <p className="text-gray-600 mt-2">{product.description}</p>
-                                        </div>
-                                    )}
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {/* Service Features */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-8">
+                    <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                        <div className="flex justify-center mb-3">
+                            <Truck className="w-10 h-10 text-teal-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-800">Free Delivery</h3>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                        <div className="flex justify-center mb-3">
+                            <XCircle className="w-10 h-10 text-red-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-800">Easy Returns</h3>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                        <div className="flex justify-center mb-3">
+                            <Wallet className="w-10 h-10 text-green-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-800">Secure Payment</h3>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md text-center">
+                        <div className="flex justify-center mb-3">
+                            <Stethoscope className="w-10 h-10 text-blue-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-800">Quality Assured</h3>
+                    </div>
+                </div>
+
                 {/* Reviews Section */}
-                <div className="my-12">
+                <div className="my-12 bg-white rounded-lg shadow-lg p-8">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-3xl font-bold text-gray-800">Reviews</h2>
+                        <h2 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+                            <MessageSquare className="w-8 h-8" />
+                            Customer Reviews
+                        </h2>
                         {isAuthenticated ? (
                             reviewEligibility && reviewEligibility.canReview ? (
                                 <button
                                     onClick={() => setShowReviewForm(!showReviewForm)}
-                                    className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg transition-colors"
+                                    className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-2 rounded-lg transition-colors font-medium"
                                 >
                                     {userReview ? 'Update Review' : 'Write Review'}
                                 </button>
                             ) : (
                                 <div className="text-sm text-gray-500 text-right">
-                                    <p>🔒 Review Locked</p>
+                                    <p className="font-medium">🔒 Review Locked</p>
                                     <p className="text-xs">Purchase this product first</p>
                                 </div>
                             )
                         ) : (
                             <div className="text-sm text-gray-500 text-right">
-                                <p>Login to write a review</p>
+                                <p className="font-medium">Login to write a review</p>
                                 <p className="text-xs">*Only available after purchase</p>
                             </div>
                         )}
                     </div>
 
-
-
                     {/* Review Form */}
                     {showReviewForm && isAuthenticated && reviewEligibility.canReview && (
-                        <div className="bg-gray-50 p-6 rounded-lg mb-6">
+                        <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg mb-6">
                             <h3 className="text-lg font-semibold mb-4">
                                 {userReview ? 'Update Your Review' : 'Write a Review'}
                             </h3>
-                            <div className="space-y-4">
+                            <form onSubmit={handleSubmitReview} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                                    <div className="flex space-x-1">
+                                    <div className="flex gap-1">
                                         {[1, 2, 3, 4, 5].map((star) => (
                                             <button
                                                 key={star}
                                                 type="button"
                                                 onClick={() => setReviewRating(star)}
-                                                className={`text-2xl ${
-                                                    star <= reviewRating
-                                                        ? 'text-yellow-400 hover:text-yellow-500'
-                                                        : 'text-gray-300 hover:text-yellow-300'
-                                                } transition-colors`}
+                                                className="transition-colors"
                                             >
-                                                ★
+                                                <Star
+                                                    className={`w-8 h-8 ${
+                                                        star <= reviewRating
+                                                            ? 'text-yellow-400 fill-yellow-400'
+                                                            : 'text-gray-300'
+                                                    }`}
+                                                />
                                             </button>
                                         ))}
                                     </div>
@@ -592,7 +605,7 @@ const ProductDetail = () => {
                                         value={reviewComment}
                                         onChange={(e) => setReviewComment(e.target.value)}
                                         rows={4}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                         placeholder="Share your thoughts about this product..."
                                         maxLength={200}
                                     />
@@ -600,64 +613,63 @@ const ProductDetail = () => {
                                         {reviewComment.length}/200 characters
                                     </p>
                                 </div>
-                                <div className="flex space-x-3">
+                                <div className="flex gap-3">
                                     <button
-                                        onClick={handleSubmitReview}
+                                        type="submit"
                                         disabled={!reviewRating || reviewComment.trim().length < 10}
-                                        className="bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 text-white px-6 py-2 rounded-lg transition-colors"
+                                        className="bg-teal-500 hover:bg-teal-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors font-medium"
                                     >
                                         {userReview ? 'Update Review' : 'Submit Review'}
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => {
                                             setShowReviewForm(false);
                                             setReviewRating(userReview?.rating || 0);
                                             setReviewComment(userReview?.comment || '');
                                         }}
-                                        className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+                                        className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors font-medium"
                                     >
                                         Cancel
                                     </button>
                                 </div>
-                            </div>
+                            </form>
                         </div>
                     )}
 
                     {/* Reviews Summary */}
-                    {reviewStats && (
-                        <div className="bg-white border rounded-lg p-6 mb-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center space-x-4">
-                                    <div className="text-center">
-                                        <div className="text-3xl font-bold text-gray-800">
-                                            {reviewStats.avgRating.toFixed(1)}
-                                        </div>
-                                        <div className="flex justify-center mb-1">
-                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                <span
-                                                    key={star}
-                                                    className={`text-lg ${
-                                                        star <= Math.round(reviewStats.avgRating)
-                                                            ? 'text-yellow-400'
-                                                            : 'text-gray-300'
-                                                    }`}
-                                                >
-                                                    ★
-                                                </span>
-                                            ))}
-                                        </div>
-                                        <div className="text-sm text-gray-600">
-                                            {reviewStats.totalReviews} review{reviewStats.totalReviews !== 1 ? 's' : ''}
-                                        </div>
+                    {reviewStats && reviewStats.totalReviews > 0 && (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+                            <div className="flex flex-col md:flex-row gap-8">
+                                <div className="text-center md:text-left">
+                                    <div className="text-5xl font-bold text-gray-800 mb-2">
+                                        {reviewStats.avgRating.toFixed(1)}
+                                    </div>
+                                    <div className="flex justify-center md:justify-start mb-2">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                                key={star}
+                                                className={`w-5 h-5 ${
+                                                    star <= Math.round(reviewStats.avgRating)
+                                                        ? 'text-yellow-400 fill-yellow-400'
+                                                        : 'text-gray-300'
+                                                }`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <div className="text-sm text-gray-600">
+                                        {reviewStats.totalReviews} review{reviewStats.totalReviews !== 1 ? 's' : ''}
                                     </div>
                                 </div>
-                                <div className="flex-1 ml-8">
+                                <div className="flex-1">
                                     {[5, 4, 3, 2, 1].map((rating) => (
-                                        <div key={rating} className="flex items-center mb-1">
-                                            <span className="text-sm text-gray-600 w-8">{rating}★</span>
-                                            <div className="flex-1 mx-3 bg-gray-200 rounded-full h-2">
+                                        <div key={rating} className="flex items-center gap-3 mb-2">
+                                            <span className="text-sm text-gray-600 w-12 flex items-center gap-1">
+                                                {rating} <Star className="w-3 h-3 fill-gray-400 text-gray-400" />
+                                            </span>
+                                            <div className="flex-1 bg-gray-200 rounded-full h-2">
                                                 <div
-                                                    className="bg-yellow-400 h-2 rounded-full"
+                                                    className="bg-yellow-400 h-2 rounded-full transition-all"
                                                     style={{
                                                         width: `${
                                                             reviewStats.totalReviews > 0 && reviewStats.distribution
@@ -667,7 +679,7 @@ const ProductDetail = () => {
                                                     }}
                                                 />
                                             </div>
-                                            <span className="text-sm text-gray-600 w-8 text-right">
+                                            <span className="text-sm text-gray-600 w-12 text-right">
                                                 {reviewStats.distribution?.[rating] || 0}
                                             </span>
                                         </div>
@@ -681,31 +693,27 @@ const ProductDetail = () => {
                     {reviews && reviews.length > 0 ? (
                         <div className="space-y-4">
                             {reviews.map((review) => (
-                                <div key={review._id} className="bg-white border rounded-lg p-6">
+                                <div key={review._id} className="bg-white border border-gray-200 rounded-lg p-6">
                                     <div className="flex items-start justify-between mb-4">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center">
-                                                <span className="text-white font-semibold">
-                                                    {review.user.fullName?.charAt(0) || review.user.username?.charAt(0) || 'U'}
-                                                </span>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+                                                {review.user.fullName?.charAt(0) || review.user.username?.charAt(0) || 'U'}
                                             </div>
                                             <div>
                                                 <h4 className="font-semibold text-gray-800">
                                                     {review.user.fullName || review.user.username}
                                                 </h4>
-                                                <div className="flex items-center space-x-2">
+                                                <div className="flex items-center gap-2">
                                                     <div className="flex">
                                                         {[1, 2, 3, 4, 5].map((star) => (
-                                                            <span
+                                                            <Star
                                                                 key={star}
-                                                                className={`text-sm ${
+                                                                className={`w-4 h-4 ${
                                                                     star <= review.rating
-                                                                        ? 'text-yellow-400'
+                                                                        ? 'text-yellow-400 fill-yellow-400'
                                                                         : 'text-gray-300'
                                                                 }`}
-                                                            >
-                                                                ★
-                                                            </span>
+                                                            />
                                                         ))}
                                                     </div>
                                                     <span className="text-sm text-gray-500">
@@ -715,14 +723,14 @@ const ProductDetail = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <p className="text-gray-700">{review.comment}</p>
+                                    <p className="text-gray-700 leading-relaxed">{review.comment}</p>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-8 text-gray-500">
-                            <i className="fas fa-comment-alt text-4xl mb-4"></i>
-                            <p>No reviews yet. Be the first to review this product!</p>
+                        <div className="text-center py-12">
+                            <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                            <p className="text-gray-500 text-lg">No reviews yet. Be the first to review this product!</p>
                         </div>
                     )}
                 </div>
@@ -732,18 +740,18 @@ const ProductDetail = () => {
                     <h2 className="text-3xl font-bold text-gray-800 mb-6">Similar Products</h2>
                     {similarProducts.length > 0 ? (
                         <div className="overflow-x-auto scrollbar-hide">
-                            <div className="flex gap-6 pb-4 px-1" style={{ width: 'max-content' }}>
+                            <div className="flex gap-4 pb-4" style={{ width: 'max-content' }}>
                                 {similarProducts.map((similarProduct) => (
                                     <div
                                         key={similarProduct._id}
-                                        className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200 flex flex-col w-64 flex-shrink-0"
+                                        className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col w-64 shrink-0"
                                         onClick={(e) => {
                                             if (!e.target.closest('.product-action')) {
                                                 navigate(`/product/${similarProduct._id}`);
                                             }
                                         }}
                                     >
-                                        <div className="relative w-full pt-[60%]">
+                                        <div className="relative w-full aspect-4/3">
                                             <img
                                                 src={
                                                     similarProduct.images && similarProduct.images.length > 0
@@ -774,55 +782,53 @@ const ProductDetail = () => {
                                             )}
                                         </div>
                                         
-                                        <div className="p-3 flex flex-col flex-grow">
-                                            <h3 className="text-base font-semibold text-gray-800 mb-1 truncate">{similarProduct.name}</h3>
-                                            <p className="text-sm text-gray-500 mb-1">{similarProduct.brand}</p>
+                                        <div className="p-4 flex flex-col grow">
+                                            <h3 className="text-base font-semibold text-gray-800 mb-1">{similarProduct.name}</h3>
+                                            <p className="text-sm text-gray-500 mb-2">{similarProduct.brand}</p>
                                             
                                             {/* Rating */}
-                                            <div className="flex items-center gap-1 mb-1">
+                                            <div className="flex items-center gap-1 mb-2">
                                                 <div className="flex">
                                                     {[1, 2, 3, 4, 5].map((star) => (
-                                                        <span
+                                                        <Star
                                                             key={star}
-                                                            className={`text-sm ${star <= (similarProduct.avgRating || 0) ? 'text-yellow-400' : 'text-gray-300'}`}
-                                                        >
-                                                            ★
-                                                        </span>
+                                                            className={`w-3 h-3 ${star <= (similarProduct.avgRating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                                                        />
                                                     ))}
                                                 </div>
-                                                <span className="text-sm text-gray-600">({similarProduct.reviewCount || 0})</span>
+                                                <span className="text-xs text-gray-600">({similarProduct.reviewCount || 0})</span>
                                             </div>
 
-                                            <p className="text-gray-600 text-xs mb-2 flex-grow line-clamp-2">{similarProduct.description}</p>
+                                            <p className="text-gray-600 text-xs mb-2 line-clamp-2">{similarProduct.description}</p>
                                             
                                             {/* Price */}
-                                            <div className="mb-1">
+                                            <div className="mb-2">
                                                 {similarProduct.discount && similarProduct.discount > 0 ? (
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-gray-400 line-through text-sm">₹{similarProduct.price.toFixed(2)}</span>
-                                                        <span className="text-lg font-bold text-gray-800">
+                                                        <span className="text-lg font-bold text-teal-600">
                                                             ₹{(similarProduct.price * (1 - similarProduct.discount / 100)).toFixed(2)}
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-lg font-bold text-gray-800">
+                                                    <span className="text-lg font-bold text-teal-600">
                                                         ₹{similarProduct.price.toFixed(2)}
                                                     </span>
                                                 )}
                                             </div>
 
                                             {/* Stock */}
-                                            <div className="text-xs mb-2">
+                                            <div className="text-xs mb-3">
                                                 {similarProduct.stock === 0 ? (
                                                     <span className="text-red-600 font-medium">Out of Stock</span>
                                                 ) : similarProduct.stock <= 5 ? (
-                                                    <span className="text-green-600 font-medium">Only {similarProduct.stock} left in stock!</span>
+                                                    <span className="text-orange-600 font-medium">Only {similarProduct.stock} left!</span>
                                                 ) : (
                                                     <span className="text-green-600 font-medium">In Stock</span>
                                                 )}
                                             </div>
 
-                                            <div className="product-action mt-auto">
+                                            <div className="product-action flex gap-2 mt-auto">
                                                 <button 
                                                     onClick={async (e) => {
                                                         e.stopPropagation();
@@ -839,13 +845,30 @@ const ProductDetail = () => {
                                                         }
                                                     }}
                                                     disabled={similarProduct.stock === 0}
-                                                    className={`w-full py-2 px-3 rounded font-medium transition text-sm ${
+                                                    className={`flex-1 py-2 px-3 rounded text-sm font-medium transition ${
                                                         similarProduct.stock === 0
                                                             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                            : 'bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700'
+                                                            : 'bg-linear-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700'
                                                     }`}
                                                 >
                                                     Add to Cart
+                                                </button>
+                                                <button 
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
+                                                        if (!isAuthenticated) {
+                                                            navigate('/login');
+                                                            return;
+                                                        }
+                                                        try {
+                                                            await toggleProductWishlist(similarProduct._id);
+                                                        } catch (error) {
+                                                            console.error('Failed to toggle wishlist:', error);
+                                                        }
+                                                    }}
+                                                    className="w-10 h-10 border border-gray-300 rounded-lg hover:border-red-500 hover:text-red-500 hover:bg-red-50 transition flex items-center justify-center"
+                                                >
+                                                    <Heart className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         </div>

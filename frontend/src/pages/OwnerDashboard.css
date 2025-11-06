@@ -54,8 +54,8 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
 }
 
 .dashboard-container {
-    padding: 20px;
-    max-width: 1400px;
+    padding: 60px;
+    max-width: 1550px;
     margin: 0 auto;
     background-color: var(--background);
     min-height: 100vh;
@@ -96,7 +96,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 40px;
+    margin-top: 80px;
 }
 
 .header-title {
