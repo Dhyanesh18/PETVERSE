@@ -162,11 +162,53 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     box-shadow: var(--shadow-sm);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid rgba(0, 0, 0, 0.05);
+    position: relative;
 }
 
 .stat-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+}
+
+/* Clickable Stats Cards */
+.clickable-stat-card {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.clickable-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(8, 145, 178, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.clickable-stat-card:hover::before {
+    left: 100%;
+}
+
+.clickable-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(8, 145, 178, 0.15);
+    border-color: rgba(8, 145, 178, 0.3);
+}
+
+.clickable-stat-card:active {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(8, 145, 178, 0.2);
+}
+
+/* Removed stat-action-hint styles as arrows are no longer used */
+
+.clickable-stat-card:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 .stat-icon {

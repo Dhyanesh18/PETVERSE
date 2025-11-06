@@ -431,6 +431,45 @@ const OwnerDashboard = () => {
         window.location.href = `/order-details/${orderId}`;
     };
 
+    // Navigation handlers for stats cards
+    const handleStatsCardClick = (cardType) => {
+        switch(cardType) {
+            case 'totalOrders':
+                // Navigate to orders page or scroll to orders section
+                document.querySelector('.my-orders-section')?.scrollIntoView({ behavior: 'smooth' });
+                break;
+            case 'activeOrders':
+            case 'totalSpent':
+            case 'walletBalance': {
+                // Find Recent Orders section by searching through all sections
+                const sections = document.querySelectorAll('.section');
+                let recentOrdersSection = null;
+                
+                sections.forEach(section => {
+                    const titleElement = section.querySelector('.section-title');
+                    if (titleElement && titleElement.textContent.includes('Recent Orders')) {
+                        recentOrdersSection = section;
+                    }
+                });
+                
+                if (recentOrdersSection) {
+                    recentOrdersSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    // Fallback: scroll to the first table or any orders-related element
+                    const fallbackElement = document.querySelector('.simple-orders-table-container') || 
+                                          document.querySelector('table') ||
+                                          document.querySelector('[class*="order"]');
+                    if (fallbackElement) {
+                        fallbackElement.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    };
+
     const getStatusColor = (status) => {
         const statusColors = {
             'pending': 'warning',
@@ -504,28 +543,52 @@ const OwnerDashboard = () => {
 
             {/* Stats Grid */}
             <div className="stats-grid">
-                <div className="stat-card">
+                <div 
+                    className="stat-card clickable-stat-card" 
+                    onClick={() => handleStatsCardClick('totalOrders')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalOrders')}
+                >
                     <div className="stat-icon">
                         <i className="fas fa-shopping-bag"></i>
                     </div>
                     <div className="stat-value">{dashboardData.stats.totalOrders}</div>
                     <div className="stat-label">Total Orders</div>
                 </div>
-                <div className="stat-card">
+                <div 
+                    className="stat-card clickable-stat-card" 
+                    onClick={() => handleStatsCardClick('activeOrders')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('activeOrders')}
+                >
                     <div className="stat-icon">
                         <i className="fas fa-clock"></i>
                     </div>
                     <div className="stat-value">{dashboardData.stats.activeOrders}</div>
                     <div className="stat-label">Active Orders</div>
                 </div>
-                <div className="stat-card">
+                <div 
+                    className="stat-card clickable-stat-card" 
+                    onClick={() => handleStatsCardClick('totalSpent')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalSpent')}
+                >
                     <div className="stat-icon">
                         <i className="fas fa-rupee-sign"></i>
                     </div>
                     <div className="stat-value">₹{dashboardData.stats.totalSpent?.toLocaleString('en-IN')}</div>
                     <div className="stat-label">Total Spent</div>
                 </div>
-                <div className="stat-card">
+                <div 
+                    className="stat-card clickable-stat-card" 
+                    onClick={() => handleStatsCardClick('walletBalance')}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('walletBalance')}
+                >
                     <div className="stat-icon">
                         <i className="fas fa-rupee-sign"></i>
                     </div>
