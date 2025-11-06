@@ -202,7 +202,7 @@ const SellerDashboard = () => {
 
         const viewOrderDetails = (orderId) => {
         // Navigate to order details page or show modal
-        navigate(`/order-details/${orderId}`);
+        navigate(`/seller/order-details/${orderId}`);
     };
 
     const handleReplyToReview = (reviewId) => {

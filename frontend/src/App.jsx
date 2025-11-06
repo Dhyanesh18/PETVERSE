@@ -18,6 +18,8 @@ import EditProduct from './pages/EditProduct';
 import Wishlist from './pages/Wishlist';
 import OwnerDashboard from './pages/OwnerDashboard';
 import SellerDashboard from './pages/SellerDashboard';
+import OrderDetails from './pages/OrderDetails';
+import UserOrderDetails from './pages/UserOrderDetails';
 
 function App() {
     return (
@@ -101,6 +103,26 @@ function App() {
                     element={
                     <ProtectedRoute allowedRoles={['seller']}>
                         <EditPet />
+                    </ProtectedRoute>
+                    }
+                />
+
+                {/* Order Details - Seller Only */}
+                <Route
+                    path="/seller/order-details/:orderId"
+                    element={
+                    <ProtectedRoute allowedRoles={['seller']}>
+                        <OrderDetails />
+                    </ProtectedRoute>
+                    }
+                />
+
+                {/* User Order Details - Owner/Customer */}
+                <Route
+                    path="/order-details/:orderId"
+                    element={
+                    <ProtectedRoute allowedRoles={['owner', 'user']}>
+                        <UserOrderDetails />
                     </ProtectedRoute>
                     }
                 />
