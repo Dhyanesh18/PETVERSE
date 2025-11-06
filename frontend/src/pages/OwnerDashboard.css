@@ -526,7 +526,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    table-layout: fixed;
 }
+
+.orders-table th:nth-child(1) { width: 12%; } /* Order ID */
+.orders-table th:nth-child(2) { width: 40%; } /* Product */
+.orders-table th:nth-child(3) { width: 15%; } /* Date */
+.orders-table th:nth-child(4) { width: 13%; } /* Amount */
+.orders-table th:nth-child(5) { width: 20%; } /* Status */
 
 .orders-table th {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(52, 211, 153, 0.1));
@@ -552,21 +559,43 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+    max-width: 100%;
 }
 
-.product-image {
-    width: 48px;
-    height: 48px;
+.orders-table .product-image {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px;
+    min-height: 48px;
+    max-width: 48px !important;
+    max-height: 48px !important;
     border-radius: var(--radius-md);
     object-fit: cover;
+    border: 1px solid #e5e7eb;
+    background-color: #f9fafb;
 }
 
-.product-name {
+.orders-table .product-info {
+    flex: 1;
+    min-width: 0; /* Allow shrinking */
+    overflow: hidden;
+}
+
+.orders-table .product-name {
     font-weight: 600;
     color: var(--text-primary);
+    font-size: 0.875rem;
+    line-height: 1.3;
+    margin-bottom: 2px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.quantity {
+.orders-table .quantity {
     display: block;
     color: var(--text-secondary);
     font-size: 0.75rem;
@@ -788,6 +817,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     font-size: 4.5rem;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
     -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
     margin-bottom: var(--spacing-md);
     display: inline-block;
@@ -1000,6 +1030,23 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     .orders-table {
         display: block;
         overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .orders-table .product-image {
+        width: 40px !important;
+        height: 40px !important;
+        min-width: 40px;
+        max-width: 40px !important;
+        max-height: 40px !important;
+    }
+    
+    .orders-table .product-name {
+        font-size: 0.8rem;
+    }
+    
+    .order-product {
+        gap: 0.5rem;
     }
 
     .product-actions {

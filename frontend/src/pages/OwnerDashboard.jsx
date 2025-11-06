@@ -471,7 +471,7 @@ const OwnerDashboard = () => {
         );
     }
     return (
-        <div className="dashboard-container">
+        <div className="dashboard-container" style={{ marginTop: '169px' }}>
             {/* Notifications */}
             {notifications.map(notification => (
                 <div key={notification.id} className={`notification notification-${notification.type}`}>

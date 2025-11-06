@@ -9,10 +9,33 @@ const Transaction = require('../models/transaction');
 const User = require('../models/users');
 
 // Middleware to check if user is authenticated
-function isAuthenticated(req, res, next) {
-    if (req.session.userId && req.user) {
-        return next();
+async function isAuthenticated(req, res, next) {
+    console.log('Seller auth - Session userId:', req.session.userId);
+    console.log('Seller auth - User object:', req.user);
+    console.log('Seller auth - Session userRole:', req.session.userRole);
+    
+    if (req.session.userId) {
+        // If user object is not attached but session exists, try to reload user
+        if (!req.user) {
+            try {
+                const User = require('../models/users');
+                req.user = await User.findById(req.session.userId);
+                console.log('Seller auth - Reloaded user:', req.user);
+            } catch (error) {
+                console.error('Seller auth - Error reloading user:', error);
+                return res.status(401).json({
+                    success: false,
+                    error: 'Authentication required',
+                    redirectPath: '/login'
+                });
+            }
+        }
+        
+        if (req.user) {
+            return next();
+        }
     }
+    
     res.status(401).json({
         success: false,
         error: 'Authentication required',
@@ -22,9 +45,15 @@ function isAuthenticated(req, res, next) {
 
 // Middleware to check if user is a seller
 function isSeller(req, res, next) {
+    console.log('Seller role check - User:', req.user);
+    console.log('Seller role check - User role:', req.user?.role);
+    
     if (req.user && req.user.role === 'seller') {
+        console.log('Seller role check - PASSED');
         return next();
     }
+    
+    console.log('Seller role check - FAILED');
     res.status(403).json({
         success: false,
         error: 'Access denied. Sellers only.'
@@ -113,13 +142,45 @@ router.get('/dashboard', isAuthenticated, isSeller, async (req, res) => {
         const totalRevenue = revenue[0]?.total || 0;
         console.log('Total Revenue:', totalRevenue);
 
-        // Get recent orders
+        // Get recent orders with proper population
         const recentOrders = await Order.find({ seller: seller._id })
             .sort({ createdAt: -1 })
             .limit(10)
             .populate('customer', 'fullName email')
-            .populate('items.product', 'name price images')
             .lean();
+            
+        // Manually populate product/pet references since we're using refPath
+        for (let order of recentOrders) {
+            if (order.items && order.items.length > 0) {
+                for (let item of order.items) {
+                    const originalProductId = item.product;
+                    console.log('Processing item with productId:', originalProductId, 'itemType:', item.itemType);
+                    
+                    if (item.itemType === 'Product' || !item.itemType) {
+                        // Default to Product if itemType is not set
+                        const product = await Product.findById(originalProductId).select('name price images').lean();
+                        if (product) {
+                            item.product = product;
+                            console.log('Found product:', product.name);
+                        } else {
+                            console.log('Product not found for ID:', originalProductId);
+                            item.product = { _id: originalProductId, name: 'Product Not Found' };
+                        }
+                    } else if (item.itemType === 'Pet') {
+                        const pet = await Pet.findById(originalProductId).select('name price images').lean();
+                        if (pet) {
+                            item.product = pet;
+                            console.log('Found pet:', pet.name);
+                        } else {
+                            console.log('Pet not found for ID:', originalProductId);
+                            item.product = { _id: originalProductId, name: 'Pet Not Found' };
+                        }
+                    }
+                }
+            }
+        }
+        
+        console.log('Sample order after population:', JSON.stringify(recentOrders[0]?.items?.[0], null, 2));
 
         // Format orders for display
         const formattedOrders = recentOrders.map(order => ({
@@ -746,6 +807,538 @@ router.get('/analytics', isAuthenticated, isSeller, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error fetching analytics',
+            message: error.message
+        });
+    }
+});
+
+// Product Management Routes
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for product images
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/products/');
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB limit
+        files: 5 // Maximum 5 files
+    },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed.'), false);
+        }
+    }
+});
+
+// Add new product
+router.post('/products', isAuthenticated, isSeller, upload.array('images', 5), async (req, res) => {
+    try {
+        const { name, description, price, category, stock } = req.body;
+        
+        console.log('Creating new product:', { name, category, price, stock });
+        console.log('Files uploaded:', req.files?.length || 0);
+
+        // Validation
+        if (!name || !description || !price || !category || !stock) {
+            return res.status(400).json({
+                success: false,
+                error: 'All required fields must be provided'
+            });
+        }
+
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'At least one product image is required'
+            });
+        }
+
+        // Process images for file system storage
+        const imagePaths = req.files.map(file => `/images/products/${file.filename}`);
+
+        // Create product
+        const product = new Product({
+            name: name.trim(),
+            description: description.trim(),
+            price: parseFloat(price),
+            category: category.trim(),
+            stock: parseInt(stock),
+            images: imagePaths,
+            seller: req.user._id,
+            available: true
+        });
+
+        await product.save();
+
+        console.log('Product created successfully:', product._id);
+
+        res.status(201).json({
+            success: true,
+            message: 'Product created successfully',
+            data: {
+                product: {
+                    _id: product._id,
+                    name: product.name,
+                    description: product.description,
+                    price: product.price,
+                    category: product.category,
+                    brand: product.brand,
+                    stock: product.stock,
+                    discount: product.discount,
+                    imageCount: product.images.length
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating product:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error creating product',
+            message: error.message
+        });
+    }
+});
+
+// Get product for editing
+router.get('/products/:productId/edit', isAuthenticated, isSeller, async (req, res) => {
+    try {
+        const product = await Product.findOne({
+            _id: req.params.productId,
+            seller: req.user._id
+        }).select('-images.data'); // Exclude binary image data for performance
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                error: 'Product not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            product: {
+                _id: product._id,
+                name: product.name,
+                description: product.description,
+                price: product.price,
+                category: product.category,
+                brand: product.brand,
+                discount: product.discount,
+                stock: product.stock,
+                available: product.available,
+                images: product.images || []
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching product for edit:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching product',
+            message: error.message
+        });
+    }
+});
+
+// Update product
+router.put('/products/:productId', isAuthenticated, isSeller, upload.array('newImages', 5), async (req, res) => {
+    try {
+        const { name, description, price, category, stock, imagesToDelete } = req.body;
+        
+        console.log('Updating product:', req.params.productId);
+        console.log('New files uploaded:', req.files?.length || 0);
+
+        const product = await Product.findOne({
+            _id: req.params.productId,
+            seller: req.user._id
+        });
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                error: 'Product not found'
+            });
+        }
+
+        // Update basic fields
+        if (name) product.name = name.trim();
+        if (description) product.description = description.trim();
+        if (price) product.price = parseFloat(price);
+        if (category) product.category = category.trim();
+        if (stock !== undefined) product.stock = parseInt(stock);
+
+        // Handle image deletions
+        if (imagesToDelete) {
+            const imagesToDeleteArray = JSON.parse(imagesToDelete);
+            product.images = product.images.filter(imagePath => !imagesToDeleteArray.includes(imagePath));
+        }
+
+        // Add new images
+        if (req.files && req.files.length > 0) {
+            const newImagePaths = req.files.map(file => `/images/products/${file.filename}`);
+            product.images = [...product.images, ...newImagePaths];
+        }
+
+        await product.save();
+
+        console.log('Product updated successfully:', product._id);
+
+        res.json({
+            success: true,
+            message: 'Product updated successfully',
+            data: {
+                product: {
+                    _id: product._id,
+                    name: product.name,
+                    description: product.description,
+                    price: product.price,
+                    category: product.category,
+                    brand: product.brand,
+                    stock: product.stock,
+                    discount: product.discount,
+                    imageCount: product.images.length
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating product:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error updating product',
+            message: error.message
+        });
+    }
+});
+
+// Toggle product status (activate/deactivate)
+router.patch('/products/:productId/toggle-status', isAuthenticated, isSeller, async (req, res) => {
+    try {
+        const product = await Product.findOne({
+            _id: req.params.productId,
+            seller: req.user._id
+        });
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                error: 'Product not found'
+            });
+        }
+
+        product.isActive = !product.isActive;
+        product.updatedAt = new Date();
+        await product.save();
+
+        res.json({
+            success: true,
+            message: `Product ${product.isActive ? 'activated' : 'deactivated'} successfully`,
+            data: {
+                productId: product._id,
+                isActive: product.isActive
+            }
+        });
+
+    } catch (error) {
+        console.error('Error toggling product status:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error updating product status',
+            message: error.message
+        });
+    }
+});
+
+// Pet Management Routes
+const petStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/pets/');
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'pet-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const petUpload = multer({
+    storage: petStorage,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB limit
+        files: 5 // Maximum 5 files
+    },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed.'), false);
+        }
+    }
+});
+
+// Add new pet
+router.post('/pets', isAuthenticated, isSeller, petUpload.array('images', 5), async (req, res) => {
+    try {
+        const { name, breed, age, price, category, description, gender, vaccinated, trained } = req.body;
+        
+        console.log('Creating new pet:', { name, breed, category, price, age });
+        console.log('Files uploaded:', req.files?.length || 0);
+
+        // Validation
+        if (!name || !breed || !age || !price || !category) {
+            return res.status(400).json({
+                success: false,
+                error: 'All required fields must be provided'
+            });
+        }
+
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'At least one pet image is required'
+            });
+        }
+
+        // Process images for database storage
+        const fs = require('fs');
+        const images = [];
+        
+        for (const file of req.files) {
+            const imageData = {
+                data: fs.readFileSync(file.path),
+                contentType: file.mimetype,
+                filename: file.filename
+            };
+            images.push(imageData);
+            
+            // Clean up temporary file
+            fs.unlinkSync(file.path);
+        }
+
+        // Create pet
+        const pet = new Pet({
+            name: name.trim(),
+            breed: breed.trim(),
+            age: age.trim(),
+            price: parseFloat(price),
+            category: category.trim(),
+            description: description?.trim() || '',
+            gender: gender || 'male',
+            images: images,
+            addedBy: req.user._id,
+            available: true
+        });
+
+        await pet.save();
+
+        console.log('Pet created successfully:', pet._id);
+
+        res.status(201).json({
+            success: true,
+            message: 'Pet listing created successfully',
+            data: {
+                pet: {
+                    _id: pet._id,
+                    name: pet.name,
+                    breed: pet.breed,
+                    age: pet.age,
+                    price: pet.price,
+                    category: pet.category,
+                    description: pet.description,
+                    gender: pet.gender,
+                    imageCount: pet.images.length
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating pet:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error creating pet listing',
+            message: error.message
+        });
+    }
+});
+
+// Get pet for editing
+router.get('/pets/:petId/edit', isAuthenticated, isSeller, async (req, res) => {
+    try {
+        const pet = await Pet.findOne({
+            _id: req.params.petId,
+            addedBy: req.user._id
+        });
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                error: 'Pet not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            pet: {
+                _id: pet._id,
+                name: pet.name,
+                breed: pet.breed,
+                age: pet.age,
+                price: pet.price,
+                category: pet.category,
+                description: pet.description,
+                gender: pet.gender,
+                available: pet.available,
+                images: pet.images || []
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching pet for edit:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching pet',
+            message: error.message
+        });
+    }
+});
+
+// Update pet
+router.put('/pets/:petId', isAuthenticated, isSeller, petUpload.array('images', 5), async (req, res) => {
+    try {
+        const { name, breed, age, price, category, description, gender, keepExistingImages } = req.body;
+        
+        console.log('Updating pet:', req.params.petId);
+        console.log('New files uploaded:', req.files?.length || 0);
+
+        const pet = await Pet.findOne({
+            _id: req.params.petId,
+            addedBy: req.user._id
+        });
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                error: 'Pet not found'
+            });
+        }
+
+        // Update basic fields
+        if (name) pet.name = name.trim();
+        if (breed) pet.breed = breed.trim();
+        if (age) pet.age = age.trim();
+        if (price) pet.price = parseFloat(price);
+        if (category) pet.category = category.trim();
+        if (description !== undefined) pet.description = description.trim();
+        if (gender) pet.gender = gender;
+
+        // Handle image updates
+        if (req.files && req.files.length > 0) {
+            const fs = require('fs');
+            const newImages = [];
+            
+            // Keep existing images if requested
+            if (keepExistingImages === 'true') {
+                newImages.push(...pet.images);
+            }
+            
+            // Add new images
+            for (const file of req.files) {
+                if (newImages.length >= 5) break; // Max 5 images
+                
+                const imageData = {
+                    data: fs.readFileSync(file.path),
+                    contentType: file.mimetype,
+                    filename: file.filename
+                };
+                newImages.push(imageData);
+                
+                // Clean up temporary file
+                fs.unlinkSync(file.path);
+            }
+
+            if (newImages.length > 0) {
+                pet.images = newImages;
+            }
+        }
+
+        await pet.save();
+
+        console.log('Pet updated successfully:', pet._id);
+
+        res.json({
+            success: true,
+            message: 'Pet listing updated successfully',
+            data: {
+                pet: {
+                    _id: pet._id,
+                    name: pet.name,
+                    breed: pet.breed,
+                    age: pet.age,
+                    price: pet.price,
+                    category: pet.category,
+                    description: pet.description,
+                    gender: pet.gender,
+                    imageCount: pet.images.length
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating pet:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error updating pet listing',
+            message: error.message
+        });
+    }
+});
+
+// Toggle pet status (available/unavailable)
+router.patch('/pets/:petId/toggle-status', isAuthenticated, isSeller, async (req, res) => {
+    try {
+        const pet = await Pet.findOne({
+            _id: req.params.petId,
+            addedBy: req.user._id
+        });
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                error: 'Pet not found'
+            });
+        }
+
+        pet.available = !pet.available;
+        await pet.save();
+
+        res.json({
+            success: true,
+            message: `Pet marked as ${pet.available ? 'available' : 'unavailable'} successfully`,
+            data: {
+                petId: pet._id,
+                available: pet.available
+            }
+        });
+
+    } catch (error) {
+        console.error('Error toggling pet status:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error updating pet status',
             message: error.message
         });
     }

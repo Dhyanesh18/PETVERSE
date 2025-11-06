@@ -37,10 +37,11 @@ const ProductDetail = () => {
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [similarProducts, setSimilarProducts] = useState([]);
     const [isInWishlist, setIsInWishlist] = useState(false);
+    const [currentReviewPage, setCurrentReviewPage] = useState(1);
+    const reviewsPerPage = 3;
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
 
-    // Function to load wishlist status for current product
     const loadWishlistStatus = useCallback(async () => {
         if (!isAuthenticated || !product) return;
         
@@ -680,7 +681,11 @@ const ProductDetail = () => {
                     {/* Reviews List */}
                     {reviews && reviews.length > 0 ? (
                         <div className="space-y-4">
-                            {reviews.map((review) => (
+                            {(() => {
+                                const startIndex = (currentReviewPage - 1) * reviewsPerPage;
+                                const endIndex = startIndex + reviewsPerPage;
+                                const paginatedReviews = reviews.slice(startIndex, endIndex);
+                                return paginatedReviews.map((review) => (
                                 <div key={review._id} className="bg-white border rounded-lg p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex items-center space-x-3">
@@ -717,7 +722,27 @@ const ProductDetail = () => {
                                     </div>
                                     <p className="text-gray-700">{review.comment}</p>
                                 </div>
-                            ))}
+                                ));
+                            })()}
+                            
+                            {/* Pagination */}
+                            {reviews.length > reviewsPerPage && (
+                                <div className="flex justify-center mt-6 space-x-2">
+                                    {Array.from({ length: Math.ceil(reviews.length / reviewsPerPage) }, (_, index) => (
+                                        <button
+                                            key={index + 1}
+                                            onClick={() => setCurrentReviewPage(index + 1)}
+                                            className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                                                currentReviewPage === index + 1
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="text-center py-8 text-gray-500">

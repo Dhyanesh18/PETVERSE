@@ -61,7 +61,40 @@ const orderSchema = new mongoose.Schema({
     type: Object,
     required: true
   },
+  statusHistory: [{
+    status: {
+      type: String,
+      enum: ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'],
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    updatedByRole: {
+      type: String,
+      enum: ['seller', 'admin', 'system'],
+      default: 'seller'
+    },
+    notes: {
+      type: String,
+      default: ''
+    }
+  }],
+  lastStatusUpdate: {
+    type: Date,
+    default: Date.now
+  },
     createdAt: {
+        type: Date,
+        default: Date.now
+    },
+    updatedAt: {
         type: Date,
         default: Date.now
     }
@@ -72,6 +105,32 @@ orderSchema.pre('validate', async function(next) {
   if (!this.orderNumber) {
     const count = await this.constructor.countDocuments();
     this.orderNumber = `ORD${Date.now()}${count + 1}`;
+  }
+  next();
+});
+
+// Update timestamps on save
+orderSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  
+  // Update lastStatusUpdate if status changed
+  if (this.isModified('status')) {
+    this.lastStatusUpdate = Date.now();
+  }
+  
+  next();
+});
+
+// Initialize status history when order is first created
+orderSchema.pre('save', function(next) {
+  if (this.isNew && (!this.statusHistory || this.statusHistory.length === 0)) {
+    this.statusHistory = [{
+      status: this.status || 'pending',
+      timestamp: new Date(),
+      updatedBy: this.seller,
+      updatedByRole: 'system',
+      notes: 'Order created'
+    }];
   }
   next();
 });
