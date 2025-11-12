@@ -360,7 +360,7 @@ const Products = () => {
                             />
                             <button 
                                 onClick={() => {/* Apply price filter */}}
-                                className="px-3 py-1 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm rounded hover:from-teal-600 hover:to-teal-700"
+                                className="px-3 py-1 bg-linear-to-r from-teal-500 to-teal-600 text-white text-sm rounded hover:from-teal-600 hover:to-teal-700"
                             >
                                 Apply
                             </button>
@@ -463,7 +463,7 @@ const Products = () => {
                                             }}
                                         />
                                     </div>
-                                    <div className="p-4 flex flex-col flex-grow">
+                                    <div className="p-4 flex flex-col grow">
                                         <h3 className="text-lg font-semibold text-gray-800 mb-1">{product.name}</h3>
                                         <p className="text-sm text-gray-500 mb-2">{product.brand}</p>
                                         
@@ -482,7 +482,7 @@ const Products = () => {
                                             <span className="text-sm text-gray-600">({product.reviewCount || 0})</span>
                                         </div>
 
-                                        <p className="text-gray-600 text-sm mb-3 flex-grow line-clamp-2">{product.description}</p>
+                                        <p className="text-gray-600 text-sm mb-3 grow line-clamp-2">{product.description}</p>
                                         
                                         {/* Price */}
                                         <div className="mb-2">
@@ -521,7 +521,7 @@ const Products = () => {
                                                 className={`flex-1 py-2.5 px-4 rounded font-medium transition ${
                                                     product.stock === 0
                                                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                        : 'bg-gradient-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700'
+                                                        : 'bg-linear-to-r from-teal-500 to-teal-600 text-white hover:from-teal-600 hover:to-teal-700'
                                                 }`}
                                             >
                                                 Add to Cart
