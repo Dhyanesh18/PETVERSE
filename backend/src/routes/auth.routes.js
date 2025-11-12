@@ -9,35 +9,61 @@ const upload = multer({
 
 // Login routes ----------------------------------------
 // Check session/authentication status
-router.get('/check-session', (req, res) => {
+router.get('/check-session', async (req, res) => {
+    console.log('Check session - Session userId:', req.session.userId);
+    console.log('Check session - User object:', req.user);
+    console.log('Check session - Session userRole:', req.session.userRole);
+    
     if (req.session.userId) {
-        return res.json({
-            success: true,
-            isLoggedIn: true,
-            isAdmin: req.user && req.user.role === 'admin',
-            userRole: req.user ? req.user.role : null,
-            user: {
-                id: req.user._id,
-                _id: req.user._id,
-                fullName: req.user.fullName,
-                username: req.user.username,
-                email: req.user.email,
-                phone: req.user.phone,
-                role: req.user.role,
-                isApproved: req.user.isApproved,
-                createdAt: req.user.createdAt,
-                updatedAt: req.user.updatedAt
+        // If user object is not attached but session exists, try to reload user
+        if (!req.user) {
+            try {
+                const User = require('../models/users');
+                req.user = await User.findById(req.session.userId);
+                console.log('Reloaded user:', req.user);
+            } catch (error) {
+                console.error('Error reloading user:', error);
+                req.session.userId = null;
+                req.session.userRole = null;
+                return res.json({
+                    success: true,
+                    isLoggedIn: false,
+                    isAdmin: false,
+                    userRole: null,
+                    user: null
+                });
             }
-        });
-    } else {
-        return res.json({
-            success: true,
-            isLoggedIn: false,
-            isAdmin: false,
-            userRole: null,
-            user: null
-        });
+        }
+        
+        if (req.user) {
+            return res.json({
+                success: true,
+                isLoggedIn: true,
+                isAdmin: req.user.role === 'admin',
+                userRole: req.user.role,
+                user: {
+                    id: req.user._id,
+                    _id: req.user._id,
+                    fullName: req.user.fullName,
+                    username: req.user.username,
+                    email: req.user.email,
+                    phone: req.user.phone,
+                    role: req.user.role,
+                    isApproved: req.user.isApproved,
+                    createdAt: req.user.createdAt,
+                    updatedAt: req.user.updatedAt
+                }
+            });
+        }
     }
+    
+    return res.json({
+        success: true,
+        isLoggedIn: false,
+        isAdmin: false,
+        userRole: null,
+        user: null
+    });
 });
 
 // Login endpoint - returns JSON with user data and redirect path

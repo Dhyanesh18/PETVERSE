@@ -393,21 +393,27 @@ router.post('/reject-user/:userId', adminAuth, async (req, res) => {
 });
 
 // Admin route to update order status
-router.post('/order/:orderId/status', adminAuth, async (req, res) => {
+router.patch('/order/:orderId/status', adminAuth, async (req, res) => {
     try {
         const { orderId } = req.params;
         const { status } = req.body;
 
-        const allowed = ['pending', 'processing', 'completed', 'cancelled'];
+        console.log('Admin updating order status:', { orderId, status, adminId: req.user._id });
+
+        const allowed = ['pending', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'];
         if (!allowed.includes(status)) {
             return res.status(400).json({ 
                 success: false, 
-                error: 'Invalid status' 
+                error: 'Invalid status',
+                validStatuses: allowed
             });
         }
 
         const Order = require('../models/order');
-        const order = await Order.findById(orderId);
+        const Wallet = require('../models/wallet');
+        const Transaction = require('../models/transaction');
+        
+        const order = await Order.findById(orderId).populate('customer').populate('seller');
         if (!order) {
             return res.status(404).json({ 
                 success: false, 
@@ -415,22 +421,118 @@ router.post('/order/:orderId/status', adminAuth, async (req, res) => {
             });
         }
 
+        const oldStatus = order.status;
+        
+        // Handle cancellation - refund customer and deduct from seller
+        if (status === 'cancelled' && oldStatus !== 'cancelled') {
+            console.log('Admin processing cancellation refund...');
+            
+            // Get wallets
+            const customerWallet = await Wallet.findOne({ user: order.customer._id });
+            const sellerWallet = await Wallet.findOne({ user: order.seller._id });
+            
+            if (!customerWallet) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Customer wallet not found' 
+                });
+            }
+            
+            if (!sellerWallet) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Seller wallet not found' 
+                });
+            }
+            
+            const refundAmount = order.totalAmount;
+            const sellerShare = refundAmount * 0.95; // Seller received 95% of the order
+            const adminCommission = refundAmount * 0.05; // Admin received 5%
+            
+            // Refund customer
+            await customerWallet.addFunds(refundAmount);
+            console.log(`Admin refunded ₹${refundAmount} to customer`);
+            
+            // Deduct from seller (only their share)
+            try {
+                await sellerWallet.deductFunds(sellerShare);
+                console.log(`Admin deducted ₹${sellerShare} from seller`);
+            } catch (err) {
+                console.error('Seller has insufficient balance for refund:', err.message);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Insufficient seller balance for refund'
+                });
+            }
+            
+            // Deduct from admin wallet
+            const adminWallet = await Wallet.findOne({ user: req.user._id });
+            if (adminWallet) {
+                try {
+                    await adminWallet.deductFunds(adminCommission);
+                    console.log(`Admin deducted ₹${adminCommission} commission from admin wallet`);
+                } catch (err) {
+                    console.error('Admin has insufficient balance for refund:', err.message);
+                }
+            }
+            
+            // Create refund transaction records
+            await new Transaction({
+                from: req.user._id,
+                to: order.customer._id,
+                amount: refundAmount,
+                type: 'admin_refund',
+                description: `Admin refund for cancelled order ${order._id}`
+            }).save();
+            
+            // Update payment status to refunded
+            order.paymentStatus = 'refunded';
+            console.log('Admin refund completed successfully');
+        }
+
+        // Update status
         order.status = status;
+        
+        // Add to status history
+        if (!order.statusHistory) {
+            order.statusHistory = [];
+        }
+        order.statusHistory.push({
+            status,
+            timestamp: new Date(),
+            updatedBy: req.user._id,
+            updatedByRole: 'admin'
+        });
+
         await order.save();
 
+        console.log('Order status updated successfully by admin');
         res.json({ 
             success: true, 
             message: 'Order status updated successfully',
-            data: { status: order.status } 
+            data: { 
+                orderId: order._id,
+                status: order.status,
+                paymentStatus: order.paymentStatus,
+                oldStatus,
+                updatedBy: 'admin'
+            } 
         });
     } catch (err) {
-        console.error('Order status update error:', err);
+        console.error('Admin order status update error:', err);
         res.status(500).json({ 
             success: false, 
             error: 'Server error',
             message: err.message 
         });
     }
+});
+
+// Keep the POST method for backward compatibility
+router.post('/order/:orderId/status', adminAuth, async (req, res) => {
+    // Redirect to PATCH method
+    req.method = 'PATCH';
+    return router.handle(req, res);
 });
 
 // Get user document (license/certificate)

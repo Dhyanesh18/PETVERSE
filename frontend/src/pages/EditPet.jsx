@@ -31,16 +31,14 @@ const EditPet = () => {
 
     const fetchPetData = async () => {
         try {
-            const response = await fetch(`/api/pets/${id}`, {
+            const response = await fetch(`/api/seller/pets/${id}/edit`, {
                 credentials: 'include'
             });
             
-            if (!response.ok) {
-                throw new Error('Failed to fetch pet data');
-            }
-            
             const data = await response.json();
-            if (data.success) {
+            console.log('Pet data received:', data); // Debug log
+            
+            if (data.success && data.pet) {
                 const pet = data.pet;
                 setFormData({
                     name: pet.name || '',
@@ -53,8 +51,13 @@ const EditPet = () => {
                     available: pet.available !== false
                 });
                 
-                setExistingImages(pet.images || []);
-                setImagesToKeep(new Array(pet.images?.length || 0).fill(true));
+                // Generate image URLs for binary data stored in database
+                const imageUrls = (pet.images || []).map((img, index) => 
+                    `/api/images/pet/${pet._id}/${index}`
+                );
+                console.log('Generated pet image URLs:', imageUrls);
+                setExistingImages(imageUrls);
+                setImagesToKeep(new Array(imageUrls.length || 0).fill(true));
             }
         } catch (err) {
             setError('Failed to load pet data: ' + err.message);
@@ -123,7 +126,7 @@ const EditPet = () => {
             if (data.success) {
                 setSuccess('Pet updated successfully!');
                 setTimeout(() => {
-                    navigate('/seller-dashboard');
+                    window.history.back();
                 }, 2000);
             } else {
                 setError(data.message || 'Failed to update pet');
@@ -149,11 +152,21 @@ const EditPet = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)' }}>
             <Header />
-            <div className="container mx-auto px-4 py-8">
-                <div className="max-w-2xl mx-auto">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-8">Edit Pet Listing</h1>
+            <div className="container mx-auto px-4 py-8" style={{ paddingTop: '100px' }}>
+                <div className="max-w-4xl mx-auto">
+                    {/* Header */}
+                    <div className="flex items-center justify-center mb-8">
+                        <h1 className="text-4xl font-bold" style={{ 
+                            background: 'linear-gradient(135deg, rgb(0, 180, 180), teal)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text'
+                        }}>
+                            Edit Pet
+                        </h1>
+                    </div>
                     
                     {error && (
                         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
@@ -302,9 +315,12 @@ const EditPet = () => {
                                     {existingImages.map((image, index) => (
                                         <div key={index} className="relative">
                                             <img
-                                                src={`data:${image.contentType};base64,${image.data}`}
+                                                src={image}
                                                 alt={`Pet ${index + 1}`}
                                                 className="w-full h-32 object-cover rounded-md"
+                                                onError={(e) => {
+                                                    e.target.src = '/images/default-pet.jpg';
+                                                }}
                                             />
                                             <label className="absolute top-2 right-2 bg-white rounded-full p-1">
                                                 <input
@@ -348,7 +364,7 @@ const EditPet = () => {
                             
                             <button
                                 type="button"
-                                onClick={() => navigate('/seller-dashboard')}
+                                onClick={() => window.history.back()}
                                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                                 Cancel

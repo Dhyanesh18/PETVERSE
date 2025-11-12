@@ -8,9 +8,11 @@ const User = require('../models/users');
 // Get product image by index
 router.get('/product/:productId/:index', async (req, res) => {
     try {
+        console.log(`Image request: product ${req.params.productId}, index ${req.params.index}`);
         const product = await Product.findById(req.params.productId);
         
         if (!product) {
+            console.log(`Product not found: ${req.params.productId}`);
             return res.status(404).json({
                 success: false,
                 error: 'Product not found'
@@ -18,7 +20,10 @@ router.get('/product/:productId/:index', async (req, res) => {
         }
 
         const index = parseInt(req.params.index);
+        console.log(`Product has ${product.images?.length || 0} images`);
+        
         if (!product.images || !product.images[index]) {
+            console.log(`Image not found at index ${index}`);
             return res.status(404).json({
                 success: false,
                 error: 'Image not found at specified index'
@@ -26,6 +31,7 @@ router.get('/product/:productId/:index', async (req, res) => {
         }
         
         const image = product.images[index];
+        console.log(`Serving image: ${image.contentType}, size: ${image.data?.length || 0} bytes`);
         
         // Set appropriate headers for image serving
         res.set('Content-Type', image.contentType);
@@ -81,9 +87,11 @@ router.get('/product/:productId/metadata', async (req, res) => {
 // Get pet image by index
 router.get('/pet/:petId/:index', async (req, res) => {
     try {
+        console.log(`Pet image request: pet ${req.params.petId}, index ${req.params.index}`);
         const pet = await Pet.findById(req.params.petId);
         
         if (!pet) {
+            console.log(`Pet not found: ${req.params.petId}`);
             return res.status(404).json({
                 success: false,
                 error: 'Pet not found'
@@ -91,7 +99,10 @@ router.get('/pet/:petId/:index', async (req, res) => {
         }
 
         const index = parseInt(req.params.index);
+        console.log(`Pet has ${pet.images?.length || 0} images`);
+        
         if (!pet.images || !pet.images[index]) {
+            console.log(`Pet image not found at index ${index}`);
             return res.status(404).json({
                 success: false,
                 error: 'Image not found at specified index'
@@ -99,6 +110,7 @@ router.get('/pet/:petId/:index', async (req, res) => {
         }
         
         const image = pet.images[index];
+        console.log(`Serving pet image: ${image.contentType}, size: ${image.data?.length || 0} bytes`);
         
         res.set('Content-Type', image.contentType);
         res.set('Cache-Control', 'public, max-age=86400');

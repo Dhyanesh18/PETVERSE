@@ -74,6 +74,7 @@ export const getServiceById = (id) => apiClient.get(`/api/services/${id}`);
 // ===== User APIs =====
 export const getUserStats = () => apiClient.get('/api/user/stats');
 export const getUserDashboard = () => apiClient.get('/api/user/dashboard');
+export const getSellerDashboard = () => apiClient.get('/api/seller/dashboard');
 
 // ===== Wishlist APIs =====
 export const getWishlist = () => apiClient.get('/api/wishlist');

@@ -13,37 +13,58 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        // Try to get user from localStorage on initialization
+        try {
+            const savedUser = localStorage.getItem('user');
+            return savedUser ? JSON.parse(savedUser) : null;
+        } catch (error) {
+            console.error('Error parsing saved user:', error);
+            return null;
+        }
+    });
     const [loading, setLoading] = useState(true);
     const [initialized, setInitialized] = useState(false);
+    const [isChecking, setIsChecking] = useState(false);
 
     const checkSession = useCallback(async () => {
         // Prevent multiple simultaneous session checks
-        if (initialized) return;
+        if (initialized || isChecking) return;
         
+        setIsChecking(true);
         try {
-            console.log('Checking user session...');
             const response = await checkUserSession();
             console.log('Session check response:', response.data);
             
-            if (response.data.success && response.data.user) {
-                console.log('User authenticated:', response.data.user);
+            // Check if user is logged in and has user data
+            if (response.data.success && response.data.isLoggedIn && response.data.user) {
+                console.log('User authenticated successfully:', response.data.user);
                 setUser(response.data.user);
-            } else if (response.data.isLoggedIn) {
-                console.log('User logged in:', response.data.user);
+                // Update localStorage with fresh data
+                localStorage.setItem('user', JSON.stringify(response.data.user));
+            } else if (response.data.isLoggedIn && response.data.user) {
                 setUser(response.data.user);
+                // Update localStorage with fresh data
+                localStorage.setItem('user', JSON.stringify(response.data.user));
             } else {
                 console.log('User not authenticated');
                 setUser(null);
+                localStorage.removeItem('user');
             }
         } catch (error) {
             console.error('Session check failed:', error);
+            console.log('Error details:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
             setUser(null);
         } finally {
             setLoading(false);
             setInitialized(true);
+            setIsChecking(false);
         }
-    }, [initialized]);
+    }, [initialized, isChecking]);
 
     useEffect(() => {
         if (!initialized) {
@@ -53,15 +74,29 @@ export const AuthProvider = ({ children }) => {
 
     const login = (userData) => {
         setUser(userData);
+        // Save to localStorage for persistence
+        localStorage.setItem('user', JSON.stringify(userData));
+        setInitialized(true);
     };
 
     const logout = async () => {
         try {
             await logoutAPI();
             setUser(null);
+            localStorage.removeItem('user');
+            setInitialized(false);
         } catch (error) {
             console.error('Logout failed:', error);
+            setUser(null);
+            localStorage.removeItem('user');
         }
+    };
+
+    const refreshSession = async () => {
+        setInitialized(false);
+        setIsChecking(false);
+        setLoading(true);
+        await checkSession();
     };
 
     const value = {
@@ -71,6 +106,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         checkSession,
+        refreshSession,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         isSeller: user?.role === 'seller',

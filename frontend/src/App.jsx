@@ -22,6 +22,7 @@ import AddEvent from './pages/AddEvent';
 import EventPayment from './pages/EventPayment';
 import EventTicket from './pages/EventTicket';
 import OwnerDashboard from './pages/OwnerDashboard';
+import SellerDashboard from './pages/SellerDashboard';
 
 function App() {
     return (
@@ -73,6 +74,38 @@ function App() {
                     element={
                     <ProtectedRoute allowedRoles={['seller']}>
                         <EditProduct />
+                    </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/seller/products/add"
+                    element={
+                    <ProtectedRoute allowedRoles={['seller']}>
+                        <AddProduct />
+                    </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/seller/products/edit/:id"
+                    element={
+                    <ProtectedRoute allowedRoles={['seller']}>
+                        <EditProduct />
+                    </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/seller/pets/add"
+                    element={
+                    <ProtectedRoute allowedRoles={['seller']}>
+                        <AddPet />
+                    </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/seller/pets/edit/:id"
+                    element={
+                    <ProtectedRoute allowedRoles={['seller']}>
+                        <EditPet />
                     </ProtectedRoute>
                     }
                 />
@@ -142,7 +175,7 @@ function App() {
                     path="/seller/dashboard"
                     element={
                     <ProtectedRoute allowedRoles={['seller','admin']}>
-                        <div>Seller Dashboard</div>
+                        <SellerDashboard />
                     </ProtectedRoute>
                     }
                 />
