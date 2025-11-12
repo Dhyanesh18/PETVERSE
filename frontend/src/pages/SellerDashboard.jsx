@@ -56,9 +56,11 @@ const SellerDashboard = () => {
                 setReviews(reviewsData || []);
                 setSeller(sellerData || {});
 
-                // Set stats from API response
+                // Set stats from API response - calculate total products + pets
+                const totalProductsAndPets = (productsData?.length || 0) + (petsData?.length || 0);
+                
                 setStats({
-                    totalProducts: statistics.totalProducts || 0,
+                    totalProducts: totalProductsAndPets,
                     totalSales: parseFloat(statistics.totalRevenue || 0),
                     pendingOrders: statistics.pendingOrders || 0,
                     rating: statistics.averageRating || 0
@@ -98,7 +100,47 @@ const SellerDashboard = () => {
             await logout();
             navigate('/');
         } catch (error) {
-            console.error('Logout error:', error);
+            console.error('Error logging out:', error);
+        }
+    };
+
+    // Navigation handlers for stats cards
+    const handleStatsCardClick = (cardType) => {
+        switch(cardType) {
+            case 'totalProducts': {
+                // Navigate to Product Management section to view all products and pets
+                const sections = document.querySelectorAll('.content-section');
+                let productManagementSection = null;
+                
+                sections.forEach(section => {
+                    const headerElement = section.querySelector('h2');
+                    if (headerElement && headerElement.textContent.includes('Product Management')) {
+                        productManagementSection = section;
+                    }
+                });
+                
+                if (productManagementSection) {
+                    productManagementSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    // Fallback: scroll to first content section
+                    document.querySelector('.content-section')?.scrollIntoView({ behavior: 'smooth' });
+                }
+                break;
+            }
+            case 'totalSales':
+                // Navigate to sales analytics or orders
+                window.location.href = '/seller/analytics';
+                break;
+            case 'pendingOrders':
+                // Navigate to orders with pending filter
+                window.location.href = '/seller/orders?status=pending';
+                break;
+            case 'rating':
+                // Navigate to reviews section
+                document.querySelector('.reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                break;
+            default:
+                break;
         }
     };
 
@@ -252,28 +294,52 @@ const SellerDashboard = () => {
             <div className="dashboard-container">
                 {/* Stats Grid */}
                 <div className="dashboard-stats">
-                    <div className="stat-card">
+                    <div 
+                        className="stat-card clickable-stat-card" 
+                        onClick={() => handleStatsCardClick('totalProducts')}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalProducts')}
+                    >
                         <div className="stat-icon">
-                            <i className="fas fa-box"></i>
+                            <i className="fas fa-store"></i>
                         </div>
                         <div className="stat-value">{stats.totalProducts}</div>
-                        <div className="stat-label">Total Products</div>
+                        <div className="stat-label">Total Items</div>
                     </div>
-                    <div className="stat-card">
+                    <div 
+                        className="stat-card clickable-stat-card" 
+                        onClick={() => handleStatsCardClick('totalSales')}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalSales')}
+                    >
                         <div className="stat-icon">
                             <i className="fas fa-rupee-sign"></i>
                         </div>
                         <div className="stat-value">₹{stats.totalSales.toLocaleString()}</div>
                         <div className="stat-label">Total Sales</div>
                     </div>
-                    <div className="stat-card">
+                    <div 
+                        className="stat-card clickable-stat-card" 
+                        onClick={() => handleStatsCardClick('pendingOrders')}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('pendingOrders')}
+                    >
                         <div className="stat-icon">
                             <i className="fas fa-clock"></i>
                         </div>
                         <div className="stat-value">{stats.pendingOrders}</div>
                         <div className="stat-label">Pending Orders</div>
                     </div>
-                    <div className="stat-card">
+                    <div 
+                        className="stat-card clickable-stat-card" 
+                        onClick={() => handleStatsCardClick('rating')}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('rating')}
+                    >
                         <div className="stat-icon">
                             <i className="fas fa-star"></i>
                         </div>

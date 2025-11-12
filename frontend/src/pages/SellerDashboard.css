@@ -168,11 +168,52 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
+    position: relative;
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Clickable Stats Cards for Seller Dashboard */
+.stat-card.clickable-stat-card {
+    cursor: pointer;
+    user-select: none;
+    overflow: hidden;
+}
+
+.stat-card.clickable-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(8, 145, 178, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+.stat-card.clickable-stat-card:hover::before {
+    left: 100%;
+}
+
+.stat-card.clickable-stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px rgba(8, 145, 178, 0.15);
+    border-color: rgba(8, 145, 178, 0.3);
+}
+
+.stat-card.clickable-stat-card:active {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 15px rgba(8, 145, 178, 0.2);
+}
+
+/* Removed stat-action-hint styles as arrows are no longer used */
+
+.stat-card.clickable-stat-card:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 .stat-icon {
@@ -402,7 +443,6 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     min-height: 180px;
     max-height: 180px;
     height: 180px;
@@ -424,6 +464,7 @@
     font-weight: 600;
     color: var(--primary);
     margin-bottom: 0.25rem;
+    margin-right: 15px;
 }
 
 .stock {
@@ -457,8 +498,8 @@
     justify-content: center;
     align-items: center;
     gap: 0.5rem;
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
     border-top: 1px solid #f3f4f6;
 }
 
