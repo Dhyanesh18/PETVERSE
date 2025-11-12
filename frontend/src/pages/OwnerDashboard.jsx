@@ -443,7 +443,7 @@ const OwnerDashboard = () => {
         return statusColors[status.toLowerCase()] || 'secondary';
     };
 
-    const getStatusIcon = (status) => {
+    const _getStatusIcon = (status) => {
         const statusIcons = {
             'delivered': 'check-circle',
             'processing': 'clock',
@@ -542,99 +542,139 @@ const OwnerDashboard = () => {
                         My Wishlist
                     </h2>
                 </div>
-                <div className="products-grid">
+                <div className="wishlist-grid">
                     {/* Wishlisted Products */}
                     {dashboardData.wishlistedProducts.map(product => (
-                        <div key={product._id} className="product-card">
-                            <a href={`/product/${product._id}`} className="product-link">
-                                <div className="product-image-wrapper">
-                                    <SmartImage 
-                                        item={product}
-                                        type="product"
-                                        alt={product.name}
-                                    />
-                                </div>
-                                <div className="product-details">
-                                    <div className="product-info">
-                                        <h3 className="product-title">{product.name}</h3>
-                                        <p className="product-brand">{product.brand || 'Unknown Brand'}</p>
-                                        <p className="product-description">{product.description}</p>
-                                        <div className="product-price">
-                                            {product.discount > 0 ? (
-                                                <>
-                                                    <span className="original-price">₹{product.price.toFixed(2)}</span>
-                                                    <span className="current-price">
-                                                        ₹{(product.price * (1 - product.discount/100)).toFixed(2)}
-                                                    </span>
-                                                    <span className="discount-badge">{product.discount}% OFF</span>
-                                                </>
-                                            ) : (
-                                                <span className="current-price">₹{product.price.toFixed(2)}</span>
-                                            )}
+                        <div
+                            key={product._id}
+                            className="wishlist-card"
+                            onClick={(e) => {
+                                if (!e.target.closest('.wishlist-action')) {
+                                    window.location.href = `/product/${product._id}`;
+                                }
+                            }}
+                        >
+                            <div className="wishlist-image-container">
+                                <SmartImage 
+                                    item={product}
+                                    type="product"
+                                    alt={product.name}
+                                    className="wishlist-image"
+                                />
+                            </div>
+                            <div className="wishlist-content">
+                                <h3 className="wishlist-title">{product.name}</h3>
+                                <p className="wishlist-brand">{product.brand || 'Pet Brand'}</p>
+                                
+                                {/* Price */}
+                                <div className="wishlist-price">
+                                    {product.discount && product.discount > 0 ? (
+                                        <div className="price-container">
+                                            <span className="price-original">₹{product.price.toFixed(2)}</span>
+                                            <span className="price-current">
+                                                ₹{(product.price * (1 - product.discount / 100)).toFixed(2)}
+                                            </span>
+                                            <span className="price-discount">
+                                                {product.discount}% OFF
+                                            </span>
                                         </div>
-                                        <div className="stock-status">
-                                            {product.stock === 0 ? 'Out of Stock' : 
-                                             product.stock <= 5 ? `Only ${product.stock} left!` : 'In Stock'}
-                                        </div>
-                                    </div>
+                                    ) : (
+                                        <span className="price-current">
+                                            ₹{product.price.toFixed(2)}
+                                        </span>
+                                    )}
                                 </div>
-                            </a>
-                            <div className="product-actions">
-                                <button 
-                                    onClick={() => handleAddToCart(product._id)}
-                                    className="btn btn-primary"
-                                    disabled={product.stock === 0}
-                                >
-                                    Add to Cart
-                                </button>
-                                <button 
-                                    onClick={() => handleRemoveFromWishlist(product._id, 'product')}
-                                    className="btn btn-wishlist-remove"
-                                >
-                                    <i className="fas fa-heart"></i>
-                                </button>
+
+                                {/* Stock */}
+                                <div className="wishlist-stock">
+                                    {product.stock === 0 ? (
+                                        <span className="stock-out">Out of Stock</span>
+                                    ) : product.stock <= 5 ? (
+                                        <span className="stock-low">In Stock</span>
+                                    ) : (
+                                        <span className="stock-available">In Stock</span>
+                                    )}
+                                </div>
+
+                                <div className="wishlist-action wishlist-buttons">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleAddToCart(product._id);
+                                        }}
+                                        disabled={product.stock === 0}
+                                        className={`wishlist-btn-primary ${product.stock === 0 ? 'disabled' : ''}`}
+                                    >
+                                        ADD TO CART
+                                    </button>
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveFromWishlist(product._id, 'product');
+                                        }}
+                                        className="wishlist-btn-heart"
+                                    >
+                                        <i className="fas fa-heart"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
 
                     {/* Wishlisted Pets */}
                     {dashboardData.wishlistedPets.map(pet => (
-                        <div key={pet._id} className="product-card">
-                            <a href={`/seller/detail/${pet._id}`} className="product-link">
-                                <div className="product-image-wrapper">
-                                    <SmartImage 
-                                        item={pet}
-                                        type="pet"
-                                        alt={pet.name}
-                                    />
+                        <div
+                            key={pet._id}
+                            className="wishlist-card"
+                            onClick={(e) => {
+                                if (!e.target.closest('.wishlist-action')) {
+                                    window.location.href = `/seller/detail/${pet._id}`;
+                                }
+                            }}
+                        >
+                            <div className="wishlist-image-container">
+                                <SmartImage 
+                                    item={pet}
+                                    type="pet"
+                                    alt={pet.name}
+                                    className="wishlist-image"
+                                />
+                            </div>
+                            <div className="wishlist-content">
+                                <h3 className="wishlist-title">{pet.name}</h3>
+                                <p className="wishlist-brand">{pet.breed || pet.category}</p>
+                                <p className="wishlist-meta">Age: {pet.age} | N/A</p>
+                                
+                                {/* Price */}
+                                <div className="wishlist-price">
+                                    <span className="price-current">₹{pet.price.toFixed(2)}</span>
                                 </div>
-                                <div className="product-details">
-                                    <div className="product-info">
-                                        <h3 className="product-title">{pet.name}</h3>
-                                        <p className="product-brand">{pet.breed || pet.category}</p>
-                                        <p className="product-meta">Age: {pet.age} | {pet.gender}</p>
-                                        <div className="product-price">
-                                            <span className="current-price">₹{pet.price.toFixed(2)}</span>
-                                        </div>
-                                        <div className="stock-status">
-                                            {pet.available ? 'Available' : 'Not Available'}
-                                        </div>
-                                    </div>
+
+                                {/* Availability */}
+                                <div className="wishlist-stock">
+                                    <span className="stock-available">Available</span>
                                 </div>
-                            </a>
-                            <div className="product-actions">
-                                <button 
-                                    onClick={() => window.location.href = `/seller/detail/${pet._id}`}
-                                    className="btn btn-primary"
-                                >
-                                    View Details
-                                </button>
-                                <button 
-                                    onClick={() => handleRemoveFromWishlist(pet._id, 'pet')}
-                                    className="btn btn-wishlist-remove"
-                                >
-                                    <i className="fas fa-heart"></i>
-                                </button>
+
+                                <div className="wishlist-action wishlist-buttons">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            window.location.href = `/seller/detail/${pet._id}`;
+                                        }}
+                                        className="wishlist-btn-primary"
+                                    >
+                                        VIEW DETAILS
+                                    </button>
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveFromWishlist(pet._id, 'pet');
+                                        }}
+                                        className="wishlist-btn-heart"
+                                    >
+                                        <i className="fas fa-heart"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -804,59 +844,68 @@ const OwnerDashboard = () => {
                 </div>
 
                 {dashboardData.orders.length > 0 ? (
-                    <table className="orders-table">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Product</th>
-                                <th>Date</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {dashboardData.orders.map(order => (
-                                <tr key={order._id}>
-                                    <td>#{order.orderNumber || order._id.toString().slice(-8).toUpperCase()}</td>
-                                    <td>
-                                        <div className="order-product">
-                                            {order.items && order.items.length > 0 ? (
-                                                <>
-                                                    <SmartImage 
-                                                        item={order.items[0].product}
-                                                        type="product"
-                                                        alt={order.items[0].product?.name || 'Product'}
-                                                        className="product-image"
-                                                    />
-                                                    <div className="product-info">
-                                                        <span className="product-name">
-                                                            {order.items[0].product?.name || 'Product No Longer Available'}
-                                                            {order.items.length > 1 && ` +${order.items.length - 1} more`}
-                                                        </span>
-                                                        <small className="quantity">
-                                                            Total: {order.items.reduce((sum, item) => sum + (item.quantity || 1), 0)} items
-                                                        </small>
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <div className="product-info">
-                                                    <span className="product-name">No items</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td>{order.orderDate || formatDate(order.createdAt)}</td>
-                                    <td>₹{(order.totalAmount || 0).toFixed(2)}</td>
-                                    <td>
-                                        <span className={`status-badge ${getStatusColor(order.status)}`}>
-                                            <i className={`fas fa-${getStatusIcon(order.status)}`}></i>
-                                            {order.status || 'pending'}
-                                        </span>
-                                    </td>
+                    <div className="simple-orders-table-container">
+                        <table className="simple-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Product</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {dashboardData.orders.slice(0, 4).map(order => {
+                                    const firstItem = order.items?.[0];
+                                    const productName = firstItem?.product?.name || 'Product Item';
+                                    const totalItems = order.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
+                                    
+                                    return (
+                                        <tr key={order._id} className="simple-table-row">
+                                            <td className="order-id-cell">
+                                                <span className="simple-order-id">
+                                                    #{order.orderNumber || order._id.toString().slice(-8).toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="product-cell">
+                                                <div className="simple-product-info">
+                                                    <div className="simple-product-image">
+                                                        <SmartImage 
+                                                            item={firstItem?.product || firstItem}
+                                                            type="product"
+                                                            alt={productName}
+                                                            className="table-product-img"
+                                                        />
+                                                    </div>
+                                                    <div className="simple-product-details">
+                                                        <span className="simple-product-name">{productName}</span>
+                                                        {order.items && order.items.length > 1 && (
+                                                            <span className="simple-additional-items">+{order.items.length - 1} more items</span>
+                                                        )}
+                                                        <span className="simple-quantity">Qty: {totalItems}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="date-cell">
+                                                <span className="simple-date">
+                                                    {order.orderDate || formatDate(order.createdAt)}
+                                                </span>
+                                            </td>
+                                            <td className="amount-cell">
+                                                <span className="simple-amount">₹{(order.totalAmount || 0).toLocaleString()}</span>
+                                            </td>
+                                            <td className="status-cell">
+                                                <span className={`simple-status-badge status-${order.status || 'pending'}`}>
+                                                    {(order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1)}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
                 ) : (
                     <div className="empty-state">
                         <i className="fas fa-shopping-bag"></i>

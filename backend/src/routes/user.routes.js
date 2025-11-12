@@ -150,22 +150,73 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Fetch orders
+        // Fetch orders with better populate handling
         const orders = await Order.find({ customer: req.user._id })
-            .populate({
-                path: 'items.product',
-                select: 'name images price description seller'
-            })
             .sort({ createdAt: -1 })
             .lean();
 
-        // Clean orders
-        const cleanedOrders = orders
-            .map(o => ({
-                ...o,
-                items: (o.items || []).filter(item => item.product)
-            }))
-            .filter(o => o.items && o.items.length > 0);
+        // Manually populate products to handle deleted products better
+        const Product = require('../models/products');
+        
+        const cleanedOrders = [];
+        
+        for (const order of orders) {
+            if (!order.items || order.items.length === 0) continue;
+            
+            const populatedItems = [];
+            
+            for (const item of order.items) {
+                try {
+                    // Try to fetch the product by ID
+                    const product = await Product.findById(item.product)
+                        .select('name images price description seller brand category')
+                        .lean();
+                    
+                    if (product) {
+                        populatedItems.push({
+                            ...item,
+                            product: {
+                                _id: product._id,
+                                name: product.name,
+                                images: product.images,
+                                price: product.price,
+                                image: product.images && product.images.length > 0
+                                    ? `/images/product/${product._id}/0`
+                                    : null
+                            }
+                        });
+                    } else {
+                        // Product not found in database
+                        populatedItems.push({
+                            ...item,
+                            product: {
+                                _id: item.product,
+                                name: 'Product No Longer Available',
+                                image: null
+                            }
+                        });
+                    }
+                } catch (error) {
+                    // Error fetching product
+                    console.error('Error fetching product:', item.product, error.message);
+                    populatedItems.push({
+                        ...item,
+                        product: {
+                            _id: item.product,
+                            name: 'Product No Longer Available',
+                            image: null
+                        }
+                    });
+                }
+            }
+            
+            if (populatedItems.length > 0) {
+                cleanedOrders.push({
+                    ...order,
+                    items: populatedItems
+                });
+            }
+        }
 
         const validOrders = cleanedOrders.filter(o => 
             !['cancelled', 'pending_payment'].includes(o.status)
