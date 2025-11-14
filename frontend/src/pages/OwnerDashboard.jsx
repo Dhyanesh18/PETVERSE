@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useContext, useCallback, memo } from 'react';
+import React, { useState, useEffect, useContext, useCallback, memo, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { getUserDashboard, togglePetWishlist, toggleProductWishlist } from '../services/api';
 import './OwnerDashboard.css';
+import { useNavigate } from 'react-router-dom';
 
 const OwnerDashboard = () => {
     const { user, logout, isAuthenticated, checkSession } = useContext(AuthContext);
-    
+    const navigate = useNavigate();
     // Redirect to login if not authenticated
     useEffect(() => {
         if (!isAuthenticated && !user) {
             console.log('User not authenticated, redirecting to login');
-            window.location.href = '/login';
+            navigate('/login');
         }
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, navigate,  user]);
     const [dashboardData, setDashboardData] = useState({
         stats: {
             totalOrders: 0,
@@ -27,6 +28,7 @@ const OwnerDashboard = () => {
         bookings: []
     });
     const [loading, setLoading] = useState(true);
+    const loadingCompleted = useRef(false);
     const [notifications, setNotifications] = useState([]);
 
     // Helper function to get proper image URL with fallback strategy
@@ -150,6 +152,7 @@ const OwnerDashboard = () => {
 
     const fetchDashboardData = useCallback(async () => {
         setLoading(true);
+        loadingCompleted.current = false;
         
         try {
             console.log('Fetching dashboard data...');
@@ -201,6 +204,7 @@ const OwnerDashboard = () => {
                 console.warn('API response unsuccessful, using fallback data');
                 throw new Error('API response unsuccessful');
             }
+            loadingCompleted.current = true;
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
             
@@ -301,6 +305,7 @@ const OwnerDashboard = () => {
                 ],
                 bookings: []
             });
+            loadingCompleted.current = true;
         } finally {
             setLoading(false);
         }
@@ -320,12 +325,12 @@ const OwnerDashboard = () => {
         
         // Safety timeout to prevent infinite loading
         const safetyTimeout = setTimeout(() => {
-            if (loading && isMounted) {
+            if (!loadingCompleted.current && isMounted) {
                 console.warn('Dashboard loading safety timeout triggered');
                 setLoading(false);
                 showNotification('Dashboard took too long to load. Please refresh the page.', 'error');
             }
-        }, 15000); // 15 second safety timeout
+        }, 15000);
         
         return () => {
             isMounted = false;
@@ -428,7 +433,7 @@ const OwnerDashboard = () => {
 
     const handleViewOrderDetails = (orderId) => {
         // Navigate to order details page
-        window.location.href = `/order-details/${orderId}`;
+        navigate(`/order-details/${orderId}`);
     };
 
     // Navigation handlers for stats cards
@@ -502,15 +507,13 @@ const OwnerDashboard = () => {
         return (
             <div className="loading-container">
                 <div className="loading-spinner">
-                    <i className="fas fa-spinner fa-spin"></i>
-                    <p>Loading your dashboard...</p>
-                   
                 </div>
+                <p>Loading your dashboard...</p>
             </div>
         );
     }
     return (
-        <div className="dashboard-container" style={{ marginTop: '169px' }}>
+        <div className="dashboard-container" style={{ marginTop: '190px' }}>
             {/* Notifications */}
             {notifications.map(notification => (
                 <div key={notification.id} className={`notification notification-${notification.type}`}>
@@ -613,7 +616,7 @@ const OwnerDashboard = () => {
                             className="wishlist-card"
                             onClick={(e) => {
                                 if (!e.target.closest('.wishlist-action')) {
-                                    window.location.href = `/product/${product._id}`;
+                                    navigate(`/product/${product._id}`);
                                 }
                             }}
                         >
@@ -691,7 +694,7 @@ const OwnerDashboard = () => {
                             className="wishlist-card"
                             onClick={(e) => {
                                 if (!e.target.closest('.wishlist-action')) {
-                                    window.location.href = `/seller/detail/${pet._id}`;
+                                    navigate(`/seller/detail/${pet._id}`);
                                 }
                             }}
                         >
@@ -722,7 +725,7 @@ const OwnerDashboard = () => {
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            window.location.href = `/seller/detail/${pet._id}`;
+                                            navigate(`/seller/detail/${pet._id}`);
                                         }}
                                         className="wishlist-btn-primary"
                                     >

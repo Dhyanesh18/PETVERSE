@@ -33,10 +33,12 @@ router.get('/home', isAuthenticated, async (req, res) => {
             .lean();
         
         // Get products with ratings
-        const products = await Product.find({ isActive: true })
+        const products = await Product.find()
             .limit(5)
             .lean();
         
+        console.log("TOP 5 PRODUCTS", products);
+
         const productIds = products.map(p => p._id);
         const productRatings = await Review.aggregate([
             {
@@ -74,6 +76,8 @@ router.get('/home', isAuthenticated, async (req, res) => {
             .sort((a, b) => b.avgRating - a.avgRating)
             .slice(0, 5);
 
+        console.log("featured products list: ",featuredProducts);
+
         res.json({
             success: true,
             data: {
@@ -86,7 +90,8 @@ router.get('/home', isAuthenticated, async (req, res) => {
                     { name: 'Dogs', image: '/images/dog.jpg', url: '/pets?category=dogs' },
                     { name: 'Cats', image: '/images/cat.jpg', url: '/pets?category=cats' },
                     { name: 'Birds', image: '/images/bird.jpg', url: '/pets?category=birds' },
-                    { name: 'Fish', image: '/images/fish.jpg', url: '/pets?category=fish' }
+                    { name: 'Fish', image: '/images/fish.jpg', url: '/pets?category=fish' },
+                    { name: 'Other', image: '/images/hamster.jpg', url: '/pets?category=other'}
                 ],
                 featuredPets: featuredPets.map(pet => ({
                     _id: pet._id,
@@ -97,23 +102,32 @@ router.get('/home', isAuthenticated, async (req, res) => {
                     category: pet.category,
                     description: pet.description,
                     gender: pet.gender,
+                    images: pet.images || [],
+                    imageCount: pet.images ? pet.images.length : 0,
+                    // Use the correct API endpoint format
                     thumbnail: pet.images && pet.images.length > 0 
-                        ? `/images/pet/${pet._id}/0` 
+                        ? `/api/pets/image/${pet._id}/0` 
                         : null
                 })),
                 featuredProducts: featuredProducts.map(product => ({
                     _id: product._id,
                     name: product.name,
                     price: product.price,
+                    brand: product.brand,
+                    stock: product.stock,
+                    category: product.category,
+                    description: product.description,
                     discount: product.discount || 0,
                     discountedPrice: product.discount > 0 
                         ? (product.price * (1 - product.discount / 100)).toFixed(2)
                         : product.price.toFixed(2),
                     avgRating: product.avgRating,
                     reviewCount: product.reviewCount,
-                    category: product.category,
+                    images: product.images || [],
+                    imageCount: product.images ? product.images.length : 0,
+                    // Use the correct API endpoint format
                     thumbnail: product.images && product.images.length > 0 
-                        ? `/images/product/${product._id}/0` 
+                        ? `/api/products/image/${product._id}/0` 
                         : null
                 })),
                 features: [
