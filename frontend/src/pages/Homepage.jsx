@@ -88,11 +88,11 @@ const Homepage = () => {
 
             {/* Search by Pet Categories */}
             <section className="py-0">
-                <div className="max-w-7xl mx-auto px-4">
+                <div className="max-w-[1400px] mx-auto">
                     <h1 className="text-4xl text-gray-700 my-8 text-center font-bold">
                         Search by Pet
                     </h1>
-                    <div className="flex flex-wrap gap-5 p-2.5 px-5 justify-center items-center mx-auto">
+                    <div className="flex gap-5 p-2.5 px-5 justify-center items-center mx-auto">
                         {petCategories.map((category, index) => (
                             <CategoryCard
                                 key={index}
@@ -108,12 +108,12 @@ const Homepage = () => {
             <hr className="border-none h-px bg-gray-300 w-[90%] mx-auto my-12 mt-15" />
 
             {/* Featured Pets Section */}
-            <section className="py-10">
-                <div className="max-w-7xl mx-auto px-4">
+            <section className="py-0">
+                <div className="max-w-[1400px] mx-auto px-4">
                     <h1 className="text-4xl text-gray-700 my-8 text-center font-bold">
                         Featured Pets
                     </h1>
-                    <div className="flex flex-wrap gap-5 p-2.5 px-5 justify-center items-center mx-auto">
+                    <div className="flex gap-5 p-2.5 px-5 pb-10 justify-center items-center mx-auto">
                         {featuredPets.map((pet) => (
                             <PetCard
                                 key={pet._id}
@@ -130,12 +130,12 @@ const Homepage = () => {
             <hr className="border-none h-px bg-gray-300 w-[90%] mx-auto my-12 mt-15" />
 
             {/* Featured Products Section */}
-            <section className="py-10">
-                <div className="max-w-7xl mx-auto px-4">
+            <section className="py-0">
+                <div className="max-w-[1400px] mx-auto px-4">
                     <h1 className="text-4xl text-gray-700 my-8 text-center font-bold">
                         Featured Products
                     </h1>
-                    <div className="flex flex-wrap gap-5 p-2.5 px-5 justify-center items-center mx-auto">
+                    <div className="flex gap-5 p-2.5 px-5 pb-30 justify-center items-center mx-auto">
                         {featuredProducts.map((product) => (
                             <ProductCard
                                 key={product._id}
