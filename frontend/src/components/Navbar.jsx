@@ -254,13 +254,13 @@ const Navbar = () => {
                                             <FaAngleDown className={`transition-transform duration-300 ${openDropdown === index ? 'rotate-180' : ''}`} />
                                         </button>
                                         {openDropdown === index && (
-                                            <ul className="absolute top-13 left[-30px]  bg-stone-900 shadow-[0_4px_20px_rgba(0,0,0,0.15)] rounded-xl py-2 min-w-5 z-50 list-none animate-fadeInDown">
+                                            <ul className="absolute top-12 -left-2.5  bg-stone-950 shadow-[0_4px_20px_rgba(0,0,0,0.15)] rounded-sm py-2 min-w-6 z-50 list-none animate-fadeInDown">
                                                 {link.dropdownItems.map((item, itemIndex) => (
                                                     <li key={itemIndex}>
                                                         <Link
                                                             to={item.url}
                                                             onClick={() => setOpenDropdown(null)}
-                                                            className="block px-8 py-3 text-teal-600 hover:bg-linear-to-r hover:from-primary-500 hover:to-secondary-500 hover:text-white transition-all duration-300 no-underline font-medium text-sm"
+                                                            className="block px-8 py-3 text-teal-600 hover:bg-linear-to-r hover:from-primary-500 hover:to-secondary-500 hover:text-white hover:bg-stone-900 transition-all duration-300 no-underline font-medium text-sm"
                                                         >
                                                             {item.name}
                                                         </Link>

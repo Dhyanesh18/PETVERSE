@@ -25,6 +25,7 @@ import OwnerDashboard from './pages/OwnerDashboard';
 import SellerDashboard from './pages/SellerDashboard';
 import OrderDetails from './pages/OrderDetails';
 import UserOrderDetails from './pages/UserOrderDetails';
+import PetMate from './pages/PetMate';
 
 function App() {
     return (
@@ -45,6 +46,7 @@ function App() {
                 <Route path="/seller/detail/:id" element={<PetDetail />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/mate" element={<PetMate />} />
 
                 {/* Protected Routes - Seller Only */}
                 <Route
