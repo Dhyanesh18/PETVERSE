@@ -141,7 +141,12 @@ const Navbar = () => {
                             )}
                         </Link>
                         <Link 
-                            to={user ? '/dashboard' : '/login'} 
+                            to={user ? (
+                                user.role === 'seller' ? '/seller/dashboard' :
+                                user.role === 'service_provider' ? '/service-provider/dashboard' :
+                                user.role === 'admin' ? '/admin/dashboard' :
+                                '/dashboard'
+                            ) : '/login'} 
                             className="text-white text-xl hover:scale-125 transition-transform duration-300"
                             style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)', filter: 'none' }}
                             onMouseEnter={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))'}
