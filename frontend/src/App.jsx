@@ -23,6 +23,7 @@ import EventPayment from './pages/EventPayment';
 import EventTicket from './pages/EventTicket';
 import OwnerDashboard from './pages/OwnerDashboard';
 import SellerDashboard from './pages/SellerDashboard';
+import ServiceProviderDashboard from './pages/ServiceProviderDashboard';
 import OrderDetails from './pages/OrderDetails';
 import UserOrderDetails from './pages/UserOrderDetails';
 import PetMate from './pages/PetMate';
@@ -206,8 +207,8 @@ function App() {
                 <Route
                     path="/service-provider/dashboard"
                     element={
-                    <ProtectedRoute allowedRoles={['service_provider']}>
-                        <div>Service Provider Dashboard</div>
+                    <ProtectedRoute allowedRoles={['service_provider', 'admin']}>
+                        <ServiceProviderDashboard />
                     </ProtectedRoute>
                     }
                 />
