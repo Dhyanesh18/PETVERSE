@@ -121,13 +121,14 @@ router.get('/dashboard', isAuthenticated, isServiceProvider, async (req, res) =>
         const formatBooking = (booking) => ({
             _id: booking._id,
             date: booking.date,
-            time: booking.time,
+            slot: booking.slot,
+            time: booking.slot, // Include both for backward compatibility
             status: booking.status || 'confirmed',
             customer: {
                 _id: booking.user?._id,
                 name: booking.user?.fullName || booking.user?.username || 'Customer',
                 email: booking.user?.email,
-                phone: booking.user?.phoneNo
+                phone: booking.user?.phoneNo || booking.user?.phone
             },
             createdAt: booking.createdAt,
             notes: booking.notes || ''
@@ -223,8 +224,8 @@ router.get('/bookings', isAuthenticated, isServiceProvider, async (req, res) => 
         const total = await Booking.countDocuments(query);
 
         const bookings = await Booking.find(query)
-            .populate('user', 'fullName username email phoneNo')
-            .sort({ date: -1, time: -1 })
+            .populate('user', 'fullName username email phoneNo phone')
+            .sort({ date: -1, slot: -1 })
             .skip(skip)
             .limit(parseInt(limit))
             .lean();
@@ -232,13 +233,14 @@ router.get('/bookings', isAuthenticated, isServiceProvider, async (req, res) => 
         const formattedBookings = bookings.map(booking => ({
             _id: booking._id,
             date: booking.date,
-            time: booking.time,
+            slot: booking.slot,
+            time: booking.slot, // Include both for backward compatibility
             status: booking.status || 'confirmed',
             customer: {
                 _id: booking.user?._id,
                 name: booking.user?.fullName || booking.user?.username || 'Customer',
                 email: booking.user?.email,
-                phone: booking.user?.phoneNo
+                phone: booking.user?.phoneNo || booking.user?.phone
             },
             createdAt: booking.createdAt,
             notes: booking.notes || ''
@@ -290,13 +292,14 @@ router.get('/bookings/:bookingId', isAuthenticated, isServiceProvider, async (re
         const formattedBooking = {
             _id: booking._id,
             date: booking.date,
-            time: booking.time,
+            slot: booking.slot,
+            time: booking.slot, // Include both for backward compatibility
             status: booking.status || 'confirmed',
             customer: {
                 _id: booking.user?._id,
                 name: booking.user?.fullName || booking.user?.username || 'Customer',
                 email: booking.user?.email,
-                phone: booking.user?.phoneNo,
+                phone: booking.user?.phoneNo || booking.user?.phone,
                 address: booking.user?.address
             },
             notes: booking.notes || '',
