@@ -75,9 +75,6 @@ export const getServices = (params = {}) => {
 export const getServiceById = (id) => apiClient.get(`/api/services/${id}`);
 export const getAvailableSlots = (serviceId, date) => 
     apiClient.get(`/api/booking/available/slots?serviceId=${serviceId}&date=${date}`);
-export const createServiceBooking = (bookingData) => apiClient.post('/api/booking/create', bookingData);
-export const getUserBookings = () => apiClient.get('/api/booking/user/my-bookings');
-export const cancelBooking = (bookingId) => apiClient.delete(`/api/booking/${bookingId}`);
 
 // ===== User APIs =====
 export const getUserStats = () => apiClient.get('/api/user/stats');
@@ -109,8 +106,9 @@ export const getMyRegisteredEvents = () => apiClient.get('/api/events/my/registe
 export const getMyOrganizedEvents = () => apiClient.get('/api/events/my/organized');
 
 // ===== Booking APIs =====
-export const getBookings = () => apiClient.get('/api/bookings');
-export const createBooking = (bookingData) => apiClient.post('/api/bookings', bookingData);
+export const getBookings = () => apiClient.get('/api/booking/user/my-bookings');
+export const createBooking = (bookingData) => apiClient.post('/api/booking/create', bookingData);
+export const getBookingDetails = (bookingId) => apiClient.get(`/api/booking/details/${bookingId}`);
 
 // ===== Order & Checkout APIs =====
 export const getOrders = () => apiClient.get('/api/orders');

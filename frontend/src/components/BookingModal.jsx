@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAvailableSlots, createServiceBooking } from '../services/api';
+import { getAvailableSlots, createBooking } from '../services/api';
 import { FaTimes, FaCalendarAlt, FaClock, FaCheckCircle } from 'react-icons/fa';
 
 const BookingModal = ({ service, onClose, onSuccess }) => {
@@ -65,7 +65,7 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                 slot: selectedSlot
             };
 
-            await createServiceBooking(bookingData);
+            await createBooking(bookingData);
             
             setSuccess(true);
             setTimeout(() => {
