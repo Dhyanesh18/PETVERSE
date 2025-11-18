@@ -27,6 +27,8 @@ import ServiceProviderDashboard from './pages/ServiceProviderDashboard';
 import OrderDetails from './pages/OrderDetails';
 import UserOrderDetails from './pages/UserOrderDetails';
 import PetMate from './pages/PetMate';
+import Services from './pages/Services';
+import ServiceDetail from './pages/ServiceDetail';
 
 function App() {
     return (
@@ -48,6 +50,10 @@ function App() {
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/mate" element={<PetMate />} />
+
+                {/* Services Routes */}
+                <Route path="/services" element={<Services />} />
+                <Route path="/services/:id" element={<ServiceDetail />} />
 
                 {/* Protected Routes - Seller Only */}
                 <Route
