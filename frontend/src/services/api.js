@@ -68,8 +68,16 @@ export const deleteProduct = (id) => apiClient.delete(`/api/products/${id}`);
 export const getFeaturedProducts = () => apiClient.get('/api/featured-products');
 
 // ===== Service APIs =====
-export const getServices = () => apiClient.get('/api/services');
+export const getServices = (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiClient.get(`/api/services${queryString ? `?${queryString}` : ''}`);
+};
 export const getServiceById = (id) => apiClient.get(`/api/services/${id}`);
+export const getAvailableSlots = (serviceId, date) => 
+    apiClient.get(`/api/booking/available/slots?serviceId=${serviceId}&date=${date}`);
+export const createServiceBooking = (bookingData) => apiClient.post('/api/booking/create', bookingData);
+export const getUserBookings = () => apiClient.get('/api/booking/user/my-bookings');
+export const cancelBooking = (bookingId) => apiClient.delete(`/api/booking/${bookingId}`);
 
 // ===== User APIs =====
 export const getUserStats = () => apiClient.get('/api/user/stats');
