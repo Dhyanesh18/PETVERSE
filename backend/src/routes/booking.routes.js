@@ -158,7 +158,7 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
 });
 
 // Book a time slot
-router.post('/', isAuthenticated, async (req, res) => {
+router.post('/create', isAuthenticated, async (req, res) => {
     try {
         const { serviceId, date, slot, petName } = req.body;
         
