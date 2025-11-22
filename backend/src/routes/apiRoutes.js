@@ -103,16 +103,17 @@ router.get('/products/:id', async (req, res) => {
     }
 });
 
-// Services API endpoints
-router.get('/services', async (req, res) => {
-    try {
-        const services = await Service.find({ available: true });
-        res.json({ success: true, data: services });
-    } catch (err) {
-        console.error('Error fetching services:', err);
-        res.status(500).json({ success: false, message: 'Error fetching services' });
-    }
-});
+// Services API endpoints - REMOVED: Conflicts with /api/services route in service.routes.js
+// The correct services route is in service.routes.js which queries Users with role='service_provider'
+// router.get('/services', async (req, res) => {
+//     try {
+//         const services = await Service.find({ available: true });
+//         res.json({ success: true, data: services });
+//     } catch (err) {
+//         console.error('Error fetching services:', err);
+//         res.status(500).json({ success: false, message: 'Error fetching services' });
+//     }
+// });
 
 // Search API endpoint
 router.get('/search', async (req, res) => {

@@ -103,7 +103,10 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
             return res.json({ 
             success: true,
             data: {
+                slots: [],
                 availableSlots: [],
+                totalSlots: 0,
+                bookedSlots: 0,
                 message: 'No slots available for this date'
             }
             });
@@ -142,9 +145,11 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
         res.json({ 
         success: true,
         data: {
-            availableSlots,
+            slots: availableSlots,
+            availableSlots: availableSlots,
             totalSlots: allPossibleSlots.length,
-            bookedSlots: bookedSlots.length
+            bookedSlots: bookedSlots.length,
+            date: date
         }
         });
     } catch (err) {
