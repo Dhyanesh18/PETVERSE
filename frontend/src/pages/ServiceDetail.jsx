@@ -52,14 +52,22 @@ const ServiceDetail = () => {
         try {
             setLoading(true);
             setError(null);
+            console.log('Fetching service details for ID:', id);
             const response = await getServiceById(id);
-            console.log('Service details:', response.data);
+            console.log('Service details response:', response.data);
             
             const serviceData = response.data.data?.service || response.data.service || response.data;
+            console.log('Parsed service data:', serviceData);
+            
+            if (!serviceData || !serviceData._id) {
+                throw new Error('Invalid service data received');
+            }
+            
             setService(serviceData);
         } catch (error) {
             console.error('Error fetching service:', error);
-            setError(error.response?.data?.message || 'Failed to load service details');
+            console.error('Error response:', error.response);
+            setError(error.response?.data?.message || error.response?.data?.error || error.message || 'Failed to load service details');
         } finally {
             setLoading(false);
         }

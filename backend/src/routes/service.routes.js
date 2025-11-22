@@ -20,6 +20,7 @@ function isAuthenticated(req, res, next) {
 
 // Helper function to calculate service price
 function calculateServicePrice(serviceType) {
+    if (!serviceType) return 300;
     const type = serviceType.toLowerCase();
     if (type === 'veterinarian' || type === 'trainer') return 500;
     if (type === 'groomer') return 300;
@@ -29,6 +30,7 @@ function calculateServicePrice(serviceType) {
 
 // Helper function to map service type to category
 function mapServiceCategory(serviceType) {
+    if (!serviceType) return 'Pet Services';
     const categoryMap = {
         'veterinarian': 'Veterinary Doctor',
         'groomer': 'Pet Grooming',
@@ -55,10 +57,9 @@ router.get('/', async (req, res) => {
             sortBy = 'rating'
         } = req.query;
         
-        let query = { 
-            role: 'service_provider',
-            serviceType: { $exists: true, $ne: null, $ne: '' }
-        };
+        console.log('\n=== SERVICES API CALLED ===');
+        
+        let query = { role: 'service_provider' };
         
         // Filter by categories
         if (categories) {
@@ -73,93 +74,109 @@ router.get('/', async (req, res) => {
         
         const providers = await User.find(query).lean();
         console.log(`Found ${providers.length} service providers`);
+        
+        if (providers.length > 0) {
+            console.log('Service providers:', providers.map(p => ({
+                name: p.fullName,
+                type: p.serviceType,
+                address: p.serviceAddress
+            })));
+        }
+        
+        const validProviders = providers.map(p => ({
+            ...p,
+            serviceType: p.serviceType || 'pet sitter'
+        }));
+        console.log(`Processing ${validProviders.length} providers`);
 
         // Process providers with reviews
-        let services = await Promise.all(providers.map(async (provider) => {
-            console.log(`Processing provider: ${provider._id}, Name: ${provider.fullName}`);
-            
-            // Fetch reviews
-            const reviews = await Review.find({ 
-                targetType: 'ServiceProvider', 
-                targetId: provider._id 
-            }).populate('user', 'fullName username').lean();
-            
-            console.log(`Found ${reviews.length} reviews for provider ${provider._id}`);
-            
-            const reviewCount = reviews.length;
-            const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-            const avgRating = reviewCount > 0 ? totalRating / reviewCount : 0;
-            const formattedRating = parseFloat(avgRating.toFixed(1));
+        const services = await Promise.all(validProviders.map(async (provider) => {
+            try {
+                const reviews = await Review.find({ 
+                    targetType: 'ServiceProvider', 
+                    targetId: provider._id 
+                }).lean();
+                
+                const reviewCount = reviews.length;
+                const avgRating = reviewCount > 0 
+                    ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewCount 
+                    : 0;
 
-            // Get top 2 most recent reviews
-            const topReviews = reviews
-                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                .slice(0, 2)
-                .map(review => ({
-                    rating: review.rating,
-                    comment: review.comment,
-                    createdAt: review.createdAt,
-                    userName: review.user ? review.user.fullName : 'Anonymous'
+                const topReviews = reviews.slice(0, 2).map(r => ({
+                    rating: r.rating || 0,
+                    comment: r.comment || '',
+                    createdAt: r.createdAt,
+                    userName: 'Customer'
                 }));
-            
-            const price = calculateServicePrice(provider.serviceType);
+                
+                const serviceType = provider.serviceType || 'pet sitter';
+                const price = calculateServicePrice(serviceType);
+                const category = mapServiceCategory(serviceType);
 
-            return {
-                _id: provider._id,
-                name: provider.fullName,
-                username: provider.username,
-                email: provider.email,
-                phone: provider.phoneNo || provider.phone,
-                serviceType: provider.serviceType,
-                serviceAddress: provider.serviceAddress,
-                serviceDescription: provider.serviceDescription,
-                experienceYears: provider.experienceYears,
-                isApproved: provider.isApproved,
-                category: mapServiceCategory(provider.serviceType),
-                rating: formattedRating,
-                reviewCount: reviewCount,
-                price: price,
-                topReviews: topReviews,
-                profilePicture: provider.profilePicture 
-                    ? `/images/user/${provider._id}/profile` 
-                    : null
-            };
+                return {
+                    _id: provider._id,
+                    id: provider._id.toString(),
+                    name: provider.fullName || provider.username || 'Service Provider',
+                    fullName: provider.fullName || provider.username || 'Service Provider',
+                    username: provider.username || 'provider',
+                    email: provider.email || 'contact@petverse.com',
+                    phone: provider.phoneNo || provider.phone || 'Not available',
+                    phoneNo: provider.phoneNo || provider.phone || 'Not available',
+                    serviceType: serviceType,
+                    serviceAddress: provider.serviceAddress || 'Location not specified',
+                    serviceDescription: provider.serviceDescription || 'Professional pet services provider.',
+                    experienceYears: provider.experienceYears || 0,
+                    isApproved: provider.isApproved !== false,
+                    category: category,
+                    rating: parseFloat(avgRating.toFixed(1)),
+                    reviewCount: reviewCount,
+                    price: price,
+                    topReviews: topReviews,
+                    profilePicture: null
+                };
+            } catch (providerError) {
+                console.error(`Error processing provider ${provider._id}:`, providerError.message);
+                return null;
+            }
         }));
+        
+        // Filter out any null values from errors
+        let validServices = services.filter(s => s !== null);
 
         // Apply price filters
         if (minPrice) {
             const min = parseFloat(minPrice);
-            services = services.filter(s => s.price >= min);
+            validServices = validServices.filter(s => s.price >= min);
         }
         
         if (maxPrice) {
             const max = parseFloat(maxPrice);
-            services = services.filter(s => s.price <= max);
+            validServices = validServices.filter(s => s.price <= max);
         }
         
         // Apply rating filter
         if (minRating) {
             const rating = parseFloat(minRating);
-            services = services.filter(s => s.rating >= rating);
+            validServices = validServices.filter(s => s.rating >= rating);
         }
 
         // Sort services
         if (sortBy === 'rating') {
-            services.sort((a, b) => b.rating - a.rating);
+            validServices.sort((a, b) => b.rating - a.rating);
         } else if (sortBy === 'price-low') {
-            services.sort((a, b) => a.price - b.price);
+            validServices.sort((a, b) => a.price - b.price);
         } else if (sortBy === 'price-high') {
-            services.sort((a, b) => b.price - a.price);
+            validServices.sort((a, b) => b.price - a.price);
         } else if (sortBy === 'reviews') {
-            services.sort((a, b) => b.reviewCount - a.reviewCount);
+            validServices.sort((a, b) => b.reviewCount - a.reviewCount);
         }
 
         // Pagination
-        const total = services.length;
+        const total = validServices.length;
         const skip = (parseInt(page) - 1) * parseInt(limit);
-        const paginatedServices = services.slice(skip, skip + parseInt(limit));
+        const paginatedServices = validServices.slice(skip, skip + parseInt(limit));
 
-        console.log(`Returning ${paginatedServices.length} services`);
+        console.log(`Returning ${paginatedServices.length} services out of ${total} total\n`);
         
         res.json({
             success: true,
@@ -259,15 +276,18 @@ router.get('/breeders', async (req, res) => {
             
             return {
                 _id: provider._id,
-                name: provider.fullName,
+                id: provider._id.toString(),
+                name: provider.fullName || provider.username || 'Breeder',
+                fullName: provider.fullName || provider.username || 'Breeder',
                 email: provider.email,
                 phone: provider.phoneNo || provider.phone,
+                phoneNo: provider.phoneNo || provider.phone,
                 serviceType: provider.serviceType,
-                serviceAddress: provider.serviceAddress,
-                serviceDescription: provider.serviceDescription,
+                serviceAddress: provider.serviceAddress || 'Location not specified',
+                serviceDescription: provider.serviceDescription || 'Professional breeding services',
                 category: 'Breeding Services',
-                rating: parseFloat(avgRating.toFixed(1)),
-                reviewCount: reviewCount,
+                rating: parseFloat(avgRating.toFixed(1)) || 0,
+                reviewCount: reviewCount || 0,
                 price: 200,
                 profilePicture: provider.profilePicture 
                     ? `/images/user/${provider._id}/profile` 
@@ -344,17 +364,23 @@ router.get('/:id', async (req, res) => {
         
         const serviceDetails = {
             _id: provider._id,
+            id: provider._id.toString(),
             name: provider.fullName || 'Service Provider',
-            category: mapServiceCategory(provider.serviceType),
+            fullName: provider.fullName || 'Service Provider',
+            category: mapServiceCategory(provider.serviceType || ''),
             serviceType: provider.serviceType,
             location: provider.serviceAddress || 'Available Locally',
+            serviceAddress: provider.serviceAddress || 'Available Locally',
             description: provider.serviceDescription || 'Professional pet services provider.',
+            serviceDescription: provider.serviceDescription || 'Professional pet services provider.',
             email: provider.email,
             phone: provider.phoneNo || provider.phone || 'Contact via email',
+            phoneNo: provider.phoneNo || provider.phone,
             experienceYears: provider.experienceYears,
+            experience: provider.experienceYears ? `${provider.experienceYears} years` : undefined,
             availability: provider.availability,
-            rating: parseFloat(avgRating.toFixed(1)),
-            reviewCount: reviewCount,
+            rating: parseFloat(avgRating.toFixed(1)) || 0,
+            reviewCount: reviewCount || 0,
             ratingDistribution,
             price: price,
             profilePicture: provider.profilePicture 
