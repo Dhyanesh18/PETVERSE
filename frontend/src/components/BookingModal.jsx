@@ -26,8 +26,11 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
             setError('');
             setSelectedSlot('');
             
-            const response = await getAvailableSlots(service._id, selectedDate);
-            const slots = response.data.data?.slots || response.data.slots || [];
+            const serviceId = service._id || service.id;
+            console.log('Fetching slots for service:', serviceId, 'date:', selectedDate);
+            const response = await getAvailableSlots(serviceId, selectedDate);
+            console.log('Slots response:', response.data);
+            const slots = response.data.data?.slots || response.data.slots || response.data.availableSlots || [];
             setAvailableSlots(slots);
             
             if (slots.length === 0) {
@@ -60,16 +63,20 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
             setError('');
             
             const bookingData = {
-                serviceId: service._id,
+                serviceId: service._id || service.id,
                 date: selectedDate,
                 slot: selectedSlot
             };
 
-            await createBooking(bookingData);
+            console.log('Creating booking with data:', bookingData);
+            const response = await createBooking(bookingData);
+            console.log('Booking response:', response.data);
             
             setSuccess(true);
             setTimeout(() => {
-                onSuccess && onSuccess();
+                if (onSuccess) {
+                    onSuccess(response.data);
+                }
             }, 2000);
         } catch (error) {
             console.error('Error creating booking:', error);

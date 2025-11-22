@@ -43,29 +43,43 @@ const Services = () => {
         try {
             setLoading(true);
             setError(null);
+            console.log('Fetching services from API...');
             const response = await getServices();
-            console.log('Services response:', response);
-            console.log('Services response.data:', response.data);
+            console.log('Services API response:', response);
+            console.log('Response data structure:', response.data);
             
             // Handle different response structures
             let servicesData = [];
-            if (response.data.data && Array.isArray(response.data.data.services)) {
+            if (response.data.success && response.data.data && Array.isArray(response.data.data.services)) {
                 servicesData = response.data.data.services;
+                console.log('Found services in response.data.data.services:', servicesData.length);
             } else if (response.data.data && Array.isArray(response.data.data)) {
                 servicesData = response.data.data;
+                console.log('Found services in response.data.data:', servicesData.length);
             } else if (Array.isArray(response.data.services)) {
                 servicesData = response.data.services;
+                console.log('Found services in response.data.services:', servicesData.length);
             } else if (Array.isArray(response.data)) {
                 servicesData = response.data;
+                console.log('Found services in response.data:', servicesData.length);
+            } else {
+                console.warn('Unexpected response structure:', response.data);
+                servicesData = [];
             }
             
-            console.log('Parsed services data:', servicesData);
+            console.log('Final parsed services data:', servicesData);
+            console.log('Total services found:', servicesData.length);
+            if (servicesData.length > 0) {
+                console.log('First service sample:', servicesData[0]);
+            }
+            
             setServices(servicesData);
             setFilteredServices(servicesData);
         } catch (error) {
             console.error('Error fetching services:', error);
-            console.error('Error details:', error.response);
-            setError('Failed to load services. Please try again later.');
+            console.error('Error response:', error.response);
+            console.error('Error message:', error.message);
+            setError(error.response?.data?.message || error.response?.data?.error || 'Failed to load services. Please try again later.');
             setServices([]);
             setFilteredServices([]);
         } finally {
@@ -311,9 +325,9 @@ const Services = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredServices.map(service => (
                                     <div
-                                        key={service._id}
+                                        key={service._id || service.id}
                                         className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer"
-                                        onClick={() => navigate(`/services/${service._id}`)}
+                                        onClick={() => navigate(`/services/${service._id || service.id}`)}
                                     >
                                         {/* Service Image */}
                                         <div className="h-48 overflow-hidden bg-gray-200">
@@ -394,7 +408,7 @@ const Services = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    navigate(`/services/${service._id}`);
+                                                    navigate(`/services/${service._id || service.id}`);
                                                 }}
                                                 className="w-full mt-4 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
                                             >
