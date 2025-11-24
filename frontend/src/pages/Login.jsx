@@ -184,20 +184,37 @@ const Login = () => {
             });
 
             if (response.data.success) {
+                console.log('Login response:', response.data.user);
+                
                 // Update AuthContext with user data
-                loginUser(response.data.user);
-
+                await loginUser(response.data.user);
+                
+                console.log('After loginUser called');
+                
                 // Store user data if needed
                 if (formData.rememberMe) {
                     localStorage.setItem('user', JSON.stringify(response.data.user));
                 }
 
+                // Wait for session to be set before navigating
+                await new Promise(resolve => setTimeout(resolve, 100));
+
                 // Redirect based on role from the login response
                 const role = response.data.user?.role || response.data.userRole;
-                let redirectPath = from || '/'; // Redirect to previous page or default
-                
-                // If no specific page was attempted, use role-based redirect
-                if (!from) {
+                console.log('Redirecting with role:', role);
+
+                let redirectPath = '/';
+
+                // Only use 'from' if it's not a role-specific dashboard or login/unauthorized page
+                const shouldUseFrom = from && 
+                    !from.includes('/dashboard') && 
+                    from !== '/login' && 
+                    from !== '/unauthorized';
+
+                if (shouldUseFrom) {
+                    redirectPath = from;
+                } else {
+                    // Always redirect based on current user's role
                     switch(role) {
                         case 'owner':
                             redirectPath = '/dashboard';
@@ -215,7 +232,8 @@ const Login = () => {
                             redirectPath = '/home';
                     }
                 }
-                
+
+                console.log('Final redirect path:', redirectPath);
                 navigate(redirectPath, { replace: true });
             }
         } catch (error) {
