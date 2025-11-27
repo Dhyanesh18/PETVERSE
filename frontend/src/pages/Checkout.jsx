@@ -1,100 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
+import { useAuth } from '../context/AuthContext';
+import { getCheckoutData } from '../services/api';
+import { FaShieldAlt, FaWallet, FaArrowLeft } from 'react-icons/fa';
 
 const Checkout = () => {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const [cart, setCart] = useState({ items: [], subtotal: 0, shipping: 0, tax: 0, total: 0 });
-    const [wallet, setWallet] = useState({ balance: 0 });
+    const [checkoutData, setCheckoutData] = useState({ cart: { items: [], subtotal: 0, shipping: 0, tax: 0, total: 0 }, user: {} });
     
     const [shippingInfo, setShippingInfo] = useState({
         fullName: '',
+        phone: '',
         address: '',
         city: '',
         state: '',
-        zipCode: '',
-        phone: ''
+        zipCode: ''
     });
-
-    const [paymentMethod, setPaymentMethod] = useState('wallet');
+    const [validationErrors, setValidationErrors] = useState({});
 
     useEffect(() => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
         fetchCheckoutData();
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, navigate]);
 
     const fetchCheckoutData = async () => {
         try {
-            // Fetch cart data
-            const cartResponse = await fetch('/api/cart', {
-                credentials: 'include'
-            });
-            
-            if (cartResponse.ok) {
-                const cartData = await cartResponse.json();
-                if (cartData.success && cartData.cart) {
-                    calculateCartTotals(cartData.cart);
+            setLoading(true);
+            const response = await getCheckoutData();
+            if (response.data.success) {
+                setCheckoutData(response.data.data);
+                // Pre-fill user info if available
+                if (response.data.data.user) {
+                    setShippingInfo(prev => ({
+                        ...prev,
+                        fullName: response.data.data.user.fullName || prev.fullName,
+                        phone: response.data.data.user.phone || prev.phone
+                    }));
                 }
+            } else {
+                setError('Failed to load checkout data');
             }
-
-            // Fetch wallet balance
-            const walletResponse = await fetch('/api/wallet', {
-                credentials: 'include'
-            });
-            
-            if (walletResponse.ok) {
-                const walletData = await walletResponse.json();
-                setWallet(walletData);
-            }
-
         } catch (err) {
-            setError('Failed to load checkout data: ' + err.message);
+            console.error('Error fetching checkout data:', err);
+            setError('Failed to load checkout data');
         } finally {
             setLoading(false);
         }
-    };
-
-    const calculateCartTotals = (cartData) => {
-        let subtotal = 0;
-        const processedItems = [];
-
-        if (cartData.items && cartData.items.length > 0) {
-            cartData.items.forEach(item => {
-                if (item.productId) {
-                    const product = item.productId;
-                    const price = product.discount > 0
-                        ? product.price * (1 - product.discount / 100)
-                        : product.price;
-                    
-                    const itemTotal = price * item.quantity;
-                    subtotal += itemTotal;
-
-                    processedItems.push({
-                        ...item,
-                        displayPrice: price,
-                        itemTotal: itemTotal,
-                        name: product.name,
-                        image: product.images?.[0] ? 
-                            `data:${product.images[0].contentType};base64,${product.images[0].data}` : 
-                            '/images/default-product.jpg'
-                    });
-                }
-            });
-        }
-
-        const shipping = subtotal >= 500 ? 0 : 50;
-        const tax = subtotal * 0.10; // 10% tax
-        const total = subtotal + shipping + tax;
-
-        setCart({
-            items: processedItems,
-            subtotal: subtotal,
-            shipping: shipping,
-            tax: tax,
-            total: total
-        });
     };
 
     const handleInputChange = (e) => {
@@ -103,86 +60,69 @@ const Checkout = () => {
             ...prev,
             [name]: value
         }));
+        // Clear validation error when user starts typing
+        if (validationErrors[name]) {
+            setValidationErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
     };
 
-    const validateShippingInfo = () => {
-        const required = ['fullName', 'address', 'city', 'state', 'zipCode', 'phone'];
-        for (const field of required) {
-            if (!shippingInfo[field].trim()) {
-                setError(`${field.replace(/([A-Z])/g, ' $1').toLowerCase()} is required`);
-                return false;
-            }
+    const validateForm = () => {
+        const errors = {};
+        
+        if (!shippingInfo.fullName.trim()) {
+            errors.fullName = 'Full name is required';
         }
-        return true;
+        
+        if (!shippingInfo.phone.trim()) {
+            errors.phone = 'Phone number is required';
+        } else if (!/^[0-9]{10}$/.test(shippingInfo.phone.replace(/\D/g, ''))) {
+            errors.phone = 'Please enter a valid 10-digit phone number';
+        }
+        
+        if (!shippingInfo.address.trim()) {
+            errors.address = 'Address is required';
+        }
+        
+        if (!shippingInfo.city.trim()) {
+            errors.city = 'City is required';
+        }
+        
+        if (!shippingInfo.state.trim()) {
+            errors.state = 'State is required';
+        }
+        
+        if (!shippingInfo.zipCode.trim()) {
+            errors.zipCode = 'ZIP code is required';
+        } else if (!/^[0-9]{6}$/.test(shippingInfo.zipCode)) {
+            errors.zipCode = 'Please enter a valid 6-digit ZIP code';
+        }
+        
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
     };
 
-    const handleCheckout = async () => {
-        if (!validateShippingInfo()) {
-            return;
-        }
 
-        if (cart.items.length === 0) {
-            setError('Your cart is empty');
-            return;
-        }
-
-        if (paymentMethod === 'wallet' && wallet.balance < cart.total) {
-            setError('Insufficient wallet balance. Please add funds to your wallet.');
-            return;
-        }
-
-        setSubmitting(true);
-        setError('');
-
-        try {
-            // First submit shipping info
-            const checkoutResponse = await fetch('/api/checkout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify(shippingInfo)
-            });
-
-            if (!checkoutResponse.ok) {
-                const errorData = await checkoutResponse.json();
-                throw new Error(errorData.error || 'Checkout failed');
-            }
-
-            // Then process payment
-            const paymentResponse = await fetch('/api/payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify({ paymentMethod })
-            });
-
-            const paymentData = await paymentResponse.json();
-
-            if (paymentData.success) {
-                // Redirect to order confirmation with order ID
-                navigate(`/order-confirmation?orderId=${paymentData.orderId}`);
-            } else {
-                setError(paymentData.message || 'Payment failed');
-            }
-
-        } catch (err) {
-            setError('Checkout failed: ' + err.message);
-        } finally {
-            setSubmitting(false);
-        }
+    const { cart = { items: [], subtotal: 0, shipping: 0, tax: 0, total: 0 } } = checkoutData;
+    
+    // Ensure cart values are properly formatted
+    const safeCart = {
+        items: cart.items || [],
+        subtotal: parseFloat(cart.subtotal || 0),
+        shipping: parseFloat(cart.shipping || 0),
+        tax: parseFloat(cart.tax || 0),
+        total: parseFloat(cart.total || 0)
     };
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gray-50">
-                <Header />
+            <div className="min-h-screen bg-gray-50 pt-20">
                 <div className="container mx-auto px-4 py-8">
                     <div className="flex justify-center items-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                        <span className="ml-3 text-lg text-gray-600">Loading checkout...</span>
                     </div>
                 </div>
             </div>
@@ -190,15 +130,27 @@ const Checkout = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Header />
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-6xl mx-auto">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-8">Checkout</h1>
+                    <div className="text-center mb-12">
+                        {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mb-4">
+                            <span className="text-white text-2xl">🛒</span>
+                        </div> */}
+                        <h1 className="text-5xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-2">Checkout</h1>
+                        <p className="text-xl text-gray-600">Complete your order securely and safely</p>
+                        <div className="w-24 h-1 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-4"></div>
+                    </div>
                     
                     {error && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-                            {error}
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-6 flex items-center gap-3">
+                            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                <span className="text-red-600 text-sm">⚠️</span>
+                            </div>
+                            <div>
+                                <div className="font-semibold">Error</div>
+                                <div className="text-sm">{error}</div>
+                            </div>
                         </div>
                     )}
 
@@ -206,8 +158,13 @@ const Checkout = () => {
                         {/* Left Column - Shipping & Payment */}
                         <div className="space-y-6">
                             {/* Shipping Information */}
-                            <div className="bg-white rounded-lg shadow-md p-6">
-                                <h2 className="text-2xl font-semibold text-gray-900 mb-4">Shipping Information</h2>
+                            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                                <div className="flex items-center gap-3 mb-6">
+                                    {/* <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                        <span className="text-indigo-600 text-lg">📦</span>
+                                    </div> */}
+                                    <h2 className="text-2xl font-bold text-gray-900">Shipping Information</h2>
+                                </div>
                                 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
@@ -220,8 +177,14 @@ const Checkout = () => {
                                             value={shippingInfo.fullName}
                                             onChange={handleInputChange}
                                             required
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all ${
+                                                validationErrors.fullName ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your full name"
                                         />
+                                        {validationErrors.fullName && (
+                                            <p className="text-red-500 text-sm mt-1">{validationErrors.fullName}</p>
+                                        )}
                                     </div>
 
                                     <div>
@@ -234,8 +197,14 @@ const Checkout = () => {
                                             value={shippingInfo.phone}
                                             onChange={handleInputChange}
                                             required
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all ${
+                                                validationErrors.phone ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your phone number"
                                         />
+                                        {validationErrors.phone && (
+                                            <p className="text-red-500 text-sm mt-1">{validationErrors.phone}</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -247,11 +216,16 @@ const Checkout = () => {
                                         name="address"
                                         value={shippingInfo.address}
                                         onChange={handleInputChange}
-                                        rows="3"
                                         required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        rows="3"
+                                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all ${
+                                            validationErrors.address ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                        }`}
                                         placeholder="Street address, apartment, suite, etc."
                                     />
+                                    {validationErrors.address && (
+                                        <p className="text-red-500 text-sm mt-1">{validationErrors.address}</p>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
@@ -265,8 +239,14 @@ const Checkout = () => {
                                             value={shippingInfo.city}
                                             onChange={handleInputChange}
                                             required
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all ${
+                                                validationErrors.city ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your city"
                                         />
+                                        {validationErrors.city && (
+                                            <p className="text-red-500 text-sm mt-1">{validationErrors.city}</p>
+                                        )}
                                     </div>
 
                                     <div>
@@ -279,8 +259,14 @@ const Checkout = () => {
                                             value={shippingInfo.state}
                                             onChange={handleInputChange}
                                             required
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all ${
+                                                validationErrors.state ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter your state"
                                         />
+                                        {validationErrors.state && (
+                                            <p className="text-red-500 text-sm mt-1">{validationErrors.state}</p>
+                                        )}
                                     </div>
 
                                     <div>
@@ -293,81 +279,96 @@ const Checkout = () => {
                                             value={shippingInfo.zipCode}
                                             onChange={handleInputChange}
                                             required
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all ${
+                                                validationErrors.zipCode ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Enter ZIP code"
                                         />
+                                        {validationErrors.zipCode && (
+                                            <p className="text-red-500 text-sm mt-1">{validationErrors.zipCode}</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Payment Method */}
-                            <div className="bg-white rounded-lg shadow-md p-6">
-                                <h2 className="text-2xl font-semibold text-gray-900 mb-4">Payment Method</h2>
-                                
-                                <div className="space-y-3">
-                                    <label className="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50">
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="wallet"
-                                            checked={paymentMethod === 'wallet'}
-                                            onChange={(e) => setPaymentMethod(e.target.value)}
-                                            className="mr-3"
-                                        />
-                                        <div className="flex-1">
-                                            <div className="font-medium">Wallet Payment</div>
-                                            <div className="text-sm text-gray-600">
-                                                Current Balance: ₹{wallet.balance?.toFixed(2) || '0.00'}
-                                            </div>
-                                        </div>
-                                    </label>
-
-                                    <label className="flex items-center p-3 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 opacity-50">
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="cod"
-                                            disabled
-                                            className="mr-3"
-                                        />
-                                        <div className="flex-1">
-                                            <div className="font-medium">Cash on Delivery</div>
-                                            <div className="text-sm text-gray-600">Coming Soon</div>
-                                        </div>
-                                    </label>
+                            {/* Navigation Buttons */}
+                            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+                                <div className="flex justify-between items-center">
+                                    <button
+                                        onClick={() => navigate('/cart')}
+                                        className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all font-semibold border border-gray-200"
+                                    >
+                                        Back to Cart
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => {
+                                            if (validateForm()) {
+                                                // Store shipping info in localStorage and navigate to payment
+                                                localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
+                                                navigate('/payment');
+                                            } else {
+                                                setError('Please fill in all required fields correctly.');
+                                            }
+                                        }}
+                                        disabled={safeCart.items.length === 0}
+                                        className="px-8 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Continue to Payment
+                                    </button>
                                 </div>
-
-                                {paymentMethod === 'wallet' && wallet.balance < cart.total && (
-                                    <div className="mt-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-                                        Insufficient wallet balance. You need ₹{(cart.total - wallet.balance).toFixed(2)} more.
-                                    </div>
-                                )}
                             </div>
                         </div>
 
                         {/* Right Column - Order Summary */}
-                        <div className="bg-white rounded-lg shadow-md p-6 h-fit">
-                            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Order Summary</h2>
+                        <div className="bg-white rounded-xl shadow-lg p-6 h-fit border border-gray-100">
+                            <div className="text-center mb-6">
+                                <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-teal-100 to-teal-200 rounded-full mb-3">
+                                    <span className="text-2xl">📋</span>
+                                </div>
+                                <h2 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent">Order Summary</h2>
+                                <div className="w-16 h-0.5 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-2"></div>
+                            </div>
                             
                             {/* Cart Items */}
                             <div className="space-y-4 mb-6">
-                                {cart.items.length === 0 ? (
+                                {safeCart.items.length === 0 ? (
                                     <p className="text-gray-500 text-center py-8">Your cart is empty</p>
                                 ) : (
-                                    cart.items.map((item, index) => (
-                                        <div key={index} className="flex items-center space-x-4 p-3 border border-gray-200 rounded">
+                                    safeCart.items.map((item, index) => (
+                                        <div key={index} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:border-teal-200 transition-colors">
                                             <img
-                                                src={item.image}
+                                                src={
+                                                    item.images && item.images.length > 0
+                                                        ? `http://localhost:8080/api/${item.itemType === 'Pet' ? 'pets' : 'products'}/${item.productId || item._id}/image/0`
+                                                        : item.itemType === 'Pet'
+                                                            ? 'https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+                                                            : 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+                                                }
                                                 alt={item.name}
-                                                className="w-16 h-16 object-cover rounded"
+                                                className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    if (item.itemType === 'Pet') {
+                                                        e.target.src = 'https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
+                                                    } else {
+                                                        e.target.src = 'https://via.placeholder.com/64x64/e5e7eb/6b7280?text=' + encodeURIComponent(item.name.substring(0, 5));
+                                                    }
+                                                }}
                                             />
                                             <div className="flex-1">
-                                                <h3 className="font-medium">{item.name}</h3>
-                                                <p className="text-sm text-gray-600">
-                                                    Qty: {item.quantity} × ₹{item.displayPrice?.toFixed(2)}
-                                                </p>
-                                            </div>
-                                            <div className="font-medium">
-                                                ₹{item.itemTotal?.toFixed(2)}
+                                                <p className="font-semibold text-gray-900 text-sm">{item.name}</p>
+                                                <div className="flex items-center justify-between mt-1">
+                                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Qty: {item.quantity}</span>
+                                                    <div className="text-right">
+                                                        <div className="font-bold text-teal-600">₹{(item.price * item.quantity).toFixed(2)}</div>
+                                                        {item.discount > 0 && (
+                                                            <div className="text-xs text-gray-400 line-through">
+                                                                ₹{(item.originalPrice * item.quantity).toFixed(2)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     ))
@@ -375,39 +376,45 @@ const Checkout = () => {
                             </div>
 
                             {/* Order Totals */}
-                            <div className="border-t pt-4 space-y-2">
-                                <div className="flex justify-between">
-                                    <span>Subtotal:</span>
-                                    <span>₹{cart.subtotal.toFixed(2)}</span>
+                            <div className="border-t border-gray-200 pt-4 space-y-3">
+                                <div className="flex justify-between items-center py-1">
+                                    <span className="text-gray-600">Subtotal:</span>
+                                    <span className="font-semibold">₹{safeCart.subtotal.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span>Shipping:</span>
-                                    <span>{cart.shipping === 0 ? 'Free' : `₹${cart.shipping.toFixed(2)}`}</span>
+                                <div className="flex justify-between items-center py-1">
+                                    <span className="text-gray-600">Shipping:</span>
+                                    <span className={`font-semibold ${safeCart.shipping === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                                        {safeCart.shipping === 0 ? 'Free' : `₹${safeCart.shipping.toFixed(2)}`}
+                                    </span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span>Tax (10%):</span>
-                                    <span>₹{cart.tax.toFixed(2)}</span>
+                                <div className="flex justify-between items-center py-1">
+                                    <span className="text-gray-600">Tax (10%):</span>
+                                    <span className="font-semibold">₹{safeCart.tax.toFixed(2)}</span>
                                 </div>
-                                <div className="border-t pt-2 flex justify-between text-lg font-semibold">
-                                    <span>Total:</span>
-                                    <span>₹{cart.total.toFixed(2)}</span>
+                                <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
+                                    <span className="text-xl font-bold text-gray-900">Total:</span>
+                                    <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent">₹{safeCart.total.toFixed(2)}</span>
                                 </div>
                             </div>
 
-                            {/* Place Order Button */}
-                            <button
-                                onClick={handleCheckout}
-                                disabled={submitting || cart.items.length === 0}
-                                className="w-full mt-6 bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {submitting ? 'Processing...' : `Place Order - ₹${cart.total.toFixed(2)}`}
-                            </button>
 
-                            <div className="mt-4 text-sm text-gray-500 text-center">
-                                {cart.subtotal >= 500 && (
-                                    <p className="text-green-600">🎉 Free shipping on orders over ₹500!</p>
-                                )}
-                            </div>
+                            {safeCart.subtotal >= 500 ? (
+                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-green-600">🎉</span>
+                                        <span className="text-green-700 font-medium text-sm">You got free shipping!</span>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-orange-600">🚚</span>
+                                        <span className="text-orange-700 font-medium text-sm">
+                                            Add ₹{(500 - safeCart.subtotal).toFixed(2)} more for free shipping
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

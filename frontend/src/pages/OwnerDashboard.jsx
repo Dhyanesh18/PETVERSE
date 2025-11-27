@@ -1,19 +1,20 @@
-import React, { useState, useEffect, useContext, useCallback, memo, useRef } from 'react';
+import React, { useState, useEffect, useContext, useCallback, memo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { getUserDashboard, togglePetWishlist, toggleProductWishlist } from '../services/api';
 import './OwnerDashboard.css';
-import { useNavigate } from 'react-router-dom';
 
 const OwnerDashboard = () => {
     const { user, logout, isAuthenticated, checkSession } = useContext(AuthContext);
     const navigate = useNavigate();
+    
     // Redirect to login if not authenticated
     useEffect(() => {
         if (!isAuthenticated && !user) {
             console.log('User not authenticated, redirecting to login');
-            navigate('/login');
+            window.location.href = '/login';
         }
-    }, [isAuthenticated, navigate,  user]);
+    }, [isAuthenticated, user]);
     const [dashboardData, setDashboardData] = useState({
         stats: {
             totalOrders: 0,
@@ -28,26 +29,22 @@ const OwnerDashboard = () => {
         bookings: []
     });
     const [loading, setLoading] = useState(true);
-    const loadingCompleted = useRef(false);
     const [notifications, setNotifications] = useState([]);
+    const [currentOrdersPage, setCurrentOrdersPage] = useState(1);
+    const ordersPerPage = 3;
 
-    // Helper function to get proper image URL with fallback strategy
     const getImageUrl = (item, type = 'product') => {
-        // Immediate fallback for missing items
         if (!item || !item._id) {
             return type === 'pet' ? '/images/default-pet.jpg' : '/images/default-product.jpg';
         }
         
-        // Check if item has thumbnail (from API response)
         if (item.thumbnail) {
-            // Backend returns paths like "/images/product/id/0" - need to add /api prefix
             if (item.thumbnail.startsWith('/images/')) {
                 return `http://localhost:8080/api${item.thumbnail}`;
             }
             return item.thumbnail.startsWith('http') ? item.thumbnail : `http://localhost:8080${item.thumbnail}`;
         }
         
-        // Check if item has images array with actual image data
         if (item.images && item.images.length > 0) {
             const image = item.images[0];
             if (image && image.url) {
@@ -152,7 +149,6 @@ const OwnerDashboard = () => {
 
     const fetchDashboardData = useCallback(async () => {
         setLoading(true);
-        loadingCompleted.current = false;
         
         try {
             console.log('Fetching dashboard data...');
@@ -204,7 +200,6 @@ const OwnerDashboard = () => {
                 console.warn('API response unsuccessful, using fallback data');
                 throw new Error('API response unsuccessful');
             }
-            loadingCompleted.current = true;
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
             
@@ -305,7 +300,6 @@ const OwnerDashboard = () => {
                 ],
                 bookings: []
             });
-            loadingCompleted.current = true;
         } finally {
             setLoading(false);
         }
@@ -325,12 +319,12 @@ const OwnerDashboard = () => {
         
         // Safety timeout to prevent infinite loading
         const safetyTimeout = setTimeout(() => {
-            if (!loadingCompleted.current && isMounted) {
+            if (loading && isMounted) {
                 console.warn('Dashboard loading safety timeout triggered');
                 setLoading(false);
                 showNotification('Dashboard took too long to load. Please refresh the page.', 'error');
             }
-        }, 15000);
+        }, 15000); // 15 second safety timeout
         
         return () => {
             isMounted = false;
@@ -433,7 +427,7 @@ const OwnerDashboard = () => {
 
     const handleViewOrderDetails = (orderId) => {
         // Navigate to order details page
-        navigate(`/order-details/${orderId}`);
+        window.location.href = `/order-details/${orderId}`;
     };
 
     // Navigation handlers for stats cards
@@ -441,35 +435,11 @@ const OwnerDashboard = () => {
         switch(cardType) {
             case 'totalOrders':
                 // Navigate to orders page or scroll to orders section
-                document.querySelector('.my-orders-section')?.scrollIntoView({ behavior: 'smooth' });
                 break;
-            case 'activeOrders':
-            case 'totalSpent':
-            case 'walletBalance': {
-                // Find Recent Orders section by searching through all sections
-                const sections = document.querySelectorAll('.section');
-                let recentOrdersSection = null;
-                
-                sections.forEach(section => {
-                    const titleElement = section.querySelector('.section-title');
-                    if (titleElement && titleElement.textContent.includes('Recent Orders')) {
-                        recentOrdersSection = section;
-                    }
-                });
-                
-                if (recentOrdersSection) {
-                    recentOrdersSection.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    // Fallback: scroll to the first table or any orders-related element
-                    const fallbackElement = document.querySelector('.simple-orders-table-container') || 
-                                          document.querySelector('table') ||
-                                          document.querySelector('[class*="order"]');
-                    if (fallbackElement) {
-                        fallbackElement.scrollIntoView({ behavior: 'smooth' });
-                    }
-                }
+            case 'walletBalance':
+                // Navigate to wallet page
+                navigate('/wallet');
                 break;
-            }
             default:
                 break;
         }
@@ -507,13 +477,15 @@ const OwnerDashboard = () => {
         return (
             <div className="loading-container">
                 <div className="loading-spinner">
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <p>Loading your dashboard...</p>
+                   
                 </div>
-                <p>Loading your dashboard...</p>
             </div>
         );
     }
     return (
-        <div className="dashboard-container" style={{ marginTop: '190px' }}>
+        <div className="dashboard-container" style={{ marginTop: '169px' }}>
             {/* Notifications */}
             {notifications.map(notification => (
                 <div key={notification.id} className={`notification notification-${notification.type}`}>
@@ -616,7 +588,7 @@ const OwnerDashboard = () => {
                             className="wishlist-card"
                             onClick={(e) => {
                                 if (!e.target.closest('.wishlist-action')) {
-                                    navigate(`/product/${product._id}`);
+                                    window.location.href = `/product/${product._id}`;
                                 }
                             }}
                         >
@@ -694,7 +666,7 @@ const OwnerDashboard = () => {
                             className="wishlist-card"
                             onClick={(e) => {
                                 if (!e.target.closest('.wishlist-action')) {
-                                    navigate(`/seller/detail/${pet._id}`);
+                                    window.location.href = `/seller/detail/${pet._id}`;
                                 }
                             }}
                         >
@@ -725,7 +697,7 @@ const OwnerDashboard = () => {
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            navigate(`/seller/detail/${pet._id}`);
+                                            window.location.href = `/seller/detail/${pet._id}`;
                                         }}
                                         className="wishlist-btn-primary"
                                     >
@@ -1068,59 +1040,103 @@ const OwnerDashboard = () => {
                 </div>
 
                 {dashboardData.orders.length > 0 ? (
-                    <div className="orders-list-clean">
-                        {dashboardData.orders.map(order => (
-                            <div key={order._id} className="order-card-clean">
-                                <div className="order-header-clean">
-                                    <div className="order-info-left">
-                                        <h3>Order #{order.orderNumber || order._id.toString().slice(-8).toUpperCase()}</h3>
-                                        <p>{formatDate(order.createdAt)}</p>
+                    <>
+                        <div className="orders-list-clean">
+                            {dashboardData.orders
+                                .slice((currentOrdersPage - 1) * ordersPerPage, currentOrdersPage * ordersPerPage)
+                                .map(order => (
+                                <div key={order._id} className="order-card-clean">
+                                    <div className="order-header-clean">
+                                        <div className="order-info-left">
+                                            <h3>Order #{order.orderNumber || order._id.toString().slice(-8).toUpperCase()}</h3>
+                                            <p>{formatDate(order.createdAt)}</p>
+                                        </div>
+                                        <div className="order-status-clean">
+                                            <span className={`status-pill ${order.status?.toLowerCase() || 'pending'}`}>
+                                                {order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || 'Pending'}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="order-status-clean">
-                                        <span className={`status-pill ${order.status?.toLowerCase() || 'pending'}`}>
-                                            {order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || 'Pending'}
-                                        </span>
-                                    </div>
-                                </div>
-                                {order.items && order.items.length > 0 && (
-                                    <div className="order-items-horizontal">
-                                        {order.items.map((item, index) => (
-                                            <div key={index} className="order-item-horizontal">
-                                                <SmartImage 
-                                                    item={item.product}
-                                                    type="product"
-                                                    alt={item.product?.name || 'Product'}
-                                                    className="item-image-small"
-                                                />
-                                                <div className="item-details-compact">
-                                                    <h4>{item.product?.name || 'Product No Longer Available'}</h4>
-                                                    <p>{item.product?.brand || 'Unknown Brand'}</p>
-                                                    <div className="item-meta">
-                                                        <span>Quantity: {item.quantity || 1}</span>
-                                                        <span>Price: ₹{(item.price || 0).toFixed(2)}</span>
+                                    {order.items && order.items.length > 0 && (
+                                        <div className="order-items-horizontal">
+                                            {order.items.map((item, index) => (
+                                                <div key={index} className="order-item-horizontal">
+                                                    <SmartImage 
+                                                        item={item.product}
+                                                        type="product"
+                                                        alt={item.product?.name || 'Product'}
+                                                        className="item-image-small"
+                                                    />
+                                                    <div className="item-details-compact">
+                                                        <h4>{item.product?.name || 'Product No Longer Available'}</h4>
+                                                        <p>{item.product?.brand || 'Unknown Brand'}</p>
+                                                        <div className="item-meta">
+                                                            <span>Quantity: {item.quantity || 1}</span>
+                                                            <span>Price: ₹{(item.price || 0).toFixed(2)}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                            ))}
+                                        </div>
+                                    )}
 
-                                <div className="order-footer-clean">
-                                    <div className="order-total-clean">
-                                        <span>Total Amount:</span>
-                                        <strong>₹{(order.totalAmount || 0).toLocaleString()}</strong>
+                                    <div className="order-footer-clean">
+                                        <div className="order-total-clean">
+                                            <span>Total Amount:</span>
+                                            <strong>₹{(order.totalAmount || 0).toLocaleString()}</strong>
+                                        </div>
+                                        <button 
+                                            className="view-details-btn"
+                                            onClick={() => handleViewOrderDetails(order._id)}
+                                        >
+                                            <i className="fas fa-eye"></i>
+                                            View Details
+                                        </button>
                                     </div>
-                                    <button 
-                                        className="view-details-btn"
-                                        onClick={() => handleViewOrderDetails(order._id)}
-                                    >
-                                        <i className="fas fa-eye"></i>
-                                        View Details
-                                    </button>
                                 </div>
+                            ))}
+                        </div>
+                        
+                        {/* Pagination */}
+                        {dashboardData.orders.length > ordersPerPage && (
+                            <div className="flex justify-center mt-8 gap-1">
+                                {/* Previous button */}
+                                <button
+                                    onClick={() => setCurrentOrdersPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentOrdersPage === 1}
+                                    className="px-3 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <i className="fas fa-chevron-left"></i>
+                                </button>
+                                
+                                {/* Page numbers */}
+                                {Array.from({ length: Math.ceil(dashboardData.orders.length / ordersPerPage) }, (_, i) => (
+                                    <button
+                                        key={i + 1}
+                                        onClick={() => setCurrentOrdersPage(i + 1)}
+                                        className={`px-3 py-2 border rounded ${
+                                            currentOrdersPage === i + 1
+                                                ? 'bg-teal-600 text-white border-teal-600'
+                                                : 'bg-white border-gray-300 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                                
+                                {/* Next button */}
+                                <button
+                                    onClick={() => setCurrentOrdersPage(prev => 
+                                        Math.min(prev + 1, Math.ceil(dashboardData.orders.length / ordersPerPage))
+                                    )}
+                                    disabled={currentOrdersPage === Math.ceil(dashboardData.orders.length / ordersPerPage)}
+                                    className="px-3 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <i className="fas fa-chevron-right"></i>
+                                </button>
                             </div>
-                        ))}
-                    </div>
+                        )}
+                    </>
                 ) : (
                     <div className="empty-state">
                         <i className="fas fa-shopping-bag"></i>

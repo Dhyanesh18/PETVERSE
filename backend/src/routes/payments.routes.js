@@ -135,7 +135,7 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
             }
         }
 
-        // Calculate total for wallet validation
+        // Calculate total for reference (wallet validation will be done in payment processing)
         let subtotal = 0;
         cart.items.forEach(item => {
             const product = item.productId;
@@ -149,17 +149,6 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
         const shipping = subtotal >= 500 ? 0 : 50;
         const tax = subtotal * 0.10;
         const total = subtotal + shipping + tax;
-
-        const userWallet = await Wallet.findOne({ user: userId });
-        if (!userWallet || userWallet.balance < total) {
-            return res.status(400).json({
-                success: false,
-                error: 'Insufficient balance. Please add funds to your wallet.',
-                requiredAmount: total.toFixed(2),
-                currentBalance: userWallet ? userWallet.balance.toFixed(2) : '0.00',
-                shortfall: userWallet ? (total - userWallet.balance).toFixed(2) : total.toFixed(2)
-            });
-        }
 
         // Store shipping info in session for payment page
         req.session.shippingInfo = { fullName, address, city, state, zipCode, phone };
@@ -267,7 +256,7 @@ router.get('/payment', isAuthenticated, async (req, res) => {
 });
 
 // ------------------ Process Payment (POST) ------------------
-router.post('/payment', isAuthenticated, async (req, res) => {
+router.post('/', isAuthenticated, async (req, res) => {
     try {
         const { paymentMethod } = req.body;
 
@@ -275,12 +264,12 @@ router.post('/payment', isAuthenticated, async (req, res) => {
             return res.status(400).json({
                 success: false,
                 error: 'Payment method is required',
-                supportedMethods: ['wallet', 'upi', 'credit-card']
+                supportedMethods: ['wallet', 'upi', 'card', 'cod']
             });
         }
 
         const customerWallet = await Wallet.findOne({ user: req.user._id });
-        if (!customerWallet) {
+        if (!customerWallet && paymentMethod === 'wallet') {
             return res.status(400).json({
                 success: false,
                 error: 'Wallet not found'
@@ -339,8 +328,8 @@ router.post('/payment', isAuthenticated, async (req, res) => {
                     error: 'Invalid UPI ID format'
                 });
             }
-        } else if (paymentMethod === 'credit-card') {
-            const { cardName, cardNumber, expiryDate, cvv } = req.body;
+        } else if (paymentMethod === 'card') {
+            const { cardName, cardNumber, expiryDate, cvv } = req.body.paymentDetails || {};
             const numRegex = /^\d{13,19}$/;
             const expRegex = /^(0[1-9]|1[0-2])\/(\d{2})$/;
             const cvvRegex = /^\d{3,4}$/;
@@ -352,11 +341,13 @@ router.post('/payment', isAuthenticated, async (req, res) => {
                     error: 'Invalid card details'
                 });
             }
+        } else if (paymentMethod === 'cod') {
+            // COD doesn't require additional validation
         } else {
             return res.status(400).json({
                 success: false,
                 error: 'Unsupported payment method',
-                supportedMethods: ['wallet', 'upi', 'credit-card']
+                supportedMethods: ['wallet', 'upi', 'card', 'cod']
             });
         }
 
@@ -392,8 +383,10 @@ router.post('/payment', isAuthenticated, async (req, res) => {
             }
         }
 
-        // Deduct funds from customer wallet
-        await customerWallet.deductFunds(total);
+        // Deduct funds from customer wallet only for wallet payments
+        if (paymentMethod === 'wallet') {
+            await customerWallet.deductFunds(total);
+        }
 
         const adminWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
         const commission = total * 0.05;
@@ -439,8 +432,8 @@ router.post('/payment', isAuthenticated, async (req, res) => {
             seller: primarySellerId,
             items: orderItems,
             totalAmount: total,
-            status: 'completed',
-            paymentStatus: 'paid',
+            status: paymentMethod === 'cod' ? 'pending' : 'processing',
+            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
             shippingAddress: shippingInfo,
             paymentMethod
         });
@@ -458,9 +451,10 @@ router.post('/payment', isAuthenticated, async (req, res) => {
             message: 'Payment processed successfully',
             data: {
                 orderId: order._id,
+                orderNumber: order.orderNumber,
                 totalAmount: total.toFixed(2),
                 paymentMethod,
-                newWalletBalance: customerWallet.balance.toFixed(2),
+                newWalletBalance: customerWallet ? customerWallet.balance.toFixed(2) : '0.00',
                 redirectPath: `/order-confirmation/${order._id}`
             }
         });
