@@ -33,12 +33,10 @@ router.get('/home', isAuthenticated, async (req, res) => {
             .lean();
         
         // Get products with ratings
-        const products = await Product.find()
+        const products = await Product.find({ isActive: true })
             .limit(5)
             .lean();
         
-        console.log("TOP 5 PRODUCTS", products);
-
         const productIds = products.map(p => p._id);
         const productRatings = await Review.aggregate([
             {
@@ -76,8 +74,6 @@ router.get('/home', isAuthenticated, async (req, res) => {
             .sort((a, b) => b.avgRating - a.avgRating)
             .slice(0, 5);
 
-        console.log("featured products list: ",featuredProducts);
-
         res.json({
             success: true,
             data: {
@@ -90,8 +86,7 @@ router.get('/home', isAuthenticated, async (req, res) => {
                     { name: 'Dogs', image: '/images/dog.jpg', url: '/pets?category=dogs' },
                     { name: 'Cats', image: '/images/cat.jpg', url: '/pets?category=cats' },
                     { name: 'Birds', image: '/images/bird.jpg', url: '/pets?category=birds' },
-                    { name: 'Fish', image: '/images/fish.jpg', url: '/pets?category=fish' },
-                    { name: 'Other', image: '/images/hamster.jpg', url: '/pets?category=other'}
+                    { name: 'Fish', image: '/images/fish.jpg', url: '/pets?category=fish' }
                 ],
                 featuredPets: featuredPets.map(pet => ({
                     _id: pet._id,
@@ -102,32 +97,23 @@ router.get('/home', isAuthenticated, async (req, res) => {
                     category: pet.category,
                     description: pet.description,
                     gender: pet.gender,
-                    images: pet.images || [],
-                    imageCount: pet.images ? pet.images.length : 0,
-                    // Use the correct API endpoint format
                     thumbnail: pet.images && pet.images.length > 0 
-                        ? `/api/pets/image/${pet._id}/0` 
+                        ? `/images/pet/${pet._id}/0` 
                         : null
                 })),
                 featuredProducts: featuredProducts.map(product => ({
                     _id: product._id,
                     name: product.name,
                     price: product.price,
-                    brand: product.brand,
-                    stock: product.stock,
-                    category: product.category,
-                    description: product.description,
                     discount: product.discount || 0,
                     discountedPrice: product.discount > 0 
                         ? (product.price * (1 - product.discount / 100)).toFixed(2)
                         : product.price.toFixed(2),
                     avgRating: product.avgRating,
                     reviewCount: product.reviewCount,
-                    images: product.images || [],
-                    imageCount: product.images ? product.images.length : 0,
-                    // Use the correct API endpoint format
+                    category: product.category,
                     thumbnail: product.images && product.images.length > 0 
-                        ? `/api/products/image/${product._id}/0` 
+                        ? `/images/product/${product._id}/0` 
                         : null
                 })),
                 features: [
@@ -1252,7 +1238,147 @@ router.post('/payment/process', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get order confirmation
+// Cancel order by user
+router.patch('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
+    try {
+        const order = await Order.findOne({
+            _id: req.params.orderId,
+            customer: req.user._id
+        }).populate('seller');
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                error: 'Order not found'
+            });
+        }
+
+        // Check if order can be cancelled
+        if (order.status === 'cancelled') {
+            return res.status(400).json({
+                success: false,
+                error: 'Order is already cancelled'
+            });
+        }
+
+        if (order.status === 'delivered' || order.status === 'completed') {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot cancel delivered or completed orders'
+            });
+        }
+
+        const oldStatus = order.status;
+        
+        // Handle refund - only for online payments, not COD
+        if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
+            console.log('User cancelling order - processing refund for online payment...');
+            
+            // Get wallets
+            const customerWallet = await Wallet.findOne({ user: req.user._id });
+            const sellerWallet = await Wallet.findOne({ user: order.seller._id });
+            
+            if (!customerWallet) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Customer wallet not found'
+                });
+            }
+            
+            if (!sellerWallet) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Seller wallet not found'
+                });
+            }
+            
+            const refundAmount = order.totalAmount;
+            const sellerShare = refundAmount * 0.95; // Seller received 95%
+            const adminCommission = refundAmount * 0.05; // Admin received 5%
+            
+            // Refund customer
+            await customerWallet.addFunds(refundAmount);
+            console.log(`User cancellation: Refunded ₹${refundAmount} to customer wallet`);
+            
+            // Deduct from seller
+            try {
+                await sellerWallet.deductFunds(sellerShare);
+                console.log(`User cancellation: Deducted ₹${sellerShare} from seller`);
+            } catch (err) {
+                console.error('Seller has insufficient balance for refund:', err.message);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Insufficient seller balance for refund. Please contact support.'
+                });
+            }
+            
+            // Deduct from admin wallet
+            const adminWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
+            if (adminWallet) {
+                try {
+                    await adminWallet.deductFunds(adminCommission);
+                    console.log(`User cancellation: Deducted ₹${adminCommission} commission from admin`);
+                } catch (err) {
+                    console.error('Admin has insufficient balance for refund:', err.message);
+                }
+            }
+            
+            // Create refund transaction
+            await new Transaction({
+                from: order.seller._id,
+                to: req.user._id,
+                amount: refundAmount,
+                type: 'user_cancellation_refund',
+                description: `Refund for user cancelled order ${order._id}`
+            }).save();
+            
+            order.paymentStatus = 'refunded';
+            console.log('User cancellation refund completed successfully');
+        } else if (order.paymentMethod === 'cod') {
+            console.log('User cancelled COD order - no refund needed');
+            order.paymentStatus = 'cancelled';
+        } else {
+            console.log('User cancellation - no refund needed, payment was not completed');
+            order.paymentStatus = 'cancelled';
+        }
+        
+        // Update order status
+        order.status = 'cancelled';
+        
+        // Add to status history
+        if (!order.statusHistory) {
+            order.statusHistory = [];
+        }
+        order.statusHistory.push({
+            status: 'cancelled',
+            timestamp: new Date(),
+            updatedBy: req.user._id,
+            updatedByRole: 'customer',
+            notes: 'Cancelled by customer'
+        });
+        
+        await order.save();
+        
+        res.json({
+            success: true,
+            message: 'Order cancelled successfully',
+            data: {
+                orderId: order._id,
+                status: order.status,
+                paymentStatus: order.paymentStatus,
+                refundProcessed: order.paymentMethod !== 'cod' && order.paymentStatus === 'refunded'
+            }
+        });
+    } catch (error) {
+        console.error('Error cancelling order:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error cancelling order',
+            message: error.message
+        });
+    }
+});
+
 router.get('/order-confirmation/:orderId', isAuthenticated, async (req, res) => {
     try {
         const order = await Order.findById(req.params.orderId)
@@ -1545,6 +1671,178 @@ router.get('/wishlist', isAuthenticated, async (req, res) => {
             success: false,
             error: 'Error fetching wishlist',
             message: err.message
+        });
+    }
+});
+
+// Get wallet data with transactions
+router.get('/wallet', isAuthenticated, async (req, res) => {
+    try {
+        const wallet = await Wallet.findOne({ user: req.user._id });
+        if (!wallet) {
+            return res.status(404).json({
+                success: false,
+                error: 'Wallet not found'
+            });
+        }
+
+        // Get recent transactions with user details
+        const transactions = await Transaction.find({
+            $or: [
+                { from: req.user._id },
+                { to: req.user._id }
+            ]
+        })
+        .populate('from', 'fullName username')
+        .populate('to', 'fullName username')
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean();
+
+        res.json({
+            success: true,
+            data: {
+                balance: wallet.balance,
+                transactions: transactions.map(transaction => {
+                    // Determine if this is a credit or debit for the current user
+                    const isCredit = transaction.to._id.toString() === req.user._id.toString();
+                    const otherUser = isCredit ? transaction.from : transaction.to;
+                    
+                    // Generate better descriptions based on transaction type
+                    let description = transaction.description;
+                    if (!description || description === '') {
+                        switch (transaction.type) {
+                            case 'add_money':
+                                description = 'Money added to wallet';
+                                break;
+                            case 'order_payment':
+                                description = isCredit ? 
+                                    `Payment received from ${otherUser.fullName || otherUser.username}` :
+                                    'Order payment';
+                                break;
+                            case 'refund':
+                            case 'user_cancellation_refund':
+                            case 'admin_refund':
+                                description = isCredit ? 
+                                    'Refund for cancelled order' :
+                                    'Refund processed';
+                                break;
+                            case 'commission':
+                                description = isCredit ? 
+                                    'Commission earned' :
+                                    'Platform commission';
+                                break;
+                            case 'event_payment':
+                                description = isCredit ? 
+                                    'Event booking payment received' :
+                                    'Event booking payment';
+                                break;
+                            case 'service_payment':
+                                description = isCredit ? 
+                                    'Service payment received' :
+                                    'Service payment';
+                                break;
+                            default:
+                                description = isCredit ? 'Money received' : 'Money sent';
+                        }
+                    }
+                    
+                    return {
+                        _id: transaction._id,
+                        amount: transaction.amount,
+                        type: transaction.type,
+                        description: description,
+                        createdAt: transaction.createdAt,
+                        isCredit: isCredit,
+                        otherUser: {
+                            name: otherUser.fullName || otherUser.username,
+                            id: otherUser._id
+                        }
+                    };
+                })
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching wallet data:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching wallet data',
+            message: error.message
+        });
+    }
+});
+
+// Add money to wallet
+router.post('/wallet/add-money', isAuthenticated, async (req, res) => {
+    try {
+        const { amount, paymentMethod, paymentDetails } = req.body;
+
+        if (!amount || amount <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid amount'
+            });
+        }
+
+        if (!paymentMethod || !['card', 'upi'].includes(paymentMethod)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid payment method'
+            });
+        }
+
+        // Validate payment details based on method
+        if (paymentMethod === 'card') {
+            const { cardName, cardNumber, expiryDate, cvv } = paymentDetails;
+            if (!cardName || !cardNumber || !expiryDate || !cvv) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid card details'
+                });
+            }
+        } else if (paymentMethod === 'upi') {
+            const { upiId } = paymentDetails;
+            if (!upiId || !/^[\w.\-]{2,}@[A-Za-z]{2,}$/.test(upiId)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid UPI ID'
+                });
+            }
+        }
+
+        // Find or create wallet
+        let wallet = await Wallet.findOne({ user: req.user._id });
+        if (!wallet) {
+            wallet = new Wallet({ user: req.user._id, balance: 0 });
+            await wallet.save();
+        }
+
+        // Add money to wallet
+        await wallet.addFunds(amount);
+
+        // Create transaction record
+        await new Transaction({
+            from: req.user._id,
+            to: req.user._id,
+            amount: amount,
+            type: 'add_money',
+            description: `Added money via ${paymentMethod}`
+        }).save();
+
+        res.json({
+            success: true,
+            message: 'Money added successfully',
+            data: {
+                newBalance: wallet.balance,
+                amountAdded: amount
+            }
+        });
+    } catch (error) {
+        console.error('Error adding money to wallet:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error adding money to wallet',
+            message: error.message
         });
     }
 });

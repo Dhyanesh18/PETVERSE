@@ -23,13 +23,14 @@ export const CartProvider = ({ children }) => {
             const cartData = response.data;
             console.log('Cart API response:', cartData);
             
-            // Handle different response structures
-            const items = cartData.data?.items || cartData.items || [];
+            // Handle cart.routes.js response structure: { success: true, data: { cart: { items: [], totalItems: 0 } } }
+            const cart = cartData.data?.cart;
+            const items = cart?.items || [];
             console.log('Cart items:', items);
             console.log('Cart items length:', items?.length);
             
             setCart(items);
-            const count = items.reduce((sum, item) => sum + item.quantity, 0);
+            const count = cart?.totalItems || items.reduce((sum, item) => sum + item.quantity, 0);
             console.log('Calculated cart count:', count);
             setCartCount(count);
         } catch (error) {
