@@ -16,19 +16,17 @@ import ProductDetail from './pages/ProductDetail';
 import AddProduct from './pages/AddProduct';
 import EditProduct from './pages/EditProduct';
 import Wishlist from './pages/Wishlist';
-import Events from './pages/Events';
-import EventDetail from './pages/EventDetail';
-import AddEvent from './pages/AddEvent';
-import EventPayment from './pages/EventPayment';
-import EventTicket from './pages/EventTicket';
 import OwnerDashboard from './pages/OwnerDashboard';
 import SellerDashboard from './pages/SellerDashboard';
-import ServiceProviderDashboard from './pages/ServiceProviderDashboard';
 import OrderDetails from './pages/OrderDetails';
 import UserOrderDetails from './pages/UserOrderDetails';
-import PetMate from './pages/PetMate';
-import Services from './pages/Services';
-import ServiceDetail from './pages/ServiceDetail';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import Payment from './pages/Payment';
+import OrderConfirmation from './pages/OrderConfirmation';
+import Wallet from './pages/Wallet';
+import About from './pages/About';
+import SearchResults from './pages/SearchResults';
 
 function App() {
     return (
@@ -45,15 +43,12 @@ function App() {
 
                 {/* Public Routes - No Authentication Required */}
                 <Route path="/home" element={<Homepage />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/search" element={<SearchResults />} />
                 <Route path="/pets" element={<Pets />} />
                 <Route path="/seller/detail/:id" element={<PetDetail />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/mate" element={<PetMate />} />
-
-                {/* Services Routes */}
-                <Route path="/services" element={<Services />} />
-                <Route path="/services/:id" element={<ServiceDetail />} />
 
                 {/* Protected Routes - Seller Only */}
                 <Route
@@ -151,44 +146,52 @@ function App() {
                     }
                 />
 
-                {/* Events */}
+                {/* Cart - Requires Login */}
                 <Route
-                    path="/events"
+                    path="/cart"
                     element={
                     <ProtectedRoute>
-                        <Events />
+                        <Cart />
                     </ProtectedRoute>
                     }
                 />
+
+                {/* Checkout - Requires Login */}
                 <Route
-                    path="/events/:id"
+                    path="/checkout"
                     element={
                     <ProtectedRoute>
-                        <EventDetail />
+                        <Checkout />
                     </ProtectedRoute>
                     }
                 />
+
+                {/* Payment - Requires Login */}
                 <Route
-                    path="/events/add"
+                    path="/payment"
                     element={
-                    <ProtectedRoute allowedRoles={['service_provider']}>
-                        <AddEvent />
+                    <ProtectedRoute>
+                        <Payment />
                     </ProtectedRoute>
                     }
                 />
+
+                {/* Order Confirmation - Requires Login */}
                 <Route
-                    path="/events/:id/payment"
+                    path="/order-confirmation/:orderId?"
                     element={
-                    <ProtectedRoute allowedRoles={['owner']}>
-                        <EventPayment />
+                    <ProtectedRoute>
+                        <OrderConfirmation />
                     </ProtectedRoute>
                     }
                 />
+
+                {/* Wallet - Requires Login */}
                 <Route
-                    path="/events/:id/ticket"
+                    path="/wallet"
                     element={
-                    <ProtectedRoute allowedRoles={['owner']}>
-                        <EventTicket />
+                    <ProtectedRoute>
+                        <Wallet />
                     </ProtectedRoute>
                     }
                 />
@@ -213,8 +216,8 @@ function App() {
                 <Route
                     path="/service-provider/dashboard"
                     element={
-                    <ProtectedRoute allowedRoles={['service_provider', 'admin']}>
-                        <ServiceProviderDashboard />
+                    <ProtectedRoute allowedRoles={['service_provider']}>
+                        <div>Service Provider Dashboard</div>
                     </ProtectedRoute>
                     }
                 />
@@ -227,6 +230,10 @@ function App() {
                     }
                 />
 
+                {/* The catch-all route should redirect to /home if authenticated,
+                    or /login if not. Your <ProtectedRoute> on /home
+                    will handle this automatically.
+                */}
                 <Route path="*" element={<Navigate to="/home" replace />} />
                 </Routes>
             </Layout>

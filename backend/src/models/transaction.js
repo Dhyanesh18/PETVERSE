@@ -15,6 +15,15 @@ const transactionSchema = new mongoose.Schema({
     type: Number, 
     required: true 
   },
+  type: {
+    type: String,
+    enum: ['add_money', 'order_payment', 'refund', 'user_cancellation_refund', 'admin_refund', 'commission', 'event_payment', 'service_payment'],
+    required: true
+  },
+  description: {
+    type: String,
+    default: ''
+  },
   createdAt: { 
     type: Date, 
     default: Date.now 
