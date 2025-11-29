@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import api from '../utils/api';
 
 const Navbar = () => {
-    const { user, isAuthenticated, logout } = useAuth();
+    const { user } = useAuth();
     const { cartCount } = useCart();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -77,13 +77,19 @@ const Navbar = () => {
 
     const performSearch = async (query) => {
         try {
-            const response = await api.get(`/search/api?term=${encodeURIComponent(query)}`);
+            const response = await api.get(`/search?q=${encodeURIComponent(query)}`);
             if (response.data.success) {
-                setSearchResults(response.data.data);
+                setSearchResults({
+                    pets: response.data.pets || [],
+                    products: response.data.products || [],
+                    services: response.data.services || []
+                });
                 setShowSearchResults(true);
             }
         } catch (error) {
             console.error('Search failed:', error);
+            setSearchResults({ pets: [], products: [], services: [] });
+            setShowSearchResults(false);
         }
     };
 
@@ -109,7 +115,7 @@ const Navbar = () => {
                 className={`w-full px-15 py-5 transition-all duration-300 ${
                     isHomepage && !isScrolled && !openDropdown
                         ? 'bg-transparent' 
-                        : 'bg-[#111] shadow-[0_2px_5px_rgba(0,0,0,0.5)]'
+                        : 'bg-[#111] shadow-[0_2px_20px_rgba(0,0,0,0.5)]'
                 }`}
             >
                 <div className="max-w-screen-2xl mx-auto flex items-center gap-8">
@@ -141,12 +147,7 @@ const Navbar = () => {
                             )}
                         </Link>
                         <Link 
-                            to={user ? (
-                                user.role === 'seller' ? '/seller/dashboard' :
-                                user.role === 'service_provider' ? '/service-provider/dashboard' :
-                                user.role === 'admin' ? '/admin/dashboard' :
-                                '/dashboard'
-                            ) : '/login'} 
+                            to={user ? '/dashboard' : '/login'} 
                             className="text-white text-xl hover:scale-125 transition-transform duration-300"
                             style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)', filter: 'none' }}
                             onMouseEnter={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))'}
@@ -259,13 +260,13 @@ const Navbar = () => {
                                             <FaAngleDown className={`transition-transform duration-300 ${openDropdown === index ? 'rotate-180' : ''}`} />
                                         </button>
                                         {openDropdown === index && (
-                                            <ul className="absolute top-12 -left-2.5  bg-stone-950 shadow-[0_4px_20px_rgba(0,0,0,0.15)] rounded-sm py-2 min-w-6 z-50 list-none animate-fadeInDown">
+                                            <ul className="absolute top-13 left[-30px]  bg-stone-900 shadow-[0_4px_20px_rgba(0,0,0,0.15)] rounded-xl py-2 min-w-5 z-50 list-none animate-fadeInDown">
                                                 {link.dropdownItems.map((item, itemIndex) => (
                                                     <li key={itemIndex}>
                                                         <Link
                                                             to={item.url}
                                                             onClick={() => setOpenDropdown(null)}
-                                                            className="block px-8 py-3 text-teal-600 hover:bg-linear-to-r hover:from-primary-500 hover:to-secondary-500 hover:text-white hover:bg-stone-900 transition-all duration-300 no-underline font-medium text-sm"
+                                                            className="block px-8 py-3 text-teal-600 hover:bg-linear-to-r hover:from-primary-500 hover:to-secondary-500 hover:text-white transition-all duration-300 no-underline font-medium text-sm"
                                                         >
                                                             {item.name}
                                                         </Link>
