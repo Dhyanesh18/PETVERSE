@@ -27,6 +27,10 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import Wallet from './pages/Wallet';
 import About from './pages/About';
 import SearchResults from './pages/SearchResults';
+import Signup from './pages/Signup';
+import SignupOwner from './pages/SignupOwner';
+import SignupSeller from './pages/SignupSeller';
+import SignupServiceProvider from './pages/SignupServiceProvider';
 
 function App() {
     return (
@@ -37,6 +41,10 @@ function App() {
                 <Routes>
                 <Route path="/login" element={<Login />} /> 
                 <Route path="/unauthorized" element={<Unauthorized />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/signup/owner" element={<SignupOwner />} />
+                <Route path="/signup/seller" element={<SignupSeller />} />
+                <Route path="/signup/service-provider" element={<SignupServiceProvider />} />
 
                 {/* Public Routes */}
                 <Route path="/" element={<Navigate to="/home" replace />} />

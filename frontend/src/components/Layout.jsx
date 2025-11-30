@@ -8,18 +8,17 @@ import Footer from './Footer';
 const Layout = ({ children }) => {
     const location = useLocation();
     
-    const authRoutes = ['/login', '/signup'];
-    const hideNavAndFooter = authRoutes.includes(location.pathname);
+    // Hide navbar on login and all signup pages
+    const hideNavbar = location.pathname === '/login' || 
+                       location.pathname.startsWith('/signup');
 
     return (
-        <div className="flex flex-col min-h-screen">
-
-            {!hideNavAndFooter && <Navbar />}
-
-            <main className={`grow ${!hideNavAndFooter ? '' : ''}`}>
+        <div className="min-h-screen flex flex-col">
+            {!hideNavbar && <Navbar />}
+            <main className="flex-grow">
                 {children}
             </main>
-            {!hideNavAndFooter && <Footer />}
+            {!hideNavbar && <Footer />}
         </div>
     );
 };
