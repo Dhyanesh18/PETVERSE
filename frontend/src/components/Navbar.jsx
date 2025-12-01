@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { FaShoppingCart, FaUser, FaSearch, FaBars, FaTimes, FaPaw, FaAngleDown } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+import { useAuth } from '../hooks/useAuth';
+import { useCart } from '../hooks/useCart';
 import api from '../utils/api';
 
 const Navbar = () => {
@@ -20,6 +20,23 @@ const Navbar = () => {
     const location = useLocation();
 
     const isHomepage = location.pathname === '/' || location.pathname === '/home';
+
+    // Get role-based dashboard URL
+    const getDashboardUrl = () => {
+        if (!user) return '/login';
+        
+        switch(user.role) {
+            case 'seller':
+                return '/seller/dashboard';
+            case 'service_provider':
+                return '/service-provider/dashboard';
+            case 'admin':
+                return '/admin/dashboard';
+            case 'owner':
+            default:
+                return '/dashboard';
+        }
+    };
 
     const navLinks = [
         { name: 'Home', url: '/home' },
@@ -147,7 +164,7 @@ const Navbar = () => {
                             )}
                         </Link>
                         <Link 
-                            to={user ? '/dashboard' : '/login'} 
+                            to={getDashboardUrl()} 
                             className="text-white text-xl hover:scale-125 transition-transform duration-300"
                             style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)', filter: 'none' }}
                             onMouseEnter={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))'}

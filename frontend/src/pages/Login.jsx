@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { FaPaw, FaExclamationCircle } from 'react-icons/fa';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { fetchCart } from '../redux/slices/cartSlice';
 import api from '../utils/api';
 
 const Login = () => {
@@ -23,6 +25,7 @@ const Login = () => {
     
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch();
     const { login: loginUser } = useAuth();
     
     // Get the page user was trying to access before login
@@ -190,6 +193,9 @@ const Login = () => {
                 await loginUser(response.data.user);
                 
                 console.log('After loginUser called');
+                
+                // Fetch cart immediately after login
+                dispatch(fetchCart());
                 
                 // Store user data if needed
                 if (formData.rememberMe) {

@@ -1847,4 +1847,109 @@ router.post('/wallet/add-money', isAuthenticated, async (req, res) => {
     }
 });
 
+// Update user profile
+router.put('/profile', isAuthenticated, async (req, res) => {
+    try {
+        const { fullName, email, phone, businessName, businessAddress } = req.body;
+        
+        console.log('Profile update request:', {
+            userId: req.user._id,
+            data: req.body
+        });
+
+        // Validate required fields
+        if (!fullName || !email || !phone) {
+            return res.status(400).json({
+                success: false,
+                error: 'Full name, email, and phone are required'
+            });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid email format'
+            });
+        }
+
+        // Validate phone number
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(phone.replace(/\D/g, ''))) {
+            return res.status(400).json({
+                success: false,
+                error: 'Phone number must be 10 digits'
+            });
+        }
+
+        // Check if email is already taken by another user
+        const existingUser = await User.findOne({ 
+            email, 
+            _id: { $ne: req.user._id } 
+        });
+        
+        if (existingUser) {
+            return res.status(400).json({
+                success: false,
+                error: 'Email is already in use by another account'
+            });
+        }
+
+        // Build update object
+        const updateData = {
+            fullName,
+            email,
+            phone
+        };
+
+        // Add seller-specific fields if user is a seller
+        if (req.user.role === 'seller') {
+            if (!businessName || !businessAddress) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Business name and address are required for sellers'
+                });
+            }
+            updateData.businessName = businessName;
+            updateData.businessAddress = businessAddress;
+        }
+
+        // Update user
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            updateData,
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).json({
+                success: false,
+                error: 'User not found'
+            });
+        }
+
+        // Update session user data
+        req.user = updatedUser;
+        req.session.user = updatedUser;
+
+        console.log('Profile updated successfully:', updatedUser._id);
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: {
+                user: updatedUser
+            }
+        });
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update profile',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;

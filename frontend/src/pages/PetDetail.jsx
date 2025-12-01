@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPetById, togglePetWishlist, getWishlist, getPets } from '../services/api';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+import { useAuth } from '../hooks/useAuth';
+import { useCart } from '../hooks/useCart';
 import { Truck, XCircle, Wallet, Stethoscope, ShoppingCart, Heart, Clock, Home, Ruler, Palette } from 'lucide-react';
 import { Mars, Venus } from 'lucide-react';
 

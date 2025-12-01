@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+// import { useNavigate } from 'react-router-dom';
+// import { useAuth } from '../hooks/useAuth';
 import Header from '../components/Header';
 
 const AddProduct = () => {
-    const navigate = useNavigate();
-    const { user } = useAuth();
+    // const navigate = useNavigate();
+    // const { user } = useAuth();
     const fileInputRef = useRef(null);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');

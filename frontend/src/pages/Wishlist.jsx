@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getWishlist, togglePetWishlist, toggleProductWishlist } from '../services/api';
+import { getWishlist, togglePetWishlist } from '../services/api';
 
 const Wishlist = () => {
     const [wishlistPets, setWishlistPets] = useState([]);

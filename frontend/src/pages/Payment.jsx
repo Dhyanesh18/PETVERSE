@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { FaWallet, FaCreditCard, FaMobile, FaMoneyBillWave, FaArrowLeft, FaLock } from 'react-icons/fa';
 import { processPayment } from '../services/api';
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEventById, registerForEvent, unregisterFromEvent } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { 
     FaCalendarAlt, 
     FaClock, 
