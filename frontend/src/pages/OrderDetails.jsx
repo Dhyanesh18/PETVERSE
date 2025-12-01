@@ -195,11 +195,11 @@ const OrderDetails = () => {
                         <div className="flex flex-col items-end gap-3">
                             {/* Status Badge */}
                             <div className={`inline-flex items-center gap-2 px-5 py-3 rounded-full font-semibold text-sm shadow-md animate-pulse ${
-                                order.status === 'pending' ? 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-2 border-yellow-400' :
-                                order.status === 'processing' ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-2 border-blue-400' :
-                                order.status === 'shipped' ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-2 border-green-400' :
-                                order.status === 'delivered' ? 'bg-gradient-to-r from-green-100 to-green-300 text-green-800 border-2 border-green-400' :
-                                'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-2 border-red-400'
+                                order.status === 'pending' ? 'bg-linear-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-2 border-yellow-400' :
+                                order.status === 'processing' ? 'bg-linear-to-r from-blue-100 to-blue-200 text-blue-800 border-2 border-blue-400' :
+                                order.status === 'shipped' ? 'bg-linear-to-r from-green-100 to-green-200 text-green-800 border-2 border-green-400' :
+                                order.status === 'delivered' ? 'bg-linear-to-r from-green-100 to-green-300 text-green-800 border-2 border-green-400' :
+                                'bg-linear-to-r from-red-100 to-red-200 text-red-800 border-2 border-red-400'
                             }`}>
                                 <i className={getStatusIcon(order.status)}></i>
                                 <span>{order.status?.charAt(0)?.toUpperCase() + order.status?.slice(1)}</span>
@@ -299,7 +299,7 @@ const OrderDetails = () => {
                                 console.log('Order item:', item); // Debug log
                                 return (
                                     <div key={index} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-                                        <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                                        <div className="w-20 h-20 bg-gray-200 rounded-lg overflow-hidden shrink-0">
                                             {item.product?._id ? (
                                                 <img 
                                                     src={`/api/images/product/${item.product._id}/0`}
@@ -314,12 +314,12 @@ const OrderDetails = () => {
                                                     }}
                                                 />
                                             ) : (
-                                                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                                                <div className="w-full h-full bg-linear-to-br from-gray-200 to-gray-300 flex items-center justify-center">
                                                     <i className="fas fa-box text-gray-500 text-xl"></i>
                                                 </div>
                                             )}
                                         </div>
-                                        <div className="flex-grow">
+                                        <div className="grow">
                                             <div className="font-semibold text-gray-800 text-lg">
                                                 {item.product?.name || item.name || `Product (ID: ${item.product?._id?.slice(-6) || item._id?.slice(-6) || 'Unknown'})`}
                                             </div>
@@ -390,16 +390,16 @@ const OrderDetails = () => {
                                     <div className="flex flex-col items-center">
                                         <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-4 border-white ${
                                             ['pending', 'processing', 'shipped', 'delivered'].includes(order.status) 
-                                                ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' 
+                                                ? 'bg-linear-to-br from-emerald-400 to-emerald-600' 
                                                 : 'bg-gray-400'
                                         }`}>
                                             <i className="fas fa-shopping-cart text-white text-sm"></i>
                                         </div>
                                         {/* Connector Line */}
-                                        <div className="w-0.5 h-16 bg-gradient-to-b from-emerald-200 to-teal-200 mt-2"></div>
+                                        <div className="w-0.5 h-16 bg-linear-to-b from-emerald-200 to-teal-200 mt-2"></div>
                                     </div>
                                     <div className="flex-1 pb-8">
-                                        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border-l-4 border-emerald-400">
+                                        <div className="bg-linear-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border-l-4 border-emerald-400">
                                             <h3 className="font-bold text-gray-800 text-lg mb-1">Order Placed</h3>
                                             <p className="text-sm text-gray-600 mb-2">Your order has been successfully placed and confirmed</p>
                                             <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold">
@@ -415,23 +415,23 @@ const OrderDetails = () => {
                                     <div className="flex flex-col items-center">
                                         <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-4 border-white ${
                                             ['processing', 'shipped', 'delivered'].includes(order.status)
-                                                ? 'bg-gradient-to-br from-blue-400 to-blue-600'
+                                                ? 'bg-linear-to-br from-blue-400 to-blue-600'
                                                 : order.status === 'pending'
-                                                ? 'bg-gradient-to-br from-amber-400 to-orange-500 animate-pulse'
+                                                ? 'bg-linear-to-br from-amber-400 to-orange-500 animate-pulse'
                                                 : 'bg-gray-300'
                                         }`}>
                                             <i className={`fas ${['processing', 'shipped', 'delivered'].includes(order.status) ? 'fa-cog' : 'fa-hourglass-half'} text-white text-sm ${
                                                 order.status === 'processing' ? 'animate-spin' : ''
                                             }`}></i>
                                         </div>
-                                        <div className="w-0.5 h-16 bg-gradient-to-b from-blue-200 to-indigo-200 mt-2"></div>
+                                        <div className="w-0.5 h-16 bg-linear-to-b from-blue-200 to-indigo-200 mt-2"></div>
                                     </div>
                                     <div className="flex-1 pb-8">
                                         <div className={`rounded-lg p-4 border-l-4 ${
                                             ['processing', 'shipped', 'delivered'].includes(order.status)
-                                                ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-400'
+                                                ? 'bg-linear-to-r from-blue-50 to-indigo-50 border-blue-400'
                                                 : order.status === 'pending'
-                                                ? 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-400'
+                                                ? 'bg-linear-to-r from-amber-50 to-orange-50 border-amber-400'
                                                 : 'bg-gray-50 border-gray-300'
                                         }`}>
                                             <h3 className="font-bold text-gray-800 text-lg mb-1">Processing Order</h3>
@@ -463,21 +463,21 @@ const OrderDetails = () => {
                                     <div className="flex flex-col items-center">
                                         <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-4 border-white ${
                                             ['shipped', 'delivered'].includes(order.status)
-                                                ? 'bg-gradient-to-br from-purple-400 to-purple-600'
+                                                ? 'bg-linear-to-br from-purple-400 to-purple-600'
                                                 : order.status === 'processing'
-                                                ? 'bg-gradient-to-br from-indigo-400 to-purple-500 animate-pulse'
+                                                ? 'bg-linear-to-br from-indigo-400 to-purple-500 animate-pulse'
                                                 : 'bg-gray-300'
                                         }`}>
                                             <i className="fas fa-truck text-white text-sm"></i>
                                         </div>
-                                        <div className="w-0.5 h-16 bg-gradient-to-b from-purple-200 to-pink-200 mt-2"></div>
+                                        <div className="w-0.5 h-16 bg-linear-to-b from-purple-200 to-pink-200 mt-2"></div>
                                     </div>
                                     <div className="flex-1 pb-8">
                                         <div className={`rounded-lg p-4 border-l-4 ${
                                             ['shipped', 'delivered'].includes(order.status)
-                                                ? 'bg-gradient-to-r from-purple-50 to-pink-50 border-purple-400'
+                                                ? 'bg-linear-to-r from-purple-50 to-pink-50 border-purple-400'
                                                 : order.status === 'processing'
-                                                ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-400'
+                                                ? 'bg-linear-to-r from-indigo-50 to-purple-50 border-indigo-400'
                                                 : 'bg-gray-50 border-gray-300'
                                         }`}>
                                             <h3 className="font-bold text-gray-800 text-lg mb-1">Shipped</h3>
@@ -509,9 +509,9 @@ const OrderDetails = () => {
                                     <div className="flex flex-col items-center">
                                         <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-4 border-white ${
                                             order.status === 'delivered'
-                                                ? 'bg-gradient-to-br from-green-500 to-emerald-600'
+                                                ? 'bg-linear-to-br from-green-500 to-emerald-600'
                                                 : order.status === 'shipped'
-                                                ? 'bg-gradient-to-br from-teal-400 to-green-500 animate-pulse'
+                                                ? 'bg-linear-to-br from-teal-400 to-green-500 animate-pulse'
                                                 : 'bg-gray-300'
                                         }`}>
                                             <i className={`fas ${order.status === 'delivered' ? 'fa-check-circle' : 'fa-home'} text-white text-sm`}></i>
@@ -520,9 +520,9 @@ const OrderDetails = () => {
                                     <div className="flex-1">
                                         <div className={`rounded-lg p-4 border-l-4 ${
                                             order.status === 'delivered'
-                                                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-400'
+                                                ? 'bg-linear-to-r from-green-50 to-emerald-50 border-green-400'
                                                 : order.status === 'shipped'
-                                                ? 'bg-gradient-to-r from-teal-50 to-green-50 border-teal-400'
+                                                ? 'bg-linear-to-r from-teal-50 to-green-50 border-teal-400'
                                                 : 'bg-gray-50 border-gray-300'
                                         }`}>
                                             <h3 className="font-bold text-gray-800 text-lg mb-1">Delivered</h3>

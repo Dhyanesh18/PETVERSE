@@ -98,7 +98,7 @@ const About = () => {
     return (
         <div className="min-h-screen bg-white">
             {/* Hero Section */}
-            <section className="relative bg-gradient-to-br from-teal-600 to-teal-800 text-white py-20 px-4" style={{marginTop:"40px"}}>
+            <section className="relative bg-linear-to-br from-teal-600 to-teal-800 text-white py-20 px-4" style={{marginTop:"40px"}}>
                 <div className="container mx-auto text-center">
                     <h1 className="text-5xl md:text-6xl font-bold mb-6">About Us</h1>
                     <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto leading-relaxed">
@@ -191,7 +191,7 @@ const About = () => {
             </section>
 
             {/* Community Section */}
-            <section className="py-16 bg-gradient-to-r from-teal-600 to-teal-700 text-white">
+            <section className="py-16 bg-linear-to-r from-teal-600 to-teal-700 text-white">
                 <div className="container mx-auto px-4 text-center">
                     <h2 className="text-4xl font-bold mb-6">Join Our Pet-Loving Community</h2>
                     <div className="max-w-4xl mx-auto space-y-4 text-lg leading-relaxed mb-8">

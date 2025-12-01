@@ -66,16 +66,16 @@ const Payment = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
+        <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 pt-20">
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-4xl mx-auto">
                     <div className="text-center mb-12">
-                        {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mb-4">
+                        {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-r from-teal-500 to-teal-600 rounded-full mb-4">
                             <span className="text-white text-2xl">💳</span>
                         </div> */}
-                        <h1 className="text-5xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-2">Payment</h1>
+                        <h1 className="text-5xl font-bold bg-linear-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-2">Payment</h1>
                         <p className="text-xl text-gray-600">Choose your preferred payment method</p>
-                        <div className="w-24 h-1 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-4"></div>
+                        <div className="w-24 h-1 bg-linear-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-4"></div>
                     </div>
 
                     {error && (
@@ -287,7 +287,7 @@ const Payment = () => {
                         <button
                             onClick={handlePayment}
                             disabled={submitting}
-                            className="px-8 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-8 py-3 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {submitting ? (
                                 <div className="flex items-center justify-center gap-2">

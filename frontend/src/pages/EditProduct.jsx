@@ -386,7 +386,7 @@ const EditProduct = () => {
                     {error && (
                         <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg">
                             <div className="flex items-center">
-                                <div className="flex-shrink-0">
+                                <div className="shrink-0">
                                     <i className="fas fa-exclamation-triangle text-red-400"></i>
                                 </div>
                                 <div className="ml-3">
@@ -399,7 +399,7 @@ const EditProduct = () => {
                     {success && (
                         <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 rounded-r-lg">
                             <div className="flex items-center">
-                                <div className="flex-shrink-0">
+                                <div className="shrink-0">
                                     <i className="fas fa-check-circle text-green-400"></i>
                                 </div>
                                 <div className="ml-3">

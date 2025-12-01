@@ -543,11 +543,8 @@ const OwnerDashboard = () => {
     if (loading) {
         return (
             <div className="loading-container">
-                <div className="loading-spinner">
-                    <i className="fas fa-spinner fa-spin"></i>
-                    <p>Loading your dashboard...</p>
-                   
-                </div>
+                <i className="fas fa-spinner fa-spin"></i>
+                <p>Loading your dashboard...</p>
             </div>
         );
     }

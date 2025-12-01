@@ -130,16 +130,16 @@ const Checkout = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pt-20">
+        <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 pt-20">
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-12">
-                        {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mb-4">
+                        {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-r from-teal-500 to-teal-600 rounded-full mb-4">
                             <span className="text-white text-2xl">🛒</span>
                         </div> */}
-                        <h1 className="text-5xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-2">Checkout</h1>
+                        <h1 className="text-5xl font-bold bg-linear-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-2">Checkout</h1>
                         <p className="text-xl text-gray-600">Complete your order securely and safely</p>
-                        <div className="w-24 h-1 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-4"></div>
+                        <div className="w-24 h-1 bg-linear-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-4"></div>
                     </div>
                     
                     {error && (
@@ -312,7 +312,7 @@ const Checkout = () => {
                                             }
                                         }}
                                         disabled={safeCart.items.length === 0}
-                                        className="px-8 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="px-8 py-3 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Continue to Payment
                                     </button>
@@ -323,11 +323,11 @@ const Checkout = () => {
                         {/* Right Column - Order Summary */}
                         <div className="bg-white rounded-xl shadow-lg p-6 h-fit border border-gray-100">
                             <div className="text-center mb-6">
-                                <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-teal-100 to-teal-200 rounded-full mb-3">
+                                <div className="inline-flex items-center justify-center w-12 h-12 bg-linear-to-r from-teal-100 to-teal-200 rounded-full mb-3">
                                     <span className="text-2xl">📋</span>
                                 </div>
-                                <h2 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent">Order Summary</h2>
-                                <div className="w-16 h-0.5 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-2"></div>
+                                <h2 className="text-2xl font-bold bg-linear-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent">Order Summary</h2>
+                                <div className="w-16 h-0.5 bg-linear-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-2"></div>
                             </div>
                             
                             {/* Cart Items */}
@@ -393,7 +393,7 @@ const Checkout = () => {
                                 </div>
                                 <div className="border-t border-gray-200 pt-3 flex justify-between items-center">
                                     <span className="text-xl font-bold text-gray-900">Total:</span>
-                                    <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent">₹{safeCart.total.toFixed(2)}</span>
+                                    <span className="text-2xl font-bold bg-linear-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent">₹{safeCart.total.toFixed(2)}</span>
                                 </div>
                             </div>
 
