@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getEvents } from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { FaCalendar, FaClock, FaMapMarkerAlt, FaUserFriends, FaSpinner, FaCalendarTimes, FaPlusCircle } from 'react-icons/fa';
 
 const Events = () => {

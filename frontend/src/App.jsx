@@ -1,9 +1,11 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import store from './redux/store';
+import { checkSession, selectInitialized, selectIsAuthenticated } from './redux/slices/authSlice';
+import { fetchCart, loadCartFromLocalStorage } from './redux/slices/cartSlice';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AuthProvider } from './context/AuthContext';
-import { CartProvider } from './context/CartContext';
 import Homepage from './pages/Homepage';
 import Login from './pages/Login';
 import Unauthorized from './pages/Unauthorized';
@@ -18,6 +20,7 @@ import EditProduct from './pages/EditProduct';
 import Wishlist from './pages/Wishlist';
 import OwnerDashboard from './pages/OwnerDashboard';
 import SellerDashboard from './pages/SellerDashboard';
+import ServiceProviderDashboard from './pages/ServiceProviderDashboard';
 import OrderDetails from './pages/OrderDetails';
 import UserOrderDetails from './pages/UserOrderDetails';
 import Cart from './pages/Cart';
@@ -27,24 +30,56 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import Wallet from './pages/Wallet';
 import About from './pages/About';
 import SearchResults from './pages/SearchResults';
-import Signup from './pages/Signup';
-import SignupOwner from './pages/SignupOwner';
-import SignupSeller from './pages/SignupSeller';
-import SignupServiceProvider from './pages/SignupServiceProvider';
+
+// Component that initializes Redux state
+function AppInitializer({ children }) {
+    const dispatch = useDispatch();
+    const initialized = useSelector(selectInitialized);
+    const isAuthenticated = useSelector(selectIsAuthenticated);
+    const cartInitialized = useRef(false);
+    const sessionInitialized = useRef(false);
+    const location = useLocation();
+
+    useEffect(() => {
+        if (!initialized && !sessionInitialized.current) {
+            sessionInitialized.current = true;
+            dispatch(checkSession());
+        }
+    }, [dispatch, initialized]);
+
+    useEffect(() => {
+        // Prevent duplicate cart fetches in StrictMode
+        if (cartInitialized.current) return;
+        cartInitialized.current = true;
+
+        const currentPath = window.location.pathname;
+        if (!currentPath.includes('/login') && !currentPath.includes('/signup')) {
+            dispatch(fetchCart());
+        } else {
+            dispatch(loadCartFromLocalStorage());
+        }
+    }, [dispatch]);
+
+    // Refresh cart when navigating to cart page and user is authenticated
+    useEffect(() => {
+        if (isAuthenticated && location.pathname === '/cart' && cartInitialized.current) {
+            console.log('Navigated to cart page, refreshing cart data');
+            dispatch(fetchCart());
+        }
+    }, [location.pathname, isAuthenticated, dispatch]);
+
+    return children;
+}
 
 function App() {
     return (
-        <AuthProvider>
-        <CartProvider>
+        <Provider store={store}>
             <Router>
-            <Layout>
-                <Routes>
-                <Route path="/login" element={<Login />} /> 
-                <Route path="/unauthorized" element={<Unauthorized />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/signup/owner" element={<SignupOwner />} />
-                <Route path="/signup/seller" element={<SignupSeller />} />
-                <Route path="/signup/service-provider" element={<SignupServiceProvider />} />
+                <AppInitializer>
+                    <Layout>
+                        <Routes>
+                            <Route path="/login" element={<Login />} /> 
+                            <Route path="/unauthorized" element={<Unauthorized />} />
 
                 {/* Public Routes */}
                 <Route path="/" element={<Navigate to="/home" replace />} />
@@ -225,7 +260,7 @@ function App() {
                     path="/service-provider/dashboard"
                     element={
                     <ProtectedRoute allowedRoles={['service_provider']}>
-                        <div>Service Provider Dashboard</div>
+                        <ServiceProviderDashboard />
                     </ProtectedRoute>
                     }
                 />
@@ -243,11 +278,11 @@ function App() {
                     will handle this automatically.
                 */}
                 <Route path="*" element={<Navigate to="/home" replace />} />
-                </Routes>
-            </Layout>
+                        </Routes>
+                    </Layout>
+                </AppInitializer>
             </Router>
-        </CartProvider>
-        </AuthProvider>
+        </Provider>
     );
 }
 

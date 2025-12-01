@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { 
     getServiceById, 
     getReviews, 
@@ -25,7 +25,7 @@ import {
 const ServiceDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user, isAuthenticated } = useAuth();
+    const { user } = useAuth();
 
     const [service, setService] = useState(null);
     const [reviews, setReviews] = useState([]);

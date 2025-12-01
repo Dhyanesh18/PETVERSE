@@ -1,20 +1,22 @@
-import React, { useState, useEffect, useContext, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { getUserDashboard, togglePetWishlist, toggleProductWishlist } from '../services/api';
+import EditProfileModal from '../components/EditProfileModal';
 import './OwnerDashboard.css';
 
 const OwnerDashboard = () => {
-    const { user, logout, isAuthenticated, checkSession } = useContext(AuthContext);
+    const { user, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    const fetchInitialized = useRef(false);
     
     // Redirect to login if not authenticated
     useEffect(() => {
         if (!isAuthenticated && !user) {
             console.log('User not authenticated, redirecting to login');
-            window.location.href = '/login';
+            navigate('/login');
         }
-    }, [isAuthenticated, user]);
+    }, [isAuthenticated, user, navigate]);
     const [dashboardData, setDashboardData] = useState({
         stats: {
             totalOrders: 0,
@@ -31,6 +33,7 @@ const OwnerDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [notifications, setNotifications] = useState([]);
     const [currentOrdersPage, setCurrentOrdersPage] = useState(1);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const ordersPerPage = 3;
 
     const getImageUrl = (item, type = 'product') => {
@@ -161,11 +164,7 @@ const OwnerDashboard = () => {
                 const data = response.data.data;
                 console.log('Dashboard data received:', data);
                 
-                // Update user context with complete user data from dashboard
-                if (data.user && (!user?.username || !user?.phone)) {
-                    console.log('Refreshing user session to get complete data');
-                    checkSession(); // This will refresh the user data from the backend
-                }
+                // Dashboard data includes complete user info
             
                 setDashboardData({
                     stats: {
@@ -303,10 +302,14 @@ const OwnerDashboard = () => {
         } finally {
             setLoading(false);
         }
-    }, [checkSession, user?.username, user?.phone]);
+    }, []); // Remove checkSession from dependencies to prevent infinite loop
 
     useEffect(() => {
+        // Prevent duplicate fetches in React StrictMode
+        if (fetchInitialized.current) return;
+        
         let isMounted = true;
+        fetchInitialized.current = true;
         
         const loadDashboard = async () => {
             if (isMounted) {
@@ -427,15 +430,52 @@ const OwnerDashboard = () => {
 
     const handleViewOrderDetails = (orderId) => {
         // Navigate to order details page
-        window.location.href = `/order-details/${orderId}`;
+        navigate(`/order-details/${orderId}`);
     };
 
     // Navigation handlers for stats cards
     const handleStatsCardClick = (cardType) => {
         switch(cardType) {
-            case 'totalOrders':
-                // Navigate to orders page or scroll to orders section
+            case 'totalOrders': {
+                // Scroll to orders section
+                const ordersSection = document.querySelector('.section') || 
+                                    document.querySelector('[class*="order"]');
+                if (ordersSection) {
+                    ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Highlight the section briefly
+                    ordersSection.style.backgroundColor = '#f0fdf4';
+                    setTimeout(() => {
+                        ordersSection.style.backgroundColor = '';
+                    }, 2000);
+                }
                 break;
+            }
+            case 'activeOrders': {
+                // Scroll to orders section
+                const ordersSection = document.querySelector('.section') || 
+                                    document.querySelector('[class*="order"]');
+                if (ordersSection) {
+                    ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    ordersSection.style.backgroundColor = '#dbeafe';
+                    setTimeout(() => {
+                        ordersSection.style.backgroundColor = '';
+                    }, 2000);
+                }
+                break;
+            }
+            case 'totalSpent': {
+                // Scroll to orders section to see spending
+                const ordersSection = document.querySelector('.section') || 
+                                    document.querySelector('[class*="order"]');
+                if (ordersSection) {
+                    ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    ordersSection.style.backgroundColor = '#fef3c7';
+                    setTimeout(() => {
+                        ordersSection.style.backgroundColor = '';
+                    }, 2000);
+                }
+                break;
+            }
             case 'walletBalance':
                 // Navigate to wallet page
                 navigate('/wallet');
@@ -473,12 +513,42 @@ const OwnerDashboard = () => {
         return new Date(dateString).toLocaleDateString('en-IN');
     };
 
+    const handleSaveProfile = async (formData) => {
+        try {
+            const response = await fetch('/api/user/profile', {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                showNotification('Profile updated successfully!', 'success');
+                // Refresh dashboard to get updated user data
+                fetchDashboardData();
+            } else {
+                throw new Error(data.error || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            showNotification('Failed to update profile', 'error');
+            throw error;
+        }
+    };
+
     if (loading) {
         return (
             <div className="loading-container">
+                <div className="loading-spinner">
                     <i className="fas fa-spinner fa-spin"></i>
                     <p>Loading your dashboard...</p>
+                   
                 </div>
+            </div>
         );
     }
     return (
@@ -585,7 +655,7 @@ const OwnerDashboard = () => {
                             className="wishlist-card"
                             onClick={(e) => {
                                 if (!e.target.closest('.wishlist-action')) {
-                                    window.location.href = `/product/${product._id}`;
+                                    navigate(`/product/${product._id}`);
                                 }
                             }}
                         >
@@ -663,7 +733,7 @@ const OwnerDashboard = () => {
                             className="wishlist-card"
                             onClick={(e) => {
                                 if (!e.target.closest('.wishlist-action')) {
-                                    window.location.href = `/seller/detail/${pet._id}`;
+                                    navigate(`/seller/detail/${pet._id}`);
                                 }
                             }}
                         >
@@ -694,7 +764,7 @@ const OwnerDashboard = () => {
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            window.location.href = `/seller/detail/${pet._id}`;
+                                            navigate(`/seller/detail/${pet._id}`);
                                         }}
                                         className="wishlist-btn-primary"
                                     >
@@ -781,6 +851,17 @@ const OwnerDashboard = () => {
                         <i className="fas fa-user-circle"></i>
                         Profile Information
                     </h2>
+                    <button
+                        onClick={() => setIsEditModalOpen(true)}
+                        className="btn btn-primary"
+                        style={{
+                            padding: '0.5rem 1rem',
+                            fontSize: '0.875rem',
+                            borderRadius: '0.5rem'
+                        }}
+                    >
+                        <i className="fas fa-edit"></i> Edit Profile
+                    </button>
                 </div>
                 <div className="profile-grid">
                     <div className="profile-info">
@@ -1152,6 +1233,14 @@ const OwnerDashboard = () => {
                     </div>
                 )}
             </section>
+
+            {/* Edit Profile Modal */}
+            <EditProfileModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                user={user}
+                onSave={handleSaveProfile}
+            />
         </div>
     );
 };

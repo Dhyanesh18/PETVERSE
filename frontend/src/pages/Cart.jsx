@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
+import { useAuth } from '../hooks/useAuth';
+import { useCart } from '../hooks/useCart';
 // Removed unused imports - using direct fetch calls instead
 import { FaShoppingCart, FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
 

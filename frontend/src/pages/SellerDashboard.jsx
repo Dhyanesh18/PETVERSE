@@ -1,24 +1,29 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { getSellerDashboard } from '../services/api';
+import EditProfileModal from '../components/EditProfileModal';
 import './SellerDashboard.css';
 
 const SellerDashboard = () => {
     const navigate = useNavigate();
     const { user, logout, loading: authLoading } = useAuth();
+    const fetchInitialized = useRef(false);
     const [products, setProducts] = useState([]);
     const [pets, setPets] = useState([]);
     const [orders, setOrders] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [stats, setStats] = useState({
         totalProducts: 0,
+        totalPets: 0,
         totalSales: 0,
         pendingOrders: 0,
+        walletBalance: 0,
         rating: 0
     });
     const [loading, setLoading] = useState(true);
     const [seller, setSeller] = useState({});
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     const fetchSellerData = useCallback(async () => {
         // Check if user is authenticated first
@@ -27,25 +32,25 @@ const SellerDashboard = () => {
             navigate('/login');
             return;
         }
-        
+
         // Check if user has seller role
         if (user.role !== 'seller') {
             console.log('User is not a seller:', user.role);
             navigate('/login');
             return;
         }
-        
+
         try {
             setLoading(true);
-            
+
             console.log('Fetching seller dashboard...');
             const response = await getSellerDashboard();
             console.log('Seller dashboard response:', response);
             const data = response.data;
-            
+
             if (data.success) {
                 const { seller: sellerData, statistics, recentOrders, products: productsData, pets: petsData, reviews: reviewsData } = data.data;
-                
+
                 console.log('Products data:', productsData);
                 console.log('Pets data:', petsData);
                 console.log('Reviews data:', reviewsData);
@@ -56,14 +61,14 @@ const SellerDashboard = () => {
                 setReviews(reviewsData || []);
                 setSeller(sellerData || {});
 
-                // Set stats from API response - calculate total products + pets
-                const totalProductsAndPets = (productsData?.length || 0) + (petsData?.length || 0);
-                
+                // Set stats from API response - separate counts for products and pets
                 setStats({
-                    totalProducts: totalProductsAndPets,
+                    totalProducts: productsData?.length || 0,
+                    totalPets: petsData?.length || 0,
                     totalSales: parseFloat(statistics.totalRevenue || 0),
                     pendingOrders: statistics.pendingOrders || 0,
-                    rating: statistics.averageRating || 0
+                    walletBalance: parseFloat(statistics.walletBalance || sellerData?.wallet?.balance || 0),
+                    rating: parseFloat(statistics.averageRating || 0)
                 });
             }
         } catch (error) {
@@ -74,7 +79,7 @@ const SellerDashboard = () => {
                 data: error.response?.data,
                 message: error.message
             });
-            
+
             if (error.response?.status === 401) {
                 console.log('Unauthorized - redirecting to login');
                 navigate('/login');
@@ -92,6 +97,10 @@ const SellerDashboard = () => {
 
     // Fetch seller data on component mount
     useEffect(() => {
+        // Prevent duplicate fetches in React StrictMode
+        if (fetchInitialized.current) return;
+        fetchInitialized.current = true;
+        
         fetchSellerData();
     }, [fetchSellerData]);
 
@@ -106,39 +115,53 @@ const SellerDashboard = () => {
 
     // Navigation handlers for stats cards
     const handleStatsCardClick = (cardType) => {
-        switch(cardType) {
+        switch (cardType) {
             case 'totalProducts': {
-                // Navigate to Product Management section to view all products and pets
-                const sections = document.querySelectorAll('.content-section');
-                let productManagementSection = null;
-                
-                sections.forEach(section => {
-                    const headerElement = section.querySelector('h2');
-                    if (headerElement && headerElement.textContent.includes('Product Management')) {
-                        productManagementSection = section;
-                    }
-                });
-                
-                if (productManagementSection) {
-                    productManagementSection.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    // Fallback: scroll to first content section
-                    document.querySelector('.content-section')?.scrollIntoView({ behavior: 'smooth' });
+                // Scroll to Product Management section
+                const productSection = document.getElementById('product-management') ||
+                    document.querySelector('[class*="product"]') ||
+                    document.querySelector('.dashboard-section');
+                if (productSection) {
+                    productSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Highlight the section briefly
+                    productSection.style.backgroundColor = '#f0fdf4';
+                    setTimeout(() => {
+                        productSection.style.backgroundColor = '';
+                    }, 2000);
                 }
                 break;
             }
-            case 'totalSales':
-                // Navigate to sales analytics or orders
-                window.location.href = '/seller/analytics';
+            case 'totalSales': {
+                // Scroll to Orders section
+                const ordersSection = document.getElementById('orders-section') ||
+                    document.querySelector('[class*="order"]');
+                if (ordersSection) {
+                    ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    ordersSection.style.backgroundColor = '#f0fdf4';
+                    setTimeout(() => {
+                        ordersSection.style.backgroundColor = '';
+                    }, 2000);
+                }
                 break;
-            case 'pendingOrders':
-                // Navigate to orders with pending filter
-                window.location.href = '/seller/orders?status=pending';
+            }
+            case 'pendingOrders': {
+                // Scroll to Orders section
+                const ordersSection = document.getElementById('orders-section') ||
+                    document.querySelector('[class*="order"]');
+                if (ordersSection) {
+                    ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    ordersSection.style.backgroundColor = '#fef3c7';
+                    setTimeout(() => {
+                        ordersSection.style.backgroundColor = '';
+                    }, 2000);
+                }
                 break;
-            case 'rating':
-                // Navigate to reviews section
-                document.querySelector('.reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+            }
+            case 'wallet': {
+                // Navigate to wallet page
+                navigate('/wallet');
                 break;
+            }
             default:
                 break;
         }
@@ -153,7 +176,7 @@ const SellerDashboard = () => {
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             if (response.ok) {
                 fetchSellerData(); // Refresh data
             }
@@ -171,7 +194,7 @@ const SellerDashboard = () => {
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             if (response.ok) {
                 fetchSellerData(); // Refresh data
             }
@@ -197,22 +220,22 @@ const SellerDashboard = () => {
                 },
                 body: JSON.stringify({ status: newStatus })
             });
-            
+
             const data = await response.json();
-            
+
             if (response.ok && data.success) {
                 // Update the local state immediately for better UX
-                setOrders(prevOrders => 
-                    prevOrders.map(order => 
-                        order._id === orderId 
+                setOrders(prevOrders =>
+                    prevOrders.map(order =>
+                        order._id === orderId
                             ? { ...order, status: newStatus }
                             : order
                     )
                 );
-                
+
                 // Show success message
                 alert(`Order status updated to ${newStatus.toUpperCase()} successfully!`);
-                
+
                 // Refresh data to sync with backend
                 fetchSellerData();
             } else {
@@ -221,7 +244,7 @@ const SellerDashboard = () => {
         } catch (error) {
             console.error('Error updating order status:', error);
             alert(`Failed to update order status: ${error.message}`);
-            
+
             // Refresh data to reset to correct status
             fetchSellerData();
         } finally {
@@ -242,7 +265,7 @@ const SellerDashboard = () => {
         navigate(`/seller/pets/edit/${petId}`);
     };
 
-        const viewOrderDetails = (orderId) => {
+    const viewOrderDetails = (orderId) => {
         // Navigate to order details page or show modal
         navigate(`/seller/order-details/${orderId}`);
     };
@@ -265,6 +288,32 @@ const SellerDashboard = () => {
         navigate('/seller/pets/add');
     };
 
+    const handleSaveProfile = async (formData) => {
+        try {
+            const response = await fetch('/api/user/profile', {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                alert('Profile updated successfully!');
+                // Refresh seller data
+                fetchSellerData();
+            } else {
+                throw new Error(data.error || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            throw error;
+        }
+    };
+
     if (loading || authLoading) {
         return (
             <div className="loading-container">
@@ -277,7 +326,7 @@ const SellerDashboard = () => {
     return (
         <div className="seller-dashboard">
             {/* Dashboard Header */}
-            <header className="dashboard-header" style={{marginTop:"55px"}}>
+            <header className="dashboard-header" style={{ marginTop: "55px" }}>
                 <h1 className="header-title">
                     <span className="petverse">PetVerse</span>
                     <span className="dashboard-text">Seller Dashboard</span>
@@ -294,21 +343,21 @@ const SellerDashboard = () => {
             <div className="dashboard-container">
                 {/* Stats Grid */}
                 <div className="dashboard-stats">
-                    <div 
-                        className="stat-card clickable-stat-card" 
+                    <div
+                        className="stat-card clickable-stat-card"
                         onClick={() => handleStatsCardClick('totalProducts')}
                         role="button"
                         tabIndex={0}
                         onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalProducts')}
                     >
                         <div className="stat-icon">
-                            <i className="fas fa-store"></i>
+                            <i className="fas fa-box"></i>
                         </div>
-                        <div className="stat-value">{stats.totalProducts}</div>
+                        <div className="stat-value">{stats.totalProducts + stats.totalPets}</div>
                         <div className="stat-label">Total Items</div>
                     </div>
-                    <div 
-                        className="stat-card clickable-stat-card" 
+                    <div
+                        className="stat-card clickable-stat-card"
                         onClick={() => handleStatsCardClick('totalSales')}
                         role="button"
                         tabIndex={0}
@@ -320,8 +369,8 @@ const SellerDashboard = () => {
                         <div className="stat-value">₹{stats.totalSales.toLocaleString()}</div>
                         <div className="stat-label">Total Sales</div>
                     </div>
-                    <div 
-                        className="stat-card clickable-stat-card" 
+                    <div
+                        className="stat-card clickable-stat-card"
                         onClick={() => handleStatsCardClick('pendingOrders')}
                         role="button"
                         tabIndex={0}
@@ -333,18 +382,18 @@ const SellerDashboard = () => {
                         <div className="stat-value">{stats.pendingOrders}</div>
                         <div className="stat-label">Pending Orders</div>
                     </div>
-                    <div 
-                        className="stat-card clickable-stat-card" 
-                        onClick={() => handleStatsCardClick('rating')}
+                    <div
+                        className="stat-card clickable-stat-card"
+                        onClick={() => handleStatsCardClick('wallet')}
                         role="button"
                         tabIndex={0}
-                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('rating')}
+                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('wallet')}
                     >
                         <div className="stat-icon">
-                            <i className="fas fa-star"></i>
+                            <i className="fas fa-wallet"></i>
                         </div>
-                        <div className="stat-value">{stats.rating}/5</div>
-                        <div className="stat-label">Rating</div>
+                        <div className="stat-value">₹{stats.walletBalance.toFixed(2)}</div>
+                        <div className="stat-label">Wallet Balance</div>
                     </div>
                 </div>
 
@@ -356,6 +405,19 @@ const SellerDashboard = () => {
                                 <i className="fas fa-user-circle"></i>
                                 Profile Information
                             </h2>
+                            <button
+                                onClick={() => setIsEditModalOpen(true)}
+                                className="btn btn-primary"
+                                style={{
+                                    maxWidth: '200px',
+                                    minWidth: '100px',
+                                    height: '36px',
+                                    padding: '0.5rem 0.75rem',
+                                    fontSize: '0.875rem'
+                                }}
+                            >
+                                <i className="fas fa-edit"></i> Edit Profile
+                            </button>
                         </div>
                         <div className="profile-grid">
                             <div className="profile-info">
@@ -412,7 +474,7 @@ const SellerDashboard = () => {
                                     <div className="info-content">
                                         <div className="info-label">Average Rating</div>
                                         <div className="info-value">
-                                            {stats.rating}/5
+                                            {stats.rating.toFixed(1)}/5
                                         </div>
                                     </div>
                                 </div>
@@ -423,7 +485,18 @@ const SellerDashboard = () => {
                                     <div className="info-content">
                                         <div className="info-label">Total Products</div>
                                         <div className="info-value">
-                                            {products.length}
+                                            {stats.totalProducts}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="info-item">
+                                    <div className="info-icon">
+                                        <i className="fas fa-paw"></i>
+                                    </div>
+                                    <div className="info-content">
+                                        <div className="info-label">Total Pets</div>
+                                        <div className="info-value">
+                                            {stats.totalPets}
                                         </div>
                                     </div>
                                 </div>
@@ -432,11 +505,11 @@ const SellerDashboard = () => {
                     </div>
 
                     {/* Product Management */}
-                    <div className="content-section">
+                    <div id="product-management" className="content-section">
                         <div className="section-header">
                             <h2><i className="fas fa-box"></i> Product Management</h2>
-                            <button 
-                                onClick={addNewProduct} 
+                            <button
+                                onClick={addNewProduct}
                                 className="btn btn-primary"
                                 style={{
                                     maxWidth: '200px',
@@ -452,15 +525,15 @@ const SellerDashboard = () => {
                                 <i className="fas fa-plus"></i> Add Product
                             </button>
                         </div>
-                        
+
                         <div className="products-grid">
                             {products && products.length > 0 ? (
                                 products.map(product => (
                                     <div key={product._id} className="product-card">
                                         <div className="product-image-container">
-                                            <img 
-                                                src={`/api/images/product/${product._id}/0`} 
-                                                alt={product.name} 
+                                            <img
+                                                src={`/api/images/product/${product._id}/0`}
+                                                alt={product.name}
                                                 className="product-image"
                                                 onError={(e) => {
                                                     console.log(`Product image failed to load: ${e.target.src}`);
@@ -477,7 +550,7 @@ const SellerDashboard = () => {
                                                         // Category-specific fallback images
                                                         const category = product.category?.toLowerCase() || '';
                                                         const name = product.name?.toLowerCase() || '';
-                                                        
+
                                                         if (category.includes('food') || name.includes('food') || name.includes('drool')) {
                                                             e.target.src = 'https://images.unsplash.com/photo-1589924691995-400dc9ecc119?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
                                                         } else if (category.includes('toy') || name.includes('toy') || name.includes('kong')) {
@@ -514,16 +587,16 @@ const SellerDashboard = () => {
                                                 <div className="product-title">{product.name}</div>
                                             </div>
                                             <div className="product-actions">
-                                                <button 
-                                                    className="btn btn-icon btn-edit" 
-                                                    data-tooltip="Edit Product" 
+                                                <button
+                                                    className="btn btn-icon btn-edit"
+                                                    data-tooltip="Edit Product"
                                                     onClick={() => editProduct(product._id)}
                                                 >
                                                     <i className="fas fa-edit"></i>
                                                 </button>
-                                                <button 
-                                                    className="btn btn-icon btn-deactivate" 
-                                                    data-tooltip={product.isActive ? 'Deactivate' : 'Activate'} 
+                                                <button
+                                                    className="btn btn-icon btn-deactivate"
+                                                    data-tooltip={product.isActive ? 'Deactivate' : 'Activate'}
                                                     onClick={() => toggleProductStatus(product._id)}
                                                 >
                                                     <i className="fas fa-power-off"></i>
@@ -545,8 +618,8 @@ const SellerDashboard = () => {
                     <div className="content-section">
                         <div className="section-header">
                             <h2><i className="fas fa-paw"></i> Pet Management</h2>
-                            <button 
-                                onClick={addNewPet} 
+                            <button
+                                onClick={addNewPet}
                                 className="btn btn-primary"
                                 style={{
                                     maxWidth: '200px',
@@ -562,15 +635,15 @@ const SellerDashboard = () => {
                                 <i className="fas fa-plus"></i> Add Pet
                             </button>
                         </div>
-                        
+
                         <div className="products-grid">
                             {pets && pets.length > 0 ? (
                                 pets.map(pet => (
                                     <div key={pet._id} className="product-card">
                                         <div className="product-image-container">
-                                            <img 
-                                                src={`/api/images/pet/${pet._id}/0`} 
-                                                alt={pet.name} 
+                                            <img
+                                                src={`/api/images/pet/${pet._id}/0`}
+                                                alt={pet.name}
                                                 className="product-image"
                                                 onError={(e) => {
                                                     console.log(`Pet image failed to load: ${e.target.src}`);
@@ -587,7 +660,7 @@ const SellerDashboard = () => {
                                                         // Pet category-specific fallback images
                                                         const category = pet.category?.toLowerCase() || '';
                                                         const breed = pet.breed?.toLowerCase() || '';
-                                                        
+
                                                         if (category.includes('dog') || breed.includes('dog')) {
                                                             e.target.src = 'https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80';
                                                         } else if (category.includes('cat') || breed.includes('cat')) {
@@ -621,16 +694,16 @@ const SellerDashboard = () => {
                                                 <div className="product-title">{pet.name}</div>
                                             </div>
                                             <div className="product-actions">
-                                                <button 
-                                                    className="btn btn-icon btn-edit" 
-                                                    data-tooltip="Edit Pet" 
+                                                <button
+                                                    className="btn btn-icon btn-edit"
+                                                    data-tooltip="Edit Pet"
                                                     onClick={() => editPet(pet._id)}
                                                 >
                                                     <i className="fas fa-edit"></i>
                                                 </button>
-                                                <button 
-                                                    className="btn btn-icon btn-deactivate" 
-                                                    data-tooltip={pet.isActive !== false ? 'Mark Unavailable' : 'Mark Available'} 
+                                                <button
+                                                    className="btn btn-icon btn-deactivate"
+                                                    data-tooltip={pet.isActive !== false ? 'Mark Unavailable' : 'Mark Available'}
                                                     onClick={() => togglePetStatus(pet._id)}
                                                 >
                                                     <i className="fas fa-power-off"></i>
@@ -649,7 +722,7 @@ const SellerDashboard = () => {
                     </div>
 
                     {/* Orders Management */}
-                    <div className="content-section">
+                    <div id="orders-section" className="content-section">
                         <div className="section-header">
                             <h2><i className="fas fa-shopping-bag"></i> Recent Orders</h2>
                             <div className="orders-stats">
@@ -659,7 +732,7 @@ const SellerDashboard = () => {
                                 </span>
                             </div>
                         </div>
-                        
+
                         {orders && orders.length > 0 ? (
                             <div className="orders-container">
                                 <div className="table-responsive">
@@ -694,7 +767,7 @@ const SellerDashboard = () => {
                                                     </td>
                                                     <td className="order-status-actions">
                                                         <div className="status-actions-container">
-                                                            <select 
+                                                            <select
                                                                 className={`status-select ${order.status?.toLowerCase()}`}
                                                                 value={order.status || 'pending'}
                                                                 data-order-id={order._id}
@@ -706,8 +779,8 @@ const SellerDashboard = () => {
                                                                 <option value="delivered">Delivered</option>
                                                                 <option value="cancelled">Cancelled</option>
                                                             </select>
-                                                            <button 
-                                                                className="btn btn-primary btn-sm view-details-btn" 
+                                                            <button
+                                                                className="btn btn-primary btn-sm view-details-btn"
                                                                 onClick={() => viewOrderDetails(order._id)}
                                                                 title="View Details"
                                                             >
@@ -716,8 +789,8 @@ const SellerDashboard = () => {
                                                         </div>
                                                     </td>
                                                     <td className="order-date">
-                                                        {order.createdAt || order.orderDate ? 
-                                                            new Date(order.createdAt || order.orderDate).toLocaleDateString() : 
+                                                        {order.createdAt || order.orderDate ?
+                                                            new Date(order.createdAt || order.orderDate).toLocaleDateString() :
                                                             'N/A'
                                                         }
                                                     </td>
@@ -736,11 +809,11 @@ const SellerDashboard = () => {
                     </div>
 
                     {/* Customer Reviews Section */}
-                    <div className="content-section">
+                    <div id="reviews-section" className="content-section">
                         <div className="section-header">
                             <h2><i className="fas fa-star"></i> Customer Reviews</h2>
                         </div>
-                        
+
                         {reviews && reviews.length > 0 ? (
                             <div className="reviews-grid">
                                 {reviews.map(review => (
@@ -755,14 +828,14 @@ const SellerDashboard = () => {
                                             </div>
                                             <div className="review-rating">
                                                 {[...Array(5)].map((_, i) => (
-                                                    <i 
-                                                        key={i} 
+                                                    <i
+                                                        key={i}
                                                         className={`fas fa-star ${i < review.rating ? 'filled' : ''}`}
                                                     ></i>
                                                 ))}
                                             </div>
                                         </div>
-                                        
+
                                         <div className="review-content">
                                             <div className="customer-info">
                                                 <i className="fas fa-user-circle"></i>
@@ -770,7 +843,7 @@ const SellerDashboard = () => {
                                             </div>
                                             <p>{review.comment}</p>
                                         </div>
-                                        
+
                                         {review.reply ? (
                                             <div className="review-reply">
                                                 <i className="fas fa-reply"></i>
@@ -778,8 +851,8 @@ const SellerDashboard = () => {
                                                 <p>{review.reply}</p>
                                             </div>
                                         ) : (
-                                            <button 
-                                                className="btn btn-secondary btn-sm reply-btn" 
+                                            <button
+                                                className="btn btn-secondary btn-sm reply-btn"
                                                 onClick={() => handleReplyToReview(review._id)}
                                             >
                                                 <i className="fas fa-reply"></i> Reply
@@ -797,6 +870,14 @@ const SellerDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Profile Modal */}
+            <EditProfileModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                user={{ ...user, ...seller }}
+                onSave={handleSaveProfile}
+            />
         </div>
     );
 };

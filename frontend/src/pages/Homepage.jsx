@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaPaw } from 'react-icons/fa';
 import api from '../utils/api';
 
@@ -13,6 +14,7 @@ import CategoryCard from '../components/cards/CategoryCard';
 import TestimonialCard from '../components/cards/TestimonialCard';
 
 const Homepage = () => {
+    const navigate = useNavigate();
     const [featuredPets, setFeaturedPets] = useState([]);
     const [featuredProducts, setFeaturedProducts] = useState([]);
     const [slides, setSlides] = useState([]);
@@ -57,7 +59,7 @@ const Homepage = () => {
         } catch (error) {
             console.error('Error adding to cart:', error);
             if (error.response?.status === 401) {
-                window.location.href = '/login';
+                navigate('/login');
             } else {
                 alert('Failed to add to cart. Please try again.');
             }
@@ -97,7 +99,7 @@ const Homepage = () => {
                             <CategoryCard
                                 key={index}
                                 category={category}
-                                onClick={() => window.location.href = '/pets'}
+                                onClick={() => navigate('/pets')}
                             />
                         ))}
                     </div>

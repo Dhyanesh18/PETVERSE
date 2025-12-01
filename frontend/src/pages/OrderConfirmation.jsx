@@ -1,51 +1,67 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
+import { useSelector } from 'react-redux';
 import { FaCheckCircle, FaHome, FaReceipt } from 'react-icons/fa';
 
 const OrderConfirmation = () => {
     const navigate = useNavigate();
     const { orderId } = useParams();
     const { isAuthenticated } = useAuth();
+    const user = useSelector((state) => state.auth.user);
     const [orderDetails, setOrderDetails] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    const fetchOrderDetails = useCallback(async () => {
-        try {
-            const response = await fetch(`http://localhost:8080/api/payment/order-confirmation/${orderId}`, {
-                credentials: 'include'
-            });
-            const data = await response.json();
-            
-            if (data.success) {
-                setOrderDetails(data.data.order);
-            } else {
-                // Order not found, redirect to cart
-                console.error('Order not found:', data.error);
-                navigate('/cart');
-            }
-        } catch (error) {
-            console.error('Error fetching order details:', error);
-            // On error, redirect to cart
-            navigate('/cart');
-        } finally {
-            setLoading(false);
+    const getDashboardUrl = () => {
+        if (!user) return '/home';
+        switch (user.role) {
+            case 'owner':
+                return '/dashboard';
+            case 'seller':
+                return '/seller/dashboard';
+            case 'service-provider':
+                return '/service-provider/dashboard';
+            case 'admin':
+                return '/admin/dashboard';
+            default:
+                return '/home';
         }
-    }, [orderId, navigate]);
+    };
 
     useEffect(() => {
+        const fetchOrderDetails = async () => {
+            try {
+                const response = await fetch(`http://localhost:8080/api/payment/order-confirmation/${orderId}`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    setOrderDetails(data.data.order);
+                } else {
+                    console.error('Order not found:', data.error);
+                    navigate('/cart');
+                }
+            } catch (error) {
+                console.error('Error fetching order details:', error);
+                navigate('/cart');
+            } finally {
+                setLoading(false);
+            }
+        };
+
         if (!isAuthenticated) {
             navigate('/login');
             return;
         }
         
-        if (orderId) {
-            fetchOrderDetails();
-        } else {
-            // No order ID provided, redirect to cart
+        if (!orderId) {
             navigate('/cart');
+            return;
         }
-    }, [isAuthenticated, navigate, orderId, fetchOrderDetails]);
+
+        fetchOrderDetails();
+    }, [isAuthenticated, navigate, orderId]);
 
     if (loading) {
         return (
@@ -202,7 +218,7 @@ const OrderConfirmation = () => {
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => navigate(getDashboardUrl())}
                             className="px-8 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                         >
                             View My Orders

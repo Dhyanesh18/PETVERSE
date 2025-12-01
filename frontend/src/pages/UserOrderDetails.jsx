@@ -1,10 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import Header from '../components/Header';
 
 const UserOrderDetails = () => {
     const navigate = useNavigate();
     const { orderId } = useParams();
+    const { user } = useAuth();
+
+    const getDashboardUrl = () => {
+        if (!user) return '/home';
+        switch (user.role) {
+            case 'owner':
+                return '/dashboard';
+            case 'seller':
+                return '/seller/dashboard';
+            case 'service-provider':
+                return '/service-provider/dashboard';
+            case 'admin':
+                return '/admin/dashboard';
+            default:
+                return '/home';
+        }
+    };
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -121,7 +139,7 @@ const UserOrderDetails = () => {
                         <h2 className="text-xl font-semibold text-red-800 mb-2">Error Loading Order</h2>
                         <p className="text-red-600 mb-4">{error}</p>
                         <button 
-                            onClick={() => navigate('/owner/dashboard')}
+                            onClick={() => navigate(getDashboardUrl())}
                             className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
                         >
                             <i className="fas fa-arrow-left mr-2"></i>
@@ -142,7 +160,7 @@ const UserOrderDetails = () => {
                         <h2 className="text-xl font-semibold text-gray-800 mb-2">Order Not Found</h2>
                         <p className="text-gray-600 mb-4">The order you're looking for doesn't exist or you don't have permission to view it.</p>
                         <button 
-                            onClick={() => navigate('/owner/dashboard')}
+                            onClick={() => navigate(getDashboardUrl())}
                             className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
                         >
                             <i className="fas fa-arrow-left mr-2"></i>
@@ -376,7 +394,7 @@ const UserOrderDetails = () => {
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-4 pt-6 border-t border-gray-100">
                         <button 
-                            onClick={() => navigate('/owner/dashboard')}
+                            onClick={() => navigate(getDashboardUrl())}
                             className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-md"
                         >
                             <i className="fas fa-arrow-left"></i>

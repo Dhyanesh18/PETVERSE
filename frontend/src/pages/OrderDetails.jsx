@@ -1,12 +1,28 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import Header from '../components/Header';
 
 const OrderDetails = () => {
     const navigate = useNavigate();
     const { orderId } = useParams();
     const { user } = useAuth();
+
+    const getDashboardUrl = () => {
+        if (!user) return '/home';
+        switch (user.role) {
+            case 'owner':
+                return '/dashboard';
+            case 'seller':
+                return '/seller/dashboard';
+            case 'service-provider':
+                return '/service-provider/dashboard';
+            case 'admin':
+                return '/admin/dashboard';
+            default:
+                return '/home';
+        }
+    };
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -30,6 +46,8 @@ const OrderDetails = () => {
                 // Handle different response structures
                 const orderData = data.data?.order || data.order || data.data;
                 console.log('Processed order data:', orderData); // Debug log
+                console.log('Customer data:', orderData.customer); // Debug customer
+                console.log('Shipping address:', orderData.shippingAddress); // Debug shipping
                 setOrder(orderData);
             } else {
                 setError(data.error || 'Failed to load order details');
@@ -127,7 +145,7 @@ const OrderDetails = () => {
                         <h2 className="text-xl font-semibold text-red-800 mb-2">Error Loading Order</h2>
                         <p className="text-red-600 mb-4">{error}</p>
                         <button 
-                            onClick={() => navigate('/seller/dashboard')}
+                            onClick={() => navigate(getDashboardUrl())}
                             className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
                         >
                             <i className="fas fa-arrow-left mr-2"></i>
@@ -148,7 +166,7 @@ const OrderDetails = () => {
                         <h2 className="text-xl font-semibold text-gray-800 mb-2">Order Not Found</h2>
                         <p className="text-gray-600 mb-4">The order you're looking for doesn't exist or you don't have permission to view it.</p>
                         <button 
-                            onClick={() => navigate('/seller/dashboard')}
+                            onClick={() => navigate(getDashboardUrl())}
                             className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
                         >
                             <i className="fas fa-arrow-left mr-2"></i>
@@ -221,7 +239,9 @@ const OrderDetails = () => {
                             <div className="space-y-4">
                                 <div>
                                     <div className="text-sm font-medium text-gray-500 mb-1">Name</div>
-                                    <div className="text-gray-800 font-medium">{order.customer?.fullName || order.customer?.name || 'N/A'}</div>
+                                    <div className="text-gray-800 font-medium">
+                                        {order.customer?.fullName || order.customer?.name || order.customer?._id || 'N/A'}
+                                    </div>
                                 </div>
                                 <div>
                                     <div className="text-sm font-medium text-gray-500 mb-1">Email</div>
@@ -231,17 +251,23 @@ const OrderDetails = () => {
                             <div className="space-y-4">
                                 <div>
                                     <div className="text-sm font-medium text-gray-500 mb-1">Phone</div>
-                                    <div className="text-gray-800">{order.customer?.phone || order.customer?.phoneNo || order.customer?.mobile || 'N/A'}</div>
+                                    <div className="text-gray-800 flex items-center gap-2">
+                                        {order.customer?.phoneNo || order.customer?.phone || order.customer?.mobile || order.shippingAddress?.phone || order.shippingAddress?.phoneNo || 'N/A'}
+                                    </div>
                                 </div>
                                 <div>
                                     <div className="text-sm font-medium text-gray-500 mb-1">Delivery Address</div>
                                     <div className="text-gray-800">
-                                        {order.shippingAddress ? (
+                                        {order.shippingAddress && (order.shippingAddress.street || order.shippingAddress.city || order.shippingAddress.state) ? (
                                             <div className="space-y-1">
                                                 {order.shippingAddress.street && <div>{order.shippingAddress.street}</div>}
-                                                {order.shippingAddress.city && <div>{order.shippingAddress.city}</div>}
-                                                {order.shippingAddress.state && <div>{order.shippingAddress.state}</div>}
-                                                {order.shippingAddress.zipCode && <div>{order.shippingAddress.zipCode}</div>}
+                                                {(order.shippingAddress.city || order.shippingAddress.state || order.shippingAddress.zipCode) && (
+                                                    <div>
+                                                        {order.shippingAddress.city && `${order.shippingAddress.city}`}
+                                                        {order.shippingAddress.state && `, ${order.shippingAddress.state}`}
+                                                        {order.shippingAddress.zipCode && ` - ${order.shippingAddress.zipCode}`}
+                                                    </div>
+                                                )}
                                                 {order.shippingAddress.country && <div>{order.shippingAddress.country}</div>}
                                                 {(order.shippingAddress.phone || order.shippingAddress.mobile || order.shippingAddress.phoneNo) && (
                                                     <div className="text-sm text-gray-600 mt-2">
@@ -529,7 +555,7 @@ const OrderDetails = () => {
                     {/* Action Buttons */}
                     <div className="flex gap-4 pt-6 border-t border-gray-100">
                         <button 
-                            onClick={() => navigate(user?.role === 'seller' ? '/seller/dashboard' : '/owner/dashboard')}
+                            onClick={() => navigate(getDashboardUrl())}
                             className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-full font-semibold hover:bg-gray-200 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-md"
                         >
                             <i className="fas fa-arrow-left"></i>

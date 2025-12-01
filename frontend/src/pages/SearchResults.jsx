@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { searchAll } from '../services/api';
 
@@ -7,20 +7,36 @@ const SearchResults = () => {
     const [results, setResults] = useState({ pets: [], products: [], services: [] });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const searchExecuted = useRef(false);
     
     const query = searchParams.get('q');
 
+    // Memoize total results calculation
+    const totalResults = useMemo(() => 
+        (results.pets?.length || 0) + (results.products?.length || 0) + (results.services?.length || 0),
+        [results.pets?.length, results.products?.length, results.services?.length]
+    );
+
     useEffect(() => {
+        // Prevent duplicate search execution
+        if (searchExecuted.current) {
+            searchExecuted.current = false;
+            return;
+        }
+
         const performSearch = async () => {
-            if (!query) {
+            if (!query || query.trim().length < 2) {
                 setLoading(false);
+                setResults({ pets: [], products: [], services: [] });
                 return;
             }
 
             try {
+                searchExecuted.current = true;
                 setLoading(true);
                 setError(null);
-                const response = await searchAll(query);
+                
+                const response = await searchAll(query.trim());
                 setResults(response.data || { pets: [], products: [], services: [] });
             } catch (err) {
                 console.error('Search failed:', err);
@@ -31,10 +47,10 @@ const SearchResults = () => {
             }
         };
 
-        performSearch();
+        // Debounce search execution
+        const timeoutId = setTimeout(performSearch, 300);
+        return () => clearTimeout(timeoutId);
     }, [query]);
-
-    const totalResults = (results.pets?.length || 0) + (results.products?.length || 0) + (results.services?.length || 0);
 
     if (loading) {
         return (

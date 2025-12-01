@@ -10,8 +10,8 @@ import {
     getUserReview,
     canUserReview
 } from '../services/api';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
+import { useCart } from '../hooks/useCart';
+import { useAuth } from '../hooks/useAuth';
 import { Truck, XCircle, Wallet, Stethoscope, ShoppingCart, Heart, Star, MessageSquare } from 'lucide-react';
 
 const ProductDetail = () => {
