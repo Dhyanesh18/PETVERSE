@@ -39,6 +39,7 @@ import Wallet from './pages/Wallet';
 import About from './pages/About';
 import SearchResults from './pages/SearchResults';
 import AdminDashboard from './pages/AdminDashboard';
+import LostAndFound from './pages/LostAndFound';
 
 // Component that initializes Redux state
 function AppInitializer({ children }) {
@@ -102,6 +103,9 @@ function App() {
                             <Route path="/products" element={<Products />} />
                             <Route path="/product/:id" element={<ProductDetail />} />
                             <Route path="/mate" element={<PetMate />} />
+                            
+                            {/* Lost & Found Routes */}
+                            <Route path="/lost-found" element={<LostAndFound />} />
 
                             {/* Services Routes */}
                             <Route path="/services" element={<Services />} />

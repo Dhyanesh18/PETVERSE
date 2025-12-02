@@ -67,7 +67,7 @@ const Events = () => {
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen pt-20">
+        <div className="bg-gray-50 min-h-screen pt-20" style={{ paddingTop: '75px' }}>
             {/* Hero Section */}
             <section 
                 className="text-white py-20 px-5 text-center mt-0 relative overflow-hidden bg-cover bg-center"
