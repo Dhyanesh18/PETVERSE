@@ -65,7 +65,7 @@ const OrderConfirmation = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 pt-20">
+            <div className="min-h-screen bg-linear-to-br from-green-50 to-teal-50 pt-20">
                 <div className="container mx-auto px-4 py-8">
                     <div className="flex justify-center items-center h-64">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
@@ -77,16 +77,16 @@ const OrderConfirmation = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-50 pt-20">
+        <div className="min-h-screen bg-linear-to-br from-green-50 to-teal-50 pt-20">
             <div className="container mx-auto px-4 py-8">
                 <div className="max-w-2xl mx-auto text-center">
                     {/* Success Icon */}
-                    <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-r from-green-500 to-green-600 rounded-full mb-8 shadow-lg">
+                    <div className="inline-flex items-center justify-center w-24 h-24 bg-linear-to-r from-green-500 to-green-600 rounded-full mb-8 shadow-lg">
                         <FaCheckCircle className="text-white text-4xl" />
                     </div>
 
                     {/* Success Message */}
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent mb-4">
+                    <h1 className="text-4xl font-bold bg-linear-to-r from-green-600 to-teal-600 bg-clip-text text-transparent mb-4">
                         Order Placed Successfully!
                     </h1>
                     <p className="text-xl text-gray-600 mb-8">
@@ -143,7 +143,7 @@ const OrderConfirmation = () => {
                         
                         {/* Order ID Highlight */}
                         {orderDetails && (
-                            <div className="mt-6 p-4 bg-gradient-to-r from-teal-50 to-blue-50 border border-teal-200 rounded-lg">
+                            <div className="mt-6 p-4 bg-linear-to-r from-teal-50 to-blue-50 border border-teal-200 rounded-lg">
                                 <div className="text-center">
                                     <p className="text-sm text-gray-600 mb-1">Your Order ID</p>
                                     <p className="text-2xl font-bold text-teal-700 font-mono tracking-wider">
@@ -219,7 +219,7 @@ const OrderConfirmation = () => {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <button
                             onClick={() => navigate(getDashboardUrl())}
-                            className="px-8 py-3 bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                            className="px-8 py-3 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                         >
                             View My Orders
                         </button>

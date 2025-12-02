@@ -96,7 +96,7 @@ const About = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white" style={{ paddingTop: '35px' }}>
             {/* Hero Section */}
             <section className="relative bg-linear-to-br from-teal-600 to-teal-800 text-white py-20 px-4" style={{marginTop:"40px"}}>
                 <div className="container mx-auto text-center">

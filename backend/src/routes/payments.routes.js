@@ -404,10 +404,13 @@ router.post('/', isAuthenticated, async (req, res) => {
             const itemSellerShare = itemPrice * 0.95;
             if (sellerWallet) await sellerWallet.addFunds(itemSellerShare);
 
+            // Create transaction with required type field
             await new Transaction({
                 from: req.user._id,
                 to: sellerId,
-                amount: itemSellerShare
+                amount: itemSellerShare,
+                type: 'order_payment', // Add type field
+                description: `Payment for order items`
             }).save();
 
             // Add to order items with correct field name
@@ -419,12 +422,14 @@ router.post('/', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Add commission to admin wallet
+        // Add commission to admin wallet with type
         if (adminWallet) await adminWallet.addFunds(commission);
         await new Transaction({
             from: req.user._id,
             to: "6807e4424877bcd9980c7e00",
-            amount: commission
+            amount: commission,
+            type: 'platform_commission', // Add type field
+            description: `Platform commission for order`
         }).save();
 
         const order = new Order({
@@ -598,12 +603,13 @@ router.post('/payment/common', isAuthenticated, async (req, res) => {
 
         await wallet.deductFunds(charge);
 
-        // Create transaction record
+        // Create transaction record with correct type
         await new Transaction({
             from: req.user._id,
             to: id,
             amount: charge,
-            type: type === 'event' ? 'event_payment' : 'service_payment'
+            type: type === 'event' ? 'event_payment' : 'service_payment', // Already has type
+            description: type === 'event' ? 'Event registration payment' : 'Service booking payment'
         }).save();
 
         res.json({

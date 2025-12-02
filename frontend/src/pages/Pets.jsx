@@ -315,7 +315,7 @@ const Pets = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="min-h-screen bg-gray-50 pt-20" style={{ paddingTop: '130px' }}>
             {/* Main Container */}
             <div className="max-w-7xl mx-auto px-5 py-5 flex gap-5">
                 {/* Filters Sidebar */}

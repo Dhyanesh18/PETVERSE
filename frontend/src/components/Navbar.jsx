@@ -40,11 +40,19 @@ const Navbar = () => {
 
     const navLinks = [
         { name: 'Home', url: '/home' },
-        { name: 'Pets', url: '/pets' },
+        {
+            name: 'Pets',
+            url: '/pets', // Change from '#' to actual route
+            dropdown: true,
+            dropdownItems: [
+                { name: 'Adopt Pets', url: '/pets' },
+                { name: 'Lost & Found', url: '/lost-found' }
+            ]
+        },
         { name: 'Products', url: '/products' },
         {
             name: 'Services',
-            url: '#',
+            url: '/services', // Change from '#' to actual route
             dropdown: true,
             dropdownItems: [
                 { name: 'PetCare', url: '/services' },
@@ -268,7 +276,7 @@ const Navbar = () => {
                                     <>
                                         <button
                                             onClick={() => toggleDropdown(index)}
-                                            className="text-white  text-xl flex items-center gap-1 hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-transparent border-none cursor-pointer font-poppins"
+                                            className="text-white text-xl flex items-center gap-1 hover:scale-105 hover:-translate-y-1 transition-all duration-300 bg-transparent border-none cursor-pointer font-poppins"
                                             style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)' }}
                                             onMouseEnter={(e) => e.currentTarget.style.textShadow = '0 0 10px rgba(255, 255, 255, 0.8)'}
                                             onMouseLeave={(e) => e.currentTarget.style.textShadow = '1px 1px 2px rgba(0, 0, 0, 0.3)'}
@@ -277,13 +285,13 @@ const Navbar = () => {
                                             <FaAngleDown className={`transition-transform duration-300 ${openDropdown === index ? 'rotate-180' : ''}`} />
                                         </button>
                                         {openDropdown === index && (
-                                            <ul className="absolute top-13 left[-30px]  bg-stone-900 shadow-[0_4px_20px_rgba(0,0,0,0.15)] rounded-xl py-2 min-w-5 z-50 list-none animate-fadeInDown">
+                                            <ul className="absolute top-11 left-[-30px] bg-stone-900 shadow-[0_4px_20px_rgba(0,0,0,0.15)] rounded-md py-2 min-w-[180px] z-50 list-none animate-fadeInDown">
                                                 {link.dropdownItems.map((item, itemIndex) => (
                                                     <li key={itemIndex}>
                                                         <Link
                                                             to={item.url}
                                                             onClick={() => setOpenDropdown(null)}
-                                                            className="block px-8 py-3 text-teal-600 hover:bg-linear-to-r hover:from-primary-500 hover:to-secondary-500 hover:text-white transition-all duration-300 no-underline font-medium text-sm"
+                                                            className="block px-8 py-3 text-teal-400 hover:bg-linear-to-r hover:from-teal-600 hover:to-cyan-600 hover:text-white transition-all duration-300 no-underline font-medium text-base"
                                                         >
                                                             {item.name}
                                                         </Link>
@@ -295,7 +303,7 @@ const Navbar = () => {
                                 ) : (
                                     <Link 
                                         to={link.url}
-                                        className="text-white  text-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 no-underline font-poppins"
+                                        className="text-white text-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 no-underline font-poppins"
                                         style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)' }}
                                         onMouseEnter={(e) => e.currentTarget.style.textShadow = '0 0 10px rgba(255, 255, 255, 0.8)'}
                                         onMouseLeave={(e) => e.currentTarget.style.textShadow = '1px 1px 2px rgba(0, 0, 0, 0.3)'}
@@ -309,7 +317,7 @@ const Navbar = () => {
 
                     {/* Mobile Menu */}
                     {isMobileMenuOpen && (
-                        <div className="lg:hidden fixed top-20 left-0 w-full bg-linear-to-br from-primary-500 to-secondary-500 shadow-[0_10px_27px_rgba(0,0,0,0.15)] z-50">
+                        <div className="lg:hidden fixed top-20 left-0 w-full bg-linear-to-br from-teal-600 to-cyan-600 shadow-[0_10px_27px_rgba(0,0,0,0.15)] z-50">
                             <ul className="flex flex-col items-center gap-6 py-8 list-none">
                                 {navLinks.map((link, index) => (
                                     <li key={index} className="w-full text-center">
@@ -317,7 +325,7 @@ const Navbar = () => {
                                             <>
                                                 <button
                                                     onClick={() => toggleDropdown(index)}
-                                                    className="text-white  text-xl flex items-center justify-center gap-2 w-full py-2 bg-transparent border-none cursor-pointer"
+                                                    className="text-white text-xl flex items-center justify-center gap-2 w-full py-2 bg-transparent border-none cursor-pointer"
                                                 >
                                                     <span>{link.name}</span>
                                                     <FaAngleDown className={`transition-transform ${openDropdown === index ? 'rotate-180' : ''}`} />
@@ -345,7 +353,7 @@ const Navbar = () => {
                                             <Link 
                                                 to={link.url}
                                                 onClick={() => setIsMobileMenuOpen(false)}
-                                                className="text-white  text-xl no-underline block py-2"
+                                                className="text-white text-xl no-underline block py-2"
                                             >
                                                 {link.name}
                                             </Link>
