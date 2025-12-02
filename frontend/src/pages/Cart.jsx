@@ -125,9 +125,9 @@ const Cart = () => {
             <div className="container mx-auto px-4 py-8">
                 <div className="text-center mb-12">
                   
-                    <h1 className="text-5xl font-bold bg-gradient-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-2" style={{paddingBottom:"10px"}}>Shopping Cart</h1>
+                    <h1 className="text-5xl font-bold bg-linear-to-r from-teal-600 to-teal-700 bg-clip-text text-transparent mb-2" style={{paddingBottom:"10px"}}>Shopping Cart</h1>
                     <p className="text-xl text-gray-600">Review your items and proceed to checkout</p>
-                    <div className="w-24 h-1 bg-gradient-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-4"></div>
+                    <div className="w-24 h-1 bg-linear-to-r from-teal-500 to-teal-600 rounded-full mx-auto mt-4"></div>
                 </div>
 
                 {cart.length === 0 ? (
@@ -166,7 +166,7 @@ const Cart = () => {
                                         {/* Product Image */}
                                         <div
                                             onClick={() => navigate(`/product/${item.productId || item._id}`)}
-                                            className="cursor-pointer flex-shrink-0"
+                                            className="cursor-pointer shrink-0"
                                         >
                                             <img
                                                 src={
@@ -318,7 +318,7 @@ const Cart = () => {
                                 <div className="space-y-3">
                                     <button
                                         onClick={() => navigate('/checkout')}
-                                        className="w-full bg-gradient-to-r from-teal-500 to-teal-600 text-white py-4 rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                                        className="w-full bg-linear-to-r from-teal-500 to-teal-600 text-white py-4 rounded-xl hover:from-teal-600 hover:to-teal-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                                     >
                                         Proceed to Checkout
                                     </button>

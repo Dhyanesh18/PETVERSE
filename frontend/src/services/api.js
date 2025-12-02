@@ -52,7 +52,7 @@ export const getPets = (params = {}) => {
 export const getPetById = (id) => apiClient.get(`/api/pets/${id}`);
 export const addPet = (petData) => apiClient.post('/api/pets', petData);
 export const updatePet = (id, petData) => apiClient.put(`/api/pets/${id}`, petData);
-export const deletePet = (id) => apiClient.delete(`/api/pets/${id}`);
+
 export const getFeaturedPets = () => apiClient.get('/api/featured-pets');
 
 // ===== Product APIs =====
@@ -63,7 +63,7 @@ export const getProducts = (params = {}) => {
 export const getProductById = (id) => apiClient.get(`/api/products/${id}`);
 export const addProduct = (productData) => apiClient.post('/api/products', productData);
 export const updateProduct = (id, productData) => apiClient.put(`/api/products/${id}`, productData);
-export const deleteProduct = (id) => apiClient.delete(`/api/products/${id}`);
+
 export const getFeaturedProducts = () => apiClient.get('/api/featured-products');
 
 // ===== Service APIs =====
@@ -136,5 +136,16 @@ export const getUserReview = (type, itemId) => apiClient.get(`/api/reviews/user/
 export const addReview = (reviewData) => apiClient.post('/api/reviews', reviewData);
 export const deleteReview = (reviewId) => apiClient.delete(`/api/reviews/${reviewId}`);
 export const canUserReview = (type, itemId) => apiClient.get(`/api/reviews/can-review/${type}/${itemId}`);
+
+// ===== Admin APIs =====
+export const getAdminDashboard = () => apiClient.get('/api/admin/dashboard');
+export const approveApplication = (id, type) => apiClient.post(`/api/admin/approve/${type}/${id}`);
+export const rejectApplication = (id, type, reason) => apiClient.post(`/api/admin/reject/${type}/${id}`, { reason });
+export const approveUser = (userId) => apiClient.post(`/api/admin/approve-user/${userId}`);
+export const deleteUser = (userId) => apiClient.delete(`/api/admin/user/${userId}`);
+export const deleteProduct = (productId) => apiClient.delete(`/api/admin/product/${productId}`);
+export const deleteService = (serviceId) => apiClient.delete(`/api/admin/service/${serviceId}`);
+export const deletePet = (petId) => apiClient.delete(`/api/admin/pet/${petId}`);
+export const updateOrderStatus = (orderId, status) => apiClient.put(`/api/admin/order/${orderId}/status`, { status });
 
 export default apiClient;

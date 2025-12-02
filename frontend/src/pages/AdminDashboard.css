@@ -1,0 +1,284 @@
+.admin-dashboard-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8f5f5 100%);
+    padding-top: 80px;
+}
+
+.admin-main-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+}
+
+/* Sidebar */
+.admin-sidebar {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+}
+
+.sidebar-section {
+    margin-bottom: 2rem;
+}
+
+.sidebar-section:last-child {
+    margin-bottom: 0;
+}
+
+.sidebar-section h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0d9488;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #99f6e4;
+}
+
+.admin-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-menu li {
+    padding: 0.875rem 1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    color: #64748b;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.admin-menu li:hover {
+    background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
+    color: #0d9488;
+    transform: translateX(4px);
+}
+
+.admin-menu li.active {
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.admin-menu li i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+/* Filters */
+.filter-section {
+    margin-bottom: 1.5rem;
+}
+
+.filter-section h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.75rem;
+}
+
+.filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.filter-option:hover {
+    background: #f8fafc;
+}
+
+.filter-option input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #14b8a6;
+    cursor: pointer;
+}
+
+.filter-option span {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+.date-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.date-filter input {
+    padding: 0.5rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    transition: all 0.3s;
+}
+
+.date-filter input:focus {
+    outline: none;
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.clear-filters-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border: none;
+    border-radius: 8px;
+    color: #475569;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.clear-filters-btn:hover {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    transform: translateY(-1px);
+}
+
+/* Main Content */
+.admin-content {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.admin-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.admin-user-info span {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+/* Loading State */
+.admin-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 1rem;
+}
+
+.admin-loading i {
+    font-size: 3rem;
+    color: #14b8a6;
+}
+
+.admin-loading p {
+    font-size: 1.1rem;
+    color: #64748b;
+}
+
+/* Error State */
+.admin-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 1rem;
+    padding: 2rem;
+}
+
+.admin-error i {
+    font-size: 4rem;
+    color: #ef4444;
+}
+
+.admin-error p {
+    font-size: 1.2rem;
+    color: #64748b;
+    text-align: center;
+}
+
+.btn-retry {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-retry:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(20, 184, 166, 0.3);
+}
+
+.btn-retry i {
+    font-size: 1rem;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .admin-main-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-sidebar {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-main-container {
+        padding: 1rem;
+    }
+    
+    .admin-content {
+        padding: 1rem;
+    }
+    
+    .admin-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}

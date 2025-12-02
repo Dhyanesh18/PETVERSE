@@ -38,6 +38,7 @@ import OrderConfirmation from './pages/OrderConfirmation';
 import Wallet from './pages/Wallet';
 import About from './pages/About';
 import SearchResults from './pages/SearchResults';
+import AdminDashboard from './pages/AdminDashboard';
 
 // Component that initializes Redux state
 function AppInitializer({ children }) {
@@ -323,7 +324,7 @@ function App() {
                                 path="/admin/dashboard"
                                 element={
                                     <ProtectedRoute allowedRoles={['admin']}>
-                                        <div>Admin Dashboard</div>
+                                        <AdminDashboard />
                                     </ProtectedRoute>
                                 }
                             />

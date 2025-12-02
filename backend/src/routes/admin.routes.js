@@ -9,6 +9,8 @@ const Wallet = require('../models/wallet');
 // Get admin dashboard data
 router.get('/dashboard', adminAuth, async (req, res) => {
     try {
+        console.log('Admin dashboard API called by:', req.user.fullName);
+        
         // Get pending sellers and service providers
         const pendingUsers = await User.find({
             role: { $in: ['seller', 'service_provider'] },
@@ -146,8 +148,7 @@ router.get('/dashboard', adminAuth, async (req, res) => {
             console.log('Order model not available, using empty orders and zeroed stats');
         }
 
-        // Return JSON response instead of rendering view
-        res.json({
+        const responseData = {
             success: true,
             data: {
                 admin: req.user,
@@ -160,27 +161,35 @@ router.get('/dashboard', adminAuth, async (req, res) => {
                 services,
                 pets,
                 orders,
+                stats: {
+                    approved: approvedApplications.length,
+                    pending: pendingApplications.length,
+                    sellers: sellerCount,
+                    totalUsers: allUsers.length,
+                    totalProducts: products.length,
+                    petsListed: pets.length,
+                },
                 orderStats,
                 userGrowthData,
                 productCategoriesData,
                 revenueData,
-                
-                // User distribution data for pie chart
                 userDistributionData: {
                     labels: ['Owners', 'Sellers', 'Service Providers', 'Admins'],
                     data: [ownerCount, sellerCount, serviceProviderCount, adminCount]
                 },
-                
-                // Platform summary data
                 platformSummary: {
                     totalUsers: allUsers.length,
                     activeSellers: approvedSellers.length,
                     serviceProviders: approvedServiceProviders.length,
                     totalProducts: products.length,
                     petsListed: pets.length,
-                }
+                },
+                users: allUsers // Add this for the AllUsers component
             }
-        });
+        };
+        
+        console.log('Sending admin dashboard response with', Object.keys(responseData.data).length, 'data keys');
+        res.json(responseData);
     } catch (err) {
         console.error('Admin dashboard error:', err);
         res.status(500).json({ 
