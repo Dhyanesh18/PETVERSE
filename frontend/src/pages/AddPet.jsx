@@ -40,6 +40,12 @@ const AddPet = () => {
             if (value.length > 50) {
                 return 'Pet name must not exceed 50 characters';
             }
+            if (!/[a-zA-Z]/.test(value)) {
+                return 'Pet name must contain at least one letter';
+            }
+            if (!/^[a-zA-Z0-9\s\-'.]+$/.test(value)) {
+                return 'Pet name can only contain letters, numbers, spaces, hyphens, apostrophes, and periods';
+            }
             return null;
         },
         breed: (value) => {
@@ -51,6 +57,9 @@ const AddPet = () => {
             }
             if (value.length > 50) {
                 return 'Breed must not exceed 50 characters';
+            }
+            if (!/^[a-zA-Z\s\-'.]+$/.test(value)) {
+                return 'Breed can only contain letters, spaces, hyphens, apostrophes, and periods';
             }
             return null;
         },

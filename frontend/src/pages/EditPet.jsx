@@ -24,6 +24,78 @@ const EditPet = () => {
     const [existingImages, setExistingImages] = useState([]);
     const [newImages, setNewImages] = useState([]);
     const [imagesToKeep, setImagesToKeep] = useState([]);
+    const [validationErrors, setValidationErrors] = useState({});
+
+    // Validation functions
+    const validators = {
+        name: (value) => {
+            if (!value || value.trim().length === 0) {
+                return 'Pet name is required';
+            }
+            if (value.length < 2) {
+                return 'Pet name must be at least 2 characters';
+            }
+            if (value.length > 50) {
+                return 'Pet name must not exceed 50 characters';
+            }
+            if (!/[a-zA-Z]/.test(value)) {
+                return 'Pet name must contain at least one letter';
+            }
+            if (!/^[a-zA-Z0-9\s\-'.]+$/.test(value)) {
+                return 'Pet name can only contain letters, numbers, spaces, hyphens, apostrophes, and periods';
+            }
+            return null;
+        },
+        breed: (value) => {
+            if (!value || value.trim().length === 0) {
+                return 'Breed is required';
+            }
+            if (value.length < 2) {
+                return 'Breed must be at least 2 characters';
+            }
+            if (value.length > 50) {
+                return 'Breed must not exceed 50 characters';
+            }
+            if (!/^[a-zA-Z\s\-'.]+$/.test(value)) {
+                return 'Breed can only contain letters, spaces, hyphens, apostrophes, and periods';
+            }
+            return null;
+        },
+        age: (value) => {
+            if (!value || value.trim().length === 0) {
+                return 'Age is required';
+            }
+            return null;
+        },
+        price: (value) => {
+            if (!value || value === '') {
+                return 'Price is required';
+            }
+            const numValue = parseFloat(value);
+            if (isNaN(numValue)) {
+                return 'Price must be a valid number';
+            }
+            if (numValue < 1) {
+                return 'Price must be at least ₹1';
+            }
+            if (numValue > 10000000) {
+                return 'Price cannot exceed ₹1,00,00,000';
+            }
+            return null;
+        },
+        category: (value) => {
+            if (!value || value === '') {
+                return 'Please select a category';
+            }
+            return null;
+        }
+    };
+
+    const validateField = (fieldName, value) => {
+        const validator = validators[fieldName];
+        if (!validator) return null;
+        return validator(value);
+    };
 
     useEffect(() => {
         fetchPetData();
@@ -68,10 +140,21 @@ const EditPet = () => {
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
+        const newValue = type === 'checkbox' ? checked : value;
+        
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: newValue
         }));
+
+        // Validate field on change
+        if (type !== 'checkbox') {
+            const error = validateField(name, value);
+            setValidationErrors(prev => ({
+                ...prev,
+                [name]: error
+            }));
+        }
     };
 
     const handleImageChange = (e) => {
@@ -97,6 +180,20 @@ const EditPet = () => {
         setError('');
         setSuccess('');
 
+        // Validate all fields before submission
+        const errors = {};
+        Object.keys(validators).forEach(field => {
+            const error = validateField(field, formData[field]);
+            if (error) errors[field] = error;
+        });
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
+            setError('Please fix all validation errors before submitting');
+            setSubmitting(false);
+            return;
+        }
+
         try {
             const formDataToSend = new FormData();
             
@@ -115,8 +212,8 @@ const EditPet = () => {
                 formDataToSend.append('images', image);
             });
 
-            const response = await fetch(`/api/pets/${id}/edit`, {
-                method: 'POST',
+            const response = await fetch(`/api/seller/pets/${id}`, {
+                method: 'PUT',
                 credentials: 'include',
                 body: formDataToSend
             });
