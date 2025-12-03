@@ -239,36 +239,48 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
         console.log('Fetching bookings for user:', req.user._id);
         
         let bookings = await Booking.find({ user: req.user._id })
-            .populate({
-                path: 'service',
-                select: 'serviceType description rate provider fullName email phoneNo serviceAddress',
-                populate: {
-                    path: 'provider',
-                    select: 'fullName email phoneNo serviceType serviceAddress'
-                }
-            })
             .sort({ createdAt: -1 })
             .limit(15)
             .lean();
 
         console.log('Found bookings:', bookings.length);
         
-        // If no bookings found with Service model, try direct User reference
-        if (bookings.length === 0) {
-            console.log('No bookings with Service model, trying direct User reference');
-            bookings = await Booking.find({ user: req.user._id })
-                .populate('service', 'fullName email phoneNo serviceType serviceAddress')
-                .sort({ createdAt: -1 })
-                .limit(15)
-                .lean();
-            console.log('Found bookings with User reference:', bookings.length);
+        // Manually populate service provider data
+        const User = require('../models/users');
+        const populatedBookings = [];
+        
+        for (const booking of bookings) {
+            if (booking.service) {
+                try {
+                    // Try to get service provider details from User model
+                    const serviceProvider = await User.findById(booking.service)
+                        .select('fullName email phoneNo phone serviceType serviceAddress')
+                        .lean();
+                    
+                    if (serviceProvider) {
+                        populatedBookings.push({
+                            ...booking,
+                            service: serviceProvider
+                        });
+                    } else {
+                        // Service provider not found, include booking anyway
+                        populatedBookings.push(booking);
+                    }
+                } catch (error) {
+                    console.error('Error populating service provider:', error);
+                    populatedBookings.push(booking);
+                }
+            } else {
+                // Include bookings without service reference
+                populatedBookings.push(booking);
+            }
         }
 
-        console.log('Sample booking:', bookings[0]);
+        console.log('Populated bookings:', populatedBookings.length);
+        console.log('Sample populated booking:', populatedBookings[0]);
 
-        // Filter out bookings with missing service data and limit to 10
-        const validBookings = bookings.filter(booking => booking.service).slice(0, 10);
-        console.log('Valid bookings after filtering:', validBookings.length);
+        // Don't filter out bookings - show all of them
+        const validBookings = populatedBookings.slice(0, 10);
 
         const events = await Event.find({ 'attendees.user': req.user._id })
             .sort({ eventDate: 1 })
@@ -329,14 +341,9 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                 })),
                 bookings: validBookings.map(booking => {
                     // Handle both Service model and direct User reference
-                    const isDirectUserRef = booking.service?.fullName && !booking.service?.provider;
-                    const serviceType = isDirectUserRef 
-                        ? booking.service?.serviceType 
-                        : (booking.service?.serviceType || booking.service?.provider?.serviceType);
-                    
-                    const providerName = isDirectUserRef 
-                        ? booking.service?.fullName 
-                        : booking.service?.provider?.fullName;
+                    const serviceProvider = booking.service;
+                    const serviceType = serviceProvider?.serviceType;
+                    const providerName = serviceProvider?.fullName;
                     
                     const formatServiceType = (type) => {
                         const typeMap = {
@@ -354,7 +361,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                     return {
                         _id: booking._id,
                         service: {
-                            _id: booking.service?._id,
+                            _id: serviceProvider?._id || booking.service,
                             name: formatServiceType(serviceType),
                             providerName: providerName || 'Service Provider',
                             type: serviceType || 'Unknown Service'
