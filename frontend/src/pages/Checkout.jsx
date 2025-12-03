@@ -4,6 +4,48 @@ import { useAuth } from '../hooks/useAuth';
 import { getCheckoutData } from '../services/api';
 import { FaShieldAlt, FaWallet, FaArrowLeft } from 'react-icons/fa';
 
+// List of all 28 Indian States and 7 Union Territories
+const INDIAN_STATES_AND_UTS = [
+    // States
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chhattisgarh',
+    'Goa',
+    'Gujarat',
+    'Haryana',
+    'Himachal Pradesh',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
+    'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
+    'West Bengal',
+    // Union Territories
+    'Andaman and Nicobar Islands',
+    'Chandigarh',
+    'Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi',
+    'Jammu and Kashmir',
+    'Ladakh',
+    'Lakshadweep',
+    'Puducherry'
+];
+
 const Checkout = () => {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
@@ -55,7 +97,24 @@ const Checkout = () => {
     };
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        let { name, value } = e.target;
+
+        // Restrict city field to only alphabetic characters and spaces
+        if (name === 'city') {
+            // Allow only letters and spaces for city field
+            value = value.replace(/[^A-Za-z\s]/g, '');
+        }
+
+        // Restrict ZIP code to digits only and max 6 characters
+        if (name === 'zipCode') {
+            value = value.replace(/\D/g, '').slice(0, 6);
+        }
+
+        // Restrict phone number to digits only and max 10 characters
+        if (name === 'phone') {
+            value = value.replace(/\D/g, '').slice(0, 10);
+        }
+
         setShippingInfo(prev => ({
             ...prev,
             [name]: value
@@ -253,8 +312,7 @@ const Checkout = () => {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             State *
                                         </label>
-                                        <input
-                                            type="text"
+                                        <select
                                             name="state"
                                             value={shippingInfo.state}
                                             onChange={handleInputChange}
@@ -262,8 +320,14 @@ const Checkout = () => {
                                             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all ${
                                                 validationErrors.state ? 'border-red-500 bg-red-50' : 'border-gray-300'
                                             }`}
-                                            placeholder="Enter your state"
-                                        />
+                                        >
+                                            <option value="">Select your state</option>
+                                            {INDIAN_STATES_AND_UTS.map((state, index) => (
+                                                <option key={index} value={state}>
+                                                    {state}
+                                                </option>
+                                            ))}
+                                        </select>
                                         {validationErrors.state && (
                                             <p className="text-red-500 text-sm mt-1">{validationErrors.state}</p>
                                         )}
