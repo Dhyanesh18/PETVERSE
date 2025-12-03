@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaStar, FaShoppingCart } from 'react-icons/fa';
+import { FaStar, FaShoppingCart, FaHeart } from 'react-icons/fa';
 
-const ProductCard = ({ product, onAddToCart, variant = 'default' }) => {
+const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted = false, variant = 'default' }) => {
     const isFeature = variant === 'feature';
     
     // Get image - handle both API endpoint and fallback
@@ -45,8 +45,9 @@ const ProductCard = ({ product, onAddToCart, variant = 'default' }) => {
                 isFeature ? 'h-[440px] w-[280px]' : 'h-[380px] w-[260px]'
             } flex flex-col`}
         >
-            <Link to={`/product/${product._id}`} className="block">
-                <img 
+            <div className="relative">
+                <Link to={`/product/${product._id}`} className="block">
+                    <img 
                     src={getImageSrc()}
                     alt={product.name}
                     className="w-full h-[250px] object-cover"
@@ -61,8 +62,22 @@ const ProductCard = ({ product, onAddToCart, variant = 'default' }) => {
                             e.target.src = 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
                         }
                     }}
-                />
-            </Link>
+                    />
+                </Link>
+                {onToggleWishlist && (
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onToggleWishlist(product._id);
+                        }}
+                        className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer z-10"
+                        aria-label="Toggle wishlist"
+                    >
+                        <FaHeart className={`text-xl ${isWishlisted ? 'text-red-500' : 'text-gray-400'}`} />
+                    </button>
+                )}
+            </div>
             
             <div className="p-5 flex flex-col grow">
                 <Link to={`/product/${product._id}`} className="no-underline">

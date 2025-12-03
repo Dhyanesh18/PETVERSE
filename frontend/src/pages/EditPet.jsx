@@ -115,8 +115,8 @@ const EditPet = () => {
                 formDataToSend.append('images', image);
             });
 
-            const response = await fetch(`/api/pets/${id}/edit`, {
-                method: 'POST',
+            const response = await fetch(`/api/seller/pets/${id}`, {
+                method: 'PUT',
                 credentials: 'include',
                 body: formDataToSend
             });

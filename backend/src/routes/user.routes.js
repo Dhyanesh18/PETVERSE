@@ -33,7 +33,7 @@ router.get('/home', isAuthenticated, async (req, res) => {
             .lean();
         
         // Get products with ratings
-        const products = await Product.find({ isActive: true })
+        const products = await Product.find({ available: true })
             .limit(5)
             .lean();
         

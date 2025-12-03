@@ -98,8 +98,7 @@ const togglePetWishlist = async (req, res) => {
             message: !isInWishlist ? 'Pet added to wishlist' : 'Pet removed from wishlist',
             data: { 
                 petId: pet._id, 
-                wishlist: !isInWishlist,
-                isInWishlist: !isInWishlist
+                isWishlisted: !isInWishlist
             }
         });
 
@@ -161,8 +160,7 @@ const toggleProductWishlist = async (req, res) => {
             message: !isInWishlist ? 'Product added to wishlist' : 'Product removed from wishlist',
             data: { 
                 productId: product._id, 
-                wishlist: !isInWishlist,
-                isInWishlist: !isInWishlist
+                isWishlisted: !isInWishlist
             }
         });
 

@@ -1,16 +1,24 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
+import { setSellerProducts } from '../redux/slices/productSlice';
+import { setSellerPets } from '../redux/slices/petSlice';
 import { getSellerDashboard, updateSellerOrderStatus } from '../services/api';
 import EditProfileModal from '../components/EditProfileModal';
 import './SellerDashboard.css';
 
 const SellerDashboard = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const { user, logout, loading: authLoading } = useAuth();
     const fetchInitialized = useRef(false);
-    const [products, setProducts] = useState([]);
-    const [pets, setPets] = useState([]);
+    
+    // Redux state for products and pets
+    const { sellerProducts: products, loading: productsLoading } = useSelector((state) => state.product);
+    const { sellerPets: pets, loading: petsLoading } = useSelector((state) => state.pet);
+    
+    // Local state for orders, reviews, stats, seller
     const [orders, setOrders] = useState([]);
     const [reviews, setReviews] = useState([]);
     const [stats, setStats] = useState({
@@ -44,24 +52,28 @@ const SellerDashboard = () => {
             setLoading(true);
 
             console.log('Fetching seller dashboard...');
+            
+            // Fetch dashboard data from API (includes products and pets)
             const response = await getSellerDashboard();
             console.log('Seller dashboard response:', response);
             const data = response.data;
 
             if (data.success) {
-                const { seller: sellerData, statistics, recentOrders, products: productsData, pets: petsData, reviews: reviewsData } = data.data;
+                const { seller: sellerData, statistics, recentOrders, reviews: reviewsData, products: productsData, pets: petsData } = data.data;
+                
+                // Populate Redux state with products and pets from dashboard
+                dispatch(setSellerProducts(productsData || []));
+                dispatch(setSellerPets(petsData || []));
 
-                console.log('Products data:', productsData);
-                console.log('Pets data:', petsData);
                 console.log('Reviews data:', reviewsData);
                 console.log('Orders data:', recentOrders);
-                setProducts(productsData || []);
-                setPets(petsData || []);
+                console.log('Products data:', productsData);
+                console.log('Pets data:', petsData);
                 setOrders(recentOrders || []);
                 setReviews(reviewsData || []);
                 setSeller(sellerData || {});
 
-                // Set stats from API response - separate counts for products and pets
+                // Set stats from API response
                 setStats({
                     totalProducts: productsData?.length || 0,
                     totalPets: petsData?.length || 0,
@@ -93,7 +105,7 @@ const SellerDashboard = () => {
         } finally {
             setLoading(false);
         }
-    }, [navigate, user]);
+    }, [navigate, user, dispatch, products.length, pets.length]);
 
     // Fetch seller data on component mount
     useEffect(() => {
@@ -564,8 +576,8 @@ const SellerDashboard = () => {
                                             {product.discount && product.discount !== '0%' && (
                                                 <span className="discount-tag">{product.discount} OFF</span>
                                             )}
-                                            <span className={`status-indicator ${product.isActive ? 'active' : 'inactive'}`}>
-                                                <i className="fas fa-circle"></i> {product.isActive ? 'Active' : 'Inactive'}
+                                            <span className={`status-indicator ${product.available ? 'active' : 'inactive'}`}>
+                                                <i className="fas fa-circle"></i> {product.available ? 'Active' : 'Inactive'}
                                             </span>
                                         </div>
                                         <div className="product-info">
@@ -588,7 +600,7 @@ const SellerDashboard = () => {
                                                 </button>
                                                 <button
                                                     className="btn btn-icon btn-deactivate"
-                                                    data-tooltip={product.isActive ? 'Deactivate' : 'Activate'}
+                                                    data-tooltip={product.available ? 'Deactivate' : 'Activate'}
                                                     onClick={() => toggleProductStatus(product._id)}
                                                 >
                                                     <i className="fas fa-power-off"></i>
@@ -695,7 +707,7 @@ const SellerDashboard = () => {
                                                 </button>
                                                 <button
                                                     className="btn btn-icon btn-deactivate"
-                                                    data-tooltip={pet.isActive !== false ? 'Mark Unavailable' : 'Mark Available'}
+                                                    data-tooltip={pet.available !== false ? 'Mark Unavailable' : 'Mark Available'}
                                                     onClick={() => togglePetStatus(pet._id)}
                                                 >
                                                     <i className="fas fa-power-off"></i>

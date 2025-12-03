@@ -71,6 +71,12 @@ router.get('/dashboard', isAuthenticated, isSeller, async (req, res) => {
         // Fetch seller's products
         const products = await Product.find({ seller: seller._id }).lean();
         console.log(`Found ${products.length} products for seller`);
+        
+        // Ensure all products have available field (for backwards compatibility)
+        const productsWithDefaults = products.map(product => ({
+            ...product,
+            available: product.available !== undefined ? product.available : true
+        }));
 
         // Fetch seller's pets
         const pets = await Pet.find({ addedBy: seller._id }).lean();
@@ -219,7 +225,7 @@ router.get('/dashboard', isAuthenticated, isSeller, async (req, res) => {
             stock: product.stock,
             category: product.category,
             brand: product.brand,
-            isActive: product.isActive !== false,
+            available: product.available !== false,
             status: product.stock > 0 ? 'In Stock' : 'Out of Stock',
             thumbnail: product.images && product.images.length > 0 
                 ? `/images/product/${product._id}/0` 
@@ -889,11 +895,17 @@ router.get('/analytics', isAuthenticated, isSeller, async (req, res) => {
 // Product Management Routes
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
 // Configure multer for product images
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/products/');
+        const uploadPath = path.join(__dirname, '../../..', 'frontend', 'public', 'images', 'products');
+        // Ensure directory exists
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -920,16 +932,16 @@ const upload = multer({
 // Add new product
 router.post('/products', isAuthenticated, isSeller, upload.array('images', 5), async (req, res) => {
     try {
-        const { name, description, price, category, stock } = req.body;
+        const { name, description, price, category, stock, brand } = req.body;
         
-        console.log('Creating new product:', { name, category, price, stock });
+        console.log('Creating new product:', { name, category, price, stock, brand });
         console.log('Files uploaded:', req.files?.length || 0);
 
         // Validation
-        if (!name || !description || !price || !category || !stock) {
+        if (!name || !description || !price || !category || !stock || !brand) {
             return res.status(400).json({
                 success: false,
-                error: 'All required fields must be provided'
+                error: 'All required fields must be provided (name, description, price, category, stock, brand)'
             });
         }
 
@@ -940,8 +952,20 @@ router.post('/products', isAuthenticated, isSeller, upload.array('images', 5), a
             });
         }
 
-        // Process images for file system storage
-        const imagePaths = req.files.map(file => `/images/products/${file.filename}`);
+        // Process images for MongoDB storage (binary data)
+        const images = [];
+        
+        for (const file of req.files) {
+            const imageData = {
+                data: fs.readFileSync(file.path),
+                contentType: file.mimetype,
+                filename: file.filename
+            };
+            images.push(imageData);
+            
+            // Delete temporary file after reading
+            fs.unlinkSync(file.path);
+        }
 
         // Create product
         const product = new Product({
@@ -949,8 +973,10 @@ router.post('/products', isAuthenticated, isSeller, upload.array('images', 5), a
             description: description.trim(),
             price: parseFloat(price),
             category: category.trim(),
+            brand: req.body.brand?.trim() || 'Generic',
             stock: parseInt(stock),
-            images: imagePaths,
+            discount: parseFloat(req.body.discount || 0),
+            images: images,
             seller: req.user._id,
             available: true
         });
@@ -1053,18 +1079,35 @@ router.put('/products/:productId', isAuthenticated, isSeller, upload.array('newI
         if (description) product.description = description.trim();
         if (price) product.price = parseFloat(price);
         if (category) product.category = category.trim();
+        if (req.body.brand) product.brand = req.body.brand.trim();
+        if (req.body.discount !== undefined) product.discount = parseFloat(req.body.discount);
         if (stock !== undefined) product.stock = parseInt(stock);
 
         // Handle image deletions
         if (imagesToDelete) {
             const imagesToDeleteArray = JSON.parse(imagesToDelete);
-            product.images = product.images.filter(imagePath => !imagesToDeleteArray.includes(imagePath));
+            product.images = product.images.filter((_, index) => !imagesToDeleteArray.includes(index));
         }
 
-        // Add new images
+        // Add new images as binary data
         if (req.files && req.files.length > 0) {
-            const newImagePaths = req.files.map(file => `/images/products/${file.filename}`);
-            product.images = [...product.images, ...newImagePaths];
+            const newImages = [];
+            
+            for (const file of req.files) {
+                if (product.images.length + newImages.length >= 5) break; // Max 5 images
+                
+                const imageData = {
+                    data: fs.readFileSync(file.path),
+                    contentType: file.mimetype,
+                    filename: file.filename
+                };
+                newImages.push(imageData);
+                
+                // Delete temporary file after reading
+                fs.unlinkSync(file.path);
+            }
+            
+            product.images = [...product.images, ...newImages];
         }
 
         await product.save();
@@ -1114,16 +1157,16 @@ router.patch('/products/:productId/toggle-status', isAuthenticated, isSeller, as
             });
         }
 
-        product.isActive = !product.isActive;
+        product.available = !product.available;
         product.updatedAt = new Date();
         await product.save();
 
         res.json({
             success: true,
-            message: `Product ${product.isActive ? 'activated' : 'deactivated'} successfully`,
+            message: `Product ${product.available ? 'activated' : 'deactivated'} successfully`,
             data: {
                 productId: product._id,
-                isActive: product.isActive
+                available: product.available
             }
         });
 
@@ -1140,7 +1183,12 @@ router.patch('/products/:productId/toggle-status', isAuthenticated, isSeller, as
 // Pet Management Routes
 const petStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/pets/');
+        const uploadPath = path.join(__dirname, '../../..', 'frontend', 'public', 'images', 'pets');
+        // Ensure directory exists
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);

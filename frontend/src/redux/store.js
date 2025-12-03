@@ -3,13 +3,17 @@ import authReducer from './slices/authSlice';
 import cartReducer from './slices/cartSlice';
 import adminReducer from './slices/adminSlice';
 import lostPetReducer from './slices/lostPetSlice';
+import productReducer from './slices/productSlice';
+import petReducer from './slices/petSlice';
 
 export const store = configureStore({
     reducer: {
         auth: authReducer,
         cart: cartReducer,
         admin: adminReducer,
-        lostPet: lostPetReducer
+        lostPet: lostPetReducer,
+        product: productReducer,
+        pet: petReducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
