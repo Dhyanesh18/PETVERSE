@@ -12,9 +12,18 @@ const OwnerDashboard = () => {
     
     // Redirect to login if not authenticated
     useEffect(() => {
+        // Redirect admin users to their own dashboard
+        if (user && user.role === 'admin') {
+            console.log('Admin user detected, redirecting to admin dashboard');
+            navigate('/admin/dashboard', { replace: true });
+            return;
+        }
+        
+        // Only redirect to login if explicitly not authenticated (not during loading)
         if (!isAuthenticated && !user) {
             console.log('User not authenticated, redirecting to login');
             navigate('/login');
+            return;
         }
     }, [isAuthenticated, user, navigate]);
     const [dashboardData, setDashboardData] = useState({
