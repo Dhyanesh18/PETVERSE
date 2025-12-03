@@ -41,6 +41,10 @@ import About from './pages/About';
 import SearchResults from './pages/SearchResults';
 import AdminDashboard from './pages/AdminDashboard';
 import LostAndFound from './pages/LostAndFound';
+import Signup from './pages/Signup';
+import SignupOwner from './pages/SignupOwner';
+import SignupSeller from './pages/SignupSeller';
+import SignupServiceProvider from './pages/SignupServiceProvider';
 
 // Component that initializes Redux state
 function AppInitializer({ children }) {
@@ -90,6 +94,10 @@ function App() {
                     <Layout>
                         <Routes>
                             <Route path="/login" element={<Login />} /> 
+                            <Route path="/signup" element={<Signup />} />
+                            <Route path="/signup/owner" element={<SignupOwner />} />
+                            <Route path="/signup/seller" element={<SignupSeller />} />
+                            <Route path="/signup/service-provider" element={<SignupServiceProvider />} />
                             <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/unauthorized" element={<Unauthorized />} />
 
