@@ -79,8 +79,8 @@ router.get('/', async (req, res) => {
     try {
         const { category, city, date, feeType, search } = req.query;
 
-        // Build query
-        let query = { status: 'upcoming', eventDate: { $gte: new Date() } };
+        // Build query - show all future events regardless of status
+        let query = { eventDate: { $gte: new Date() } };
 
         if (category && category !== 'all') {
             query.category = category;
@@ -112,10 +112,13 @@ router.get('/', async (req, res) => {
             ];
         }
 
+        console.log('Events query:', JSON.stringify(query));
         const events = await Event.find(query)
             .populate('organizer', 'fullName email')
             .sort({ eventDate: 1 })
             .lean();
+        
+        console.log(`Found ${events.length} events`);
 
         // Add formatted date and available slots
         const eventsWithDetails = events.map(event => ({
