@@ -1,21 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
+import { 
+    fetchWalletData, 
+    addMoneyToWallet, 
+    transferMoneyFromWallet,
+    clearError 
+} from '../redux/slices/walletSlice';
 import { FaWallet, FaPlus, FaMinus, FaHistory, FaArrowLeft, FaRupeeSign, FaCreditCard, FaMobile, FaExchangeAlt, FaUniversity } from 'react-icons/fa';
 
 const Wallet = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const { isAuthenticated, user } = useAuth();
-    const [walletData, setWalletData] = useState({
-        balance: 0,
-        transactions: []
-    });
-    const [gstInfo, setGstInfo] = useState({
-        totalRevenue: 0,
-        gstAmount: 0,
-        netRevenue: 0
-    });
-    const [loading, setLoading] = useState(true);
+    
+    // Redux state
+    const { balance, transactions, statistics, gstInfo, loading, processing, error } = useSelector(state => state.wallet);
+    
+    // Local UI state
     const [showAddMoney, setShowAddMoney] = useState(false);
     const [showTransferMoney, setShowTransferMoney] = useState(false);
     const [addAmount, setAddAmount] = useState('');
@@ -36,37 +39,41 @@ const Wallet = () => {
         cvv: '',
         upiId: ''
     });
-    const [processing, setProcessing] = useState(false);
-
-    const fetchWalletData = React.useCallback(async () => {
-        try {
-            const response = await fetch('http://localhost:8080/api/user/wallet', {
-                credentials: 'include'
-            });
-            const data = await response.json();
-            
-            if (data.success) {
-                setWalletData(data.data);
-                
-                // Use GST info from backend for admin users
-                if (user?.role === 'admin' && data.data.gstInfo) {
-                    setGstInfo(data.data.gstInfo);
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching wallet data:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, [user]);
 
     useEffect(() => {
         if (!isAuthenticated) {
             navigate('/login');
             return;
         }
-        fetchWalletData();
-    }, [isAuthenticated, navigate, fetchWalletData]);
+        // Fetch wallet data on component mount
+        dispatch(fetchWalletData());
+        
+        // Refetch wallet data when user returns to this page
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                dispatch(fetchWalletData());
+            }
+        };
+        
+        const handleFocus = () => {
+            dispatch(fetchWalletData());
+        };
+        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleFocus);
+        
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [isAuthenticated, navigate, dispatch]);
+
+    // Clear errors when component unmounts
+    useEffect(() => {
+        return () => {
+            dispatch(clearError());
+        };
+    }, [dispatch]);
 
     const handleAddMoney = async () => {
         if (!addAmount || parseFloat(addAmount) <= 0) {
@@ -74,45 +81,27 @@ const Wallet = () => {
             return;
         }
 
-        setProcessing(true);
         try {
-            const requestData = {
+            const result = await dispatch(addMoneyToWallet({
                 amount: parseFloat(addAmount),
                 paymentMethod,
                 paymentDetails: paymentMethod === 'card' ? paymentDetails : { upiId: paymentDetails.upiId }
-            };
-
-            const response = await fetch('http://localhost:8080/api/user/wallet/add-money', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify(requestData)
-            });
-
-            const data = await response.json();
+            })).unwrap();
             
-            if (data.success) {
-                alert('Money added successfully!');
-                setShowAddMoney(false);
-                setAddAmount('');
-                setPaymentDetails({
-                    cardName: '',
-                    cardNumber: '',
-                    expiryDate: '',
-                    cvv: '',
-                    upiId: ''
-                });
-                fetchWalletData(); 
-            } else {
-                alert(data.error || 'Failed to add money');
-            }
+            alert('Money added successfully!');
+            setShowAddMoney(false);
+            setAddAmount('');
+            setPaymentDetails({
+                cardName: '',
+                cardNumber: '',
+                expiryDate: '',
+                cvv: '',
+                upiId: ''
+            });
+            // Refresh wallet data
+            dispatch(fetchWalletData());
         } catch (error) {
-            console.error('Error adding money:', error);
-            alert('Failed to add money. Please try again.');
-        } finally {
-            setProcessing(false);
+            alert(error || 'Failed to add money. Please try again.');
         }
     };
 
@@ -122,7 +111,7 @@ const Wallet = () => {
             return;
         }
 
-        if (parseFloat(transferAmount) > walletData.balance) {
+        if (parseFloat(transferAmount) > balance) {
             alert('Insufficient balance in wallet');
             return;
         }
@@ -140,9 +129,8 @@ const Wallet = () => {
             }
         }
 
-        setProcessing(true);
         try {
-            const requestData = {
+            const result = await dispatch(transferMoneyFromWallet({
                 amount: parseFloat(transferAmount),
                 transferType,
                 transferDetails: transferType === 'bank' ? {
@@ -153,39 +141,22 @@ const Wallet = () => {
                 } : {
                     upiId: transferDetails.upiId
                 }
-            };
-
-            const response = await fetch('http://localhost:8080/api/user/wallet/transfer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include',
-                body: JSON.stringify(requestData)
-            });
-
-            const data = await response.json();
+            })).unwrap();
             
-            if (data.success) {
-                alert(`Transfer of ₹${transferAmount} initiated successfully!`);
-                setShowTransferMoney(false);
-                setTransferAmount('');
-                setTransferDetails({
-                    accountHolderName: '',
-                    accountNumber: '',
-                    ifscCode: '',
-                    bankName: '',
-                    upiId: ''
-                });
-                fetchWalletData(); // Refresh wallet data
-            } else {
-                alert(data.error || 'Failed to transfer money');
-            }
+            alert(`Transfer of ₹${transferAmount} initiated successfully!`);
+            setShowTransferMoney(false);
+            setTransferAmount('');
+            setTransferDetails({
+                accountHolderName: '',
+                accountNumber: '',
+                ifscCode: '',
+                bankName: '',
+                upiId: ''
+            });
+            // Refresh wallet data
+            dispatch(fetchWalletData());
         } catch (error) {
-            console.error('Error transferring money:', error);
-            alert('Failed to transfer money. Please try again.');
-        } finally {
-            setProcessing(false);
+            alert(error || 'Failed to transfer money. Please try again.');
         }
     };
 
@@ -272,7 +243,7 @@ const Wallet = () => {
                                         <h2 className="text-2xl font-bold">Wallet Balance</h2>
                                     </div>
                                     <div className="text-5xl font-bold mb-2">
-                                        ₹{walletData.balance?.toLocaleString('en-IN') || '0'}
+                                        ₹{balance?.toLocaleString('en-IN') || '0'}
                                     </div>
                                     <p className="text-teal-100">Available Balance</p>
                                 </div>
@@ -362,62 +333,9 @@ const Wallet = () => {
                         </div>
 
                         <div className="p-6">
-                            {walletData.transactions && walletData.transactions.length > 0 ? (
-                                <>
-                                    {/* Transaction Summary */}
-                                    <div className="bg-gradient-to-r from-blue-50 to-teal-50 border border-blue-200 rounded-lg p-4 mb-6">
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mb-4">
-                                            <div>
-                                                <p className="text-sm text-gray-600 mb-1">Total Credits</p>
-                                                <p className="text-lg font-bold text-green-600">
-                                                    +₹{walletData.statistics?.totalCredits?.toLocaleString('en-IN') || 
-                                                        walletData.transactions
-                                                            .filter(t => t.isCredit)
-                                                            .reduce((sum, t) => sum + (t.amount || 0), 0)
-                                                            .toLocaleString('en-IN')}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600 mb-1">Total Debits</p>
-                                                <p className="text-lg font-bold text-red-600">
-                                                    -₹{walletData.statistics?.totalDebits?.toLocaleString('en-IN') || 
-                                                        walletData.transactions
-                                                            .filter(t => !t.isCredit)
-                                                            .reduce((sum, t) => sum + (t.amount || 0), 0)
-                                                            .toLocaleString('en-IN')}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600 mb-1">Net from Transactions</p>
-                                                <p className={`text-lg font-bold ${
-                                                    (walletData.statistics?.netFromTransactions || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                                                }`}>
-                                                    ₹{walletData.statistics?.netFromTransactions?.toLocaleString('en-IN') || 
-                                                        (walletData.transactions
-                                                            .filter(t => t.isCredit)
-                                                            .reduce((sum, t) => sum + (t.amount || 0), 0) -
-                                                        walletData.transactions
-                                                            .filter(t => !t.isCredit)
-                                                            .reduce((sum, t) => sum + (t.amount || 0), 0))
-                                                            .toLocaleString('en-IN')}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600 mb-1">Total Transactions</p>
-                                                <p className="text-lg font-bold text-purple-600">
-                                                    {walletData.statistics?.totalTransactionCount || walletData.transactions.length}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-gray-500 text-center mt-3">
-                                            {walletData.statistics?.displayedTransactionCount 
-                                                ? `Showing last ${walletData.statistics.displayedTransactionCount} of ${walletData.statistics.totalTransactionCount} transactions. Statistics include all historical transactions.`
-                                                : 'Showing last 50 transactions. Your balance includes all historical transactions.'}
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                    {walletData.transactions.map((transaction, index) => {
+                            {transactions && transactions.length > 0 ? (
+                                <div className="space-y-4">
+                                    {transactions.map((transaction, index) => {
                                         // Determine transaction title based on type and credit/debit
                                         let title = transaction.description || 'Transaction';
                                         let subtitle = '';
@@ -480,8 +398,7 @@ const Wallet = () => {
                                             </div>
                                         );
                                     })}
-                                    </div>
-                                </>
+                                </div>
                             ) : (
                                 <div className="text-center py-12">
                                     <FaHistory className="text-6xl text-gray-300 mx-auto mb-4" />
@@ -640,7 +557,7 @@ const Wallet = () => {
 
                             <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-6">
                                 <p className="text-sm text-teal-800">
-                                    <strong>Available Balance:</strong> ₹{walletData.balance?.toLocaleString('en-IN') || '0'}
+                                    <strong>Available Balance:</strong> ₹{balance?.toLocaleString('en-IN') || '0'}
                                 </p>
                             </div>
 
@@ -659,7 +576,7 @@ const Wallet = () => {
                                             placeholder="Enter amount"
                                             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                             min="1"
-                                            max={walletData.balance}
+                                            max={balance}
                                         />
                                     </div>
                                 </div>

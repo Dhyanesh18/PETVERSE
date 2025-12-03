@@ -17,7 +17,7 @@ router.get('/featured-pets', async (req, res) => {
 
 router.get('/featured-products', async (req, res) => {
     try {
-        const products = await Product.find().sort({ avgRating: -1 }).limit(4);
+        const products = await Product.find({ available: true }).sort({ avgRating: -1 }).limit(4);
         res.json(products);
     } catch (err) {
         console.error(err);
@@ -76,7 +76,7 @@ router.get('/pets/:id', async (req, res) => {
 // Products API endpoints
 router.get('/products', async (req, res) => {
     try {
-        const products = await Product.find({});
+        const products = await Product.find({ available: true });
         console.log('Found products:', products.length);
         res.json({ success: true, data: products });
     } catch (err) {

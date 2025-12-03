@@ -1,13 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEventPaymentData, processEventPayment, getWalletBalance } from '../services/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { getEventPaymentData, processEventPayment } from '../services/api';
+import { fetchWalletData } from '../redux/slices/walletSlice';
 import { FaCheck, FaCreditCard, FaMobile, FaWallet, FaShieldAlt, FaCalendar, FaClock, FaMapMarker } from 'react-icons/fa';
 
 const EventPayment = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    
+    // Redux state
+    const { balance: walletBalance } = useSelector(state => state.wallet);
+    
     const [event, setEvent] = useState(null);
-    const [wallet, setWallet] = useState({ balance: 0 });
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState('wallet');
@@ -21,7 +27,9 @@ const EventPayment = () => {
 
     useEffect(() => {
         fetchPaymentData();
-    }, [id]);
+        // Fetch wallet balance on component mount
+        dispatch(fetchWalletData());
+    }, [id, dispatch]);
 
     const fetchPaymentData = async () => {
         try {
@@ -30,7 +38,6 @@ const EventPayment = () => {
             const data = response.data.data;
             
             setEvent(data.event);
-            setWallet(data.wallet);
         } catch (error) {
             console.error('Failed to fetch payment data:', error);
             alert('Failed to load payment page');
@@ -42,10 +49,7 @@ const EventPayment = () => {
 
     const refreshWalletBalance = async () => {
         try {
-            const response = await getWalletBalance();
-            if (response.data && typeof response.data.balance === 'number') {
-                setWallet({ balance: response.data.balance });
-            }
+            await dispatch(fetchWalletData()).unwrap();
         } catch (error) {
             console.warn('Failed to refresh wallet balance');
         }
@@ -94,7 +98,7 @@ const EventPayment = () => {
                 return false;
             }
         } else if (selectedMethod === 'wallet') {
-            if (wallet.balance < (event?.entryFee || 0)) {
+            if (walletBalance < (event?.entryFee || 0)) {
                 alert('Insufficient wallet balance');
                 return false;
             }
@@ -129,6 +133,10 @@ const EventPayment = () => {
             const response = await processEventPayment(id, payload);
 
             if (response.data.success) {
+                // Refresh wallet data if payment was made using wallet
+                if (selectedMethod === 'wallet') {
+                    await dispatch(fetchWalletData()).unwrap();
+                }
                 navigate(response.data.data.redirectPath || `/events/${id}/ticket`);
             }
         } catch (error) {
@@ -323,7 +331,7 @@ const EventPayment = () => {
                                             <FaWallet className="text-2xl text-green-600" />
                                             <div>
                                                 <div className="font-semibold text-gray-800">PetVerse Wallet</div>
-                                                <div className="text-sm text-gray-600">Balance: ₹{wallet.balance.toFixed(2)}</div>
+                                                <div className="text-sm text-gray-600">Balance: ₹{walletBalance?.toFixed(2) || '0.00'}</div>
                                             </div>
                                         </div>
                                     </div>

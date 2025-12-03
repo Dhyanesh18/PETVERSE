@@ -2,7 +2,8 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { getAdminDashboard } from '../../services/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = `${API_URL}/api`;
 
 // Create axios instance with credentials
 const apiClient = axios.create({
@@ -42,11 +43,19 @@ export const deletePet = (petId) => {
     return apiClient.delete(`/admin/pet/${petId}`);
 };
 
-export const updateOrderStatus = (orderId, status) => {
-    return apiClient.put(`/admin/order/${orderId}/status`, { status });
-};
-
 // Async thunks
+export const updateAdminOrderStatus = createAsyncThunk(
+    'admin/updateOrderStatus',
+    async ({ orderId, status }, { rejectWithValue }) => {
+        try {
+            const response = await apiClient.patch(`/admin/order/${orderId}/status`, { status });
+            return { orderId, status, data: response.data };
+        } catch (error) {
+            return rejectWithValue(error.response?.data || { message: 'Failed to update order status' });
+        }
+    }
+);
+
 export const fetchAdminDashboard = createAsyncThunk(
     'admin/fetchDashboard',
     async (_, { rejectWithValue }) => {
@@ -126,6 +135,27 @@ const adminSlice = createSlice({
             })
             .addCase(rejectItem.fulfilled, () => {
                 // Trigger a refresh by setting a flag or refetch
+            })
+            .addCase(updateAdminOrderStatus.pending, (state) => {
+                state.error = null;
+            })
+            .addCase(updateAdminOrderStatus.fulfilled, (state, action) => {
+                // Update the order status in the dashboard data
+                const { orderId, status } = action.payload;
+                if (state.dashboardData?.data?.orders) {
+                    const order = state.dashboardData.data.orders.find(o => o._id === orderId);
+                    if (order) {
+                        order.status = status;
+                    }
+                } else if (state.dashboardData?.orders) {
+                    const order = state.dashboardData.orders.find(o => o._id === orderId);
+                    if (order) {
+                        order.status = status;
+                    }
+                }
+            })
+            .addCase(updateAdminOrderStatus.rejected, (state, action) => {
+                state.error = action.payload?.message || 'Failed to update order status';
             });
     }
 });

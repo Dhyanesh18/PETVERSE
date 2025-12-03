@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
 import { setSellerProducts } from '../redux/slices/productSlice';
 import { setSellerPets } from '../redux/slices/petSlice';
-import { getSellerDashboard, updateSellerOrderStatus } from '../services/api';
+import { fetchSellerDashboard, updateOrderStatus, clearSellerData } from '../redux/slices/sellerSlice';
 import EditProfileModal from '../components/EditProfileModal';
 import './SellerDashboard.css';
 
@@ -18,20 +18,20 @@ const SellerDashboard = () => {
     const { sellerProducts: products, loading: productsLoading } = useSelector((state) => state.product);
     const { sellerPets: pets, loading: petsLoading } = useSelector((state) => state.pet);
     
-    // Local state for orders, reviews, stats, seller
-    const [orders, setOrders] = useState([]);
-    const [reviews, setReviews] = useState([]);
-    const [stats, setStats] = useState({
-        totalProducts: 0,
-        totalPets: 0,
-        totalSales: 0,
-        pendingOrders: 0,
-        walletBalance: 0,
-        rating: 0
-    });
-    const [loading, setLoading] = useState(true);
-    const [seller, setSeller] = useState({});
+    // Redux state for seller dashboard
+    const { 
+        seller, 
+        statistics, 
+        orders, 
+        reviews, 
+        loading: sellerLoading 
+    } = useSelector((state) => state.seller);
+    
+    // Local state
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    
+    // Combine loading states
+    const loading = sellerLoading || productsLoading || petsLoading;
 
     const fetchSellerData = useCallback(async () => {
         // Check if user is authenticated first
@@ -49,63 +49,36 @@ const SellerDashboard = () => {
         }
 
         try {
-            setLoading(true);
-
             console.log('Fetching seller dashboard...');
             
-            // Fetch dashboard data from API (includes products and pets)
-            const response = await getSellerDashboard();
-            console.log('Seller dashboard response:', response);
-            const data = response.data;
+            // Fetch dashboard data using Redux thunk
+            const result = await dispatch(fetchSellerDashboard()).unwrap();
+            console.log('Seller dashboard result:', result);
+            
+            // Populate Redux state with products and pets from dashboard
+            dispatch(setSellerProducts(result.products || []));
+            dispatch(setSellerPets(result.pets || []));
 
-            if (data.success) {
-                const { seller: sellerData, statistics, recentOrders, reviews: reviewsData, products: productsData, pets: petsData } = data.data;
-                
-                // Populate Redux state with products and pets from dashboard
-                dispatch(setSellerProducts(productsData || []));
-                dispatch(setSellerPets(petsData || []));
-
-                console.log('Reviews data:', reviewsData);
-                console.log('Orders data:', recentOrders);
-                console.log('Products data:', productsData);
-                console.log('Pets data:', petsData);
-                setOrders(recentOrders || []);
-                setReviews(reviewsData || []);
-                setSeller(sellerData || {});
-
-                // Set stats from API response
-                setStats({
-                    totalProducts: productsData?.length || 0,
-                    totalPets: petsData?.length || 0,
-                    totalSales: parseFloat(statistics.totalRevenue || 0),
-                    pendingOrders: statistics.pendingOrders || 0,
-                    walletBalance: parseFloat(statistics.walletBalance || sellerData?.wallet?.balance || 0),
-                    rating: parseFloat(statistics.averageRating || 0)
-                });
-            }
+            console.log('Reviews data:', result.reviews);
+            console.log('Orders data:', result.recentOrders);
+            console.log('Products data:', result.products);
+            console.log('Pets data:', result.pets);
         } catch (error) {
             console.error('Error fetching seller data:', error);
-            console.error('Error details:', {
-                status: error.response?.status,
-                statusText: error.response?.statusText,
-                data: error.response?.data,
-                message: error.message
-            });
+            console.error('Error details:', error);
 
-            if (error.response?.status === 401) {
+            if (error?.message?.includes('401') || error?.message?.includes('Unauthorized')) {
                 console.log('Unauthorized - redirecting to login');
                 navigate('/login');
                 return;
             }
-            if (error.response?.status === 403) {
+            if (error?.message?.includes('403') || error?.message?.includes('Forbidden')) {
                 console.log('Forbidden - user may not have seller role, redirecting to login');
                 navigate('/login');
                 return;
             }
-        } finally {
-            setLoading(false);
         }
-    }, [navigate, user, dispatch, products.length, pets.length]);
+    }, [navigate, user, dispatch]);
 
     // Fetch seller data on component mount
     useEffect(() => {
@@ -215,7 +188,7 @@ const SellerDashboard = () => {
         }
     };
 
-    const updateOrderStatus = async (orderId, newStatus) => {
+    const updateOrderStatusHandler = async (orderId, newStatus) => {
         try {
             // Show loading state
             const statusSelect = document.querySelector(`select[data-order-id="${orderId}"]`);
@@ -224,33 +197,21 @@ const SellerDashboard = () => {
                 statusSelect.classList.add('loading');
             }
 
-            const response = await updateSellerOrderStatus(orderId, newStatus);
+            // Use Redux thunk to update order status
+            await dispatch(updateOrderStatus({ orderId, status: newStatus })).unwrap();
 
-            if (response.data && response.data.success) {
-                // Update the local state immediately for better UX
-                setOrders(prevOrders =>
-                    prevOrders.map(order =>
-                        order._id === orderId
-                            ? { ...order, status: newStatus }
-                            : order
-                    )
-                );
+            // Show success message
+            alert(`Order status updated to ${newStatus.toUpperCase()} successfully!`);
 
-                // Show success message
-                alert(`Order status updated to ${newStatus.toUpperCase()} successfully!`);
-
-                // Refresh data to sync with backend
-                fetchSellerData();
-            } else {
-                throw new Error(response.data?.error || 'Failed to update order status');
-            }
+            // Optionally refresh data to sync with backend
+            await dispatch(fetchSellerDashboard()).unwrap();
         } catch (error) {
             console.error('Error updating order status:', error);
-            const errorMessage = error.response?.data?.error || error.message || 'Failed to update order status';
+            const errorMessage = error?.message || 'Failed to update order status';
             alert(`Failed to update order status: ${errorMessage}`);
 
             // Refresh data to reset to correct status
-            fetchSellerData();
+            await dispatch(fetchSellerDashboard()).unwrap();
         } finally {
             // Reset loading state
             const statusSelect = document.querySelector(`select[data-order-id="${orderId}"]`);
@@ -357,7 +318,7 @@ const SellerDashboard = () => {
                         <div className="stat-icon">
                             <i className="fas fa-box"></i>
                         </div>
-                        <div className="stat-value">{stats.totalProducts + stats.totalPets}</div>
+                        <div className="stat-value">{statistics.totalProducts + statistics.totalPets}</div>
                         <div className="stat-label">Total Items</div>
                     </div>
                     <div
@@ -370,7 +331,7 @@ const SellerDashboard = () => {
                         <div className="stat-icon">
                             <i className="fas fa-rupee-sign"></i>
                         </div>
-                        <div className="stat-value">₹{stats.totalSales.toLocaleString()}</div>
+                        <div className="stat-value">₹{statistics.totalRevenue.toLocaleString()}</div>
                         <div className="stat-label">Total Sales</div>
                     </div>
                     <div
@@ -383,7 +344,7 @@ const SellerDashboard = () => {
                         <div className="stat-icon">
                             <i className="fas fa-clock"></i>
                         </div>
-                        <div className="stat-value">{stats.pendingOrders}</div>
+                        <div className="stat-value">{statistics.pendingOrders}</div>
                         <div className="stat-label">Pending Orders</div>
                     </div>
                     <div
@@ -396,7 +357,7 @@ const SellerDashboard = () => {
                         <div className="stat-icon">
                             <i className="fas fa-wallet"></i>
                         </div>
-                        <div className="stat-value">₹{stats.walletBalance.toFixed(2)}</div>
+                        <div className="stat-value">₹{statistics.walletBalance.toFixed(2)}</div>
                         <div className="stat-label">Wallet Balance</div>
                     </div>
                 </div>
@@ -478,7 +439,7 @@ const SellerDashboard = () => {
                                     <div className="info-content">
                                         <div className="info-label">Average Rating</div>
                                         <div className="info-value">
-                                            {stats.rating.toFixed(1)}/5
+                                            {statistics.averageRating.toFixed(1)}/5
                                         </div>
                                     </div>
                                 </div>
@@ -489,7 +450,7 @@ const SellerDashboard = () => {
                                     <div className="info-content">
                                         <div className="info-label">Total Products</div>
                                         <div className="info-value">
-                                            {stats.totalProducts}
+                                            {statistics.totalProducts}
                                         </div>
                                     </div>
                                 </div>
@@ -500,7 +461,7 @@ const SellerDashboard = () => {
                                     <div className="info-content">
                                         <div className="info-label">Total Pets</div>
                                         <div className="info-value">
-                                            {stats.totalPets}
+                                            {statistics.totalPets}
                                         </div>
                                     </div>
                                 </div>
@@ -732,7 +693,7 @@ const SellerDashboard = () => {
                             <div className="orders-stats">
                                 <span className="stat-badge pending">
                                     <i className="fas fa-clock"></i>
-                                    {stats.pendingOrders} Pending
+                                    {statistics.pendingOrders} Pending
                                 </span>
                             </div>
                         </div>
@@ -775,7 +736,7 @@ const SellerDashboard = () => {
                                                                 className={`status-select ${order.status?.toLowerCase()}`}
                                                                 value={order.status || 'pending'}
                                                                 data-order-id={order._id}
-                                                                onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                                                                onChange={(e) => updateOrderStatusHandler(order._id, e.target.value)}
                                                             >
                                                                 <option value="pending">Pending</option>
                                                                 <option value="processing">Processing</option>

@@ -1,6 +1,7 @@
 const Wallet = require('../models/wallet');
 const Order = require('../models/order');
 const Cart = require('../models/cart');
+const Transaction = require('../models/transaction');
 
 exports.checkout = async (req, res) => {
   try {
@@ -32,7 +33,16 @@ exports.checkout = async (req, res) => {
       status: 'processing' // Auto-mark as paid
     });
 
-    // 4. Clear cart
+    // 4. Create transaction record
+    await new Transaction({
+      from: userId,
+      to: userId,
+      amount: total,
+      type: 'order_payment',
+      description: `Payment for order items`
+    }).save();
+
+    // 5. Clear cart
     await Cart.findOneAndUpdate({ userId }, { items: [] });
 
     res.json({ 
