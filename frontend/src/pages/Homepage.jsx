@@ -30,17 +30,30 @@ const Homepage = () => {
     const fetchHomeData = async () => {
         try {
             const response = await api.get('/user/home');
+            console.log('Full API Response:', response);
+            console.log('Response Data:', response.data);
+            
             if (response.data.success) {
                 const data = response.data.data;
+                console.log('Data Object:', data);
+                console.log('Featured Pets:', data.featuredPets);
+                console.log('Featured Products:', data.featuredProducts);
+                console.log('Featured Products Length:', data.featuredProducts?.length);
+                console.log('Featured Products Type:', typeof data.featuredProducts);
+                console.log('Is Array?', Array.isArray(data.featuredProducts));
+                
                 setFeaturedPets(data.featuredPets || []);
                 setFeaturedProducts(data.featuredProducts || []);
                 setSlides(data.slides || []);
                 setPetCategories(data.petCategories || []);
                 setFeatures(data.features || []);
                 setTestimonials(data.testimonials || []);
+            } else {
+                console.error('API returned success: false', response.data);
             }
         } catch (error) {
             console.error('Error fetching home data:', error);
+            console.error('Error response:', error.response?.data);
         } finally {
             setLoading(false);
         }
@@ -137,16 +150,23 @@ const Homepage = () => {
                     <h1 className="text-4xl text-gray-700 my-8 text-center font-bold">
                         Featured Products
                     </h1>
-                    <div className="flex gap-5 p-2.5 px-5 pb-30 justify-center items-center mx-auto">
-                        {featuredProducts.map((product) => (
-                            <ProductCard
-                                key={product._id}
-                                product={product}
-                                onAddToCart={addToCart}
-                                variant="feature"
-                            />
-                        ))}
-                    </div>
+                    <p className="text-center text-sm text-gray-400 mb-4">
+                        Debug: {featuredProducts.length} products | Type: {typeof featuredProducts} | IsArray: {Array.isArray(featuredProducts).toString()}
+                    </p>
+                    {featuredProducts.length === 0 ? (
+                        <p className="text-center text-gray-500 py-10">No featured products available</p>
+                    ) : (
+                        <div className="flex gap-5 p-2.5 px-5 pb-30 justify-center items-center mx-auto">
+                            {featuredProducts.map((product) => (
+                                <ProductCard
+                                    key={product._id}
+                                    product={product}
+                                    onAddToCart={addToCart}
+                                    variant="feature"
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
 
