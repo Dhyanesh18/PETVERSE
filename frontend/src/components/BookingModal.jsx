@@ -107,10 +107,10 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                     {/* Success Icon with Animation */}
                     <div className="mb-4 relative">
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-20 h-20 bg-green-100 rounded-full animate-ping opacity-75"></div>
+                            <div className="w-20 h-20 bg-teal-100 rounded-full animate-ping opacity-75"></div>
                         </div>
                         <div className="relative">
-                            <FaCheckCircle className="text-6xl text-green-500 mx-auto drop-shadow-lg" />
+                            <FaCheckCircle className="text-6xl text-teal-500 mx-auto drop-shadow-lg" />
                         </div>
                     </div>
                     
@@ -121,24 +121,24 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                     </p>
                     
                     {/* Booking Details Card */}
-                    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 mb-4 border border-indigo-100 shadow-inner">
-                        <h3 className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-3">Booking Details</h3>
+                    <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-4 mb-4 border border-teal-100 shadow-inner">
+                        <h3 className="text-xs font-semibold text-teal-600 uppercase tracking-wide mb-3">Booking Details</h3>
                         
                         <div className="space-y-2 text-left">
-                            <div className="flex items-start gap-2 pb-2 border-b border-indigo-100">
-                                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <FaUser className="text-indigo-600 text-sm" />
+                            <div className="flex items-start gap-2 pb-2 border-b border-teal-100">
+                                <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <FaUser className="text-teal-600 text-sm" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500">Service Provider</p>
                                     <p className="font-bold text-gray-800">{service.name || service.fullName}</p>
-                                    <p className="text-xs text-indigo-600">{service.category || service.serviceType}</p>
+                                    <p className="text-xs text-teal-600">{service.category || service.serviceType}</p>
                                 </div>
                             </div>
                             
-                            <div className="flex items-start gap-2 pb-2 border-b border-indigo-100">
-                                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <FaCalendarAlt className="text-indigo-600 text-sm" />
+                            <div className="flex items-start gap-2 pb-2 border-b border-teal-100">
+                                <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <FaCalendarAlt className="text-teal-600 text-sm" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500">Appointment Date</p>
@@ -147,8 +147,8 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                             </div>
                             
                             <div className="flex items-start gap-2">
-                                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <FaClock className="text-indigo-600 text-sm" />
+                                <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <FaClock className="text-teal-600 text-sm" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500">Time Slot</p>
@@ -168,7 +168,7 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                     {/* Action Button */}
                     <button
                         onClick={onClose}
-                        className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-2.5 px-6 rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 text-white py-2.5 px-6 rounded-lg hover:from-teal-700 hover:to-cyan-700 transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
                         Done
                     </button>
@@ -184,11 +184,11 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800 mb-1 flex items-center gap-2">
-                            <FaCalendarAlt className="text-indigo-600" />
+                            <FaCalendarAlt className="text-teal-600" />
                             Book Appointment
                         </h2>
                         <p className="text-gray-600 text-base">
-                            {service.name || service.fullName} - <span className="text-indigo-600 font-medium">{service.category || service.serviceType}</span>
+                            {service.name || service.fullName} - <span className="text-teal-600 font-medium">{service.category || service.serviceType}</span>
                         </p>
                     </div>
                     <button
@@ -216,15 +216,15 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                 {/* Booking Form */}
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Service Info Card */}
-                    <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg p-4 border border-indigo-100 shadow-sm">
+                    <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-4 border border-teal-100 shadow-sm">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-md">
-                                    <FaPaw className="text-2xl text-indigo-600" />
+                                    <FaPaw className="text-2xl text-teal-600" />
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-600 mb-0.5">Service Price</p>
-                                    <p className="text-2xl font-bold text-indigo-600">₹{service.price}</p>
+                                    <p className="text-2xl font-bold text-teal-600">₹{service.price}</p>
                                     <p className="text-xs text-gray-500">per session</p>
                                 </div>
                             </div>
@@ -236,9 +236,9 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                     </div>
 
                     {/* Date Selection */}
-                    <div className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors">
+                    <div className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
                         <label className="block text-gray-800 font-semibold mb-2 flex items-center gap-2">
-                            <FaCalendarAlt className="text-indigo-600" />
+                            <FaCalendarAlt className="text-teal-600" />
                             Select Appointment Date
                         </label>
                         <input
@@ -246,12 +246,12 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
                             min={today}
-                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 font-medium text-gray-700 transition-all"
+                            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-200 focus:border-teal-500 font-medium text-gray-700 transition-all"
                             required
                         />
                         {selectedDate && (
-                            <div className="mt-2 p-2 bg-indigo-50 rounded-lg">
-                                <p className="text-sm text-indigo-600 font-medium">
+                            <div className="mt-2 p-2 bg-teal-50 rounded-lg">
+                                <p className="text-sm text-teal-600 font-medium">
                                     📅 {formatDate(selectedDate)}
                                 </p>
                             </div>
@@ -260,15 +260,15 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
 
                     {/* Time Slot Selection */}
                     {selectedDate && (
-                        <div className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-300 transition-colors">
+                        <div className="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
                             <label className="block text-gray-800 font-semibold mb-3 flex items-center gap-2">
-                                <FaClock className="text-indigo-600" />
+                                <FaClock className="text-teal-600" />
                                 Select Time Slot
                             </label>
                             
                             {fetchingSlots ? (
-                                <div className="text-center py-8 bg-gradient-to-br from-gray-50 to-indigo-50 rounded-lg">
-                                    <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-indigo-200 border-t-indigo-600 mb-3"></div>
+                                <div className="text-center py-8 bg-gradient-to-br from-gray-50 to-teal-50 rounded-lg">
+                                    <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-teal-200 border-t-teal-600 mb-3"></div>
                                     <p className="text-gray-600 text-sm font-medium">Loading available slots...</p>
                                 </div>
                             ) : availableSlots.length === 0 ? (
@@ -290,11 +290,11 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                                                 onClick={() => setSelectedSlot(slot)}
                                                 className={`px-3 py-3 rounded-lg border-2 font-semibold text-sm transition-all transform hover:scale-105 ${
                                                     selectedSlot === slot
-                                                        ? 'bg-gradient-to-br from-indigo-600 to-blue-600 text-white border-indigo-600 shadow-lg scale-105'
-                                                        : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-400 hover:bg-indigo-50 shadow-sm'
+                                                        ? 'bg-gradient-to-br from-teal-600 to-cyan-600 text-white border-teal-600 shadow-lg scale-105'
+                                                        : 'bg-white text-gray-700 border-gray-300 hover:border-teal-400 hover:bg-teal-50 shadow-sm'
                                                 }`}
                                             >
-                                                <FaClock className={`mx-auto mb-1 text-xs ${selectedSlot === slot ? 'text-white' : 'text-indigo-500'}`} />
+                                                <FaClock className={`mx-auto mb-1 text-xs ${selectedSlot === slot ? 'text-white' : 'text-teal-500'}`} />
                                                 {slot}
                                             </button>
                                         ))}
@@ -326,7 +326,7 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                                 </div>
                                 <div className="flex justify-between items-center pt-2 bg-white rounded-lg p-2.5">
                                     <span className="text-gray-700 font-bold">Total Amount:</span>
-                                    <span className="font-bold text-green-600 text-xl">₹{service.price}</span>
+                                    <span className="font-bold text-teal-600 text-xl">₹{service.price}</span>
                                 </div>
                             </div>
                         </div>
@@ -344,7 +344,7 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-3 rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-300 font-semibold disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
+                            className="flex-1 bg-gradient-to-r from-teal-600 to-cyan-600 text-white py-3 rounded-lg hover:from-teal-700 hover:to-cyan-700 transition-all duration-300 font-semibold disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
                             disabled={loading || !selectedDate || !selectedSlot}
                         >
                             {loading ? (

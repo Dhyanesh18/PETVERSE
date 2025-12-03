@@ -185,7 +185,7 @@ const ServiceDetail = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
                 <div className="text-center">
-                    <FaPaw className="text-6xl text-indigo-500 animate-bounce mx-auto mb-4" />
+                    <FaPaw className="text-6xl text-teal-500 animate-bounce mx-auto mb-4" />
                     <p className="text-xl text-gray-700 font-semibold">Loading Service Details...</p>
                 </div>
             </div>
@@ -201,7 +201,7 @@ const ServiceDetail = () => {
                     <p className="text-gray-600 mb-4">{error}</p>
                     <button
                         onClick={() => navigate('/services')}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition-colors"
+                        className="bg-teal-600 text-white px-6 py-2 rounded-md hover:bg-teal-700 transition-colors font-semibold"
                     >
                         Back to Services
                     </button>
@@ -211,12 +211,12 @@ const ServiceDetail = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="bg-gray-50 min-h-screen" style={{ paddingTop: '95px' }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Back Button */}
                 <button
                     onClick={() => navigate('/services')}
-                    className="mb-6 text-indigo-600 hover:text-indigo-800 flex items-center gap-2 font-medium"
+                    className="mb-6 text-teal-600 hover:text-teal-800 flex items-center gap-2 font-semibold transition-colors"
                 >
                     ← Back to Services
                 </button>
@@ -225,12 +225,12 @@ const ServiceDetail = () => {
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Service Header */}
-                        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-                            <div className="h-64 overflow-hidden bg-gray-200">
+                        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                            <div className="h-64 overflow-hidden bg-gradient-to-br from-teal-100 to-cyan-100">
                                 <img
                                     src={getServiceImage(service.serviceType)}
                                     alt={service.name || service.fullName}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                     onError={(e) => {
                                         e.target.src = '/images/services/service2.jpg';
                                     }}
@@ -243,12 +243,12 @@ const ServiceDetail = () => {
                                         <h1 className="text-3xl font-bold text-gray-800 mb-2">
                                             {service.name || service.fullName}
                                         </h1>
-                                        <p className="text-lg text-indigo-600 font-medium">
+                                        <p className="text-lg text-teal-600 font-semibold">
                                             {service.category || service.serviceType}
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <div className="text-3xl font-bold text-green-600">₹{service.price}</div>
+                                        <div className="text-3xl font-bold text-teal-600">₹{service.price}</div>
                                         <p className="text-sm text-gray-500">per visit</p>
                                     </div>
                                 </div>
@@ -272,47 +272,47 @@ const ServiceDetail = () => {
                                 {service.description && (
                                     <div className="mb-4">
                                         <h3 className="font-semibold text-gray-800 mb-2">About</h3>
-                                        <p className="text-gray-600">{service.description}</p>
+                                        <p className="text-gray-600 leading-relaxed">{service.description}</p>
                                     </div>
                                 )}
 
                                 {/* Experience & Specialization */}
                                 <div className="grid md:grid-cols-2 gap-4 mb-4">
                                     {service.experience && (
-                                        <div>
-                                            <span className="text-sm text-gray-500">Experience</span>
+                                        <div className="bg-teal-50 p-3 rounded-lg">
+                                            <span className="text-sm text-teal-600 font-medium">Experience</span>
                                             <p className="font-semibold text-gray-800">{service.experience}</p>
                                         </div>
                                     )}
                                     {service.specialization && (
-                                        <div>
-                                            <span className="text-sm text-gray-500">Specialization</span>
+                                        <div className="bg-cyan-50 p-3 rounded-lg">
+                                            <span className="text-sm text-cyan-600 font-medium">Specialization</span>
                                             <p className="font-semibold text-gray-800">{service.specialization}</p>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Contact Info */}
-                                <div className="border-t pt-4 space-y-2">
+                                <div className="border-t border-teal-100 pt-4 space-y-2">
                                     <h3 className="font-semibold text-gray-800 mb-3">Contact Information</h3>
                                     
                                     {service.serviceAddress && (
                                         <p className="text-gray-600 flex items-center gap-2">
-                                            <FaMapMarkerAlt className="text-indigo-600" />
+                                            <FaMapMarkerAlt className="text-teal-500" />
                                             {service.serviceAddress}
                                         </p>
                                     )}
                                     
                                     {service.phone && (
                                         <p className="text-gray-600 flex items-center gap-2">
-                                            <FaPhone className="text-indigo-600" />
+                                            <FaPhone className="text-teal-500" />
                                             {service.phone}
                                         </p>
                                     )}
                                     
                                     {service.email && (
                                         <p className="text-gray-600 flex items-center gap-2">
-                                            <FaEnvelope className="text-indigo-600" />
+                                            <FaEnvelope className="text-teal-500" />
                                             {service.email}
                                         </p>
                                     )}
@@ -321,29 +321,30 @@ const ServiceDetail = () => {
                         </div>
 
                         {/* Reviews Section */}
-                        <div className="bg-white rounded-xl shadow-sm p-6">
+                        <div className="bg-white rounded-lg shadow-md p-6">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-bold text-gray-800">Reviews</h2>
                                 <button
                                     onClick={handleAddReview}
-                                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                                    className="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors font-semibold hover:shadow-md"
                                 >
                                     Write a Review
                                 </button>
                             </div>
 
                             {reviews.length === 0 ? (
-                                <div className="text-center py-8">
-                                    <p className="text-gray-500">No reviews yet. Be the first to review!</p>
+                                <div className="text-center py-8 bg-teal-50 rounded-lg">
+                                    <FaPaw className="text-4xl text-teal-300 mx-auto mb-3" />
+                                    <p className="text-gray-600">No reviews yet. Be the first to review!</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
                                     {reviews.map(review => (
-                                        <div key={review._id} className="border-b pb-4 last:border-b-0">
+                                        <div key={review._id} className="border-b border-teal-100 pb-4 last:border-b-0 hover:bg-teal-50 p-3 rounded-lg transition-colors">
                                             <div className="flex justify-between items-start mb-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
-                                                        <FaUser className="text-indigo-600" />
+                                                    <div className="w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
+                                                        <FaUser className="text-teal-600" />
                                                     </div>
                                                     <div>
                                                         <p className="font-semibold text-gray-800">
@@ -359,13 +360,13 @@ const ServiceDetail = () => {
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => handleEditReview(review)}
-                                                            className="text-indigo-600 hover:text-indigo-800"
+                                                            className="text-teal-600 hover:text-teal-800 transition-colors"
                                                         >
                                                             <FaEdit />
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteReview(review._id)}
-                                                            className="text-red-600 hover:text-red-800"
+                                                            className="text-red-600 hover:text-red-800 transition-colors"
                                                         >
                                                             <FaTrash />
                                                         </button>
@@ -384,7 +385,7 @@ const ServiceDetail = () => {
                                     {hasMoreReviews && (
                                         <button
                                             onClick={() => fetchReviews(reviewsPage + 1)}
-                                            className="w-full text-indigo-600 hover:text-indigo-800 font-medium py-2"
+                                            className="w-full text-teal-600 hover:text-teal-800 font-semibold py-2 hover:bg-teal-50 rounded-md transition-colors"
                                         >
                                             Load More Reviews
                                         </button>
@@ -396,35 +397,35 @@ const ServiceDetail = () => {
 
                     {/* Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
+                        <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
                             <h3 className="text-xl font-bold text-gray-800 mb-4">Book This Service</h3>
                             
                             <div className="space-y-4 mb-6">
-                                <div className="flex items-center gap-3 text-gray-600">
-                                    <FaCalendarAlt className="text-indigo-600" />
+                                <div className="flex items-center gap-3 text-gray-600 bg-teal-50 p-3 rounded-lg">
+                                    <FaCalendarAlt className="text-teal-500 text-xl" />
                                     <span>Flexible scheduling</span>
                                 </div>
-                                <div className="flex items-center gap-3 text-gray-600">
-                                    <FaClock className="text-indigo-600" />
+                                <div className="flex items-center gap-3 text-gray-600 bg-cyan-50 p-3 rounded-lg">
+                                    <FaClock className="text-cyan-500 text-xl" />
                                     <span>Available time slots</span>
                                 </div>
                             </div>
 
                             <button
                                 onClick={handleBookNow}
-                                className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors font-bold text-lg shadow-md hover:shadow-lg"
+                                className="w-full bg-teal-600 text-white py-3 rounded-md hover:bg-teal-700 transition-all font-bold text-lg shadow-md hover:shadow-lg hover:-translate-y-0.5"
                             >
                                 Book Now
                             </button>
 
                             {service.availableSlots && service.availableSlots.length > 0 && (
-                                <div className="mt-6 border-t pt-4">
+                                <div className="mt-6 border-t border-teal-100 pt-4">
                                     <h4 className="font-semibold text-gray-800 mb-3">Available Time Slots</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {service.availableSlots.slice(0, 6).map((slot, index) => (
                                             <span
                                                 key={index}
-                                                className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full"
+                                                className="px-3 py-1 bg-teal-50 text-teal-700 text-sm rounded-full font-medium"
                                             >
                                                 {slot}
                                             </span>
@@ -452,7 +453,7 @@ const ServiceDetail = () => {
             {/* Review Modal */}
             {showReviewModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold text-gray-800">
                                 {editingReview ? 'Edit Review' : 'Write a Review'}
@@ -462,7 +463,7 @@ const ServiceDetail = () => {
                                     setShowReviewModal(false);
                                     setEditingReview(null);
                                 }}
-                                className="text-gray-500 hover:text-gray-700"
+                                className="text-gray-500 hover:text-gray-700 transition-colors"
                             >
                                 <FaTimes className="text-xl" />
                             </button>
@@ -483,7 +484,7 @@ const ServiceDetail = () => {
                                 <textarea
                                     value={reviewForm.comment}
                                     onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:outline-none"
                                     rows="4"
                                     required
                                     placeholder="Share your experience..."
@@ -497,13 +498,13 @@ const ServiceDetail = () => {
                                         setShowReviewModal(false);
                                         setEditingReview(null);
                                     }}
-                                    className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                                    className="flex-1 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition-colors font-semibold"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                                    className="flex-1 bg-teal-600 text-white py-2 rounded-md hover:bg-teal-700 transition-colors font-semibold hover:shadow-md"
                                 >
                                     {editingReview ? 'Update' : 'Submit'} Review
                                 </button>
