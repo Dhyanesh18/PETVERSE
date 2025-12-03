@@ -1704,7 +1704,62 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Get recent transactions with user details
+        // Calculate GST info for admin users based on actual commission transactions
+        let gstInfo = null;
+        if (req.user.role === 'admin') {
+            const adminId = '6807e4424877bcd9980c7e00';
+            
+            // Get all commission transactions (money received by admin)
+            const commissionTransactions = await Transaction.find({
+                to: adminId,
+                type: 'commission'
+            }).lean();
+            
+            // Calculate total revenue from commissions
+            const totalRevenue = commissionTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+            
+            // Calculate GST (18% of revenue)
+            const gstAmount = totalRevenue * 0.18;
+            
+            // Calculate net revenue after GST
+            const netRevenue = totalRevenue - gstAmount;
+            
+            gstInfo = {
+                totalRevenue,
+                gstAmount,
+                netRevenue
+            };
+        }
+
+        // Get ALL transactions for statistics (without limit)
+        const allTransactions = await Transaction.find({
+            $or: [
+                { from: req.user._id },
+                { to: req.user._id }
+            ]
+        }).lean();
+
+        // Calculate transaction statistics from ALL transactions
+        let totalCredits = 0;
+        let totalDebits = 0;
+        let totalTransactionCount = allTransactions.length;
+
+        allTransactions.forEach(transaction => {
+            const isCredit = transaction.to.toString() === req.user._id.toString();
+            if (isCredit) {
+                totalCredits += transaction.amount;
+            } else {
+                totalDebits += transaction.amount;
+            }
+        });
+
+        // Calculate net from transactions
+        const netFromTransactions = totalCredits - totalDebits;
+        
+        // The difference between wallet balance and net transactions is the initial balance
+        const initialBalance = wallet.balance - netFromTransactions;
+
+        // Get recent transactions with user details (limited to 50 for display)
         const transactions = await Transaction.find({
             $or: [
                 { from: req.user._id },
@@ -1721,6 +1776,14 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
             success: true,
             data: {
                 balance: wallet.balance,
+                statistics: {
+                    totalCredits,
+                    totalDebits,
+                    netFromTransactions,
+                    initialBalance,
+                    totalTransactionCount,
+                    displayedTransactionCount: transactions.length
+                },
                 transactions: transactions.map(transaction => {
                     // Determine if this is a credit or debit for the current user
                     const isCredit = transaction.to._id.toString() === req.user._id.toString();
@@ -1792,7 +1855,8 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
                             id: otherUser._id
                         }
                     };
-                })
+                }),
+                gstInfo: gstInfo // Include GST info for admin users
             }
         });
     } catch (error) {

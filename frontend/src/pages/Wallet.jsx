@@ -48,16 +48,9 @@ const Wallet = () => {
             if (data.success) {
                 setWalletData(data.data);
                 
-                // Calculate GST for admin users
-                if (user?.role === 'admin') {
-                    const totalRevenue = data.data.balance - 10000; // Subtract initial balance
-                    const gstAmount = totalRevenue * 0.18; // 18% GST
-                    const netRevenue = totalRevenue - gstAmount;
-                    setGstInfo({
-                        totalRevenue,
-                        gstAmount,
-                        netRevenue
-                    });
+                // Use GST info from backend for admin users
+                if (user?.role === 'admin' && data.data.gstInfo) {
+                    setGstInfo(data.data.gstInfo);
                 }
             }
         } catch (error) {
@@ -248,26 +241,25 @@ const Wallet = () => {
                                         <h2 className="text-2xl font-bold">Admin Revenue & GST Summary</h2>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                                        <div className="bg-white bg-opacity-20 rounded-lg p-4">
-                                            <p className="text-white text-opacity-90 text-sm mb-2">Total Revenue (Excl. Initial)</p>
-                                            <div className="text-3xl font-bold text-white">
+                                        <div className="bg-white bg-opacity-30 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-40">
+                                            <p className="text-gray-900 font-semibold text-sm mb-2">Total Commission Revenue</p>
+                                            <div className="text-3xl font-bold text-gray-900">
                                                 ₹{gstInfo.totalRevenue?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                                             </div>
                                         </div>
-                                        <div className="bg-white bg-opacity-20 rounded-lg p-4">
-                                            <p className="text-white text-opacity-90 text-sm mb-2">GST (18%)</p>
-                                            <div className="text-3xl font-bold text-white">
+                                        <div className="bg-white bg-opacity-30 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-40">
+                                            <p className="text-gray-900 font-semibold text-sm mb-2">GST Liability (18%)</p>
+                                            <div className="text-3xl font-bold text-gray-900">
                                                 ₹{gstInfo.gstAmount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                                             </div>
                                         </div>
-                                        <div className="bg-white bg-opacity-20 rounded-lg p-4">
-                                            <p className="text-white text-opacity-90 text-sm mb-2">Net Revenue (After GST)</p>
-                                            <div className="text-3xl font-bold text-white">
+                                        <div className="bg-white bg-opacity-30 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-40">
+                                            <p className="text-gray-900 font-semibold text-sm mb-2">Net Revenue (After GST)</p>
+                                            <div className="text-3xl font-bold text-gray-900">
                                                 ₹{gstInfo.netRevenue?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                                             </div>
                                         </div>
                                     </div>
-                                    <p className="text-white text-opacity-90 text-sm mt-4">* Revenue calculated from commission earnings (excluding initial ₹10,000 balance)</p>
                                 </div>
                             </div>
                         </div>
@@ -378,42 +370,49 @@ const Wallet = () => {
                                             <div>
                                                 <p className="text-sm text-gray-600 mb-1">Total Credits</p>
                                                 <p className="text-lg font-bold text-green-600">
-                                                    +₹{walletData.transactions
-                                                        .filter(t => t.isCredit)
-                                                        .reduce((sum, t) => sum + (t.amount || 0), 0)
-                                                        .toLocaleString('en-IN')}
+                                                    +₹{walletData.statistics?.totalCredits?.toLocaleString('en-IN') || 
+                                                        walletData.transactions
+                                                            .filter(t => t.isCredit)
+                                                            .reduce((sum, t) => sum + (t.amount || 0), 0)
+                                                            .toLocaleString('en-IN')}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-sm text-gray-600 mb-1">Total Debits</p>
                                                 <p className="text-lg font-bold text-red-600">
-                                                    -₹{walletData.transactions
-                                                        .filter(t => !t.isCredit)
-                                                        .reduce((sum, t) => sum + (t.amount || 0), 0)
-                                                        .toLocaleString('en-IN')}
+                                                    -₹{walletData.statistics?.totalDebits?.toLocaleString('en-IN') || 
+                                                        walletData.transactions
+                                                            .filter(t => !t.isCredit)
+                                                            .reduce((sum, t) => sum + (t.amount || 0), 0)
+                                                            .toLocaleString('en-IN')}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-gray-600 mb-1">Net (Shown)</p>
-                                                <p className="text-lg font-bold text-blue-600">
-                                                    ₹{(walletData.transactions
-                                                        .filter(t => t.isCredit)
-                                                        .reduce((sum, t) => sum + (t.amount || 0), 0) -
-                                                    walletData.transactions
-                                                        .filter(t => !t.isCredit)
-                                                        .reduce((sum, t) => sum + (t.amount || 0), 0))
-                                                        .toLocaleString('en-IN')}
+                                                <p className="text-sm text-gray-600 mb-1">Net from Transactions</p>
+                                                <p className={`text-lg font-bold ${
+                                                    (walletData.statistics?.netFromTransactions || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                                                }`}>
+                                                    ₹{walletData.statistics?.netFromTransactions?.toLocaleString('en-IN') || 
+                                                        (walletData.transactions
+                                                            .filter(t => t.isCredit)
+                                                            .reduce((sum, t) => sum + (t.amount || 0), 0) -
+                                                        walletData.transactions
+                                                            .filter(t => !t.isCredit)
+                                                            .reduce((sum, t) => sum + (t.amount || 0), 0))
+                                                            .toLocaleString('en-IN')}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-gray-600 mb-1">Transactions</p>
+                                                <p className="text-sm text-gray-600 mb-1">Total Transactions</p>
                                                 <p className="text-lg font-bold text-purple-600">
-                                                    {walletData.transactions.length}
+                                                    {walletData.statistics?.totalTransactionCount || walletData.transactions.length}
                                                 </p>
                                             </div>
                                         </div>
                                         <p className="text-xs text-gray-500 text-center mt-3">
-                                            Showing last 50 transactions. Your balance includes all historical transactions.
+                                            {walletData.statistics?.displayedTransactionCount 
+                                                ? `Showing last ${walletData.statistics.displayedTransactionCount} of ${walletData.statistics.totalTransactionCount} transactions. Statistics include all historical transactions.`
+                                                : 'Showing last 50 transactions. Your balance includes all historical transactions.'}
                                         </p>
                                     </div>
 
