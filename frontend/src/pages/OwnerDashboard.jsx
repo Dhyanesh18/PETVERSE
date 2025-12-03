@@ -452,41 +452,42 @@ const OwnerDashboard = () => {
     const handleStatsCardClick = (cardType) => {
         switch(cardType) {
             case 'totalOrders': {
-                // Scroll to orders section
-                const ordersSection = document.querySelector('.section') || 
-                                    document.querySelector('[class*="order"]');
-                if (ordersSection) {
-                    ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // Scroll directly to Recent Orders section
+                const sections = document.querySelectorAll('.section');
+                const recentOrdersSection = Array.from(sections).find(section => 
+                    section.textContent.includes('Recent Orders')
+                );
+                
+                if (recentOrdersSection) {
+                    recentOrdersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     // Highlight the section briefly
-                    ordersSection.style.backgroundColor = '#f0fdf4';
+                    recentOrdersSection.style.backgroundColor = '#f0fdf4';
                     setTimeout(() => {
-                        ordersSection.style.backgroundColor = '';
-                    }, 2000);
+                        recentOrdersSection.style.backgroundColor = '';
+                    }, 1500);
                 }
                 break;
             }
             case 'activeOrders': {
-                // Scroll to orders section
-                const ordersSection = document.querySelector('.section') || 
-                                    document.querySelector('[class*="order"]');
-                if (ordersSection) {
-                    ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    ordersSection.style.backgroundColor = '#dbeafe';
+                // Scroll to My Orders section
+                const myOrdersSection = document.querySelector('.my-orders-section');
+                if (myOrdersSection) {
+                    myOrdersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    myOrdersSection.style.backgroundColor = '#dbeafe';
                     setTimeout(() => {
-                        ordersSection.style.backgroundColor = '';
+                        myOrdersSection.style.backgroundColor = '';
                     }, 2000);
                 }
                 break;
             }
             case 'totalSpent': {
-                // Scroll to orders section to see spending
-                const ordersSection = document.querySelector('.section') || 
-                                    document.querySelector('[class*="order"]');
-                if (ordersSection) {
-                    ordersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    ordersSection.style.backgroundColor = '#fef3c7';
+                // Scroll to My Orders section to see spending
+                const myOrdersSection = document.querySelector('.my-orders-section');
+                if (myOrdersSection) {
+                    myOrdersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    myOrdersSection.style.backgroundColor = '#fef3c7';
                     setTimeout(() => {
-                        ordersSection.style.backgroundColor = '';
+                        myOrdersSection.style.backgroundColor = '';
                     }, 2000);
                 }
                 break;

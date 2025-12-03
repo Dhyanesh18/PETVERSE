@@ -1,38 +1,46 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPets, togglePetWishlist, getWishlist } from '../services/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { 
+    fetchPets, 
+    togglePetWishlist as toggleWishlistAction,
+    setWishlist,
+    setFilters as setPetFilters,
+    clearFilters as clearPetFilters
+} from '../redux/slices/petSlice';
+import { getWishlist } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 
 const Pets = () => {
-    const [pets, setPets] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({
-        categories: [],
-        breeds: [],
-        ages: [],
-        minPrice: '',
-        maxPrice: ''
-    });
-    const [wishlist, setWishlist] = useState([]);
+    // Redux state
+    const dispatch = useDispatch();
+    const { pets, wishlist, loading, filters } = useSelector((state) => state.pet);
+    
+    // Local state for pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(6); // 6 items per page (2 rows of 3)
+    
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
 
+    // Fetch pets on mount
     useEffect(() => {
-        fetchPets();
+        dispatch(fetchPets());
+    }, [dispatch]);
+
+    // Load wishlist when user is authenticated
+    useEffect(() => {
         if (isAuthenticated) {
             loadWishlistStatus();
         } else {
             // Clear wishlist when user logs out
-            setWishlist([]);
+            dispatch(setWishlist([]));
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, dispatch]);
 
     const loadWishlistStatus = async () => {
         try {
             console.log('Loading wishlist for authenticated user...');
-            // Get user's wishlist from backend
             const response = await getWishlist();
             console.log('Wishlist API response:', response.data);
             const wishlistData = response.data.data || {};
@@ -40,53 +48,28 @@ const Pets = () => {
             // Extract pet IDs from user's wishlist
             const wishlistPetIds = (wishlistData.pets || []).map(pet => pet._id);
             
-            setWishlist(wishlistPetIds);
+            dispatch(setWishlist(wishlistPetIds));
             console.log('Loaded wishlist pet IDs:', wishlistPetIds);
-            console.log('Wishlist state updated successfully');
         } catch (error) {
             console.error('Error loading wishlist status:', error);
-            console.error('Error details:', error.response?.data);
-            // If user is not logged in or error occurs, set empty wishlist
-            setWishlist([]);
-        }
-    };
-
-    const fetchPets = async () => {
-        try {
-            setLoading(true);
-            const response = await getPets();
-            const petsData = response.data.data || response.data || [];
-            setPets(petsData);
-        } catch (error) {
-            console.error('Failed to fetch pets:', error);
-            setPets([]);
-        } finally {
-            setLoading(false);
+            dispatch(setWishlist([]));
         }
     };
 
     const handleFilterChange = (type, value) => {
-        setFilters(prev => {
-            if (type === 'categories' || type === 'breeds' || type === 'ages') {
-                const currentArray = prev[type];
-                const newArray = currentArray.includes(value)
-                    ? currentArray.filter(item => item !== value)
-                    : [...currentArray, value];
-                return { ...prev, [type]: newArray };
-            } else {
-                return { ...prev, [type]: value };
-            }
-        });
+        if (type === 'categories' || type === 'breeds' || type === 'ages') {
+            const currentArray = filters[type];
+            const newArray = currentArray.includes(value)
+                ? currentArray.filter(item => item !== value)
+                : [...currentArray, value];
+            dispatch(setPetFilters({ [type]: newArray }));
+        } else {
+            dispatch(setPetFilters({ [type]: value }));
+        }
     };
 
     const clearFilters = () => {
-        setFilters({
-            categories: [],
-            breeds: [],
-            ages: [],
-            minPrice: '',
-            maxPrice: ''
-        });
+        dispatch(clearPetFilters());
     };
 
     const toggleWishlist = async (petId) => {
@@ -96,38 +79,13 @@ const Pets = () => {
         }
         
         try {
-            const response = await togglePetWishlist(petId);
-            console.log('Toggle wishlist response:', response.data);
+            // Dispatch Redux action to toggle wishlist (state updates instantly)
+            const result = await dispatch(toggleWishlistAction(petId)).unwrap();
+            console.log('Toggle wishlist result:', result);
             
-            if (response.data.success) {
-                console.log('Toggle response data:', response.data.data);
-                // Check if pet is now in wishlist based on backend response
-                const isInWishlist = response.data.data?.isInWishlist || response.data.data?.wishlist;
-                console.log('Pet is in wishlist:', isInWishlist);
-                
-                // Update local state based on actual backend state
-                setWishlist(prev => {
-                    console.log('Previous wishlist state:', prev);
-                    if (isInWishlist && !prev.includes(petId)) {
-                        console.log('Adding pet to wishlist');
-                        return [...prev, petId];
-                    } else if (!isInWishlist && prev.includes(petId)) {
-                        console.log('Removing pet from wishlist');
-                        return prev.filter(id => id !== petId);
-                    }
-                    console.log('No change to wishlist state');
-                    return prev;
-                });
-                
-                // Show notification
-                const message = isInWishlist ? 'Added to wishlist' : 'Removed from wishlist';
-                console.log(message, petId);
-                
-                // Optionally refresh wishlist from server to ensure consistency
-                setTimeout(() => {
-                    loadWishlistStatus();
-                }, 500);
-            }
+            // Show notification
+            const message = result.isWishlisted ? 'Added to wishlist' : 'Removed from wishlist';
+            console.log(message, petId);
         } catch (error) {
             console.error('Error toggling wishlist:', error);
         }
@@ -506,7 +464,7 @@ const Pets = () => {
                                                 }}
                                                 className={`w-10 h-10 border border-gray-300 rounded-full transition flex items-center justify-center ${
                                                     isAuthenticated 
-                                                        ? 'hover:border-red-500 hover:text-red-500' 
+                                                        ? 'hover:border-red-500 hover:text-red-500 cursor-pointer' 
                                                         : 'cursor-not-allowed opacity-50'
                                                 }`}
                                             >

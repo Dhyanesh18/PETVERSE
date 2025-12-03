@@ -1,40 +1,48 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProducts, toggleProductWishlist, getWishlist } from '../services/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { 
+    fetchProducts, 
+    toggleProductWishlist as toggleWishlistAction,
+    setWishlist,
+    setFilters as setProductFilters,
+    clearFilters as clearProductFilters
+} from '../redux/slices/productSlice';
+import { getWishlist } from '../services/api';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 
 const Products = () => {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({
-        categories: [],
-        brands: [],
-        minPrice: '',
-        maxPrice: '',
-        ratings: []
-    });
-    const [wishlist, setWishlist] = useState([]);
+    // Redux state
+    const dispatch = useDispatch();
+    const { products, wishlist, loading, filters } = useSelector((state) => state.product);
+    
+    // Local state for pagination
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(6); // 6 items per page (2 rows of 3)
+    
     const navigate = useNavigate();
     const { addToCart } = useCart();
     const { isAuthenticated } = useAuth();
 
+    // Fetch products on mount
     useEffect(() => {
-        fetchProducts();
+        dispatch(fetchProducts());
+    }, [dispatch]);
+
+    // Load wishlist when user is authenticated
+    useEffect(() => {
         if (isAuthenticated) {
             loadWishlistStatus();
         } else {
             // Clear wishlist when user logs out
-            setWishlist([]);
+            dispatch(setWishlist([]));
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, dispatch]);
 
     const loadWishlistStatus = async () => {
         try {
             console.log('Loading wishlist for authenticated user...');
-            // Get user's wishlist from backend
             const response = await getWishlist();
             console.log('Wishlist API response:', response.data);
             const wishlistData = response.data.data || {};
@@ -42,53 +50,28 @@ const Products = () => {
             // Extract product IDs from user's wishlist
             const wishlistProductIds = (wishlistData.products || []).map(product => product._id);
             
-            setWishlist(wishlistProductIds);
+            dispatch(setWishlist(wishlistProductIds));
             console.log('Loaded wishlist product IDs:', wishlistProductIds);
-            console.log('Wishlist state updated successfully');
         } catch (error) {
             console.error('Error loading wishlist status:', error);
-            console.error('Error details:', error.response?.data);
-            // If user is not logged in or error occurs, set empty wishlist
-            setWishlist([]);
-        }
-    };
-
-    const fetchProducts = async () => {
-        try {
-            setLoading(true);
-            const response = await getProducts();
-            const productsData = response.data.data || response.data || [];
-            setProducts(productsData);
-        } catch (error) {
-            console.error('Failed to fetch products:', error);
-            setProducts([]);
-        } finally {
-            setLoading(false);
+            dispatch(setWishlist([]));
         }
     };
 
     const handleFilterChange = (type, value) => {
-        setFilters(prev => {
-            if (type === 'categories' || type === 'brands' || type === 'ratings') {
-                const currentArray = prev[type];
-                const newArray = currentArray.includes(value)
-                    ? currentArray.filter(item => item !== value)
-                    : [...currentArray, value];
-                return { ...prev, [type]: newArray };
-            } else {
-                return { ...prev, [type]: value };
-            }
-        });
+        if (type === 'categories' || type === 'brands' || type === 'ratings') {
+            const currentArray = filters[type];
+            const newArray = currentArray.includes(value)
+                ? currentArray.filter(item => item !== value)
+                : [...currentArray, value];
+            dispatch(setProductFilters({ [type]: newArray }));
+        } else {
+            dispatch(setProductFilters({ [type]: value }));
+        }
     };
 
     const clearFilters = () => {
-        setFilters({
-            categories: [],
-            brands: [],
-            minPrice: '',
-            maxPrice: '',
-            ratings: []
-        });
+        dispatch(clearProductFilters());
     };
 
     const toggleWishlist = async (productId) => {
@@ -98,38 +81,13 @@ const Products = () => {
         }
         
         try {
-            const response = await toggleProductWishlist(productId);
-            console.log('Toggle wishlist response:', response.data);
+            // Dispatch Redux action to toggle wishlist (state updates instantly)
+            const result = await dispatch(toggleWishlistAction(productId)).unwrap();
+            console.log('Toggle wishlist result:', result);
             
-            if (response.data.success) {
-                console.log('Toggle response data:', response.data.data);
-                // Check if product is now in wishlist based on backend response
-                const isInWishlist = response.data.data?.isInWishlist || response.data.data?.wishlist;
-                console.log('Product is in wishlist:', isInWishlist);
-                
-                // Update local state based on actual backend state
-                setWishlist(prev => {
-                    console.log('Previous wishlist state:', prev);
-                    if (isInWishlist && !prev.includes(productId)) {
-                        console.log('Adding product to wishlist');
-                        return [...prev, productId];
-                    } else if (!isInWishlist && prev.includes(productId)) {
-                        console.log('Removing product from wishlist');
-                        return prev.filter(id => id !== productId);
-                    }
-                    console.log('No change to wishlist state');
-                    return prev;
-                });
-                
-                // Show notification
-                const message = isInWishlist ? 'Added to wishlist' : 'Removed from wishlist';
-                console.log(message, productId);
-                
-                // Optionally refresh wishlist from server to ensure consistency
-                setTimeout(() => {
-                    loadWishlistStatus();
-                }, 500);
-            }
+            // Show notification
+            const message = result.isWishlisted ? 'Added to wishlist' : 'Removed from wishlist';
+            console.log(message, productId);
         } catch (error) {
             console.error('Error toggling wishlist:', error);
         }
@@ -537,7 +495,7 @@ const Products = () => {
                                                 }}
                                                 className={`w-10 h-10 border border-gray-300 rounded transition flex items-center justify-center ${
                                                     isAuthenticated 
-                                                        ? 'hover:border-red-500 hover:text-red-500' 
+                                                        ? 'hover:border-red-500 hover:text-red-500 cursor-pointer' 
                                                         : 'cursor-not-allowed opacity-50'
                                                 }`}
                                             >
