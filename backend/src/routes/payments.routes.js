@@ -428,7 +428,7 @@ router.post('/', isAuthenticated, async (req, res) => {
             from: req.user._id,
             to: "6807e4424877bcd9980c7e00",
             amount: commission,
-            type: 'platform_commission', // Add type field
+            type: 'commission',
             description: `Platform commission for order`
         }).save();
 

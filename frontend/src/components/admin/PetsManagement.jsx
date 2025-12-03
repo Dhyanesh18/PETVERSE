@@ -9,6 +9,14 @@ const PetsManagement = ({ data }) => {
 
     const pets = data.pets || [];
 
+    // Helper function to get full image URL
+    const getImageUrl = (pet) => {
+        if (pet.images && pet.images.length > 0) {
+            return `http://localhost:8080/api/pets/image/${pet._id}/0`;
+        }
+        return '/images/default-pet.jpg';
+    };
+
     const filteredPets = pets.filter(pet =>
         pet.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         pet.breed?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -42,7 +50,11 @@ const PetsManagement = ({ data }) => {
                 {filteredPets.map(pet => (
                     <div key={pet._id} className="pet-card-admin">
                         <div className="pet-image-admin">
-                            <img src={pet.images?.[0]?.url || '/images/default-pet.jpg'} alt={pet.name} />
+                            <img 
+                                src={getImageUrl(pet)} 
+                                alt={pet.name} 
+                                onError={(e) => e.target.src = '/images/default-pet.jpg'} 
+                            />
                         </div>
                         <div className="pet-info-admin">
                             <h4>{pet.name}</h4>

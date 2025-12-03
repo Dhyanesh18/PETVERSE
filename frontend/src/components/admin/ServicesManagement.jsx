@@ -25,6 +25,19 @@ const ServicesManagement = ({ data }) => {
         }
     };
 
+    // Helper function to get service icon based on service type
+    const getServiceIcon = (serviceType) => {
+        const icons = {
+            'Grooming': 'fas fa-cut',
+            'Veterinary': 'fas fa-stethoscope',
+            'Training': 'fas fa-graduation-cap',
+            'Walking': 'fas fa-walking',
+            'Boarding': 'fas fa-home',
+            'Daycare': 'fas fa-sun'
+        };
+        return icons[serviceType] || 'fas fa-hands-helping';
+    };
+
     return (
         <div className="services-management">
             <div className="management-header">
@@ -38,17 +51,28 @@ const ServicesManagement = ({ data }) => {
                 />
             </div>
 
-            <div className="services-list-admin">
+            <div className="services-grid-admin">
                 {filteredServices.map(service => (
                     <div key={service._id} className="service-card-admin">
-                        <h4>{service.name}</h4>
-                        <p><strong>Provider:</strong> {service.provider?.fullName}</p>
-                        <p><strong>Type:</strong> {service.serviceType}</p>
-                        <p>{service.description}</p>
-                        <div className="service-actions-admin">
-                            <button className="action-btn delete-btn" onClick={() => handleDeleteService(service._id)}>
-                                <i className="fas fa-trash"></i> Delete
-                            </button>
+                        <div className="service-icon-wrapper">
+                            <i className={getServiceIcon(service.provider?.serviceType)}></i>
+                        </div>
+                        <div className="service-info-admin">
+                            <h4>{service.name}</h4>
+                            <p className="service-provider">
+                                <i className="fas fa-user"></i> {service.provider?.fullName}
+                            </p>
+                            <p className="service-type">
+                                <i className="fas fa-tag"></i> {service.provider?.serviceType}
+                            </p>
+                            {service.description && (
+                                <p className="service-description">{service.description}</p>
+                            )}
+                            <div className="service-actions-admin">
+                                <button className="action-btn delete-btn" onClick={() => handleDeleteService(service._id)}>
+                                    <i className="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}

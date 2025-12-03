@@ -9,6 +9,14 @@ const ProductsManagement = ({ data }) => {
 
     const products = data.products || [];
 
+    // Helper function to get full image URL
+    const getImageUrl = (product) => {
+        if (product.images && product.images.length > 0) {
+            return `http://localhost:8080/api/products/image/${product._id}/0`;
+        }
+        return '/images/default-product.jpg';
+    };
+
     const filteredProducts = products.filter(product =>
         product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.brand?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -42,7 +50,11 @@ const ProductsManagement = ({ data }) => {
                 {filteredProducts.map(product => (
                     <div key={product._id} className="product-card-admin">
                         <div className="product-image-admin">
-                            <img src={product.thumbnail || product.images?.[0]?.url || '/images/default-product.jpg'} alt={product.name} />
+                            <img 
+                                src={getImageUrl(product)} 
+                                alt={product.name} 
+                                onError={(e) => e.target.src = '/images/default-product.jpg'} 
+                            />
                         </div>
                         <div className="product-info-admin">
                             <h4>{product.name}</h4>

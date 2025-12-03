@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getSellerDashboard } from '../services/api';
+import { getSellerDashboard, updateSellerOrderStatus } from '../services/api';
 import EditProfileModal from '../components/EditProfileModal';
 import './SellerDashboard.css';
 
@@ -212,18 +212,9 @@ const SellerDashboard = () => {
                 statusSelect.classList.add('loading');
             }
 
-            const response = await fetch(`/api/seller/orders/${orderId}/status`, {
-                method: 'PATCH',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status: newStatus })
-            });
+            const response = await updateSellerOrderStatus(orderId, newStatus);
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
+            if (response.data && response.data.success) {
                 // Update the local state immediately for better UX
                 setOrders(prevOrders =>
                     prevOrders.map(order =>
@@ -239,11 +230,12 @@ const SellerDashboard = () => {
                 // Refresh data to sync with backend
                 fetchSellerData();
             } else {
-                throw new Error(data.error || 'Failed to update order status');
+                throw new Error(response.data?.error || 'Failed to update order status');
             }
         } catch (error) {
             console.error('Error updating order status:', error);
-            alert(`Failed to update order status: ${error.message}`);
+            const errorMessage = error.response?.data?.error || error.message || 'Failed to update order status';
+            alert(`Failed to update order status: ${errorMessage}`);
 
             // Refresh data to reset to correct status
             fetchSellerData();

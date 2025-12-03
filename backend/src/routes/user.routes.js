@@ -1270,6 +1270,15 @@ router.patch('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
 
         const oldStatus = order.status;
         
+        // Check if refund was already processed
+        if (order.paymentStatus === 'refunded') {
+            console.log('Refund already processed - skipping duplicate refund');
+            return res.status(400).json({
+                success: false,
+                error: 'Order has already been refunded'
+            });
+        }
+        
         // Handle refund - only for online payments, not COD
         if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
             console.log('User cancelling order - processing refund for online payment...');
@@ -1304,11 +1313,20 @@ router.patch('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
             try {
                 await sellerWallet.deductFunds(sellerShare);
                 console.log(`User cancellation: Deducted ₹${sellerShare} from seller`);
+                
+                // Create transaction for seller deduction
+                await new Transaction({
+                    from: order.seller._id,
+                    to: req.user._id,
+                    amount: sellerShare,
+                    type: 'refund',
+                    description: `Refund deduction for user cancelled order`
+                }).save();
             } catch (err) {
                 console.error('Seller has insufficient balance for refund:', err.message);
                 return res.status(400).json({
                     success: false,
-                    error: 'Insufficient seller balance for refund. Please contact support.'
+                    error: 'Insufficient seller balance for refund. Seller needs to add funds to wallet.'
                 });
             }
             
@@ -1323,13 +1341,13 @@ router.patch('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
                 }
             }
             
-            // Create refund transaction
+            // Create refund transaction for customer
             await new Transaction({
-                from: order.seller._id,
+                from: "6807e4424877bcd9980c7e00",
                 to: req.user._id,
                 amount: refundAmount,
                 type: 'user_cancellation_refund',
-                description: `Refund for user cancelled order ${order._id}`
+                description: `Refund for cancelled order`
             }).save();
             
             order.paymentStatus = 'refunded';
@@ -1710,14 +1728,28 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
                     
                     // Generate better descriptions based on transaction type
                     let description = transaction.description;
-                    if (!description || description === '') {
+                    let displayName = otherUser.fullName || otherUser.username;
+                    
+                    // Check if transaction involves admin (GST) - check both to and from
+                    const adminId = '6807e4424877bcd9980c7e00';
+                    const isGSTTransaction = (transaction.type === 'commission' || transaction.type === 'admin_refund') && 
+                        (transaction.from._id.toString() === adminId || transaction.to._id.toString() === adminId);
+                    
+                    if (isGSTTransaction) {
+                        displayName = 'GST';
+                        if (transaction.type === 'admin_refund') {
+                            description = isCredit ? 'Refund from GST' : 'Refund to Customer';
+                        } else {
+                            description = !isCredit ? 'GST Payment' : 'GST Received';
+                        }
+                    } else if (!description || description === '') {
                         switch (transaction.type) {
                             case 'add_money':
                                 description = 'Money added to wallet';
                                 break;
                             case 'order_payment':
                                 description = isCredit ? 
-                                    `Payment received from ${otherUser.fullName || otherUser.username}` :
+                                    `Payment received from ${displayName}` :
                                     'Order payment';
                                 break;
                             case 'refund':
@@ -1754,8 +1786,9 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
                         description: description,
                         createdAt: transaction.createdAt,
                         isCredit: isCredit,
+                        isGST: isGSTTransaction,
                         otherUser: {
-                            name: otherUser.fullName || otherUser.username,
+                            name: displayName,
                             id: otherUser._id
                         }
                     };

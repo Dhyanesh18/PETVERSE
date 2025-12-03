@@ -7,6 +7,13 @@ module.exports = (req, res, next) => {
     // Check if user exists in request (populated from session)
     if (!req.user) {
         console.log('No user found in request');
+        // Check if it's an API request
+        if (req.originalUrl.startsWith('/api/')) {
+            return res.status(401).json({
+                success: false,
+                error: 'Authentication required'
+            });
+        }
         return res.redirect('/login');
     }
     
@@ -17,6 +24,13 @@ module.exports = (req, res, next) => {
     }
     
     console.log('Not a seller or admin:', req.user.role);
+    // Check if it's an API request
+    if (req.originalUrl.startsWith('/api/')) {
+        return res.status(403).json({
+            success: false,
+            error: 'Seller or admin access required'
+        });
+    }
     res.status(403).render('error', { 
         message: 'Seller access required. Please ensure your account is approved.' 
     });

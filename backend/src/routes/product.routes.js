@@ -31,7 +31,6 @@ function isAuthenticated(req, res, next) {
     });
 }
 
-// Middleware to check if user is a seller
 function isSeller(req, res, next) {
     if (req.user && req.user.role === 'seller') {
         return next();
