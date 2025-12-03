@@ -37,13 +37,19 @@ const Login = () => {
             try {
                 const response = await api.get('/auth/check-session');
                 if (response.data.success && response.data.isLoggedIn) {
-                    // If user is already logged in and there's a 'from' location, go there
-                    // Otherwise redirect based on user role
-                    if (from && from !== '/login') {
+                    // If user is already logged in, redirect appropriately
+                    const validFrom = from && 
+                        !from.includes('/login') && 
+                        !from.includes('/signup') && 
+                        from !== '/unauthorized' &&
+                        from !== '/';
+                    
+                    if (validFrom) {
                         navigate(from, { replace: true });
                         return;
                     }
                     
+                    // Redirect to role-based dashboard
                     const role = response.data.userRole;
                     switch(role) {
                         case 'owner':
@@ -209,34 +215,23 @@ const Login = () => {
                 const role = response.data.user?.role || response.data.userRole;
                 console.log('Redirecting with role:', role);
 
-                let redirectPath = '/';
-
-                // Only use 'from' if it's not a role-specific dashboard or login/unauthorized page
-                const shouldUseFrom = from && 
-                    !from.includes('/dashboard') && 
-                    from !== '/login' && 
-                    from !== '/unauthorized';
-
-                if (shouldUseFrom) {
-                    redirectPath = from;
-                } else {
-                    // Always redirect based on current user's role
-                    switch(role) {
-                        case 'owner':
-                            redirectPath = '/dashboard';
-                            break;
-                        case 'seller':
-                            redirectPath = '/seller/dashboard';
-                            break;
-                        case 'service_provider':
-                            redirectPath = '/service-provider/dashboard';
-                            break;
-                        case 'admin':
-                            redirectPath = '/admin/dashboard';
-                            break;
-                        default:
-                            redirectPath = '/home';
-                    }
+                // Always redirect to role-specific dashboard
+                let redirectPath = '/home';
+                switch(role) {
+                    case 'owner':
+                        redirectPath = '/dashboard';
+                        break;
+                    case 'seller':
+                        redirectPath = '/seller/dashboard';
+                        break;
+                    case 'service_provider':
+                        redirectPath = '/service-provider/dashboard';
+                        break;
+                    case 'admin':
+                        redirectPath = '/admin/dashboard';
+                        break;
+                    default:
+                        redirectPath = '/home';
                 }
 
                 console.log('Final redirect path:', redirectPath);

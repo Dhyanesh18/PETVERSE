@@ -187,6 +187,16 @@ function App() {
                                 }
                             />
 
+                            {/* Order Details - Admin Only */}
+                            <Route
+                                path="/admin/order-details/:orderId"
+                                element={
+                                    <ProtectedRoute allowedRoles={['admin']}>
+                                        <OrderDetails />
+                                    </ProtectedRoute>
+                                }
+                            />
+
                             {/* User Order Details - Owner/Customer */}
                             <Route
                                 path="/order-details/:orderId"
@@ -265,7 +275,7 @@ function App() {
                                         <Events />
                                     </ProtectedRoute>
                                 }
-                            />
+                            />3
                             <Route
                                 path="/events/:id"
                                 element={

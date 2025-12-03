@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import axios from 'axios';
 import Header from '../components/Header';
 
 const OrderDetails = () => {
@@ -27,13 +28,19 @@ const OrderDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [updating, setUpdating] = useState(false);
+    const [requestingRefund, setRequestingRefund] = useState(false);
 
     const fetchOrderDetails = useCallback(async () => {
         try {
             // Determine API endpoint based on user role
-            const apiEndpoint = user?.role === 'seller' 
-                ? `/api/seller/orders/${orderId}` 
-                : `/api/user/orders/${orderId}`;
+            let apiEndpoint;
+            if (user?.role === 'admin') {
+                apiEndpoint = `/api/admin/orders/${orderId}`;
+            } else if (user?.role === 'seller') {
+                apiEndpoint = `/api/seller/orders/${orderId}`;
+            } else {
+                apiEndpoint = `/api/user/orders/${orderId}`;
+            }
             
             const response = await fetch(apiEndpoint, {
                 credentials: 'include'
@@ -67,8 +74,8 @@ const OrderDetails = () => {
     }, [orderId, fetchOrderDetails]);
 
     const updateOrderStatus = async (newStatus) => {
-        // Only sellers can update order status
-        if (user?.role !== 'seller') {
+        // Only sellers and admins can update order status
+        if (user?.role !== 'seller' && user?.role !== 'admin') {
             showToast('You do not have permission to update order status');
             return;
         }
@@ -81,7 +88,7 @@ const OrderDetails = () => {
         setUpdating(true);
         try {
             const response = await fetch(`/api/seller/orders/${orderId}/status`, {
-                method: 'PATCH',
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
                 },
@@ -108,6 +115,40 @@ const OrderDetails = () => {
     const showToast = (message) => {
         // Simple alert for now, can be replaced with a proper toast library
         alert(message);
+    };
+
+    const handleRefundRequest = async () => {
+        if (order.status === 'cancelled') {
+            showToast('This order is already cancelled');
+            return;
+        }
+
+        const reason = window.prompt('Please enter the reason for refund request:');
+        if (!reason) {
+            return; // User cancelled
+        }
+
+        setRequestingRefund(true);
+        try {
+            const apiEndpoint = user?.role === 'seller' 
+                ? `/api/seller/orders/${orderId}/request-refund`
+                : `/api/user/orders/${orderId}/request-refund`;
+
+            const response = await axios.post(apiEndpoint, { reason }, {
+                withCredentials: true
+            });
+
+            if (response.data.success) {
+                showToast('Refund request submitted successfully! Admin will review it soon.');
+            } else {
+                showToast(response.data.error || 'Failed to submit refund request');
+            }
+        } catch (err) {
+            console.error('Error requesting refund:', err);
+            showToast(err.response?.data?.error || 'Failed to submit refund request');
+        } finally {
+            setRequestingRefund(false);
+        }
     };
 
     const getStatusIcon = (status) => {
@@ -205,8 +246,8 @@ const OrderDetails = () => {
                                 <span>{order.status?.charAt(0)?.toUpperCase() + order.status?.slice(1)}</span>
                             </div>
                             
-                            {/* Status Update Form - Only for Sellers */}
-                            {user?.role === 'seller' && (
+                            {/* Status Update Form - Only for Sellers and Admins */}
+                            {(user?.role === 'seller' || user?.role === 'admin') && (
                                 <div className="flex gap-2 items-center">
                                     <select 
                                         value={order.status || 'pending'}
@@ -288,6 +329,39 @@ const OrderDetails = () => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Seller Information - Only for Admin */}
+                    {user?.role === 'admin' && order.seller && (
+                        <div className="mb-8">
+                            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <i className="fas fa-store text-green-600"></i> Seller Information
+                            </h2>
+                            <div className="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="text-sm font-medium text-gray-500 mb-1">Seller Name</div>
+                                            <div className="text-gray-800 font-medium">
+                                                {order.seller?.name || order.seller?.fullName || order.seller?.businessName || 'N/A'}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-medium text-gray-500 mb-1">Email</div>
+                                            <div className="text-gray-800">{order.seller?.email || 'N/A'}</div>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="text-sm font-medium text-gray-500 mb-1">Seller ID</div>
+                                            <div className="text-gray-800 font-mono text-sm">
+                                                {order.seller?._id || 'N/A'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Order Items */}
                     <div className="mb-8">
@@ -568,6 +642,25 @@ const OrderDetails = () => {
                             <i className="fas fa-print"></i>
                             Print Order
                         </button>
+                        {order.status !== 'cancelled' && order.status !== 'delivered' && (
+                            <button 
+                                onClick={handleRefundRequest}
+                                disabled={requestingRefund}
+                                className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-full font-semibold hover:bg-red-600 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {requestingRefund ? (
+                                    <>
+                                        <i className="fas fa-spinner fa-spin"></i>
+                                        Requesting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="fas fa-undo"></i>
+                                        Request Refund
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

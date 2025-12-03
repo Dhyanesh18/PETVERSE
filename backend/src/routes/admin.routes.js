@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const adminAuth = require('../middleware/admin-auth');
 const User = require('../models/users');
+const Order = require('../models/order');
+const Transaction = require('../models/transaction');
 const mongoose = require('mongoose');
 const fs = require('fs');
 const Wallet = require('../models/wallet');
@@ -56,7 +58,9 @@ router.get('/dashboard', adminAuth, async (req, res) => {
         let products = [];
         try {
             const Product = require('../models/products');
-            products = await Product.find().populate('seller').sort({ createdAt: -1 }).limit(10);
+            const allProducts = await Product.find().populate('seller').sort({ createdAt: -1 }).limit(10);
+            // Don't transform images - let frontend handle the image URLs
+            products = allProducts.map(product => product.toObject());
         } catch (err) {
             console.error('Error loading products:', err);
         }
@@ -65,7 +69,9 @@ router.get('/dashboard', adminAuth, async (req, res) => {
         let pets = [];
         try {
             const Pet = require('../models/pets');
-            pets = await Pet.find().populate('addedBy').sort({ createdAt: -1 }).limit(10);
+            const allPets = await Pet.find().populate('addedBy').sort({ createdAt: -1 }).limit(10);
+            // Don't transform images - let frontend handle the image URLs  
+            pets = allPets.map(pet => pet.toObject());
         } catch (err) {
             console.error('Error loading pets:', err);
         }
@@ -432,9 +438,86 @@ router.patch('/order/:orderId/status', adminAuth, async (req, res) => {
 
         const oldStatus = order.status;
         
+        // Prevent changing status if order has been refunded (unless admin is setting it back to cancelled)
+        if (order.paymentStatus === 'refunded' && status !== 'cancelled') {
+            console.log('Cannot change status - order has been refunded');
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot change status of a refunded order. Order must remain cancelled.'
+            });
+        }
+        
+        // Prevent changing from cancelled to another status (only admin can override this if really needed)
+        // But we'll still block it for safety - admin should create a new order instead
+        if (oldStatus === 'cancelled' && status !== 'cancelled' && order.paymentStatus === 'refunded') {
+            console.log('Cannot reactivate refunded cancelled order');
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot reactivate a cancelled order that has been refunded. Please create a new order instead.'
+            });
+        }
+        
         // Handle cancellation - refund customer and deduct from seller
         if (status === 'cancelled' && oldStatus !== 'cancelled') {
             console.log('Admin processing cancellation refund...');
+            
+            // Check if refund was already processed
+            if (order.paymentStatus === 'refunded') {
+                console.log('Refund already processed - skipping duplicate refund');
+                // Just update status, don't process refund again
+                order.status = status;
+                
+                if (!order.statusHistory) {
+                    order.statusHistory = [];
+                }
+                order.statusHistory.push({
+                    status,
+                    timestamp: new Date(),
+                    updatedBy: req.user._id,
+                    updatedByRole: 'admin'
+                });
+                
+                await order.save();
+                
+                return res.json({ 
+                    success: true, 
+                    message: 'Order status updated successfully (refund already processed)',
+                    data: {
+                        orderId: order._id,
+                        status: order.status,
+                        paymentStatus: order.paymentStatus
+                    }
+                });
+            }
+            
+            // Check if payment method is COD or not paid
+            if (order.paymentMethod === 'cod' || order.paymentStatus !== 'paid') {
+                console.log('No refund needed - COD order or payment not completed');
+                order.status = status;
+                order.paymentStatus = 'cancelled';
+                
+                if (!order.statusHistory) {
+                    order.statusHistory = [];
+                }
+                order.statusHistory.push({
+                    status,
+                    timestamp: new Date(),
+                    updatedBy: req.user._id,
+                    updatedByRole: 'admin'
+                });
+                
+                await order.save();
+                
+                return res.json({ 
+                    success: true, 
+                    message: 'Order cancelled successfully (no refund needed)',
+                    data: {
+                        orderId: order._id,
+                        status: order.status,
+                        paymentStatus: order.paymentStatus
+                    }
+                });
+            }
             
             // Get wallets
             const customerWallet = await Wallet.findOne({ user: order.customer._id });
@@ -466,11 +549,20 @@ router.patch('/order/:orderId/status', adminAuth, async (req, res) => {
             try {
                 await sellerWallet.deductFunds(sellerShare);
                 console.log(`Admin deducted ₹${sellerShare} from seller`);
+                
+                // Create transaction for seller deduction
+                await new Transaction({
+                    from: order.seller._id,
+                    to: req.user._id,
+                    amount: sellerShare,
+                    type: 'refund',
+                    description: `Refund deduction for cancelled order`
+                }).save();
             } catch (err) {
                 console.error('Seller has insufficient balance for refund:', err.message);
                 return res.status(400).json({
                     success: false,
-                    error: 'Insufficient seller balance for refund'
+                    error: 'Insufficient seller balance for refund. Seller needs to add funds to wallet.'
                 });
             }
             
@@ -485,13 +577,13 @@ router.patch('/order/:orderId/status', adminAuth, async (req, res) => {
                 }
             }
             
-            // Create refund transaction records
+            // Create refund transaction record for customer
             await new Transaction({
                 from: req.user._id,
                 to: order.customer._id,
                 amount: refundAmount,
                 type: 'admin_refund',
-                description: `Admin refund for cancelled order ${order._id}`
+                description: `Refund for cancelled order`
             }).save();
             
             // Update payment status to refunded
@@ -542,6 +634,76 @@ router.post('/order/:orderId/status', adminAuth, async (req, res) => {
     // Redirect to PATCH method
     req.method = 'PATCH';
     return router.handle(req, res);
+});
+
+// Get single order details for admin
+router.get('/orders/:orderId', adminAuth, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.orderId)
+            .populate('customer', 'fullName email phoneNo address')
+            .populate('seller', 'fullName email businessName')
+            .populate('items.product', 'name price images description breed category')
+            .lean();
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                error: 'Order not found'
+            });
+        }
+
+        const formattedOrder = {
+            _id: order._id,
+            orderNumber: order.orderNumber || order._id.toString().slice(-8).toUpperCase(),
+            customer: {
+                _id: order.customer?._id,
+                name: order.customer?.fullName || 'Customer',
+                email: order.customer?.email,
+                phone: order.customer?.phoneNo,
+                address: order.customer?.address
+            },
+            seller: {
+                _id: order.seller?._id,
+                name: order.seller?.fullName || order.seller?.businessName || 'Seller',
+                email: order.seller?.email
+            },
+            items: order.items.map(item => ({
+                product: {
+                    _id: item.product?._id,
+                    name: item.product?.name || item.product?.breed || 'Product',
+                    description: item.product?.description,
+                    images: item.product?.images?.map((_, index) => 
+                        `/images/product/${item.product._id}/${index}`
+                    ) || []
+                },
+                quantity: item.quantity,
+                price: item.price,
+                subtotal: (item.quantity * item.price).toFixed(2)
+            })),
+            totalAmount: order.totalAmount || 0,
+            status: order.status || 'pending',
+            paymentStatus: order.paymentStatus || 'pending',
+            paymentMethod: order.paymentMethod || 'wallet',
+            shippingAddress: order.shippingAddress || {},
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+            statusHistory: order.statusHistory || []
+        };
+
+        res.json({
+            success: true,
+            data: {
+                order: formattedOrder
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching admin order details:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching order details',
+            message: error.message
+        });
+    }
 });
 
 // Get user document (license/certificate)

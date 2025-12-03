@@ -79,6 +79,7 @@ export const getAvailableSlots = (serviceId, date) =>
 export const getUserStats = () => apiClient.get('/api/user/stats');
 export const getUserDashboard = () => apiClient.get('/api/user/dashboard');
 export const getSellerDashboard = () => apiClient.get('/api/seller/dashboard');
+export const updateSellerOrderStatus = (orderId, status) => apiClient.patch(`/api/seller/orders/${orderId}/status`, { status });
 
 // ===== Wishlist APIs =====
 export const getWishlist = () => apiClient.get('/api/wishlist');
@@ -146,6 +147,6 @@ export const deleteUser = (userId) => apiClient.delete(`/api/admin/user/${userId
 export const deleteProduct = (productId) => apiClient.delete(`/api/admin/product/${productId}`);
 export const deleteService = (serviceId) => apiClient.delete(`/api/admin/service/${serviceId}`);
 export const deletePet = (petId) => apiClient.delete(`/api/admin/pet/${petId}`);
-export const updateOrderStatus = (orderId, status) => apiClient.put(`/api/admin/order/${orderId}/status`, { status });
+export const updateOrderStatus = (orderId, status) => apiClient.patch(`/api/admin/order/${orderId}/status`, { status });
 
 export default apiClient;
