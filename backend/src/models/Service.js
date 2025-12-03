@@ -8,7 +8,7 @@ const serviceSchema = new mongoose.Schema({
   },
   serviceType: { 
     type: String, 
-    enum: ['walking', 'sitting'], 
+    enum: ['walking', 'sitting', 'veterinarian', 'groomer', 'trainer', 'pet sitter', 'breeder'], 
     required: true 
   },
   description: String,

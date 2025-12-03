@@ -80,6 +80,8 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
         });
         }
         
+        console.log('Fetching slots for serviceId:', serviceId, 'date:', date);
+        
         // Get the day of the week for the selected date
         const selectedDate = new Date(date);
         const dayOfWeek = getDayName(selectedDate.getDay());
@@ -132,11 +134,20 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Find bookings for this provider on the selected date
+        // Find all services belonging to this provider
+        const Service = require('../models/Service');
+        const providerServices = await Service.find({ provider: serviceId }).select('_id').lean();
+        const serviceIds = providerServices.map(s => s._id);
+        
+        console.log(`Found ${serviceIds.length} services for provider ${serviceId}`);
+        
+        // Find bookings for these services on the selected date
         const bookings = await Booking.find({ 
-        service: serviceId, 
+        service: { $in: serviceIds }, 
         date: date 
         });
+        
+        console.log(`Found ${bookings.length} bookings for this date`);
         
         // Filter out already booked slots
         const bookedSlots = bookings.map(b => b.slot);
@@ -184,9 +195,25 @@ router.post('/create', isAuthenticated, async (req, res) => {
         });
         }
         
+        // Find or create a Service document for this provider
+        const Service = require('../models/Service');
+        let service = await Service.findOne({ provider: serviceId });
+        
+        if (!service) {
+        // Create a new Service document for this provider
+        service = new Service({
+            provider: serviceId,
+            serviceType: provider.serviceType || 'sitting',
+            description: provider.serviceDescription || 'Professional pet care services',
+            rate: provider.rate || 300
+        });
+        await service.save();
+        console.log('Created new Service document for provider:', serviceId);
+        }
+        
         // Check if slot is already booked
         const existing = await Booking.findOne({ 
-        service: serviceId, 
+        service: service._id, 
         date, 
         slot 
         });
@@ -201,7 +228,7 @@ router.post('/create', isAuthenticated, async (req, res) => {
         // Create and save the booking
         const booking = new Booking({
         user: req.user._id,
-        service: serviceId,
+        service: service._id,
         date,
         slot,
         petName: petName || 'Not specified',
@@ -212,7 +239,13 @@ router.post('/create', isAuthenticated, async (req, res) => {
         
         // Populate the booking with user and service details
         await booking.populate('user', 'fullName email');
-        await booking.populate('service', 'fullName serviceType serviceAddress');
+        await booking.populate({
+        path: 'service',
+        populate: {
+            path: 'provider',
+            select: 'fullName serviceType serviceAddress email phoneNo'
+        }
+        });
         
         res.status(201).json({
         success: true,
@@ -225,7 +258,7 @@ router.post('/create', isAuthenticated, async (req, res) => {
             petName: booking.petName,
             status: booking.status,
             user: booking.user,
-            service: booking.service,
+            provider: booking.service?.provider,
             createdAt: booking.createdAt
             },
             redirectPath: `/services/${serviceId}/payment`,

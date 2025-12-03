@@ -135,7 +135,7 @@ const Navbar = () => {
                       searchResults.services?.length > 0;
 
     return (
-        <header className="fixed top-0 left-0 w-full z-1000">
+        <header className="fixed top-0 left-0 w-full z-[1000]">
             <nav 
                 className={`w-full px-15 py-5 transition-all duration-300 ${
                     isHomepage && !isScrolled && !openDropdown
