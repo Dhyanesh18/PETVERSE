@@ -1,24 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getServices } from '../services/api';
 import { FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaFilter, FaTimes, FaPaw, FaUser, FaComment } from 'react-icons/fa';
+import { useServiceEvent } from '../hooks/useServiceEvent';
 
 const Services = () => {
-    const [services, setServices] = useState([]);
-    const [filteredServices, setFilteredServices] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const {
+        filteredServices,
+        servicesLoading: loading,
+        servicesError: error,
+        serviceFilters: filters,
+        loadServices,
+        updateServiceFilters,
+        resetServiceFilters
+    } = useServiceEvent();
     
-    console.log('Services component mounted');
-
-    // Filter states
-    const [filters, setFilters] = useState({
-        categories: [],
-        minPrice: '',
-        maxPrice: '',
-        minRating: ''
-    });
     const [showFilters, setShowFilters] = useState(true);
 
     const serviceCategories = [
@@ -32,103 +28,18 @@ const Services = () => {
     ];
 
     useEffect(() => {
-        fetchServices();
+        loadServices();
     }, []);
 
-    useEffect(() => {
-        applyFilters();
-    }, [filters, services]);
-
-    const fetchServices = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            console.log('Fetching services from API...');
-            const response = await getServices();
-            console.log('Services API response:', response);
-            console.log('Response data structure:', response.data);
-            
-            // Handle different response structures
-            let servicesData = [];
-            if (response.data.success && response.data.data && Array.isArray(response.data.data.services)) {
-                servicesData = response.data.data.services;
-                console.log('Found services in response.data.data.services:', servicesData.length);
-            } else if (response.data.data && Array.isArray(response.data.data)) {
-                servicesData = response.data.data;
-                console.log('Found services in response.data.data:', servicesData.length);
-            } else if (Array.isArray(response.data.services)) {
-                servicesData = response.data.services;
-                console.log('Found services in response.data.services:', servicesData.length);
-            } else if (Array.isArray(response.data)) {
-                servicesData = response.data;
-                console.log('Found services in response.data:', servicesData.length);
-            } else {
-                console.warn('Unexpected response structure:', response.data);
-                servicesData = [];
-            }
-            
-            console.log('Final parsed services data:', servicesData);
-            console.log('Total services found:', servicesData.length);
-            if (servicesData.length > 0) {
-                console.log('First service sample:', servicesData[0]);
-            }
-            
-            setServices(servicesData);
-            setFilteredServices(servicesData);
-        } catch (error) {
-            console.error('Error fetching services:', error);
-            console.error('Error response:', error.response);
-            console.error('Error message:', error.message);
-            setError(error.response?.data?.message || error.response?.data?.error || 'Failed to load services. Please try again later.');
-            setServices([]);
-            setFilteredServices([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const applyFilters = () => {
-        let filtered = [...services];
-
-        // Filter by categories
-        if (filters.categories.length > 0) {
-            filtered = filtered.filter(service => 
-                filters.categories.includes(service.serviceType?.toLowerCase())
-            );
-        }
-
-        // Filter by price range
-        if (filters.minPrice) {
-            filtered = filtered.filter(service => service.price >= parseFloat(filters.minPrice));
-        }
-        if (filters.maxPrice) {
-            filtered = filtered.filter(service => service.price <= parseFloat(filters.maxPrice));
-        }
-
-        // Filter by rating
-        if (filters.minRating) {
-            filtered = filtered.filter(service => service.rating >= parseFloat(filters.minRating));
-        }
-
-        setFilteredServices(filtered);
-    };
-
     const handleCategoryChange = (category) => {
-        setFilters(prev => {
-            const categories = prev.categories.includes(category)
-                ? prev.categories.filter(c => c !== category)
-                : [...prev.categories, category];
-            return { ...prev, categories };
-        });
+        const categories = filters.categories.includes(category)
+            ? filters.categories.filter(c => c !== category)
+            : [...filters.categories, category];
+        updateServiceFilters({ categories });
     };
 
     const clearFilters = () => {
-        setFilters({
-            categories: [],
-            minPrice: '',
-            maxPrice: '',
-            minRating: ''
-        });
+        resetServiceFilters();
     };
 
     const getServiceImage = (serviceType) => {
@@ -172,7 +83,7 @@ const Services = () => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Services</h2>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <button
-                        onClick={fetchServices}
+                        onClick={() => loadServices()}
                         className="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition-colors"
                     >
                         Try Again
@@ -234,7 +145,7 @@ const Services = () => {
                                         type="number"
                                         placeholder="Min"
                                         value={filters.minPrice}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, minPrice: e.target.value }))}
+                                        onChange={(e) => updateServiceFilters({ minPrice: e.target.value })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     />
                                     <span className="text-gray-500">to</span>
@@ -242,7 +153,7 @@ const Services = () => {
                                         type="number"
                                         placeholder="Max"
                                         value={filters.maxPrice}
-                                        onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: e.target.value }))}
+                                        onChange={(e) => updateServiceFilters({ maxPrice: e.target.value })}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                                     />
                                 </div>
@@ -258,7 +169,7 @@ const Services = () => {
                                                 type="radio"
                                                 name="rating"
                                                 checked={filters.minRating === rating.toString()}
-                                                onChange={() => setFilters(prev => ({ ...prev, minRating: rating.toString() }))}
+                                                onChange={() => updateServiceFilters({ minRating: rating.toString() })}
                                                 className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
                                             />
                                             <span className="text-gray-700 flex items-center gap-1">
@@ -305,14 +216,14 @@ const Services = () => {
                             <div className="text-center py-16 bg-white rounded-xl shadow-sm">
                                 <FaPaw className="text-6xl text-gray-300 mx-auto mb-4" />
                                 <h3 className="text-2xl font-semibold text-gray-600 mb-2">
-                                    {services.length === 0 ? 'No Service Providers Available Yet' : 'No Services Found'}
+                                    {filteredServices.length === 0 && filters.categories.length === 0 && !filters.minPrice && !filters.maxPrice ? 'No Service Providers Available Yet' : 'No Services Found'}
                                 </h3>
                                 <p className="text-gray-500 mb-4">
-                                    {services.length === 0 
+                                    {filteredServices.length === 0 && filters.categories.length === 0 && !filters.minPrice && !filters.maxPrice
                                         ? 'Service providers will appear here once they register. Check back soon!' 
                                         : 'Try adjusting your filters to see more results'}
                                 </p>
-                                {services.length > 0 && (
+                                {(filters.categories.length > 0 || filters.minPrice || filters.maxPrice || filters.minRating) && (
                                     <button
                                         onClick={clearFilters}
                                         className="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition-colors"

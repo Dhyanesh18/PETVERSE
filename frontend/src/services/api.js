@@ -27,8 +27,33 @@ apiClient.interceptors.response.use(
         return response;
     },
     (error) => {
-        if (error.response?.status === 401) {
-            console.error('Unauthorized request');
+        if (error.response) {
+            // Server responded with error status
+            console.error(`API Error (${error.response.status}):`, error.response.data);
+            
+            switch (error.response.status) {
+                case 400:
+                    console.error('Bad Request:', error.response.data?.message || 'Invalid data');
+                    break;
+                case 401:
+                    console.error('Unauthorized. Please login.');
+                    break;
+                case 403:
+                    console.error('Forbidden. Access denied.');
+                    break;
+                case 404:
+                    console.error('Resource not found.');
+                    break;
+                case 500:
+                    console.error('Server error. Please try again later.');
+                    break;
+            }
+        } else if (error.request) {
+            // Request was made but no response received
+            console.error('Network error. Please check your connection.');
+        } else {
+            // Something else happened
+            console.error('An error occurred:', error.message);
         }
         return Promise.reject(error);
     }
@@ -37,6 +62,13 @@ apiClient.interceptors.response.use(
 // ===== Auth APIs =====
 export const login = (credentials) => apiClient.post('/api/auth/login', credentials);
 export const signup = (userData) => apiClient.post('/api/auth/register', userData);
+export const signupOwner = (userData) => apiClient.post('/api/auth/signup/owner', userData);
+export const signupSeller = (formData) => apiClient.post('/api/auth/signup/seller', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+});
+export const signupServiceProvider = (formData) => apiClient.post('/api/auth/signup/service-provider', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+});
 export const logout = () => apiClient.post('/api/auth/logout');
 export const checkUserSession = () => apiClient.get('/api/auth/check-session');
 

@@ -1,61 +1,38 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getEvents } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import { useServiceEvent } from '../hooks/useServiceEvent';
 import { FaCalendar, FaClock, FaMapMarkerAlt, FaUserFriends, FaSpinner, FaCalendarTimes, FaPlusCircle } from 'react-icons/fa';
 
 const Events = () => {
-    const [events, setEvents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({
-        category: 'all',
-        feeType: 'all',
-        city: '',
-        date: ''
-    });
     const navigate = useNavigate();
     const { user } = useAuth();
+    const {
+        filteredEvents: events,
+        eventsLoading: loading,
+        eventFilters: filters,
+        loadEvents,
+        updateEventFilters,
+        resetEventFilters
+    } = useServiceEvent();
 
     useEffect(() => {
-        loadEvents();
-    }, [filters]);
-
-    const loadEvents = async () => {
-        try {
-            setLoading(true);
-            
-            // Build query params
-            const params = {};
-            if (filters.category !== 'all') params.category = filters.category;
-            if (filters.feeType !== 'all') params.feeType = filters.feeType;
-            if (filters.city) params.city = filters.city;
-            if (filters.date) params.date = filters.date;
-
-            const response = await getEvents(params);
-            const eventsData = response.data.data?.events || response.data.events || [];
-            setEvents(eventsData);
-        } catch (error) {
-            console.error('Failed to fetch events:', error);
-            setEvents([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+        // Build query params for API
+        const params = {};
+        if (filters.category !== 'all') params.category = filters.category;
+        if (filters.feeType !== 'all') params.feeType = filters.feeType;
+        if (filters.city) params.city = filters.city;
+        if (filters.date) params.date = filters.date;
+        
+        loadEvents(params);
+    }, []);
 
     const handleFilterChange = (filterType, value) => {
-        setFilters(prev => ({
-            ...prev,
-            [filterType]: value
-        }));
+        updateEventFilters({ [filterType]: value });
     };
 
     const clearFilters = () => {
-        setFilters({
-            category: 'all',
-            feeType: 'all',
-            city: '',
-            date: ''
-        });
+        resetEventFilters();
     };
 
     const handleEventClick = (eventId) => {
