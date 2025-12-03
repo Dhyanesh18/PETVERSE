@@ -68,7 +68,7 @@ const Services = () => {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
                 <div className="text-center">
-                    <FaPaw className="text-6xl text-indigo-500 animate-bounce mx-auto mb-4" />
+                    <FaPaw className="text-6xl text-teal-500 animate-bounce mx-auto mb-4" />
                     <p className="text-xl text-gray-700 font-semibold">Loading Services...</p>
                 </div>
             </div>
@@ -94,21 +94,30 @@ const Services = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Page Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-800 mb-2">Pet Care Services</h1>
-                    <p className="text-gray-600">Find professional pet care services near you</p>
+        <div className="bg-gray-50 min-h-screen" style={{ paddingTop: '75px' }}>
+            {/* Hero Section */}
+            <section 
+                className="text-white py-20 px-5 text-center relative overflow-hidden bg-cover bg-center"
+                style={{
+                    background: `linear-gradient(135deg, rgba(102, 201, 234, 0.5) 0%, rgba(75, 162, 162, 0.3) 100%), url('/images/service-hero.jpg') no-repeat center center`,
+                    backgroundSize: 'cover'
+                }}
+            >
+                <div className="max-w-7xl mx-auto px-4 text-center" style={{paddingTop:'15px'}}>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4">Pet Care Services</h1>
+                    <p className="text-xl text-teal-50">Find professional pet care services near you</p>
                 </div>
+            </section>
 
-                <div className="flex gap-8">
+            {/* Main Content */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="flex flex-col lg:flex-row gap-6">
                     {/* Filters Sidebar */}
-                    <aside className={`${showFilters ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden`}>
-                        <div className="bg-white rounded-xl shadow-sm p-6 sticky top-24">
+                    <aside className={`lg:w-64 shrink-0 ${showFilters ? '' : 'hidden lg:block'}`}>
+                        <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                    <FaFilter className="text-indigo-600" />
+                                    <FaFilter className="text-teal-600" />
                                     Filters
                                 </h2>
                                 <button
@@ -124,12 +133,12 @@ const Services = () => {
                                 <h3 className="font-semibold text-gray-700 mb-3">Category</h3>
                                 <div className="space-y-2">
                                     {serviceCategories.map(category => (
-                                        <label key={category.value} className="flex items-center gap-2 cursor-pointer">
+                                        <label key={category.value} className="flex items-center gap-2 cursor-pointer hover:bg-teal-50 p-2 rounded transition-colors">
                                             <input
                                                 type="checkbox"
                                                 checked={filters.categories.includes(category.value)}
                                                 onChange={() => handleCategoryChange(category.value)}
-                                                className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                                                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500"
                                             />
                                             <span className="text-gray-700">{category.label}</span>
                                         </label>
@@ -146,7 +155,7 @@ const Services = () => {
                                         placeholder="Min"
                                         value={filters.minPrice}
                                         onChange={(e) => updateServiceFilters({ minPrice: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:outline-none"
                                     />
                                     <span className="text-gray-500">to</span>
                                     <input
@@ -154,7 +163,7 @@ const Services = () => {
                                         placeholder="Max"
                                         value={filters.maxPrice}
                                         onChange={(e) => updateServiceFilters({ maxPrice: e.target.value })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:outline-none"
                                     />
                                 </div>
                             </div>
@@ -164,13 +173,13 @@ const Services = () => {
                                 <h3 className="font-semibold text-gray-700 mb-3">Minimum Rating</h3>
                                 <div className="space-y-2">
                                     {[4, 3, 2].map(rating => (
-                                        <label key={rating} className="flex items-center gap-2 cursor-pointer">
+                                        <label key={rating} className="flex items-center gap-2 cursor-pointer hover:bg-teal-50 p-2 rounded transition-colors">
                                             <input
                                                 type="radio"
                                                 name="rating"
                                                 checked={filters.minRating === rating.toString()}
                                                 onChange={() => updateServiceFilters({ minRating: rating.toString() })}
-                                                className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                                                className="w-4 h-4 text-teal-600 focus:ring-teal-500"
                                             />
                                             <span className="text-gray-700 flex items-center gap-1">
                                                 {rating}
@@ -184,7 +193,7 @@ const Services = () => {
 
                             <button
                                 onClick={clearFilters}
-                                className="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-md hover:shadow-md transition-all font-semibold"
                             >
                                 Clear All Filters
                             </button>
@@ -197,24 +206,26 @@ const Services = () => {
                         {!showFilters && (
                             <button
                                 onClick={() => setShowFilters(true)}
-                                className="mb-4 lg:hidden bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                className="mb-4 lg:hidden bg-teal-600 text-white px-4 py-2 rounded-md flex items-center gap-2 hover:bg-teal-700 transition-colors"
                             >
                                 <FaFilter />
                                 Show Filters
                             </button>
                         )}
 
-                        {/* Results Info */}
-                        <div className="mb-6 flex justify-between items-center">
-                            <p className="text-gray-600">
-                                Showing <span className="font-semibold">{filteredServices.length}</span> services
-                            </p>
+                        {/* Results Header */}
+                        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-2xl font-bold text-gray-800">
+                                    Available Services <span className="text-teal-600">({filteredServices.length})</span>
+                                </h2>
+                            </div>
                         </div>
 
                         {/* Services Grid */}
                         {filteredServices.length === 0 ? (
-                            <div className="text-center py-16 bg-white rounded-xl shadow-sm">
-                                <FaPaw className="text-6xl text-gray-300 mx-auto mb-4" />
+                            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg shadow-md">
+                                <FaPaw className="text-6xl text-gray-400 mb-4" />
                                 <h3 className="text-2xl font-semibold text-gray-600 mb-2">
                                     {filteredServices.length === 0 && filters.categories.length === 0 && !filters.minPrice && !filters.maxPrice ? 'No Service Providers Available Yet' : 'No Services Found'}
                                 </h3>
@@ -226,7 +237,7 @@ const Services = () => {
                                 {(filters.categories.length > 0 || filters.minPrice || filters.maxPrice || filters.minRating) && (
                                     <button
                                         onClick={clearFilters}
-                                        className="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition-colors"
+                                        className="bg-teal-600 text-white px-6 py-2 rounded-md hover:bg-teal-700 transition-colors font-semibold"
                                     >
                                         Clear Filters
                                     </button>
@@ -237,15 +248,15 @@ const Services = () => {
                                 {filteredServices.map(service => (
                                     <div
                                         key={service._id || service.id}
-                                        className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer"
+                                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1 cursor-pointer"
                                         onClick={() => navigate(`/services/${service._id || service.id}`)}
                                     >
                                         {/* Service Image */}
-                                        <div className="h-48 overflow-hidden bg-gray-200">
+                                        <div className="h-48 overflow-hidden bg-gradient-to-br from-teal-100 to-cyan-100">
                                             <img
                                                 src={getServiceImage(service.serviceType)}
                                                 alt={service.name}
-                                                className="w-full h-full object-cover"
+                                                className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                                                 onError={(e) => {
                                                     e.target.src = '/images/services/service2.jpg';
                                                 }}
@@ -258,12 +269,12 @@ const Services = () => {
                                                 <h3 className="text-xl font-bold text-gray-800">
                                                     {service.name || service.fullName}
                                                 </h3>
-                                                <span className="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                                <span className="inline-block px-3 py-1 bg-teal-100 text-teal-800 text-xs font-semibold rounded-full">
                                                     ₹{service.price}
                                                 </span>
                                             </div>
 
-                                            <p className="text-sm text-indigo-600 font-medium mb-3">
+                                            <p className="text-sm text-teal-600 font-medium mb-3">
                                                 {service.category || service.serviceType}
                                             </p>
 
@@ -282,7 +293,7 @@ const Services = () => {
                                             {/* Location */}
                                             {service.serviceAddress && (
                                                 <p className="text-sm text-gray-600 flex items-center gap-2 mb-2">
-                                                    <FaMapMarkerAlt className="text-gray-400" />
+                                                    <FaMapMarkerAlt className="text-teal-500" />
                                                     {service.serviceAddress}
                                                 </p>
                                             )}
@@ -291,7 +302,7 @@ const Services = () => {
                                             <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                                                 {service.phone && (
                                                     <span className="flex items-center gap-1">
-                                                        <FaPhone className="text-xs" />
+                                                        <FaPhone className="text-xs text-teal-500" />
                                                         {service.phone}
                                                     </span>
                                                 )}
@@ -299,14 +310,14 @@ const Services = () => {
 
                                             {/* Recent Reviews Preview */}
                                             {service.topReviews && service.topReviews.length > 0 && (
-                                                <div className="border-t pt-3 mt-3">
+                                                <div className="border-t border-teal-100 pt-3 mt-3">
                                                     <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1">
-                                                        <FaComment className="text-indigo-500" />
+                                                        <FaComment className="text-teal-500" />
                                                         Recent Review
                                                     </p>
                                                     <div className="text-xs text-gray-600">
                                                         <div className="flex items-center gap-1 mb-1">
-                                                            <FaUser className="text-gray-400 text-xs" />
+                                                            <FaUser className="text-teal-400 text-xs" />
                                                             <span className="font-medium">{service.topReviews[0].userName}</span>
                                                         </div>
                                                         <p className="line-clamp-2">
@@ -321,7 +332,7 @@ const Services = () => {
                                                     e.stopPropagation();
                                                     navigate(`/services/${service._id || service.id}`);
                                                 }}
-                                                className="w-full mt-4 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                                                className="w-full mt-4 bg-teal-600 text-white py-2 rounded-md hover:bg-teal-700 transition-colors font-semibold hover:shadow-md"
                                             >
                                                 View Details & Book
                                             </button>

@@ -150,9 +150,7 @@ const Homepage = () => {
                     <h1 className="text-4xl text-gray-700 my-8 text-center font-bold">
                         Featured Products
                     </h1>
-                    <p className="text-center text-sm text-gray-400 mb-4">
-                        Debug: {featuredProducts.length} products | Type: {typeof featuredProducts} | IsArray: {Array.isArray(featuredProducts).toString()}
-                    </p>
+                    
                     {featuredProducts.length === 0 ? (
                         <p className="text-center text-gray-500 py-10">No featured products available</p>
                     ) : (
