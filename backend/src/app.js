@@ -101,6 +101,7 @@ const eventRoutes = require('./routes/event.routes');
 const wishlistRoutes = require('./routes/wishlist.routes');
 const apiRoutes = require('./routes/apiRoutes');
 const lostPetRoutes = require('./routes/lostPet.routes');
+const forgotPasswordRoutes = require('./routes/forgotPassword.routes');
 
 app.use('/api', apiRoutes);
 // Mount routes under /api prefix
@@ -122,6 +123,7 @@ app.use('/api/search', searchRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/lost-pets', lostPetRoutes);
+app.use('/api/forgot-password', forgotPasswordRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({
