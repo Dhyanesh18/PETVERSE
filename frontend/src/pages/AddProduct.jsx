@@ -40,6 +40,9 @@ const AddProduct = () => {
             if (value.length > 100) {
                 return 'Product name must not exceed 100 characters';
             }
+            if (!/[a-zA-Z]/.test(value)) {
+                return 'Product name must contain at least one letter';
+            }
             if (!/^[a-zA-Z0-9\s\-&().,]+$/.test(value)) {
                 return 'Product name contains invalid characters';
             }
@@ -88,6 +91,9 @@ const AddProduct = () => {
             }
             if (value.length > 50) {
                 return 'Brand name must not exceed 50 characters';
+            }
+            if (!/^[a-zA-Z\s\-&'.]+$/.test(value)) {
+                return 'Brand can only contain letters, spaces, hyphens, ampersands, apostrophes, and periods';
             }
             return null;
         },
