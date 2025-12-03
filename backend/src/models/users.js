@@ -44,9 +44,16 @@ const userSchema = new mongoose.Schema({
             return ['seller', 'service_provider'].includes(this.role);
         }
     },
-        wishlistProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
-    wishlistPets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pet' }]
-
+    wishlistProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+    wishlistPets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pet' }],
+    resetPasswordOTP: {
+        type: String,
+        default: null
+    },
+    resetPasswordOTPExpires: {
+        type: Date,
+        default: null
+    }
 }, { 
     timestamps: true 
 });

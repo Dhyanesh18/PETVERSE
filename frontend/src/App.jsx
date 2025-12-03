@@ -9,6 +9,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Homepage from './pages/Homepage';
 import Login from './pages/Login';
 import Unauthorized from './pages/Unauthorized';
+import ForgotPassword from './pages/ForgotPassword';
 import Pets from './pages/Pets';
 import PetDetail from './pages/PetDetail';
 import AddPet from './pages/AddPet';
@@ -89,6 +90,7 @@ function App() {
                     <Layout>
                         <Routes>
                             <Route path="/login" element={<Login />} /> 
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
                             <Route path="/unauthorized" element={<Unauthorized />} />
 
                             {/* Public Routes */}
