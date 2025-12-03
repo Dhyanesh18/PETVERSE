@@ -25,17 +25,22 @@ function isAuthenticated(req, res, next) {
 }
 
 // Get homepage data (featured pets & products)
-router.get('/home', isAuthenticated, async (req, res) => {
+router.get('/home', async (req, res) => {
     try {
         const featuredPets = await Pet.find({ available: true })
             .sort({ createdAt: -1 })
             .limit(5)
             .lean();
         
-        // Get products with ratings
-        const products = await Product.find({ isActive: true })
+        console.log('Fetching products for homepage...');
+        
+        // Get products - remove isActive filter or make it optional
+        const products = await Product.find()
             .limit(5)
             .lean();
+        
+        console.log('Total products found:', products.length);
+        console.log('Sample product:', products[0]);
         
         const productIds = products.map(p => p._id);
         const productRatings = await Review.aggregate([
@@ -74,6 +79,8 @@ router.get('/home', isAuthenticated, async (req, res) => {
             .sort((a, b) => b.avgRating - a.avgRating)
             .slice(0, 5);
 
+        console.log('Featured products count:', featuredProducts.length);
+
         res.json({
             success: true,
             data: {
@@ -86,7 +93,8 @@ router.get('/home', isAuthenticated, async (req, res) => {
                     { name: 'Dogs', image: '/images/dog.jpg', url: '/pets?category=dogs' },
                     { name: 'Cats', image: '/images/cat.jpg', url: '/pets?category=cats' },
                     { name: 'Birds', image: '/images/bird.jpg', url: '/pets?category=birds' },
-                    { name: 'Fish', image: '/images/fish.jpg', url: '/pets?category=fish' }
+                    { name: 'Fish', image: '/images/fish.jpg', url: '/pets?category=fish' },
+                    { name: 'Others', image:'/images/hamster.jpg', url:'/pets?category=other'}
                 ],
                 featuredPets: featuredPets.map(pet => ({
                     _id: pet._id,

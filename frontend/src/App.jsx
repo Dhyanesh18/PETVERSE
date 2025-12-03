@@ -277,7 +277,7 @@ function App() {
                                         <Events />
                                     </ProtectedRoute>
                                 }
-                            />3
+                            />
                             <Route
                                 path="/events/:id"
                                 element={

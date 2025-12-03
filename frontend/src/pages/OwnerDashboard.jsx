@@ -9,14 +9,24 @@ const OwnerDashboard = () => {
     const { user, logout, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const fetchInitialized = useRef(false);
+    const isMounted = useRef(true);
     
     // Redirect to login if not authenticated
     useEffect(() => {
-        if (!isAuthenticated && !user) {
+        isMounted.current = true;
+        
+        // Only redirect if definitely not authenticated
+        if (isAuthenticated === false) {
             console.log('User not authenticated, redirecting to login');
             navigate('/login');
+            return;
         }
-    }, [isAuthenticated, user, navigate]);
+        
+        return () => {
+            isMounted.current = false;
+        };
+    }, [isAuthenticated, navigate]);
+
     const [dashboardData, setDashboardData] = useState({
         stats: {
             totalOrders: 0,
@@ -151,6 +161,9 @@ const OwnerDashboard = () => {
     ));
 
     const fetchDashboardData = useCallback(async () => {
+        // Prevent duplicate fetches
+        if (!isMounted.current) return;
+        
         setLoading(true);
         
         try {
@@ -160,11 +173,11 @@ const OwnerDashboard = () => {
             const response = await getUserDashboard();
             console.log('Dashboard API response:', response.data);
             
+            if (!isMounted.current) return; // Check before updating state
+            
             if (response.data.success && response.data.data) {
                 const data = response.data.data;
                 console.log('Dashboard data received:', data);
-                console.log('Bookings data:', data.bookings);
-                console.log('Number of bookings:', data.bookings?.length || 0);
                 
                 // Dashboard data includes complete user info
             
@@ -202,6 +215,8 @@ const OwnerDashboard = () => {
                 throw new Error('API response unsuccessful');
             }
         } catch (error) {
+            if (!isMounted.current) return; // Check before updating state
+            
             console.error('Error fetching dashboard data:', error);
             
             // Handle specific error types
@@ -302,29 +317,29 @@ const OwnerDashboard = () => {
                 bookings: []
             });
         } finally {
-            setLoading(false);
+            if (isMounted.current) {
+                setLoading(false);
+            }
         }
-    }, []); // Remove checkSession from dependencies to prevent infinite loop
+    }, []); // Empty dependencies - stable function
 
     useEffect(() => {
         // Prevent duplicate fetches in React StrictMode
         if (fetchInitialized.current) return;
+        if (!isAuthenticated) return; // Don't fetch if not authenticated
         
-        let isMounted = true;
         fetchInitialized.current = true;
         
         const loadDashboard = async () => {
-            if (isMounted) {
-                await fetchDashboardData();
-                updateCartCount();
-            }
+            await fetchDashboardData();
+            updateCartCount();
         };
         
         loadDashboard();
         
         // Safety timeout to prevent infinite loading
         const safetyTimeout = setTimeout(() => {
-            if (loading && isMounted) {
+            if (loading && isMounted.current) {
                 console.warn('Dashboard loading safety timeout triggered');
                 setLoading(false);
                 showNotification('Dashboard took too long to load. Please refresh the page.', 'error');
@@ -332,37 +347,9 @@ const OwnerDashboard = () => {
         }, 15000); // 15 second safety timeout
         
         return () => {
-            isMounted = false;
             clearTimeout(safetyTimeout);
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    // Refresh dashboard data when component becomes visible (user navigates back)
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (!document.hidden && fetchInitialized.current) {
-                console.log('Dashboard became visible, refreshing data...');
-                fetchDashboardData();
-            }
-        };
-
-        const handleFocus = () => {
-            if (fetchInitialized.current) {
-                console.log('Window focused, refreshing dashboard data...');
-                fetchDashboardData();
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('focus', handleFocus);
-
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('focus', handleFocus);
-        };
-    }, [fetchDashboardData]);
-
+    }, [isAuthenticated]); // Only depend on isAuthenticated
 
 
 
@@ -556,8 +543,8 @@ const OwnerDashboard = () => {
             
             if (response.ok && data.success) {
                 showNotification('Profile updated successfully!', 'success');
-                // Refresh dashboard to get updated user data
-                fetchDashboardData();
+                // Don't refetch - user data will be updated through context
+                // fetchDashboardData(); // REMOVE THIS LINE
             } else {
                 throw new Error(data.error || 'Failed to update profile');
             }
@@ -1067,8 +1054,8 @@ const OwnerDashboard = () => {
                     </h2>
                 </div>
 
-                {dashboardData.bookings && dashboardData.bookings.length > 0 ? (
-                    <table className="orders-table">
+                {dashboardData.bookings.length > 0 ? (
+                    <table className="service-appointment-table">
                         <thead>
                             <tr>
                                 <th>Service ID</th>
@@ -1083,14 +1070,36 @@ const OwnerDashboard = () => {
                                 <tr key={booking._id || booking.id || index}>
                                     <td>#{(booking._id || booking.id || 'Unknown').toString().substring(0, 8)}...</td>
                                     <td>
-                                        {booking.service?.name || booking.serviceName || 'Service'}
-                                        <span className="product-meta"> (Provider: {booking.service?.providerName || 'Unknown Provider'})</span>
+                                        <div className="order-product">
+                                            <div className="service-icon">
+                                                <i className={`fas fa-${
+                                                    (booking.serviceType || booking.service?.type) === 'Grooming' ? 'cut' :
+                                                    (booking.serviceType || booking.service?.type) === 'Veterinary' ? 'stethoscope' :
+                                                    (booking.serviceType || booking.service?.type) === 'Training' ? 'dumbbell' : 'paw'
+                                                }`}></i>
+                                            </div>
+                                            <div className="product-info">
+                                                <span className="product-name">{booking.service?.name || booking.serviceName || 'Service'}</span>
+                                                <span className="product-meta">Provider: {booking.service?.providerName || 'Unknown Provider'}</span>
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td>{booking.date || booking.bookingDate || 'Not set'}</td>
-                                    <td>{booking.time || 'Not set'}</td>
+                                    <td>
+                                        <div className="date-badge">
+                                            <i className="far fa-calendar-alt"></i>
+                                            {booking.date || booking.bookingDate || 'Not set'}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="time-badge">
+                                            <i className="far fa-clock"></i>
+                                            {booking.time || 'Not set'}
+                                        </div>
+                                    </td>
                                     <td>
                                         <span className={`status-badge ${getStatusColor(booking.status || 'pending')}`}>
-                                            {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
+                                            <i className="fas fa-check-circle"></i>
+                                            {booking.status || 'pending'}
                                         </span>
                                     </td>
                                 </tr>
@@ -1098,11 +1107,15 @@ const OwnerDashboard = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <div className="empty-state">
-                        <i className="fas fa-calendar-alt"></i>
-                        <p>No appointments scheduled yet.</p>
-                        <a href="/services" className="btn btn-primary">
-                            <i className="fas fa-concierge-bell"></i> Browse Services
+                    <div className="empty-state service-empty-state">
+                        <div className="empty-icon">
+                            <i className="fas fa-calendar-alt"></i>
+                            <i className="fas fa-times overlay-icon"></i>
+                        </div>
+                        <h3>No appointments scheduled yet.</h3>
+                        <p>Book a service for your pet today!</p>
+                        <a href="/services" className="btn btn-primary browse-services-btn">
+                            Browse Services
                         </a>
                     </div>
                 )}
