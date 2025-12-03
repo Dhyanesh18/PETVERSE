@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { updateOrderStatus } from '../../services/api';
 import './DashboardComponents.css';
 
 const OrdersManagement = ({ data }) => {
+    const navigate = useNavigate();
+    
     if (!data) return <div>Loading...</div>;
 
     const orders = data.orders || [];
+
+    const handleViewOrder = (orderId) => {
+        navigate(`/admin/order-details/${orderId}`);
+    };
 
     const handleStatusUpdate = async (orderId, newStatus) => {
         try {
@@ -58,7 +65,11 @@ const OrdersManagement = ({ data }) => {
                                 </td>
                                 <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                                 <td>
-                                    <button className="action-icon view" title="View Details">
+                                    <button 
+                                        className="action-icon view" 
+                                        title="View Details"
+                                        onClick={() => handleViewOrder(order._id)}
+                                    >
                                         <i className="fas fa-eye"></i>
                                     </button>
                                 </td>

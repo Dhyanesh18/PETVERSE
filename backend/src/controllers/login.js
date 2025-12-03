@@ -36,15 +36,21 @@ module.exports = {
             console.log('Session after login:', req.session);
             console.log('User authenticated successfully:', user.email, 'with role:', user.role);
             
-            // Return JSON response with user data
+            // Return JSON response with complete user data
             return res.status(200).json({
                 success: true,
                 message: 'Login successful',
                 user: {
                     id: user._id,
+                    _id: user._id,
+                    fullName: user.fullName,
+                    username: user.username,
                     email: user.email,
-                    name: user.name,
-                    role: user.role
+                    phone: user.phone,
+                    role: user.role,
+                    isApproved: user.isApproved,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt
                 },
                 userRole: user.role
             });

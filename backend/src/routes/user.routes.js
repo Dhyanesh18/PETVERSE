@@ -239,36 +239,48 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
         console.log('Fetching bookings for user:', req.user._id);
         
         let bookings = await Booking.find({ user: req.user._id })
-            .populate({
-                path: 'service',
-                select: 'serviceType description rate provider fullName email phoneNo serviceAddress',
-                populate: {
-                    path: 'provider',
-                    select: 'fullName email phoneNo serviceType serviceAddress'
-                }
-            })
             .sort({ createdAt: -1 })
             .limit(15)
             .lean();
 
         console.log('Found bookings:', bookings.length);
         
-        // If no bookings found with Service model, try direct User reference
-        if (bookings.length === 0) {
-            console.log('No bookings with Service model, trying direct User reference');
-            bookings = await Booking.find({ user: req.user._id })
-                .populate('service', 'fullName email phoneNo serviceType serviceAddress')
-                .sort({ createdAt: -1 })
-                .limit(15)
-                .lean();
-            console.log('Found bookings with User reference:', bookings.length);
+        // Manually populate service provider data
+        const User = require('../models/users');
+        const populatedBookings = [];
+        
+        for (const booking of bookings) {
+            if (booking.service) {
+                try {
+                    // Try to get service provider details from User model
+                    const serviceProvider = await User.findById(booking.service)
+                        .select('fullName email phoneNo phone serviceType serviceAddress')
+                        .lean();
+                    
+                    if (serviceProvider) {
+                        populatedBookings.push({
+                            ...booking,
+                            service: serviceProvider
+                        });
+                    } else {
+                        // Service provider not found, include booking anyway
+                        populatedBookings.push(booking);
+                    }
+                } catch (error) {
+                    console.error('Error populating service provider:', error);
+                    populatedBookings.push(booking);
+                }
+            } else {
+                // Include bookings without service reference
+                populatedBookings.push(booking);
+            }
         }
 
-        console.log('Sample booking:', bookings[0]);
+        console.log('Populated bookings:', populatedBookings.length);
+        console.log('Sample populated booking:', populatedBookings[0]);
 
-        // Filter out bookings with missing service data and limit to 10
-        const validBookings = bookings.filter(booking => booking.service).slice(0, 10);
-        console.log('Valid bookings after filtering:', validBookings.length);
+        // Don't filter out bookings - show all of them
+        const validBookings = populatedBookings.slice(0, 10);
 
         const events = await Event.find({ 'attendees.user': req.user._id })
             .sort({ eventDate: 1 })
@@ -329,14 +341,9 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                 })),
                 bookings: validBookings.map(booking => {
                     // Handle both Service model and direct User reference
-                    const isDirectUserRef = booking.service?.fullName && !booking.service?.provider;
-                    const serviceType = isDirectUserRef 
-                        ? booking.service?.serviceType 
-                        : (booking.service?.serviceType || booking.service?.provider?.serviceType);
-                    
-                    const providerName = isDirectUserRef 
-                        ? booking.service?.fullName 
-                        : booking.service?.provider?.fullName;
+                    const serviceProvider = booking.service;
+                    const serviceType = serviceProvider?.serviceType;
+                    const providerName = serviceProvider?.fullName;
                     
                     const formatServiceType = (type) => {
                         const typeMap = {
@@ -354,7 +361,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                     return {
                         _id: booking._id,
                         service: {
-                            _id: booking.service?._id,
+                            _id: serviceProvider?._id || booking.service,
                             name: formatServiceType(serviceType),
                             providerName: providerName || 'Service Provider',
                             type: serviceType || 'Unknown Service'
@@ -1270,6 +1277,15 @@ router.patch('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
 
         const oldStatus = order.status;
         
+        // Check if refund was already processed
+        if (order.paymentStatus === 'refunded') {
+            console.log('Refund already processed - skipping duplicate refund');
+            return res.status(400).json({
+                success: false,
+                error: 'Order has already been refunded'
+            });
+        }
+        
         // Handle refund - only for online payments, not COD
         if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
             console.log('User cancelling order - processing refund for online payment...');
@@ -1304,11 +1320,20 @@ router.patch('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
             try {
                 await sellerWallet.deductFunds(sellerShare);
                 console.log(`User cancellation: Deducted ₹${sellerShare} from seller`);
+                
+                // Create transaction for seller deduction
+                await new Transaction({
+                    from: order.seller._id,
+                    to: req.user._id,
+                    amount: sellerShare,
+                    type: 'refund',
+                    description: `Refund deduction for user cancelled order`
+                }).save();
             } catch (err) {
                 console.error('Seller has insufficient balance for refund:', err.message);
                 return res.status(400).json({
                     success: false,
-                    error: 'Insufficient seller balance for refund. Please contact support.'
+                    error: 'Insufficient seller balance for refund. Seller needs to add funds to wallet.'
                 });
             }
             
@@ -1323,13 +1348,13 @@ router.patch('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
                 }
             }
             
-            // Create refund transaction
+            // Create refund transaction for customer
             await new Transaction({
-                from: order.seller._id,
+                from: "6807e4424877bcd9980c7e00",
                 to: req.user._id,
                 amount: refundAmount,
                 type: 'user_cancellation_refund',
-                description: `Refund for user cancelled order ${order._id}`
+                description: `Refund for cancelled order`
             }).save();
             
             order.paymentStatus = 'refunded';
@@ -1686,7 +1711,62 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Get recent transactions with user details
+        // Calculate GST info for admin users based on actual commission transactions
+        let gstInfo = null;
+        if (req.user.role === 'admin') {
+            const adminId = '6807e4424877bcd9980c7e00';
+            
+            // Get all commission transactions (money received by admin)
+            const commissionTransactions = await Transaction.find({
+                to: adminId,
+                type: 'commission'
+            }).lean();
+            
+            // Calculate total revenue from commissions
+            const totalRevenue = commissionTransactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+            
+            // Calculate GST (18% of revenue)
+            const gstAmount = totalRevenue * 0.18;
+            
+            // Calculate net revenue after GST
+            const netRevenue = totalRevenue - gstAmount;
+            
+            gstInfo = {
+                totalRevenue,
+                gstAmount,
+                netRevenue
+            };
+        }
+
+        // Get ALL transactions for statistics (without limit)
+        const allTransactions = await Transaction.find({
+            $or: [
+                { from: req.user._id },
+                { to: req.user._id }
+            ]
+        }).lean();
+
+        // Calculate transaction statistics from ALL transactions
+        let totalCredits = 0;
+        let totalDebits = 0;
+        let totalTransactionCount = allTransactions.length;
+
+        allTransactions.forEach(transaction => {
+            const isCredit = transaction.to.toString() === req.user._id.toString();
+            if (isCredit) {
+                totalCredits += transaction.amount;
+            } else {
+                totalDebits += transaction.amount;
+            }
+        });
+
+        // Calculate net from transactions
+        const netFromTransactions = totalCredits - totalDebits;
+        
+        // The difference between wallet balance and net transactions is the initial balance
+        const initialBalance = wallet.balance - netFromTransactions;
+
+        // Get recent transactions with user details (limited to 50 for display)
         const transactions = await Transaction.find({
             $or: [
                 { from: req.user._id },
@@ -1703,6 +1783,14 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
             success: true,
             data: {
                 balance: wallet.balance,
+                statistics: {
+                    totalCredits,
+                    totalDebits,
+                    netFromTransactions,
+                    initialBalance,
+                    totalTransactionCount,
+                    displayedTransactionCount: transactions.length
+                },
                 transactions: transactions.map(transaction => {
                     // Determine if this is a credit or debit for the current user
                     const isCredit = transaction.to._id.toString() === req.user._id.toString();
@@ -1710,14 +1798,28 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
                     
                     // Generate better descriptions based on transaction type
                     let description = transaction.description;
-                    if (!description || description === '') {
+                    let displayName = otherUser.fullName || otherUser.username;
+                    
+                    // Check if transaction involves admin (GST) - check both to and from
+                    const adminId = '6807e4424877bcd9980c7e00';
+                    const isGSTTransaction = (transaction.type === 'commission' || transaction.type === 'admin_refund') && 
+                        (transaction.from._id.toString() === adminId || transaction.to._id.toString() === adminId);
+                    
+                    if (isGSTTransaction) {
+                        displayName = 'GST';
+                        if (transaction.type === 'admin_refund') {
+                            description = isCredit ? 'Refund from GST' : 'Refund to Customer';
+                        } else {
+                            description = !isCredit ? 'GST Payment' : 'GST Received';
+                        }
+                    } else if (!description || description === '') {
                         switch (transaction.type) {
                             case 'add_money':
                                 description = 'Money added to wallet';
                                 break;
                             case 'order_payment':
                                 description = isCredit ? 
-                                    `Payment received from ${otherUser.fullName || otherUser.username}` :
+                                    `Payment received from ${displayName}` :
                                     'Order payment';
                                 break;
                             case 'refund':
@@ -1754,12 +1856,14 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
                         description: description,
                         createdAt: transaction.createdAt,
                         isCredit: isCredit,
+                        isGST: isGSTTransaction,
                         otherUser: {
-                            name: otherUser.fullName || otherUser.username,
+                            name: displayName,
                             id: otherUser._id
                         }
                     };
-                })
+                }),
+                gstInfo: gstInfo // Include GST info for admin users
             }
         });
     } catch (error) {

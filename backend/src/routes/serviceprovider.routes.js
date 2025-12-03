@@ -41,43 +41,46 @@ router.get('/dashboard', isAuthenticated, isServiceProvider, async (req, res) =>
         console.log('Service Provider Dashboard - Provider ID:', serviceProviderId);
         console.log('Today\'s date:', todayFormatted);
 
-        // First, find all services belonging to this provider
-        const providerServices = await Service.find({ provider: serviceProviderId }).select('_id').lean();
-        const serviceIds = providerServices.map(s => s._id);
+        // The 'service' field in Booking refers directly to the User (service provider)
+        // So we query bookings where service equals the service provider's ID
         
-        console.log(`Found ${serviceIds.length} services for this provider`);
+        // Fetch ALL bookings first to see what's there
+        const allBookings = await Booking.find({
+            service: serviceProviderId
+        }).lean();
+        console.log(`Found ${allBookings.length} total bookings for this service provider`);
+        if (allBookings.length > 0) {
+            console.log('Sample booking dates:', allBookings.slice(0, 3).map(b => ({ date: b.date, slot: b.slot })));
+        }
 
-        // Fetch future bookings
+        // Fetch future bookings (including today)
         const futureBookings = await Booking.find({
-            service: { $in: serviceIds },
-            date: { $gt: todayFormatted }
+            service: serviceProviderId,
+            date: { $gte: todayFormatted }
         })
         .populate('user', 'fullName username email phoneNo')
-        .populate('service', 'serviceType description rate')
         .sort({ date: 1, slot: 1 })
         .lean();
 
-        console.log(`Found ${futureBookings.length} future bookings`);
+        console.log(`Found ${futureBookings.length} future bookings (including today)`);
 
-        // Fetch past bookings
+        // Fetch past bookings (excluding today)
         const pastBookings = await Booking.find({
-            service: { $in: serviceIds },
-            date: { $lte: todayFormatted }
+            service: serviceProviderId,
+            date: { $lt: todayFormatted }
         })
         .populate('user', 'fullName username email phoneNo')
-        .populate('service', 'serviceType description rate')
         .sort({ date: -1, slot: -1 })
         .lean();
 
-        console.log(`Found ${pastBookings.length} past bookings`);
+        console.log(`Found ${pastBookings.length} past bookings (excluding today)`);
 
         // Fetch today's bookings separately
         const todayBookings = await Booking.find({
-            service: { $in: serviceIds },
+            service: serviceProviderId,
             date: todayFormatted
         })
         .populate('user', 'fullName username email phoneNo')
-        .populate('service', 'serviceType description rate')
         .sort({ slot: 1 })
         .lean();
 
@@ -111,11 +114,10 @@ router.get('/dashboard', isAuthenticated, isServiceProvider, async (req, res) =>
             }
         });
 
-        // Calculate total bookings and revenue statistics
-        const allBookings = await Booking.find({ service: { $in: serviceIds } });
+        // Calculate total bookings and revenue statistics (reuse allBookings from above)
         const totalBookings = allBookings.length;
         const completedBookings = allBookings.filter(b => 
-            new Date(b.date) < today
+            b.date < todayFormatted
         ).length;
         const upcomingBookings = futureBookings.length;
 
@@ -209,11 +211,8 @@ router.get('/bookings', isAuthenticated, isServiceProvider, async (req, res) => 
     try {
         const { status, date, page = 1, limit = 20 } = req.query;
         
-        // Find all services belonging to this provider
-        const providerServices = await Service.find({ provider: req.user._id }).select('_id').lean();
-        const serviceIds = providerServices.map(s => s._id);
-        
-        let query = { service: { $in: serviceIds } };
+        // The 'service' field in Booking refers directly to the User (service provider)
+        let query = { service: req.user._id };
         
         // Filter by status
         if (status === 'upcoming') {
@@ -288,13 +287,10 @@ router.get('/bookings', isAuthenticated, isServiceProvider, async (req, res) => 
 // Get single booking details
 router.get('/bookings/:bookingId', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
-        // Find all services belonging to this provider
-        const providerServices = await Service.find({ provider: req.user._id }).select('_id').lean();
-        const serviceIds = providerServices.map(s => s._id);
-        
+        // The 'service' field in Booking refers directly to the User (service provider)
         const booking = await Booking.findOne({
             _id: req.params.bookingId,
-            service: { $in: serviceIds }
+            service: req.user._id
         })
         .populate('user', 'fullName username email phoneNo address')
         .populate('service', 'serviceType description rate')
@@ -346,13 +342,10 @@ router.patch('/bookings/:bookingId/status', isAuthenticated, isServiceProvider, 
     try {
         const { status } = req.body;
         
-        // Find all services belonging to this provider
-        const providerServices = await Service.find({ provider: req.user._id }).select('_id').lean();
-        const serviceIds = providerServices.map(s => s._id);
-        
+        // The 'service' field in Booking refers directly to the User (service provider)
         const booking = await Booking.findOne({
             _id: req.params.bookingId,
-            service: { $in: serviceIds }
+            service: req.user._id
         });
 
         if (!booking) {
@@ -410,12 +403,8 @@ router.get('/profile', isAuthenticated, isServiceProvider, async (req, res) => {
         // Get wallet info
         const wallet = await Wallet.findOne({ user: provider._id });
 
-        // Find all services belonging to this provider
-        const providerServices = await Service.find({ provider: provider._id }).select('_id').lean();
-        const serviceIds = providerServices.map(s => s._id);
-
-        // Get service statistics
-        const totalBookings = await Booking.countDocuments({ service: { $in: serviceIds } });
+        // Get service statistics (service field refers to service provider user ID)
+        const totalBookings = await Booking.countDocuments({ service: provider._id });
         const reviews = await Review.find({
             targetType: 'ServiceProvider',
             targetId: provider._id
@@ -529,15 +518,11 @@ router.get('/analytics', isAuthenticated, isServiceProvider, async (req, res) =>
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - parseInt(period));
 
-        // Find all services belonging to this provider
-        const providerServices = await Service.find({ provider: req.user._id }).select('_id').lean();
-        const serviceIds = providerServices.map(s => s._id);
-        
-        // Bookings over time
+        // Bookings over time (service field refers to service provider user ID)
         const bookingsByDate = await Booking.aggregate([
             {
                 $match: {
-                    service: { $in: serviceIds },
+                    service: req.user._id,
                     createdAt: { $gte: startDate }
                 }
             },
@@ -552,7 +537,7 @@ router.get('/analytics', isAuthenticated, isServiceProvider, async (req, res) =>
 
         // Booking status distribution
         const statusDistribution = await Booking.aggregate([
-            { $match: { service: { $in: serviceIds } } },
+            { $match: { service: req.user._id } },
             { 
                 $group: { 
                     _id: '$status', 
@@ -565,7 +550,7 @@ router.get('/analytics', isAuthenticated, isServiceProvider, async (req, res) =>
         const monthlyRevenue = await Booking.aggregate([
             {
                 $match: {
-                    service: { $in: serviceIds },
+                    service: req.user._id,
                     createdAt: { $gte: startDate }
                 }
             },

@@ -40,13 +40,19 @@ const Login = () => {
             try {
                 const response = await api.get('/auth/check-session');
                 if (response.data.success && response.data.isLoggedIn) {
-                    // If user is already logged in and there's a 'from' location, go there
-                    // Otherwise redirect based on user role
-                    if (from && from !== '/login') {
+                    // If user is already logged in, redirect appropriately
+                    const validFrom = from && 
+                        !from.includes('/login') && 
+                        !from.includes('/signup') && 
+                        from !== '/unauthorized' &&
+                        from !== '/';
+                    
+                    if (validFrom) {
                         navigate(from, { replace: true });
                         return;
                     }
                     
+                    // Redirect to role-based dashboard
                     const role = response.data.userRole;
                     switch(role) {
                         case 'owner':
@@ -232,16 +238,20 @@ const Login = () => {
                 
                 // Redirect based on role from the login response
                 const role = response.data.user?.role || response.data.userRole;
+                console.log('Redirecting with role:', role);
                 
+                // Determine redirect path with fallback to 'from' if valid
                 let redirectPath = '/home';
                 const shouldUseFrom = from && 
                     !from.includes('/dashboard') && 
-                    from !== '/login' && 
+                    !from.includes('/login') && 
+                    !from.includes('/signup') && 
                     from !== '/unauthorized';
 
                 if (shouldUseFrom) {
                     redirectPath = from;
                 } else {
+                    // Use role-based dashboard
                     switch(role) {
                         case 'owner':
                             redirectPath = '/dashboard';

@@ -163,6 +163,8 @@ const OwnerDashboard = () => {
             if (response.data.success && response.data.data) {
                 const data = response.data.data;
                 console.log('Dashboard data received:', data);
+                console.log('Bookings data:', data.bookings);
+                console.log('Number of bookings:', data.bookings?.length || 0);
                 
                 // Dashboard data includes complete user info
             
@@ -335,6 +337,32 @@ const OwnerDashboard = () => {
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    // Refresh dashboard data when component becomes visible (user navigates back)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden && fetchInitialized.current) {
+                console.log('Dashboard became visible, refreshing data...');
+                fetchDashboardData();
+            }
+        };
+
+        const handleFocus = () => {
+            if (fetchInitialized.current) {
+                console.log('Window focused, refreshing dashboard data...');
+                fetchDashboardData();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [fetchDashboardData]);
+
 
 
 
@@ -1039,8 +1067,8 @@ const OwnerDashboard = () => {
                     </h2>
                 </div>
 
-                {dashboardData.bookings.length > 0 ? (
-                    <table className="service-appointment-table">
+                {dashboardData.bookings && dashboardData.bookings.length > 0 ? (
+                    <table className="orders-table">
                         <thead>
                             <tr>
                                 <th>Service ID</th>
@@ -1055,36 +1083,14 @@ const OwnerDashboard = () => {
                                 <tr key={booking._id || booking.id || index}>
                                     <td>#{(booking._id || booking.id || 'Unknown').toString().substring(0, 8)}...</td>
                                     <td>
-                                        <div className="order-product">
-                                            <div className="service-icon">
-                                                <i className={`fas fa-${
-                                                    (booking.serviceType || booking.service?.type) === 'Grooming' ? 'cut' :
-                                                    (booking.serviceType || booking.service?.type) === 'Veterinary' ? 'stethoscope' :
-                                                    (booking.serviceType || booking.service?.type) === 'Training' ? 'dumbbell' : 'paw'
-                                                }`}></i>
-                                            </div>
-                                            <div className="product-info">
-                                                <span className="product-name">{booking.service?.name || booking.serviceName || 'Service'}</span>
-                                                <span className="product-meta">Provider: {booking.service?.providerName || 'Unknown Provider'}</span>
-                                            </div>
-                                        </div>
+                                        {booking.service?.name || booking.serviceName || 'Service'}
+                                        <span className="product-meta"> (Provider: {booking.service?.providerName || 'Unknown Provider'})</span>
                                     </td>
-                                    <td>
-                                        <div className="date-badge">
-                                            <i className="far fa-calendar-alt"></i>
-                                            {booking.date || booking.bookingDate || 'Not set'}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="time-badge">
-                                            <i className="far fa-clock"></i>
-                                            {booking.time || 'Not set'}
-                                        </div>
-                                    </td>
+                                    <td>{booking.date || booking.bookingDate || 'Not set'}</td>
+                                    <td>{booking.time || 'Not set'}</td>
                                     <td>
                                         <span className={`status-badge ${getStatusColor(booking.status || 'pending')}`}>
-                                            <i className="fas fa-check-circle"></i>
-                                            {booking.status || 'pending'}
+                                            {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
                                         </span>
                                     </td>
                                 </tr>
@@ -1092,15 +1098,11 @@ const OwnerDashboard = () => {
                         </tbody>
                     </table>
                 ) : (
-                    <div className="empty-state service-empty-state">
-                        <div className="empty-icon">
-                            <i className="fas fa-calendar-alt"></i>
-                            <i className="fas fa-times overlay-icon"></i>
-                        </div>
-                        <h3>No appointments scheduled yet.</h3>
-                        <p>Book a service for your pet today!</p>
-                        <a href="/services" className="btn btn-primary browse-services-btn">
-                            Browse Services
+                    <div className="empty-state">
+                        <i className="fas fa-calendar-alt"></i>
+                        <p>No appointments scheduled yet.</p>
+                        <a href="/services" className="btn btn-primary">
+                            <i className="fas fa-concierge-bell"></i> Browse Services
                         </a>
                     </div>
                 )}

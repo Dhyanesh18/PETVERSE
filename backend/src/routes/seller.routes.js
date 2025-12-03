@@ -422,10 +422,12 @@ router.get('/orders', isAuthenticated, isSeller, async (req, res) => {
 // Get single order details
 router.get('/orders/:orderId', isAuthenticated, isSeller, async (req, res) => {
     try {
-        const order = await Order.findOne({
-            _id: req.params.orderId,
-            seller: req.user._id
-        })
+        // Admin can view any order, sellers can only view their own
+        const query = req.user.role === 'admin' 
+            ? { _id: req.params.orderId }
+            : { _id: req.params.orderId, seller: req.user._id };
+        
+        const order = await Order.findOne(query)
         .populate('customer', 'fullName email phoneNo address')
         .populate('items.product', 'name price images description')
         .lean();
@@ -493,16 +495,19 @@ router.patch('/orders/:orderId/status', isAuthenticated, isSeller, async (req, r
         console.log('Update order status request:', { 
             orderId: req.params.orderId, 
             status, 
-            userId: req.user._id 
+            userId: req.user._id,
+            userRole: req.user.role
         });
         
-        const order = await Order.findOne({
-            _id: req.params.orderId,
-            seller: req.user._id
-        }).populate('customer');
+        // Admin can update any order, seller can only update their own orders
+        const query = req.user.role === 'admin' 
+            ? { _id: req.params.orderId }
+            : { _id: req.params.orderId, seller: req.user._id };
+        
+        const order = await Order.findOne(query).populate('customer');
 
         if (!order) {
-            console.log('Order not found for seller');
+            console.log('Order not found');
             return res.status(404).json({ 
                 success: false, 
                 error: 'Order not found' 
@@ -525,13 +530,59 @@ router.patch('/orders/:orderId/status', isAuthenticated, isSeller, async (req, r
         
         const oldStatus = order.status;
         
+        // Prevent changing status if order has been refunded
+        if (order.paymentStatus === 'refunded' && status !== 'cancelled') {
+            console.log('Cannot change status - order has been refunded');
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot change status of a refunded order. Order must remain cancelled.'
+            });
+        }
+        
+        // Prevent changing from cancelled to another status (except if already cancelled)
+        if (oldStatus === 'cancelled' && status !== 'cancelled') {
+            console.log('Cannot reactivate cancelled order');
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot reactivate a cancelled order. Once cancelled, the order cannot be changed to another status.'
+            });
+        }
+        
         // Handle cancellation - refund customer only if they paid online (not COD)
         if (status === 'cancelled' && oldStatus !== 'cancelled') {
             console.log('Processing cancellation...');
             console.log('Payment method:', order.paymentMethod);
             console.log('Payment status:', order.paymentStatus);
             
-            // Only process refund if customer paid online (not COD)
+            // Check if refund was already processed
+            if (order.paymentStatus === 'refunded') {
+                console.log('Refund already processed - skipping duplicate refund');
+                // Just update status, don't process refund again
+                order.status = status;
+                
+                if (!order.statusHistory) {
+                    order.statusHistory = [];
+                }
+                order.statusHistory.push({
+                    status,
+                    timestamp: new Date(),
+                    updatedBy: req.user._id
+                });
+                
+                await order.save();
+                
+                return res.json({ 
+                    success: true, 
+                    message: 'Order status updated successfully (refund already processed)',
+                    data: {
+                        orderId: order._id,
+                        status: order.status,
+                        paymentStatus: order.paymentStatus
+                    }
+                });
+            }
+            
+            // Only process refund if customer paid online (not COD) and not already refunded
             if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
                 console.log('Processing refund for online payment...');
                 
@@ -569,7 +620,7 @@ router.patch('/orders/:orderId/status', isAuthenticated, isSeller, async (req, r
                     console.error('Seller has insufficient balance for refund:', err.message);
                     return res.status(400).json({
                         success: false,
-                        error: 'Insufficient seller balance for refund'
+                        error: 'Insufficient seller balance for refund. Please add funds to your wallet.'
                     });
                 }
                 
@@ -584,13 +635,22 @@ router.patch('/orders/:orderId/status', isAuthenticated, isSeller, async (req, r
                     }
                 }
                 
-                // Create refund transaction records
+                // Create refund transaction record for customer
                 await new Transaction({
-                    from: req.user._id,
+                    from: "6807e4424877bcd9980c7e00",
                     to: order.customer._id,
                     amount: refundAmount,
                     type: 'refund',
-                    description: `Refund for cancelled order ${order._id}`
+                    description: `Refund for cancelled order`
+                }).save();
+                
+                // Create transaction record for seller deduction
+                await new Transaction({
+                    from: req.user._id,
+                    to: "6807e4424877bcd9980c7e00",
+                    amount: sellerShare,
+                    type: 'refund',
+                    description: `Refund deduction for cancelled order`
                 }).save();
                 
                 // Update payment status to refunded

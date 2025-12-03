@@ -5,10 +5,15 @@ import { FaWallet, FaPlus, FaMinus, FaHistory, FaArrowLeft, FaRupeeSign, FaCredi
 
 const Wallet = () => {
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [walletData, setWalletData] = useState({
         balance: 0,
         transactions: []
+    });
+    const [gstInfo, setGstInfo] = useState({
+        totalRevenue: 0,
+        gstAmount: 0,
+        netRevenue: 0
     });
     const [loading, setLoading] = useState(true);
     const [showAddMoney, setShowAddMoney] = useState(false);
@@ -33,15 +38,7 @@ const Wallet = () => {
     });
     const [processing, setProcessing] = useState(false);
 
-    useEffect(() => {
-        if (!isAuthenticated) {
-            navigate('/login');
-            return;
-        }
-        fetchWalletData();
-    }, [isAuthenticated, navigate]);
-
-    const fetchWalletData = async () => {
+    const fetchWalletData = React.useCallback(async () => {
         try {
             const response = await fetch('http://localhost:8080/api/user/wallet', {
                 credentials: 'include'
@@ -50,13 +47,26 @@ const Wallet = () => {
             
             if (data.success) {
                 setWalletData(data.data);
+                
+                // Use GST info from backend for admin users
+                if (user?.role === 'admin' && data.data.gstInfo) {
+                    setGstInfo(data.data.gstInfo);
+                }
             }
         } catch (error) {
             console.error('Error fetching wallet data:', error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [user]);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+        fetchWalletData();
+    }, [isAuthenticated, navigate, fetchWalletData]);
 
     const handleAddMoney = async () => {
         if (!addAmount || parseFloat(addAmount) <= 0) {
@@ -222,28 +232,61 @@ const Wallet = () => {
 
                 {/* Wallet Balance Card */}
                 <div className="max-w-4xl mx-auto">
-                    <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-8 text-white mb-8 shadow-xl">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <div className="flex items-center gap-3 mb-4">
-                                    <FaWallet className="text-3xl" />
-                                    <h2 className="text-2xl font-bold">Wallet Balance</h2>
+                    {user?.role === 'admin' ? (
+                        <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-8 text-white mb-8 shadow-xl">
+                            <div className="flex items-center justify-between">
+                                <div className="w-full">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <FaWallet className="text-3xl" />
+                                        <h2 className="text-2xl font-bold">Admin Revenue & GST Summary</h2>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+                                        <div className="bg-white bg-opacity-30 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-40">
+                                            <p className="text-gray-900 font-semibold text-sm mb-2">Total Commission Revenue</p>
+                                            <div className="text-3xl font-bold text-gray-900">
+                                                ₹{gstInfo.totalRevenue?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                                            </div>
+                                        </div>
+                                        <div className="bg-white bg-opacity-30 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-40">
+                                            <p className="text-gray-900 font-semibold text-sm mb-2">GST Liability (18%)</p>
+                                            <div className="text-3xl font-bold text-gray-900">
+                                                ₹{gstInfo.gstAmount?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                                            </div>
+                                        </div>
+                                        <div className="bg-white bg-opacity-30 backdrop-blur-sm rounded-lg p-4 border border-white border-opacity-40">
+                                            <p className="text-gray-900 font-semibold text-sm mb-2">Net Revenue (After GST)</p>
+                                            <div className="text-3xl font-bold text-gray-900">
+                                                ₹{gstInfo.netRevenue?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="text-5xl font-bold mb-2">
-                                    ₹{walletData.balance?.toLocaleString('en-IN') || '0'}
-                                </div>
-                                <p className="text-teal-100">Available Balance</p>
-                            </div>
-                            <div className="text-right">
-                                <button
-                                    onClick={() => setShowAddMoney(true)}
-                                    className="bg-white text-teal-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2"
-                                >
-                                    <FaPlus /> Add Money
-                                </button>
                             </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-8 text-white mb-8 shadow-xl">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <FaWallet className="text-3xl" />
+                                        <h2 className="text-2xl font-bold">Wallet Balance</h2>
+                                    </div>
+                                    <div className="text-5xl font-bold mb-2">
+                                        ₹{walletData.balance?.toLocaleString('en-IN') || '0'}
+                                    </div>
+                                    <p className="text-teal-100">Available Balance</p>
+                                </div>
+                                <div className="text-right">
+                                    <button
+                                        onClick={() => setShowAddMoney(true)}
+                                        className="bg-white text-teal-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2"
+                                    >
+                                        <FaPlus /> Add Money
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Quick Actions */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -327,42 +370,49 @@ const Wallet = () => {
                                             <div>
                                                 <p className="text-sm text-gray-600 mb-1">Total Credits</p>
                                                 <p className="text-lg font-bold text-green-600">
-                                                    +₹{walletData.transactions
-                                                        .filter(t => t.isCredit)
-                                                        .reduce((sum, t) => sum + (t.amount || 0), 0)
-                                                        .toLocaleString('en-IN')}
+                                                    +₹{walletData.statistics?.totalCredits?.toLocaleString('en-IN') || 
+                                                        walletData.transactions
+                                                            .filter(t => t.isCredit)
+                                                            .reduce((sum, t) => sum + (t.amount || 0), 0)
+                                                            .toLocaleString('en-IN')}
                                                 </p>
                                             </div>
                                             <div>
                                                 <p className="text-sm text-gray-600 mb-1">Total Debits</p>
                                                 <p className="text-lg font-bold text-red-600">
-                                                    -₹{walletData.transactions
-                                                        .filter(t => !t.isCredit)
-                                                        .reduce((sum, t) => sum + (t.amount || 0), 0)
-                                                        .toLocaleString('en-IN')}
+                                                    -₹{walletData.statistics?.totalDebits?.toLocaleString('en-IN') || 
+                                                        walletData.transactions
+                                                            .filter(t => !t.isCredit)
+                                                            .reduce((sum, t) => sum + (t.amount || 0), 0)
+                                                            .toLocaleString('en-IN')}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-gray-600 mb-1">Net (Shown)</p>
-                                                <p className="text-lg font-bold text-blue-600">
-                                                    ₹{(walletData.transactions
-                                                        .filter(t => t.isCredit)
-                                                        .reduce((sum, t) => sum + (t.amount || 0), 0) -
-                                                    walletData.transactions
-                                                        .filter(t => !t.isCredit)
-                                                        .reduce((sum, t) => sum + (t.amount || 0), 0))
-                                                        .toLocaleString('en-IN')}
+                                                <p className="text-sm text-gray-600 mb-1">Net from Transactions</p>
+                                                <p className={`text-lg font-bold ${
+                                                    (walletData.statistics?.netFromTransactions || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                                                }`}>
+                                                    ₹{walletData.statistics?.netFromTransactions?.toLocaleString('en-IN') || 
+                                                        (walletData.transactions
+                                                            .filter(t => t.isCredit)
+                                                            .reduce((sum, t) => sum + (t.amount || 0), 0) -
+                                                        walletData.transactions
+                                                            .filter(t => !t.isCredit)
+                                                            .reduce((sum, t) => sum + (t.amount || 0), 0))
+                                                            .toLocaleString('en-IN')}
                                                 </p>
                                             </div>
                                             <div>
-                                                <p className="text-sm text-gray-600 mb-1">Transactions</p>
+                                                <p className="text-sm text-gray-600 mb-1">Total Transactions</p>
                                                 <p className="text-lg font-bold text-purple-600">
-                                                    {walletData.transactions.length}
+                                                    {walletData.statistics?.totalTransactionCount || walletData.transactions.length}
                                                 </p>
                                             </div>
                                         </div>
                                         <p className="text-xs text-gray-500 text-center mt-3">
-                                            Showing last 50 transactions. Your balance includes all historical transactions.
+                                            {walletData.statistics?.displayedTransactionCount 
+                                                ? `Showing last ${walletData.statistics.displayedTransactionCount} of ${walletData.statistics.totalTransactionCount} transactions. Statistics include all historical transactions.`
+                                                : 'Showing last 50 transactions. Your balance includes all historical transactions.'}
                                         </p>
                                     </div>
 
@@ -374,18 +424,29 @@ const Wallet = () => {
                                         
                                         // Add more context based on transaction type
                                         if (transaction.otherUser && transaction.otherUser.name) {
-                                            subtitle = transaction.isCredit ? 
-                                                `From: ${transaction.otherUser.name}` : 
-                                                `To: ${transaction.otherUser.name}`;
+                                            // Check if it's a GST transaction
+                                            if (transaction.isGST || transaction.otherUser.name === 'GST') {
+                                                subtitle = transaction.isCredit ? 
+                                                    `From: GST` : 
+                                                    `To: GST`;
+                                            } else {
+                                                subtitle = transaction.isCredit ? 
+                                                    `From: ${transaction.otherUser.name}` : 
+                                                    `To: ${transaction.otherUser.name}`;
+                                            }
                                         }
 
                                         return (
                                             <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-sm ${
+                                                        transaction.isGST || transaction.otherUser?.name === 'GST' 
+                                                            ? 'bg-purple-100' 
+                                                            : 'bg-white'
+                                                    }`}>
                                                         {transaction.isCredit ? 
-                                                            <FaPlus className="text-green-600" /> : 
-                                                            <FaMinus className="text-red-600" />
+                                                            <FaPlus className={transaction.isGST || transaction.otherUser?.name === 'GST' ? 'text-purple-600' : 'text-green-600'} /> : 
+                                                            <FaMinus className={transaction.isGST || transaction.otherUser?.name === 'GST' ? 'text-purple-600' : 'text-red-600'} />
                                                         }
                                                     </div>
                                                     <div>
@@ -393,7 +454,11 @@ const Wallet = () => {
                                                             {title}
                                                         </h4>
                                                         {subtitle && (
-                                                            <p className="text-sm text-gray-600">
+                                                            <p className={`text-sm ${
+                                                                transaction.isGST || transaction.otherUser?.name === 'GST' 
+                                                                    ? 'text-purple-600 font-medium' 
+                                                                    : 'text-gray-600'
+                                                            }`}>
                                                                 {subtitle}
                                                             </p>
                                                         )}
@@ -403,7 +468,11 @@ const Wallet = () => {
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <div className={`text-lg font-bold ${transaction.isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                                                    <div className={`text-lg font-bold ${
+                                                        transaction.isGST || transaction.otherUser?.name === 'GST' 
+                                                            ? 'text-purple-600' 
+                                                            : transaction.isCredit ? 'text-green-600' : 'text-red-600'
+                                                    }`}>
                                                         {transaction.isCredit ? '+' : '-'}
                                                         ₹{transaction.amount?.toLocaleString('en-IN') || '0'}
                                                     </div>

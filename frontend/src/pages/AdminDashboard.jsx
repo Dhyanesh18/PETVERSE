@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { fetchAdminDashboard, setActiveTab } from '../redux/slices/adminSlice';
+import { logout } from '../redux/slices/authSlice';
 import { useAuth } from '../hooks/useAuth';
 import DashboardOverview from '../components/admin/DashboardOverview';
 import PendingApplications from '../components/admin/PendingApplications';
@@ -15,6 +17,7 @@ import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { dashboardData, loading, activeTab, error } = useSelector(state => state.admin);
 
@@ -38,6 +41,15 @@ const AdminDashboard = () => {
 
     const handleTabChange = (tab) => {
         dispatch(setActiveTab(tab));
+    };
+
+    const handleLogout = async () => {
+        try {
+            await dispatch(logout()).unwrap();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     if (loading) {
@@ -121,6 +133,23 @@ const AdminDashboard = () => {
                             </li>
                             <li className={activeTab === 'orders' ? 'active' : ''} onClick={() => handleTabChange('orders')}>
                                 <i className="fas fa-shopping-cart"></i> Orders
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <h2>Financial</h2>
+                        <ul className="admin-menu">
+                            <li onClick={() => window.location.href = '/wallet'}>
+                                <i className="fas fa-wallet"></i> Wallet
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <ul className="admin-menu">
+                            <li onClick={handleLogout} className="logout-btn">
+                                <i className="fas fa-sign-out-alt"></i> Logout
                             </li>
                         </ul>
                     </div>
