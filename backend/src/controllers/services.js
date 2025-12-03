@@ -1,6 +1,7 @@
 const User = require('../models/users');
 const Review = require('../models/reviews');
 const Wallet = require('../models/wallet');
+const Transaction = require('../models/transaction');
 
 exports.getServices = async (req, res) => {
   try {
@@ -245,6 +246,15 @@ exports.payForService = async (req, res) => {
       if (!wallet) return res.status(400).json({ success: false, message: 'Wallet not found' });
       if (wallet.balance < amount) return res.status(400).json({ success: false, message: 'Insufficient wallet balance' });
       await wallet.deductFunds(amount);
+      
+      // Create transaction record for service payment
+      await new Transaction({
+        from: req.user._id,
+        to: req.user._id,
+        amount: amount,
+        type: 'service_payment',
+        description: `Payment for service: ${provider.serviceType}`
+      }).save();
     } else if (paymentMethod === 'upi') {
       const upiId = details && details.upiId ? String(details.upiId).trim() : '';
       const upiRegex = /^[\w.\-]{2,}@[A-Za-z]{2,}$/;

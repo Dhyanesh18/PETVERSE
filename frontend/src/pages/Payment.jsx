@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
 import { FaWallet, FaCreditCard, FaMobile, FaMoneyBillWave, FaArrowLeft, FaLock } from 'react-icons/fa';
 import { processPayment } from '../services/api';
+import { fetchWalletData } from '../redux/slices/walletSlice';
 
 const Payment = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const { isAuthenticated } = useAuth();
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('wallet');
     const [paymentDetails, setPaymentDetails] = useState({
@@ -45,6 +48,10 @@ const Payment = () => {
 
             const response = await processPayment(paymentData);
             if (response.data.success) {
+                // Refresh wallet data if payment was made using wallet
+                if (selectedPaymentMethod === 'wallet') {
+                    dispatch(fetchWalletData());
+                }
                 // Clear stored shipping info
                 localStorage.removeItem('shippingInfo');
                 // Navigate to order confirmation with order ID

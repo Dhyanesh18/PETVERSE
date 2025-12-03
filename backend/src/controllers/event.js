@@ -1,6 +1,7 @@
 const Event = require('../models/event');
 const User = require('../models/users');
 const Wallet = require('../models/wallet');
+const Transaction = require('../models/transaction');
 
 // Get all events (public listing) - Renders initial page
 exports.getEvents = async (req, res) => {
@@ -340,6 +341,15 @@ exports.payForEvent = async (req, res) => {
             if (amount > 0) {
                 if (wallet.balance < amount) return res.status(400).json({ success: false, message: 'Insufficient wallet balance' });
                 await wallet.deductFunds(amount);
+                
+                // Create transaction record for event payment
+                await new Transaction({
+                    from: req.user._id,
+                    to: req.user._id,
+                    amount: amount,
+                    type: 'event_payment',
+                    description: `Payment for event: ${event.name}`
+                }).save();
             }
         } else if (paymentMethod === 'upi') {
             // Basic UPI validation

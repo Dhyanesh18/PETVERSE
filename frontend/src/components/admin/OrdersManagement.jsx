@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { updateOrderStatus } from '../../services/api';
+import { useDispatch } from 'react-redux';
+import { updateAdminOrderStatus, fetchAdminDashboard } from '../../redux/slices/adminSlice';
 import './DashboardComponents.css';
 
 const OrdersManagement = ({ data }) => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const [updating, setUpdating] = useState(null);
     
     if (!data) return <div>Loading...</div>;
 
@@ -16,11 +19,16 @@ const OrdersManagement = ({ data }) => {
 
     const handleStatusUpdate = async (orderId, newStatus) => {
         try {
-            await updateOrderStatus(orderId, newStatus);
-            alert('Order status updated!');
-            window.location.reload();
+            setUpdating(orderId);
+            await dispatch(updateAdminOrderStatus({ orderId, status: newStatus })).unwrap();
+            alert('Order status updated successfully!');
+            // Optionally refresh dashboard data
+            await dispatch(fetchAdminDashboard());
         } catch (error) {
-            alert('Failed to update status: ' + error.message);
+            console.error('Failed to update order status:', error);
+            alert('Failed to update status: ' + (error.message || 'Unknown error'));
+        } finally {
+            setUpdating(null);
         }
     };
 
@@ -55,6 +63,7 @@ const OrdersManagement = ({ data }) => {
                                         value={order.status}
                                         onChange={(e) => handleStatusUpdate(order._id, e.target.value)}
                                         className="status-select"
+                                        disabled={updating === order._id}
                                     >
                                         <option value="pending">Pending</option>
                                         <option value="processing">Processing</option>
