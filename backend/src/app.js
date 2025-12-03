@@ -101,6 +101,7 @@ const eventRoutes = require('./routes/event.routes');
 const wishlistRoutes = require('./routes/wishlist.routes');
 const apiRoutes = require('./routes/apiRoutes');
 const lostPetRoutes = require('./routes/lostPet.routes');
+const otpRoutes = require('./routes/otp.routes');
 const forgotPasswordRoutes = require('./routes/forgotPassword.routes');
 
 app.use('/api', apiRoutes);
@@ -123,7 +124,9 @@ app.use('/api/search', searchRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/lost-pets', lostPetRoutes);
+app.use('/api/otp', otpRoutes);
 app.use('/api/forgot-password', forgotPasswordRoutes);
+
 
 app.get('/api/health', (req, res) => {
     res.json({
