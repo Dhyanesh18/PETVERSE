@@ -5,6 +5,7 @@ import { FaPaw, FaExclamationCircle } from 'react-icons/fa';
 import { useAuth } from '../hooks/useAuth';
 import { fetchCart } from '../redux/slices/cartSlice';
 import api from '../utils/api';
+import OTPVerification from '../components/OTPVerification';
 
 const Login = () => {
     const [formData, setFormData] = useState({
@@ -22,6 +23,8 @@ const Login = () => {
         password: false
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showOTP, setShowOTP] = useState(false);
+    const [otpEmail, setOtpEmail] = useState('');
     
     const navigate = useNavigate();
     const location = useLocation();
@@ -172,7 +175,7 @@ const Login = () => {
         return !newErrors.email && !newErrors.password;
     };
 
-    // Handle form submission
+    // Handle form submission (Step 1: Request OTP)
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -187,55 +190,21 @@ const Login = () => {
         setIsSubmitting(true);
 
         try {
-            const response = await api.post('/auth/login', {
+            const response = await api.post('/otp/request-login-otp', {
                 email: formData.email,
                 password: formData.password
             });
 
             if (response.data.success) {
-                console.log('Login response:', response.data.user);
+                console.log('OTP sent successfully');
+                setOtpEmail(formData.email);
+                setShowOTP(true);
                 
-                // Update AuthContext with user data
-                await loginUser(response.data.user);
-                
-                console.log('After loginUser called');
-                
-                // Fetch cart immediately after login
-                dispatch(fetchCart());
-                
-                // Store user data if needed
-                if (formData.rememberMe) {
-                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                // Show dev OTP in console for testing
+                if (response.data.devOTP) {
+                    console.log('Development OTP:', response.data.devOTP);
+                    alert(`Development Mode - Your OTP: ${response.data.devOTP}`);
                 }
-
-                // Wait for session to be set before navigating
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                // Redirect based on role from the login response
-                const role = response.data.user?.role || response.data.userRole;
-                console.log('Redirecting with role:', role);
-
-                // Always redirect to role-specific dashboard
-                let redirectPath = '/home';
-                switch(role) {
-                    case 'owner':
-                        redirectPath = '/dashboard';
-                        break;
-                    case 'seller':
-                        redirectPath = '/seller/dashboard';
-                        break;
-                    case 'service_provider':
-                        redirectPath = '/service-provider/dashboard';
-                        break;
-                    case 'admin':
-                        redirectPath = '/admin/dashboard';
-                        break;
-                    default:
-                        redirectPath = '/home';
-                }
-
-                console.log('Final redirect path:', redirectPath);
-                navigate(redirectPath, { replace: true });
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -255,6 +224,115 @@ const Login = () => {
             setIsSubmitting(false);
         }
     };
+
+    // Handle OTP verification (Step 2)
+    const handleVerifyOTP = async (otp) => {
+        try {
+            const response = await api.post('/otp/verify-login-otp', {
+                email: otpEmail,
+                otp: otp
+            });
+
+            if (response.data.success) {
+                console.log('Login successful:', response.data.user);
+                
+                // Redirect based on role from the login response
+                const role = response.data.user?.role || response.data.userRole;
+                console.log('Redirecting with role:', role);
+                
+                // Determine redirect path with fallback to 'from' if valid
+                let redirectPath = '/home';
+                const shouldUseFrom = from && 
+                    !from.includes('/dashboard') && 
+                    !from.includes('/login') && 
+                    !from.includes('/signup') && 
+                    from !== '/unauthorized';
+
+                if (shouldUseFrom) {
+                    redirectPath = from;
+                } else {
+                    // Use role-based dashboard
+                    switch(role) {
+                        case 'owner':
+                            redirectPath = '/dashboard';
+                            break;
+                        case 'seller':
+                            redirectPath = '/seller/dashboard';
+                            break;
+                        case 'service_provider':
+                            redirectPath = '/service-provider/dashboard';
+                            break;
+                        case 'admin':
+                            redirectPath = '/admin/dashboard';
+                            break;
+                        default:
+                            redirectPath = '/home';
+                    }
+                }
+
+                // Store user data if needed
+                if (formData.rememberMe) {
+                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                }
+
+                // Update auth state and navigate immediately
+                loginUser(response.data.user);
+                
+                // Fetch cart in background (don't wait for it)
+                dispatch(fetchCart());
+                
+                console.log('Redirecting to:', redirectPath);
+                navigate(redirectPath, { replace: true });
+            }
+        } catch (error) {
+            console.error('OTP verification error:', error);
+            throw new Error(error.response?.data?.error || 'Invalid OTP. Please try again.');
+        }
+    };
+
+    // Handle OTP resend
+    const handleResendOTP = async () => {
+        try {
+            const response = await api.post('/otp/resend-otp', {
+                email: otpEmail,
+                purpose: 'login'
+            });
+
+            if (response.data.success) {
+                console.log('OTP resent successfully');
+                
+                // Show dev OTP in console for testing
+                if (response.data.devOTP) {
+                    console.log('Development OTP:', response.data.devOTP);
+                    alert(`Development Mode - Your new OTP: ${response.data.devOTP}`);
+                }
+            }
+        } catch (error) {
+            console.error('Resend OTP error:', error);
+            throw new Error(error.response?.data?.error || 'Failed to resend OTP. Please try again.');
+        }
+    };
+
+    // Handle back to login from OTP screen
+    const handleBackToLogin = () => {
+        setShowOTP(false);
+        setOtpEmail('');
+        setFormData(prev => ({ ...prev, password: '' }));
+        setErrors({ email: '', password: '', server: '' });
+        setTouched({ email: false, password: false });
+    };
+
+    // Show OTP verification screen if needed
+    if (showOTP) {
+        return (
+            <OTPVerification
+                email={otpEmail}
+                onVerify={handleVerifyOTP}
+                onResend={handleResendOTP}
+                onBack={handleBackToLogin}
+            />
+        );
+    }
 
     return (
         <div 

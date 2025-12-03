@@ -73,6 +73,11 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
     try {
         const { serviceId, date } = req.query;
         
+        console.log('=== AVAILABLE SLOTS REQUEST ===');
+        console.log('ServiceId:', serviceId);
+        console.log('Date:', date);
+        console.log('Authenticated user:', req.user?._id);
+        
         if (!serviceId || !date) {
         return res.status(400).json({ 
             success: false,
@@ -86,8 +91,12 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
         const selectedDate = new Date(date);
         const dayOfWeek = getDayName(selectedDate.getDay());
         
+        console.log('Day of week:', dayOfWeek);
+        
         // Get service provider's availability
         const providerAvailability = await Availability.findOne({ serviceProvider: serviceId });
+        
+        console.log('Provider availability found:', !!providerAvailability);
         
         // Default slots if no availability is set
         let allPossibleSlots = [
@@ -96,62 +105,86 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
         '03:00 PM', '04:00 PM', '05:00 PM'
         ];
 
-        // If provider has availability settings, use those instead
+        // If provider has availability settings, check if it's valid
         if (providerAvailability) {
-        const dayAvailability = providerAvailability.getByDay(dayOfWeek);
+        console.log('Checking provider availability for day:', dayOfWeek);
         
-        // If it's a holiday or no slots are available, return empty array
-        if (dayAvailability.isHoliday || dayAvailability.slots.length === 0) {
-            return res.json({ 
-            success: true,
-            data: {
-                slots: [],
-                availableSlots: [],
-                totalSlots: 0,
-                bookedSlots: 0,
-                message: 'No slots available for this date'
-            }
+        // Check if provider has ANY working days (days that are not holidays and have slots)
+        const hasAnyWorkingDays = providerAvailability.days.some(d => 
+            !d.isHoliday && d.slots && d.slots.length > 0
+        );
+        
+        if (!hasAnyWorkingDays) {
+            console.log('Provider has no working days configured, using default slots for all days');
+            // Treat this as if no availability is configured
+            // Fall through to use default slots
+        } else {
+            const dayAvailability = providerAvailability.getByDay(dayOfWeek);
+            console.log('Day availability:', JSON.stringify(dayAvailability));
+            
+            // Check if this specific day is configured
+            const dayExistsInConfig = providerAvailability.days.some(d => d.day === dayOfWeek.toLowerCase());
+            
+            if (!dayExistsInConfig) {
+                console.log('Day not configured in availability, using default slots');
+            } else if (dayAvailability.isHoliday) {
+                // Only return empty if explicitly marked as holiday AND provider has other working days
+                console.log('Day is marked as holiday');
+                return res.json({ 
+                success: true,
+                data: {
+                    slots: [],
+                    availableSlots: [],
+                    totalSlots: 0,
+                    bookedSlots: 0,
+                    message: 'No slots available for this date'
+                }
+                });
+            } else if (dayAvailability.slots && dayAvailability.slots.length > 0) {
+            console.log('Using custom slots from availability');
+            // Generate slots based on provider's availability
+            allPossibleSlots = [];
+            dayAvailability.slots.forEach(slot => {
+                // Generate 1-hour slots between start and end times
+                const [startHour, startMin] = slot.start.split(':').map(Number);
+                const [endHour, endMin] = slot.end.split(':').map(Number);
+                
+                let currentHour = startHour;
+                let currentMin = startMin;
+                
+                while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
+                const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
+                allPossibleSlots.push(formatTime(timeString));
+                
+                // Advance by 1 hour
+                currentHour++;
+                }
             });
         }
-        
-        // Generate slots based on provider's availability
-        allPossibleSlots = [];
-        dayAvailability.slots.forEach(slot => {
-            // Generate 1-hour slots between start and end times
-            const [startHour, startMin] = slot.start.split(':').map(Number);
-            const [endHour, endMin] = slot.end.split(':').map(Number);
-            
-            let currentHour = startHour;
-            let currentMin = startMin;
-            
-            while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
-            const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
-            allPossibleSlots.push(formatTime(timeString));
-            
-            // Advance by 1 hour
-            currentHour++;
-            }
-        });
+        // If no slots configured, allPossibleSlots remains as default
         }
+    } else {
+        console.log('No provider availability, using default slots');
+    }
         
-        // Find all services belonging to this provider
-        const Service = require('../models/Service');
-        const providerServices = await Service.find({ provider: serviceId }).select('_id').lean();
-        const serviceIds = providerServices.map(s => s._id);
+        console.log('Total possible slots:', allPossibleSlots.length);
         
-        console.log(`Found ${serviceIds.length} services for provider ${serviceId}`);
-        
-        // Find bookings for these services on the selected date
+        // Find bookings for this service provider on the selected date
+        // The booking.service field references the service provider's User ID directly
         const bookings = await Booking.find({ 
-        service: { $in: serviceIds }, 
-        date: date 
+            service: serviceId, 
+            date: date 
         });
         
-        console.log(`Found ${bookings.length} bookings for this date`);
+        console.log(`Found ${bookings.length} bookings for provider ${serviceId} on ${date}`);
         
         // Filter out already booked slots
         const bookedSlots = bookings.map(b => b.slot);
         const availableSlots = allPossibleSlots.filter(slot => !bookedSlots.includes(slot));
+        
+        console.log('All possible slots:', allPossibleSlots.length);
+        console.log('Booked slots:', bookedSlots);
+        console.log('Available slots:', availableSlots.length);
         
         res.json({ 
         success: true,
@@ -163,6 +196,7 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
             date: date
         }
         });
+        console.log('=== RESPONSE SENT ===\n');
     } catch (err) {
         console.error('Error fetching available slots:', err);
         res.status(500).json({ 
@@ -195,25 +229,10 @@ router.post('/create', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Find or create a Service document for this provider
-        const Service = require('../models/Service');
-        let service = await Service.findOne({ provider: serviceId });
-        
-        if (!service) {
-        // Create a new Service document for this provider
-        service = new Service({
-            provider: serviceId,
-            serviceType: provider.serviceType || 'sitting',
-            description: provider.serviceDescription || 'Professional pet care services',
-            rate: provider.rate || 300
-        });
-        await service.save();
-        console.log('Created new Service document for provider:', serviceId);
-        }
-        
         // Check if slot is already booked
+        // The booking.service field stores the service provider's User ID directly
         const existing = await Booking.findOne({ 
-        service: service._id, 
+        service: serviceId, 
         date, 
         slot 
         });
@@ -226,9 +245,10 @@ router.post('/create', isAuthenticated, async (req, res) => {
         }
         
         // Create and save the booking
+        // Store the service provider's User ID directly in the service field
         const booking = new Booking({
         user: req.user._id,
-        service: service._id,
+        service: serviceId,
         date,
         slot,
         petName: petName || 'Not specified',
@@ -237,15 +257,9 @@ router.post('/create', isAuthenticated, async (req, res) => {
         
         await booking.save();
         
-        // Populate the booking with user and service details
+        // Populate the booking with user and service provider details
         await booking.populate('user', 'fullName email');
-        await booking.populate({
-        path: 'service',
-        populate: {
-            path: 'provider',
-            select: 'fullName serviceType serviceAddress email phoneNo'
-        }
-        });
+        await booking.populate('service', 'fullName serviceType serviceAddress email phoneNo');
         
         res.status(201).json({
         success: true,
@@ -258,7 +272,7 @@ router.post('/create', isAuthenticated, async (req, res) => {
             petName: booking.petName,
             status: booking.status,
             user: booking.user,
-            provider: booking.service?.provider,
+            provider: booking.service,
             createdAt: booking.createdAt
             },
             redirectPath: `/services/${serviceId}/payment`,
