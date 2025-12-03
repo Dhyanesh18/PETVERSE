@@ -11,28 +11,41 @@ const getDashboard = async (req, res) => {
         }
 
         const serviceProviderId = req.user._id;
-        const today = new Date('2025-05-07'); // As per requirements
-
+        const today = new Date(); // Use current date
+        
         // Format today as YYYY-MM-DD for string comparison
         const todayFormatted = today.toISOString().split('T')[0];
 
-        // Fetch future bookings - directly using provider field
+        console.log('Service Provider Dashboard - Provider ID:', serviceProviderId);
+        console.log('Today\'s date:', todayFormatted);
+
+        // First, find all services belonging to this provider
+        const providerServices = await Service.find({ provider: serviceProviderId }).select('_id').lean();
+        const serviceIds = providerServices.map(s => s._id);
+        
+        console.log(`Found ${serviceIds.length} services for this provider`);
+
+        // Fetch future bookings using service IDs
         const futureBookings = await Booking.find({
-            service: serviceProviderId,
+            service: { $in: serviceIds },
             date: { $gt: todayFormatted }
         }).populate({
             path: 'user',
             select: 'fullName username email'
-        });
+        }).sort({ date: 1, slot: 1 });
 
-        // Fetch past bookings - directly using provider field
+        console.log(`Found ${futureBookings.length} future bookings`);
+
+        // Fetch past bookings using service IDs
         const pastBookings = await Booking.find({
-            service: serviceProviderId,
+            service: { $in: serviceIds },
             date: { $lte: todayFormatted }
         }).populate({
             path: 'user',
             select: 'fullName username email'
-        });
+        }).sort({ date: -1, slot: -1 });
+
+        console.log(`Found ${pastBookings.length} past bookings`);
 
         // Get review statistics
         const reviews = await Review.find({

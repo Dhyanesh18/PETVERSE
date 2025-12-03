@@ -30,7 +30,12 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
             console.log('Fetching slots for service:', serviceId, 'date:', selectedDate);
             const response = await getAvailableSlots(serviceId, selectedDate);
             console.log('Slots response:', response.data);
+            console.log('Response.data.data:', response.data.data);
+            console.log('Response.data.data.slots:', response.data.data?.slots);
+            console.log('Response.data.data.availableSlots:', response.data.data?.availableSlots);
             const slots = response.data.data?.slots || response.data.slots || response.data.availableSlots || [];
+            console.log('Final slots array:', slots);
+            console.log('Slots length:', slots.length);
             setAvailableSlots(slots);
             
             if (slots.length === 0) {

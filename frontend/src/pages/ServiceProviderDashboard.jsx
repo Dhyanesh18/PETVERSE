@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getServiceProviderDashboard } from '../services/serviceProviderService';
-import { FaStar, FaCommentAlt, FaCalendarCheck, FaHistory, FaUser, FaEnvelope, FaIdCard, FaBriefcase, FaPhone, FaCalendar, FaPlusCircle, FaSignOutAlt, FaPaw, FaCalendarTimes, FaHome, FaChartBar, FaWallet, FaCog, FaBars, FaTimes } from 'react-icons/fa';
+import { getServiceProviderDashboard, updateBookingStatus } from '../services/serviceProviderService';
+import { FaStar, FaCommentAlt, FaCalendarCheck, FaHistory, FaUser, FaEnvelope, FaIdCard, FaBriefcase, FaPhone, FaCalendar, FaPlusCircle, FaSignOutAlt, FaPaw, FaCalendarTimes, FaHome, FaChartBar, FaWallet, FaCog, FaBars, FaTimes, FaBan } from 'react-icons/fa';
 
 const ServiceProviderDashboard = () => {
     const { user, logout } = useAuth();
@@ -12,6 +12,7 @@ const ServiceProviderDashboard = () => {
     const [error, setError] = useState(null);
     const [activeSection, setActiveSection] = useState('overview');
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [cancellingBooking, setCancellingBooking] = useState(null);
 
     useEffect(() => {
         fetchDashboardData();
@@ -41,6 +42,27 @@ const ServiceProviderDashboard = () => {
             }
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCancelBooking = async (bookingId) => {
+        if (!window.confirm('Are you sure you want to cancel this booking?')) {
+            return;
+        }
+
+        try {
+            setCancellingBooking(bookingId);
+            await updateBookingStatus(bookingId, 'cancelled');
+            
+            // Refresh dashboard data
+            await fetchDashboardData();
+            
+            alert('Booking cancelled successfully');
+        } catch (error) {
+            console.error('Error cancelling booking:', error);
+            alert(error.response?.data?.message || 'Failed to cancel booking');
+        } finally {
+            setCancellingBooking(null);
         }
     };
 
@@ -361,6 +383,7 @@ const ServiceProviderDashboard = () => {
                                         <th className="text-left p-4 text-sm font-medium text-gray-600">Time Slot</th>
                                         <th className="text-left p-4 text-sm font-medium text-gray-600">Customer</th>
                                         <th className="text-left p-4 text-sm font-medium text-gray-600">Status</th>
+                                        <th className="text-left p-4 text-sm font-medium text-gray-600">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -381,9 +404,26 @@ const ServiceProviderDashboard = () => {
                                                 </div>
                                             </td>
                                             <td className="p-4">
-                                                <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                                                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                                                    booking.status === 'cancelled' 
+                                                        ? 'bg-red-100 text-red-800' 
+                                                        : 'bg-blue-100 text-blue-800'
+                                                }`}>
                                                     {booking.status || 'Confirmed'}
                                                 </span>
+                                            </td>
+                                            <td className="p-4">
+                                                {booking.status !== 'cancelled' && (
+                                                    <button
+                                                        onClick={() => handleCancelBooking(booking._id)}
+                                                        disabled={cancellingBooking === booking._id}
+                                                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                                                        title="Cancel booking"
+                                                    >
+                                                        <FaBan size={14} />
+                                                        {cancellingBooking === booking._id ? 'Cancelling...' : 'Cancel'}
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}

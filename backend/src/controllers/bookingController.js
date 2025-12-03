@@ -78,29 +78,34 @@ exports.getAvailableSlots = async (req, res) => {
     if (providerAvailability) {
       const dayAvailability = providerAvailability.getByDay(dayOfWeek);
       
-      // If it's a holiday or no slots are available, return empty array
-      if (dayAvailability.isHoliday || dayAvailability.slots.length === 0) {
+      // Only return empty if explicitly marked as holiday
+      // If no slots configured for the day, fall back to default slots
+      if (dayAvailability.isHoliday) {
         return res.json({ availableSlots: [] });
       }
       
-      // Generate slots based on provider's availability
-      allPossibleSlots = [];
-      dayAvailability.slots.forEach(slot => {
-        // Generate 1-hour slots between start and end times
-        const [startHour, startMin] = slot.start.split(':').map(Number);
-        const [endHour, endMin] = slot.end.split(':').map(Number);
-        
-        let currentHour = startHour;
-        let currentMin = startMin;
-        
-        while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
-          const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
-          allPossibleSlots.push(formatTime(timeString));
+      // If slots are configured for this day, use them
+      if (dayAvailability.slots && dayAvailability.slots.length > 0) {
+        // Generate slots based on provider's availability
+        allPossibleSlots = [];
+        dayAvailability.slots.forEach(slot => {
+          // Generate 1-hour slots between start and end times
+          const [startHour, startMin] = slot.start.split(':').map(Number);
+          const [endHour, endMin] = slot.end.split(':').map(Number);
           
-          // Advance by 1 hour
-          currentHour++;
-        }
-      });
+          let currentHour = startHour;
+          let currentMin = startMin;
+          
+          while (currentHour < endHour || (currentHour === endHour && currentMin < endMin)) {
+            const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
+            allPossibleSlots.push(formatTime(timeString));
+            
+            // Advance by 1 hour
+            currentHour++;
+          }
+        });
+      }
+      // If no slots configured, allPossibleSlots remains as default
     }
     
     // Find bookings for this provider on the selected date
