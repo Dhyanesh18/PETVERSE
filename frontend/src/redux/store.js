@@ -7,6 +7,7 @@ import productReducer from './slices/productSlice';
 import petReducer from './slices/petSlice';
 import sellerReducer from './slices/sellerSlice';
 import walletReducer from './slices/walletSlice';
+import serviceEventReducer from './slices/serviceEventSlice';
 
 export const store = configureStore({
     reducer: {
@@ -17,7 +18,8 @@ export const store = configureStore({
         product: productReducer,
         pet: petReducer,
         seller: sellerReducer,
-        wallet: walletReducer
+        wallet: walletReducer,
+        serviceEvent: serviceEventReducer
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({

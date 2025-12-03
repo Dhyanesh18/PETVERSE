@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaPaw } from 'react-icons/fa';
-import api from '../utils/api';
+import { signupOwner } from '../services/api';
 
 const SignupOwner = () => {
     const [formData, setFormData] = useState({
@@ -94,15 +94,25 @@ const SignupOwner = () => {
         setIsSubmitting(true);
 
         try {
-            const response = await api.post('/auth/signup/owner', formData);
-            if (response.data.success) {
+            // Prepare data with correct field names for backend
+            const signupData = {
+                email: formData.email,
+                username: formData.username,
+                password: formData.password,
+                fullName: formData.fullName,
+                phone: formData.phoneNumber // Backend expects 'phone' not 'phoneNumber'
+            };
+            
+            const response = await signupOwner(signupData);
+            if (response.data) {
                 navigate('/login', { 
                     state: { message: 'Registration successful! Please login.' }
                 });
             }
         } catch (error) {
+            console.error('Signup error:', error);
             setErrors({
-                server: error.response?.data?.error || 'Registration failed. Please try again.'
+                server: error.response?.data?.message || error.response?.data?.error || 'Registration failed. Please try again.'
             });
         } finally {
             setIsSubmitting(false);
