@@ -40,6 +40,11 @@ export const signup = (userData) => apiClient.post('/api/auth/register', userDat
 export const logout = () => apiClient.post('/api/auth/logout');
 export const checkUserSession = () => apiClient.get('/api/auth/check-session');
 
+// ===== OTP APIs =====
+export const requestLoginOTP = (credentials) => apiClient.post('/api/otp/request-login-otp', credentials);
+export const verifyLoginOTP = (data) => apiClient.post('/api/otp/verify-login-otp', data);
+export const resendOTP = (data) => apiClient.post('/api/otp/resend-otp', data);
+
 // ===== Search APIs =====
 export const searchAll = (query) => apiClient.get(`/api/search?q=${encodeURIComponent(query)}`);
 export const searchByType = (query, type) => apiClient.get(`/api/search?q=${encodeURIComponent(query)}&type=${type}`);
