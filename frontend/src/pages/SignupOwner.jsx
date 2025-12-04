@@ -23,27 +23,58 @@ const SignupOwner = () => {
         let error = '';
         switch (name) {
             case 'email':
-                if (!value.trim()) error = 'Email is required';
-                else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
-                    error = 'Invalid email format';
+                if (!value.trim()) {
+                    error = 'Email is required';
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    error = 'Please enter a valid email address (e.g., user@example.com)';
+                }
                 break;
             case 'password':
-                if (!value) error = 'Password is required';
-                else if (value.length < 6)
-                    error = 'Password must be at least 6 characters';
+                if (!value) {
+                    error = 'Password is required';
+                } else if (value.length < 6) {
+                    error = 'Password must be at least 6 characters long';
+                } else if (!/(?=.*[a-z])/.test(value)) {
+                    error = 'Password must contain at least one lowercase letter';
+                } else if (!/(?=.*[A-Z])/.test(value)) {
+                    error = 'Password must contain at least one uppercase letter';
+                } else if (!/(?=.*\d)/.test(value)) {
+                    error = 'Password must contain at least one number';
+                }
                 break;
             case 'confirmPassword':
-                if (value !== formData.password)
+                if (!value) {
+                    error = 'Please confirm your password';
+                } else if (value !== formData.password) {
                     error = 'Passwords do not match';
+                }
                 break;
             case 'username':
-                if (!value.trim()) error = 'Username is required';
+                if (!value.trim()) {
+                    error = 'Username is required';
+                } else if (value.length < 3) {
+                    error = 'Username must be at least 3 characters';
+                } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+                    error = 'Username can only contain letters, numbers, and underscores';
+                } else if (/^\d/.test(value)) {
+                    error = 'Username cannot start with a number';
+                }
                 break;
             case 'phoneNumber':
-                if (!value.trim()) error = 'Phone number is required';
+                if (!value.trim()) {
+                    error = 'Phone number is required';
+                } else if (!/^\d{10}$/.test(value.replace(/\D/g, ''))) {
+                    error = 'Please enter a valid 10-digit phone number';
+                }
                 break;
             case 'fullName':
-                if (!value.trim()) error = 'Full name is required';
+                if (!value.trim()) {
+                    error = 'Full name is required';
+                } else if (value.trim().length < 2) {
+                    error = 'Full name must be at least 2 characters';
+                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
+                    error = 'Full name can only contain letters and spaces';
+                }
                 break;
             default:
                 break;
@@ -155,13 +186,27 @@ const SignupOwner = () => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder=" "
-                                    className="peer w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)] focus:outline-none"
+                                    className={`peer w-full px-3 py-2.5 border-2 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:outline-none ${
+                                        touched.email && errors.email
+                                            ? 'border-red-500 bg-red-50'
+                                            : 'border-gray-300 focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)]'
+                                    }`}
                                 />
-                                <label className="absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm text-gray-600 transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:text-teal-500 peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:text-teal-500 peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5">
+                                <label className={`absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5 ${
+                                    touched.email && errors.email ? 'text-red-600' : 'text-gray-600 peer-focus:text-teal-500 peer-[:not(:placeholder-shown)]:text-teal-500'
+                                }`}>
                                     Email Address<span className="text-red-500">*</span>
                                 </label>
                                 {touched.email && errors.email && (
-                                    <span className="absolute -bottom-5 left-0 text-red-500 text-xs">{errors.email}</span>
+                                    <span className="absolute -bottom-5 left-0 text-red-600 text-xs font-semibold flex items-center gap-1">
+                                        <i className="fas fa-exclamation-circle"></i>
+                                        {errors.email}
+                                    </span>
+                                )}
+                                {touched.email && !errors.email && formData.email && (
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                                        <i className="fas fa-check-circle"></i>
+                                    </span>
                                 )}
                             </div>
 
@@ -174,13 +219,27 @@ const SignupOwner = () => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder=" "
-                                    className="peer w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)] focus:outline-none"
+                                    className={`peer w-full px-3 py-2.5 border-2 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:outline-none ${
+                                        touched.password && errors.password
+                                            ? 'border-red-500 bg-red-50'
+                                            : 'border-gray-300 focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)]'
+                                    }`}
                                 />
-                                <label className="absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm text-gray-600 transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:text-teal-500 peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:text-teal-500 peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5">
+                                <label className={`absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5 ${
+                                    touched.password && errors.password ? 'text-red-600' : 'text-gray-600 peer-focus:text-teal-500 peer-[:not(:placeholder-shown)]:text-teal-500'
+                                }`}>
                                     Password<span className="text-red-500">*</span>
                                 </label>
                                 {touched.password && errors.password && (
-                                    <span className="absolute -bottom-5 left-0 text-red-500 text-xs">{errors.password}</span>
+                                    <span className="absolute -bottom-5 left-0 text-red-600 text-xs font-semibold flex items-center gap-1">
+                                        <i className="fas fa-exclamation-circle"></i>
+                                        {errors.password}
+                                    </span>
+                                )}
+                                {touched.password && !errors.password && formData.password && (
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                                        <i className="fas fa-check-circle"></i>
+                                    </span>
                                 )}
                             </div>
 
@@ -193,13 +252,27 @@ const SignupOwner = () => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder=" "
-                                    className="peer w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)] focus:outline-none"
+                                    className={`peer w-full px-3 py-2.5 border-2 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:outline-none ${
+                                        touched.confirmPassword && errors.confirmPassword
+                                            ? 'border-red-500 bg-red-50'
+                                            : 'border-gray-300 focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)]'
+                                    }`}
                                 />
-                                <label className="absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm text-gray-600 transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:text-teal-500 peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:text-teal-500 peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5">
+                                <label className={`absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5 ${
+                                    touched.confirmPassword && errors.confirmPassword ? 'text-red-600' : 'text-gray-600 peer-focus:text-teal-500 peer-[:not(:placeholder-shown)]:text-teal-500'
+                                }`}>
                                     Confirm Password<span className="text-red-500">*</span>
                                 </label>
                                 {touched.confirmPassword && errors.confirmPassword && (
-                                    <span className="absolute -bottom-5 left-0 text-red-500 text-xs">{errors.confirmPassword}</span>
+                                    <span className="absolute -bottom-5 left-0 text-red-600 text-xs font-semibold flex items-center gap-1">
+                                        <i className="fas fa-exclamation-circle"></i>
+                                        {errors.confirmPassword}
+                                    </span>
+                                )}
+                                {touched.confirmPassword && !errors.confirmPassword && formData.confirmPassword && (
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                                        <i className="fas fa-check-circle"></i>
+                                    </span>
                                 )}
                             </div>
                         </div>
@@ -215,32 +288,61 @@ const SignupOwner = () => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder=" "
-                                    className="peer w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)] focus:outline-none"
+                                    className={`peer w-full px-3 py-2.5 border-2 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:outline-none ${
+                                        touched.username && errors.username
+                                            ? 'border-red-500 bg-red-50'
+                                            : 'border-gray-300 focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)]'
+                                    }`}
                                 />
-                                <label className="absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm text-gray-600 transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:text-teal-500 peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:text-teal-500 peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5">
+                                <label className={`absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5 ${
+                                    touched.username && errors.username ? 'text-red-600' : 'text-gray-600 peer-focus:text-teal-500 peer-[:not(:placeholder-shown)]:text-teal-500'
+                                }`}>
                                     Username<span className="text-red-500">*</span>
                                 </label>
                                 {touched.username && errors.username && (
-                                    <span className="absolute -bottom-5 left-0 text-red-500 text-xs">{errors.username}</span>
+                                    <span className="absolute -bottom-5 left-0 text-red-600 text-xs font-semibold flex items-center gap-1">
+                                        <i className="fas fa-exclamation-circle"></i>
+                                        {errors.username}
+                                    </span>
+                                )}
+                                {touched.username && !errors.username && formData.username && (
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                                        <i className="fas fa-check-circle"></i>
+                                    </span>
                                 )}
                             </div>
 
                             {/* Phone Number */}
                             <div className="relative mt-6 mb-4">
                                 <input
-                                    type="text"
+                                    type="tel"
                                     name="phoneNumber"
                                     value={formData.phoneNumber}
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder=" "
-                                    className="peer w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)] focus:outline-none"
+                                    maxLength="10"
+                                    className={`peer w-full px-3 py-2.5 border-2 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:outline-none ${
+                                        touched.phoneNumber && errors.phoneNumber
+                                            ? 'border-red-500 bg-red-50'
+                                            : 'border-gray-300 focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)]'
+                                    }`}
                                 />
-                                <label className="absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm text-gray-600 transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:text-teal-500 peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:text-teal-500 peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5">
+                                <label className={`absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5 ${
+                                    touched.phoneNumber && errors.phoneNumber ? 'text-red-600' : 'text-gray-600 peer-focus:text-teal-500 peer-[:not(:placeholder-shown)]:text-teal-500'
+                                }`}>
                                     Phone Number<span className="text-red-500">*</span>
                                 </label>
                                 {touched.phoneNumber && errors.phoneNumber && (
-                                    <span className="absolute -bottom-5 left-0 text-red-500 text-xs">{errors.phoneNumber}</span>
+                                    <span className="absolute -bottom-5 left-0 text-red-600 text-xs font-semibold flex items-center gap-1">
+                                        <i className="fas fa-exclamation-circle"></i>
+                                        {errors.phoneNumber}
+                                    </span>
+                                )}
+                                {touched.phoneNumber && !errors.phoneNumber && formData.phoneNumber && (
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                                        <i className="fas fa-check-circle"></i>
+                                    </span>
                                 )}
                             </div>
 
@@ -253,13 +355,27 @@ const SignupOwner = () => {
                                     onChange={handleChange}
                                     onBlur={handleBlur}
                                     placeholder=" "
-                                    className="peer w-full px-3 py-2.5 border-2 border-gray-300 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)] focus:outline-none"
+                                    className={`peer w-full px-3 py-2.5 border-2 rounded-lg mt-4 text-sm transition-all bg-gray-50 focus:bg-white focus:outline-none ${
+                                        touched.fullName && errors.fullName
+                                            ? 'border-red-500 bg-red-50'
+                                            : 'border-gray-300 focus:border-teal-500 focus:shadow-[0_0_8px_rgba(95,158,160,0.1)]'
+                                    }`}
                                 />
-                                <label className="absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm text-gray-600 transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:text-teal-500 peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:text-teal-500 peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5">
+                                <label className={`absolute left-3 top-1/2 -translate-y-1/2 bg-transparent px-1 text-sm transition-all pointer-events-none peer-focus:top-4 peer-focus:left-2.5 peer-focus:-translate-y-1/2 peer-focus:scale-90 peer-focus:bg-white peer-focus:z-10 peer-focus:px-1.5 peer-[:not(:placeholder-shown)]:top-4 peer-[:not(:placeholder-shown)]:left-2.5 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:scale-90 peer-[:not(:placeholder-shown)]:bg-white peer-[:not(:placeholder-shown)]:z-10 peer-[:not(:placeholder-shown)]:px-1.5 ${
+                                    touched.fullName && errors.fullName ? 'text-red-600' : 'text-gray-600 peer-focus:text-teal-500 peer-[:not(:placeholder-shown)]:text-teal-500'
+                                }`}>
                                     Full Name<span className="text-red-500">*</span>
                                 </label>
                                 {touched.fullName && errors.fullName && (
-                                    <span className="absolute -bottom-5 left-0 text-red-500 text-xs">{errors.fullName}</span>
+                                    <span className="absolute -bottom-5 left-0 text-red-600 text-xs font-semibold flex items-center gap-1">
+                                        <i className="fas fa-exclamation-circle"></i>
+                                        {errors.fullName}
+                                    </span>
+                                )}
+                                {touched.fullName && !errors.fullName && formData.fullName && (
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">
+                                        <i className="fas fa-check-circle"></i>
+                                    </span>
                                 )}
                             </div>
                         </div>
