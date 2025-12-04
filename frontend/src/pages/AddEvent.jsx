@@ -25,12 +25,149 @@ const AddEvent = () => {
     });
     const [permissionDocument, setPermissionDocument] = useState(null);
     const [documentPreview, setDocumentPreview] = useState('');
+    const [errors, setErrors] = useState({});
+    const [touched, setTouched] = useState({});
+
+    // Validation functions
+    const validateField = (name, value) => {
+        let error = '';
+
+        switch (name) {
+            case 'title':
+                if (!value.trim()) {
+                    error = 'Title is required';
+                } else if (value.trim().length < 5) {
+                    error = 'Title must be at least 5 characters';
+                } else if (value.length > 100) {
+                    error = 'Title must not exceed 100 characters';
+                }
+                break;
+
+            case 'category':
+                if (!value) {
+                    error = 'Category is required';
+                }
+                break;
+
+            case 'description':
+                if (!value.trim()) {
+                    error = 'Description is required';
+                } else if (value.trim().length < 20) {
+                    error = 'Description must be at least 20 characters';
+                } else if (value.length > 1000) {
+                    error = 'Description must not exceed 1000 characters';
+                }
+                break;
+
+            case 'venue':
+                if (!value.trim()) {
+                    error = 'Venue name is required';
+                } else if (value.trim().length < 3) {
+                    error = 'Venue name must be at least 3 characters';
+                }
+                break;
+
+            case 'address':
+                if (!value.trim()) {
+                    error = 'Address is required';
+                } else if (value.trim().length < 10) {
+                    error = 'Address must be at least 10 characters';
+                }
+                break;
+
+            case 'city':
+                if (!value.trim()) {
+                    error = 'City is required';
+                } else if (!/^[a-zA-Z\s]+$/.test(value.trim())) {
+                    error = 'City should only contain letters';
+                }
+                break;
+
+            case 'entryFee':
+                const fee = parseFloat(value);
+                if (isNaN(fee) || fee < 0) {
+                    error = 'Entry fee must be 0 or greater';
+                } else if (fee > 10000) {
+                    error = 'Entry fee seems too high (max: ₹10,000)';
+                }
+                break;
+
+            case 'maxAttendees':
+                const attendees = parseInt(value);
+                if (!value || isNaN(attendees)) {
+                    error = 'Maximum attendees is required';
+                } else if (attendees < 1) {
+                    error = 'Must allow at least 1 attendee';
+                } else if (attendees > 1000) {
+                    error = 'Maximum attendees cannot exceed 1000';
+                }
+                break;
+
+            case 'contactEmail':
+                if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    error = 'Enter a valid email address';
+                }
+                break;
+
+            case 'contactPhone':
+                if (value && !/^[0-9]{10}$/.test(value)) {
+                    error = 'Phone number must be exactly 10 digits';
+                }
+                break;
+
+            case 'eventDate':
+                if (!value) {
+                    error = 'Event date is required';
+                }
+                break;
+
+            case 'startTime':
+                if (!value) {
+                    error = 'Start time is required';
+                }
+                break;
+
+            case 'endTime':
+                if (!value) {
+                    error = 'End time is required';
+                }
+                break;
+
+            default:
+                break;
+        }
+
+        return error;
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
+        }));
+
+        // Validate on change if field has been touched
+        if (touched[name]) {
+            const error = validateField(name, value);
+            setErrors(prev => ({
+                ...prev,
+                [name]: error
+            }));
+        }
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        setTouched(prev => ({
+            ...prev,
+            [name]: true
+        }));
+
+        const error = validateField(name, value);
+        setErrors(prev => ({
+            ...prev,
+            [name]: error
         }));
     };
 
@@ -92,22 +229,49 @@ const AddEvent = () => {
         e.preventDefault();
         setError('');
 
+        // Validate all fields
+        const newErrors = {};
+        Object.keys(formData).forEach(field => {
+            const error = validateField(field, formData[field]);
+            if (error) {
+                newErrors[field] = error;
+            }
+        });
+
         // Validate date
         const dateError = validateDate(formData.eventDate);
         if (dateError) {
-            setError(dateError);
-            return;
+            newErrors.eventDate = dateError;
         }
 
         // Validate time
         if (formData.startTime >= formData.endTime) {
-            setError('End time must be after start time');
-            return;
+            newErrors.endTime = 'End time must be after start time';
         }
 
         // Validate permission document
         if (!permissionDocument) {
             setError('Government permission letter is required');
+            setErrors(newErrors);
+            // Mark all fields as touched
+            const allTouched = {};
+            Object.keys(formData).forEach(key => {
+                allTouched[key] = true;
+            });
+            setTouched(allTouched);
+            return;
+        }
+
+        // Check if there are any errors
+        if (Object.keys(newErrors).length > 0) {
+            setError('Please fix all validation errors before submitting');
+            setErrors(newErrors);
+            // Mark all fields as touched
+            const allTouched = {};
+            Object.keys(formData).forEach(key => {
+                allTouched[key] = true;
+            });
+            setTouched(allTouched);
             return;
         }
 
@@ -189,11 +353,24 @@ const AddEvent = () => {
                                     name="title"
                                     value={formData.title}
                                     onChange={handleInputChange}
+                                    onBlur={handleBlur}
                                     required
                                     maxLength="100"
                                     placeholder="e.g., Dog Training Workshop"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                        touched.title && errors.title
+                                            ? 'border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300 focus:ring-teal-500'
+                                    }`}
                                 />
+                                <div className="flex justify-between items-center mt-1">
+                                    {touched.title && errors.title && (
+                                        <small className="text-red-500">{errors.title}</small>
+                                    )}
+                                    <small className={`${touched.title && errors.title ? 'ml-auto' : ''} text-gray-500`}>
+                                        {formData.title.length} / 100
+                                    </small>
+                                </div>
                             </div>
 
                             <div className="mb-4">
@@ -205,8 +382,13 @@ const AddEvent = () => {
                                     name="category"
                                     value={formData.category}
                                     onChange={handleInputChange}
+                                    onBlur={handleBlur}
                                     required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                        touched.category && errors.category
+                                            ? 'border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300 focus:ring-teal-500'
+                                    }`}
                                 >
                                     <option value="">Select Category</option>
                                     <option value="Workshop">Workshop</option>
@@ -214,6 +396,9 @@ const AddEvent = () => {
                                     <option value="Pet Show">Pet Show</option>
                                     <option value="Competition">Competition</option>
                                 </select>
+                                {touched.category && errors.category && (
+                                    <small className="text-red-500 block mt-1">{errors.category}</small>
+                                )}
                             </div>
 
                             <div className="mb-4">
@@ -225,13 +410,25 @@ const AddEvent = () => {
                                     name="description"
                                     value={formData.description}
                                     onChange={handleInputChange}
+                                    onBlur={handleBlur}
                                     required
                                     maxLength="1000"
                                     rows="5"
                                     placeholder="Describe your event..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                        touched.description && errors.description
+                                            ? 'border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300 focus:ring-teal-500'
+                                    }`}
                                 />
-                                <small className="text-gray-500">{formData.description.length} / 1000</small>
+                                <div className="flex justify-between items-center mt-1">
+                                    {touched.description && errors.description && (
+                                        <small className="text-red-500">{errors.description}</small>
+                                    )}
+                                    <small className={`${touched.description && errors.description ? 'ml-auto' : ''} text-gray-500`}>
+                                        {formData.description.length} / 1000
+                                    </small>
+                                </div>
                             </div>
                         </div>
 
@@ -282,15 +479,24 @@ const AddEvent = () => {
                                         name="eventDate"
                                         value={formData.eventDate}
                                         onChange={handleInputChange}
+                                        onBlur={handleBlur}
                                         min={getMinDate()}
                                         max={getMaxDate()}
                                         required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                            touched.eventDate && errors.eventDate
+                                                ? 'border-red-500 focus:ring-red-500'
+                                                : 'border-gray-300 focus:ring-teal-500'
+                                        }`}
                                     />
-                                    <div className="mt-1 text-xs text-blue-600 flex items-center gap-1">
-                                        <FaInfoCircle />
-                                        Event must be scheduled 1-6 months in advance
-                                    </div>
+                                    {touched.eventDate && errors.eventDate ? (
+                                        <small className="text-red-500 block mt-1">{errors.eventDate}</small>
+                                    ) : (
+                                        <div className="mt-1 text-xs text-blue-600 flex items-center gap-1">
+                                            <FaInfoCircle />
+                                            Event must be scheduled 1-6 months in advance
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -303,9 +509,17 @@ const AddEvent = () => {
                                         name="startTime"
                                         value={formData.startTime}
                                         onChange={handleInputChange}
+                                        onBlur={handleBlur}
                                         required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                            touched.startTime && errors.startTime
+                                                ? 'border-red-500 focus:ring-red-500'
+                                                : 'border-gray-300 focus:ring-teal-500'
+                                        }`}
                                     />
+                                    {touched.startTime && errors.startTime && (
+                                        <small className="text-red-500 block mt-1">{errors.startTime}</small>
+                                    )}
                                 </div>
 
                                 <div>
@@ -318,9 +532,17 @@ const AddEvent = () => {
                                         name="endTime"
                                         value={formData.endTime}
                                         onChange={handleInputChange}
+                                        onBlur={handleBlur}
                                         required
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                            touched.endTime && errors.endTime
+                                                ? 'border-red-500 focus:ring-red-500'
+                                                : 'border-gray-300 focus:ring-teal-500'
+                                        }`}
                                     />
+                                    {touched.endTime && errors.endTime && (
+                                        <small className="text-red-500 block mt-1">{errors.endTime}</small>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -341,10 +563,18 @@ const AddEvent = () => {
                                     name="venue"
                                     value={formData.venue}
                                     onChange={handleInputChange}
+                                    onBlur={handleBlur}
                                     required
                                     placeholder="e.g., City Park"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                        touched.venue && errors.venue
+                                            ? 'border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300 focus:ring-teal-500'
+                                    }`}
                                 />
+                                {touched.venue && errors.venue && (
+                                    <small className="text-red-500 block mt-1">{errors.venue}</small>
+                                )}
                             </div>
 
                             <div className="mb-4">
@@ -357,10 +587,18 @@ const AddEvent = () => {
                                     name="address"
                                     value={formData.address}
                                     onChange={handleInputChange}
+                                    onBlur={handleBlur}
                                     required
                                     placeholder="Street address"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                        touched.address && errors.address
+                                            ? 'border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300 focus:ring-teal-500'
+                                    }`}
                                 />
+                                {touched.address && errors.address && (
+                                    <small className="text-red-500 block mt-1">{errors.address}</small>
+                                )}
                             </div>
 
                             <div className="mb-4">
@@ -373,10 +611,18 @@ const AddEvent = () => {
                                     name="city"
                                     value={formData.city}
                                     onChange={handleInputChange}
+                                    onBlur={handleBlur}
                                     required
                                     placeholder="City name"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                        touched.city && errors.city
+                                            ? 'border-red-500 focus:ring-red-500'
+                                            : 'border-gray-300 focus:ring-teal-500'
+                                    }`}
                                 />
+                                {touched.city && errors.city && (
+                                    <small className="text-red-500 block mt-1">{errors.city}</small>
+                                )}
                             </div>
                         </div>
 
@@ -397,10 +643,18 @@ const AddEvent = () => {
                                         name="entryFee"
                                         value={formData.entryFee}
                                         onChange={handleInputChange}
+                                        onBlur={handleBlur}
                                         min="0"
                                         placeholder="0 for free"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                            touched.entryFee && errors.entryFee
+                                                ? 'border-red-500 focus:ring-red-500'
+                                                : 'border-gray-300 focus:ring-teal-500'
+                                        }`}
                                     />
+                                    {touched.entryFee && errors.entryFee && (
+                                        <small className="text-red-500 block mt-1">{errors.entryFee}</small>
+                                    )}
                                 </div>
 
                                 <div>
@@ -413,12 +667,20 @@ const AddEvent = () => {
                                         name="maxAttendees"
                                         value={formData.maxAttendees}
                                         onChange={handleInputChange}
+                                        onBlur={handleBlur}
                                         required
                                         min="1"
                                         max="1000"
                                         placeholder="e.g., 50"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                            touched.maxAttendees && errors.maxAttendees
+                                                ? 'border-red-500 focus:ring-red-500'
+                                                : 'border-gray-300 focus:ring-teal-500'
+                                        }`}
                                     />
+                                    {touched.maxAttendees && errors.maxAttendees && (
+                                        <small className="text-red-500 block mt-1">{errors.maxAttendees}</small>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -440,13 +702,22 @@ const AddEvent = () => {
                                         name="contactEmail"
                                         value={formData.contactEmail}
                                         onChange={handleInputChange}
+                                        onBlur={handleBlur}
                                         placeholder="your.email@example.com (optional)"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                            touched.contactEmail && errors.contactEmail
+                                                ? 'border-red-500 focus:ring-red-500'
+                                                : 'border-gray-300 focus:ring-teal-500'
+                                        }`}
                                     />
-                                    <div className="mt-1 text-xs text-blue-600 flex items-center gap-1">
-                                        <FaInfoCircle />
-                                        Optional - Leave blank to use your account email
-                                    </div>
+                                    {touched.contactEmail && errors.contactEmail ? (
+                                        <small className="text-red-500 block mt-1">{errors.contactEmail}</small>
+                                    ) : (
+                                        <div className="mt-1 text-xs text-blue-600 flex items-center gap-1">
+                                            <FaInfoCircle />
+                                            Optional - Leave blank to use your account email
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -459,14 +730,23 @@ const AddEvent = () => {
                                         name="contactPhone"
                                         value={formData.contactPhone}
                                         onChange={handleInputChange}
+                                        onBlur={handleBlur}
                                         placeholder="9876543210 (optional)"
                                         pattern="[0-9]{10}"
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+                                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                            touched.contactPhone && errors.contactPhone
+                                                ? 'border-red-500 focus:ring-red-500'
+                                                : 'border-gray-300 focus:ring-teal-500'
+                                        }`}
                                     />
-                                    <div className="mt-1 text-xs text-blue-600 flex items-center gap-1">
-                                        <FaInfoCircle />
-                                        Optional - Leave blank to use your account phone
-                                    </div>
+                                    {touched.contactPhone && errors.contactPhone ? (
+                                        <small className="text-red-500 block mt-1">{errors.contactPhone}</small>
+                                    ) : (
+                                        <div className="mt-1 text-xs text-blue-600 flex items-center gap-1">
+                                            <FaInfoCircle />
+                                            Optional - Leave blank to use your account phone
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
