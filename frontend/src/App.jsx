@@ -41,6 +41,7 @@ import About from './pages/About';
 import SearchResults from './pages/SearchResults';
 import AdminDashboard from './pages/AdminDashboard';
 import LostAndFound from './pages/LostAndFound';
+import LostPetDetail from './pages/LostPetDetail';
 import Signup from './pages/Signup';
 import SignupOwner from './pages/SignupOwner';
 import SignupSeller from './pages/SignupSeller';
@@ -116,6 +117,7 @@ function App() {
                             
                             {/* Lost & Found Routes */}
                             <Route path="/lost-found" element={<LostAndFound />} />
+                            <Route path="/lost-found/:id" element={<LostPetDetail />} />
 
                             {/* Services Routes */}
                             <Route path="/services" element={<Services />} />

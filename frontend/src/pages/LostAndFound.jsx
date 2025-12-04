@@ -83,7 +83,7 @@ const LostAndFound = () => {
                 </div>
 
                 {/* Alert Banner */}
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r-lg">
+                <div className="bg-yellow-50 border-2 border-yellow-600 p-4 mb-8 rounded-lg">
                     <div className="flex items-center">
                         <i className="fas fa-exclamation-triangle text-yellow-400 text-xl mr-3"></i>
                         <div>
