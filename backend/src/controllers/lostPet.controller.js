@@ -152,48 +152,32 @@ exports.getAllLostPets = async (req, res) => {
 // Get single lost pet by ID
 exports.getLostPetById = async (req, res) => {
     try {
-        const lostPet = await LostPet.findById(req.params.id)
-            .populate('postedBy', 'fullName username email phone')
-            .populate('comments.user', 'fullName username');
+        const { id } = req.params;
+
+        const lostPet = await LostPet.findById(id)
+            .populate('postedBy', 'fullName email phone')
+            .populate('comments.user', 'fullName');
 
         if (!lostPet) {
             return res.status(404).json({
                 success: false,
-                message: 'Lost pet post not found'
+                error: 'Pet not found'
             });
         }
 
-        // Increment views
-        lostPet.views += 1;
+        // Increment view count
+        lostPet.views = (lostPet.views || 0) + 1;
         await lostPet.save();
-
-        // Calculate distance if user coordinates provided
-        const { latitude, longitude } = req.query;
-        let distance = null;
-
-        if (latitude && longitude) {
-            distance = calculateDistance(
-                parseFloat(latitude),
-                parseFloat(longitude),
-                lostPet.lastSeenLocation.coordinates.latitude,
-                lostPet.lastSeenLocation.coordinates.longitude
-            );
-            distance = Math.round(distance * 10) / 10;
-        }
 
         res.json({
             success: true,
-            data: {
-                ...lostPet.toObject(),
-                distance
-            }
+            data: lostPet
         });
-    } catch (err) {
-        console.error('Get lost pet error:', err);
+    } catch (error) {
+        console.error('Error fetching lost pet:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
-            error: err.message
+            error: 'Failed to fetch pet details'
         });
     }
 };
@@ -248,44 +232,83 @@ exports.updateLostPet = async (req, res) => {
     }
 };
 
-// Update status (mark as found/reunited)
-exports.updateStatus = async (req, res) => {
+// Get lost pet image
+exports.getLostPetImage = async (req, res) => {
     try {
-        const { status } = req.body;
-        const lostPet = await LostPet.findById(req.params.id);
+        const { id, index } = req.params;
+        const imageIndex = parseInt(index);
 
-        if (!lostPet) {
+        const lostPet = await LostPet.findById(id);
+        
+        if (!lostPet || !lostPet.images || !lostPet.images[imageIndex]) {
             return res.status(404).json({
                 success: false,
-                message: 'Lost pet post not found'
+                error: 'Image not found'
             });
         }
 
-        // Check ownership
-        if (lostPet.postedBy.toString() !== req.user._id.toString()) {
+        const image = lostPet.images[imageIndex];
+        
+        // If image has binary data
+        if (image.data && image.contentType) {
+            res.set('Content-Type', image.contentType);
+            return res.send(image.data);
+        }
+        
+        // If image has URL
+        if (image.url) {
+            return res.redirect(image.url);
+        }
+        
+        res.status(404).json({
+            success: false,
+            error: 'Image data not available'
+        });
+    } catch (error) {
+        console.error('Error fetching image:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch image'
+        });
+    }
+};
+
+// Update status (mark as found/reunited)
+exports.updateStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const userId = req.session.userId;
+
+        const lostPet = await LostPet.findById(id);
+        
+        if (!lostPet) {
+            return res.status(404).json({
+                success: false,
+                error: 'Pet not found'
+            });
+        }
+
+        // Check if user is the owner
+        if (lostPet.postedBy.toString() !== userId) {
             return res.status(403).json({
                 success: false,
-                message: 'Not authorized to update this post'
+                error: 'Not authorized to update this post'
             });
         }
 
         lostPet.status = status;
-        if (status === 'reunited') {
-            lostPet.isActive = false;
-        }
-
         await lostPet.save();
 
         res.json({
             success: true,
-            message: `Status updated to ${status}`,
             data: lostPet
         });
-    } catch (err) {
-        console.error('Update status error:', err);
-        res.status(400).json({
+    } catch (error) {
+        console.error('Error updating status:', error);
+        res.status(500).json({
             success: false,
-            message: err.message
+            error: 'Failed to update status'
         });
     }
 };
@@ -293,37 +316,39 @@ exports.updateStatus = async (req, res) => {
 // Add comment
 exports.addComment = async (req, res) => {
     try {
+        const { id } = req.params;
         const { message } = req.body;
-        const lostPet = await LostPet.findById(req.params.id);
+        const userId = req.session.userId;
 
+        const lostPet = await LostPet.findById(id);
+        
         if (!lostPet) {
             return res.status(404).json({
                 success: false,
-                message: 'Lost pet post not found'
+                error: 'Pet not found'
             });
         }
 
         lostPet.comments.push({
-            user: req.user._id,
+            user: userId,
             message,
             createdAt: new Date()
         });
 
         await lostPet.save();
 
-        const populatedLostPet = await LostPet.findById(req.params.id)
-            .populate('comments.user', 'fullName username');
+        // Populate the new comment
+        await lostPet.populate('comments.user', 'fullName');
 
         res.json({
             success: true,
-            message: 'Comment added successfully',
-            data: populatedLostPet.comments
+            data: lostPet
         });
-    } catch (err) {
-        console.error('Add comment error:', err);
-        res.status(400).json({
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).json({
             success: false,
-            message: err.message
+            error: 'Failed to add comment'
         });
     }
 };
@@ -382,25 +407,5 @@ exports.getUserLostPets = async (req, res) => {
             message: 'Server error',
             error: err.message
         });
-    }
-};
-
-// Get lost pet image
-exports.getLostPetImage = async (req, res) => {
-    try {
-        const lostPet = await LostPet.findById(req.params.id);
-        const imageIndex = parseInt(req.params.index);
-
-        if (!lostPet || !lostPet.images[imageIndex]) {
-            return res.status(404).send('Image not found');
-        }
-
-        const image = lostPet.images[imageIndex];
-        res.set('Content-Type', image.contentType);
-        res.set('Cache-Control', 'public, max-age=86400');
-        res.send(image.data);
-    } catch (err) {
-        console.error('Get image error:', err);
-        res.status(500).send('Server error');
     }
 };
