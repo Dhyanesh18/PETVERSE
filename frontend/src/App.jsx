@@ -46,6 +46,8 @@ import Signup from './pages/Signup';
 import SignupOwner from './pages/SignupOwner';
 import SignupSeller from './pages/SignupSeller';
 import SignupServiceProvider from './pages/SignupServiceProvider';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 // Component that initializes Redux state
 function AppInitializer({ children }) {
@@ -104,6 +106,8 @@ function App() {
 
                             {/* Public Routes */}
                             <Route path="/" element={<Navigate to="/home" replace />} />
+                            <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                            <Route path="/privacy-policy"element={<PrivacyPolicy />} />
 
                             {/* Public Routes - No Authentication Required */}
                             <Route path="/home" element={<Homepage />} />

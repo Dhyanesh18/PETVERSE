@@ -392,13 +392,20 @@ const SignupOwner = () => {
                                 className="w-4 h-4 accent-teal-600"
                             />
                             I agree to the{' '}
-                            <a href="#" className="text-teal-600 no-underline font-medium hover:underline">
-                                Terms and Conditions
-                            </a>{' '}
+                            <Link
+                                to="/terms-and-conditions"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className='text-teal-600 no-underline font-medium hover:underline'
+                            >Terms and Conditions</Link>
+                            {' '}
                             and{' '}
-                            <a href="#" className="text-teal-600 no-underline font-medium hover:underline">
-                                Privacy Policy
-                            </a>
+                            <Link
+                                to="/privacy-policy"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className='text-teal-600 no-underline font-medium hover:underline'
+                            >Privacy Policy</Link>
                         </label>
                     </div>
                     {errors.agree && <span className="text-red-500 text-xs ml-2">{errors.agree}</span>}
