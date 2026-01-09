@@ -160,6 +160,9 @@ router.get('/', async (req, res) => {
 // Get single event details
 router.get('/:id', async (req, res) => {
     try {
+        console.log('GET /api/events/:id - req.user:', req.user ? req.user._id : 'null');
+        console.log('GET /api/events/:id - req.session.userId:', req.session.userId);
+        
         const event = await Event.findById(req.params.id)
             .populate('organizer', 'fullName email phone')
             .populate('attendees.user', 'fullName email');
@@ -172,6 +175,8 @@ router.get('/:id', async (req, res) => {
         }
 
         const isRegistered = req.user ? event.isUserRegistered(req.user._id) : false;
+        console.log('isUserRegistered result:', isRegistered);
+        
         const availableSlots = event.maxAttendees - event.attendees.length;
         const isFull = event.attendees.length >= event.maxAttendees;
 

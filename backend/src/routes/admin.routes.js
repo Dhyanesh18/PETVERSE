@@ -745,4 +745,171 @@ router.get('/user-document/:userId', adminAuth, async (req, res) => {
     }
 });
 
+// Admin routes for pet, product, and service approval/rejection/deletion
+// Approve pet
+router.post('/approve/pet/:id', adminAuth, async (req, res) => {
+    try {
+        const Pet = require('../models/pets');
+        const pet = await Pet.findById(req.params.id);
+        if (!pet) {
+            return res.status(404).json({ success: false, error: 'Pet not found' });
+        }
+        pet.isApproved = true;
+        pet.approvedAt = new Date();
+        pet.approvedBy = req.user._id;
+        await pet.save();
+        res.json({ success: true, message: 'Pet approved successfully', data: pet });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Reject pet
+router.post('/reject/pet/:id', adminAuth, async (req, res) => {
+    try {
+        const Pet = require('../models/pets');
+        const pet = await Pet.findById(req.params.id);
+        if (!pet) {
+            return res.status(404).json({ success: false, error: 'Pet not found' });
+        }
+        pet.isApproved = false;
+        pet.rejectionReason = req.body.reason || 'Not specified';
+        pet.rejectedAt = new Date();
+        pet.rejectedBy = req.user._id;
+        await pet.save();
+        res.json({ success: true, message: 'Pet rejected successfully', data: pet });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete pet
+router.delete('/pet/:id', adminAuth, async (req, res) => {
+    try {
+        const Pet = require('../models/pets');
+        const pet = await Pet.findByIdAndDelete(req.params.id);
+        if (!pet) {
+            return res.status(404).json({ success: false, error: 'Pet not found' });
+        }
+        res.json({ success: true, message: 'Pet deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Approve product
+router.post('/approve/product/:id', adminAuth, async (req, res) => {
+    try {
+        const Product = require('../models/products');
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ success: false, error: 'Product not found' });
+        }
+        product.isApproved = true;
+        product.approvedAt = new Date();
+        product.approvedBy = req.user._id;
+        await product.save();
+        res.json({ success: true, message: 'Product approved successfully', data: product });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Reject product
+router.post('/reject/product/:id', adminAuth, async (req, res) => {
+    try {
+        const Product = require('../models/products');
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ success: false, error: 'Product not found' });
+        }
+        product.isApproved = false;
+        product.rejectionReason = req.body.reason || 'Not specified';
+        product.rejectedAt = new Date();
+        product.rejectedBy = req.user._id;
+        await product.save();
+        res.json({ success: true, message: 'Product rejected successfully', data: product });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete product
+router.delete('/product/:id', adminAuth, async (req, res) => {
+    try {
+        const Product = require('../models/products');
+        const product = await Product.findByIdAndDelete(req.params.id);
+        if (!product) {
+            return res.status(404).json({ success: false, error: 'Product not found' });
+        }
+        res.json({ success: true, message: 'Product deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Approve service
+router.post('/approve/service/:id', adminAuth, async (req, res) => {
+    try {
+        const ServiceProvider = require('../models/serviceProvider');
+        const service = await ServiceProvider.findById(req.params.id);
+        if (!service) {
+            return res.status(404).json({ success: false, error: 'Service not found' });
+        }
+        service.isApproved = true;
+        service.approvedAt = new Date();
+        service.approvedBy = req.user._id;
+        await service.save();
+        res.json({ success: true, message: 'Service approved successfully', data: service });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Reject service
+router.post('/reject/service/:id', adminAuth, async (req, res) => {
+    try {
+        const ServiceProvider = require('../models/serviceProvider');
+        const service = await ServiceProvider.findById(req.params.id);
+        if (!service) {
+            return res.status(404).json({ success: false, error: 'Service not found' });
+        }
+        service.isApproved = false;
+        service.rejectionReason = req.body.reason || 'Not specified';
+        service.rejectedAt = new Date();
+        service.rejectedBy = req.user._id;
+        await service.save();
+        res.json({ success: true, message: 'Service rejected successfully', data: service });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete service
+router.delete('/service/:id', adminAuth, async (req, res) => {
+    try {
+        const ServiceProvider = require('../models/serviceProvider');
+        const service = await ServiceProvider.findByIdAndDelete(req.params.id);
+        if (!service) {
+            return res.status(404).json({ success: false, error: 'Service not found' });
+        }
+        res.json({ success: true, message: 'Service deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// Delete user
+router.delete('/user/:userId', adminAuth, async (req, res) => {
+    try {
+        const user = await User.findByIdAndDelete(req.params.userId);
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
+        res.json({ success: true, message: 'User deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 module.exports = router;
