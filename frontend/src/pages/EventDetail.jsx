@@ -36,7 +36,9 @@ const EventDetail = () => {
     });
 
     useEffect(() => {
-        fetchEventDetails();
+        if (id) {
+            fetchEventDetails();
+        }
     }, [id]);
 
     useEffect(() => {
@@ -49,6 +51,9 @@ const EventDetail = () => {
             setLoading(true);
             const response = await getEventById(id);
             const data = response.data.data;
+            
+            console.log('Event details response:', data);
+            console.log('isRegistered:', data.isRegistered);
             
             setEvent(data.event);
             setIsRegistered(data.isRegistered);
@@ -289,6 +294,12 @@ const EventDetail = () => {
                                 <div className="text-center py-8">
                                     <FaCheckCircle className="text-5xl text-green-500 mx-auto mb-4" />
                                     <p className="text-gray-800 font-semibold mb-4">You are registered for this event!</p>
+                                    <button
+                                        onClick={() => navigate(`/events/${id}/ticket`)}
+                                        className="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-4 rounded-md transition duration-200 mb-3"
+                                    >
+                                        View Ticket
+                                    </button>
                                     <button
                                         onClick={handleUnregister}
                                         disabled={submitting}
