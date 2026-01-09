@@ -838,7 +838,7 @@ const OwnerDashboard = () => {
                                     <td>{event.startTime} - {event.endTime}</td>
                                     <td>{event.city}</td>
                                     <td>
-                                        <a href={`/events/${event.id}/ticket`} className="btn btn-secondary">
+                                        <a href={`/events/${event._id}/ticket`} className="btn btn-secondary">
                                             View Ticket
                                         </a>
                                     </td>
