@@ -140,7 +140,6 @@ const sendOTPEmail = async (email, otp, purpose = 'login') => {
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('Error sending email:', error);
-        // Return success even if email fails (for development without email setup)
         return { success: true, error: error.message, devMode: true };
     }
 };

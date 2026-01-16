@@ -1054,6 +1054,105 @@ router.get('/products/:productId/edit', isAuthenticated, isSeller, async (req, r
     }
 });
 
+// POST route for editing product (handles form submission from edit-product.ejs)
+router.post('/products/:productId/edit', isAuthenticated, isSeller, upload.array('images', 5), async (req, res) => {
+    try {
+        const { name, description, price, category, stock, brand, discount, keepImages } = req.body;
+        
+        console.log('Updating product via POST:', req.params.productId);
+        console.log('Stock value received:', stock);
+        console.log('New files uploaded:', req.files?.length || 0);
+
+        const product = await Product.findOne({
+            _id: req.params.productId,
+            seller: req.user._id
+        });
+
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                error: 'Product not found'
+            });
+        }
+
+        // Update basic fields
+        if (name) product.name = name.trim();
+        if (description) product.description = description.trim();
+        if (price) product.price = parseFloat(price);
+        if (category) product.category = category.trim();
+        if (brand) product.brand = brand.trim();
+        if (discount !== undefined) product.discount = parseFloat(discount) || 0;
+        if (stock !== undefined && stock !== '') {
+            product.stock = parseInt(stock, 10);
+            console.log('Updated stock to:', product.stock);
+        }
+
+        // Handle image deletions based on keepImages array
+        if (keepImages) {
+            const keepImagesArray = Array.isArray(keepImages) ? keepImages : [keepImages];
+            const newImages = [];
+            product.images.forEach((image, index) => {
+                if (keepImagesArray[index] === 'true') {
+                    newImages.push(image);
+                }
+            });
+            product.images = newImages;
+        }
+
+        // Add new images as binary data
+        if (req.files && req.files.length > 0) {
+            const newImages = [];
+            
+            for (const file of req.files) {
+                if (product.images.length + newImages.length >= 5) break; // Max 5 images
+                
+                const imageData = {
+                    data: fs.readFileSync(file.path),
+                    contentType: file.mimetype,
+                    filename: file.filename
+                };
+                newImages.push(imageData);
+                
+                // Delete temporary file after reading
+                fs.unlinkSync(file.path);
+            }
+            
+            product.images = [...product.images, ...newImages];
+        }
+
+        await product.save();
+
+        console.log('Product updated successfully:', product._id);
+        console.log('Final stock value:', product.stock);
+
+        res.json({
+            success: true,
+            message: 'Product updated successfully',
+            data: {
+                product: {
+                    _id: product._id,
+                    name: product.name,
+                    description: product.description,
+                    price: product.price,
+                    category: product.category,
+                    brand: product.brand,
+                    stock: product.stock,
+                    discount: product.discount,
+                    imageCount: product.images.length
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating product:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error updating product',
+            message: error.message
+        });
+    }
+});
+
 // Update product
 router.put('/products/:productId', isAuthenticated, isSeller, upload.array('newImages', 5), async (req, res) => {
     try {
