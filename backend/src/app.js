@@ -12,8 +12,8 @@ const app = express();
 const corsOptions = {
     origin: [
         process.env.FRONTEND_URL || 'http://localhost:3000', 
-        'http://localhost:3001', // Alternative port
-        'http://localhost:5173' // Vite dev server
+        'http://localhost:3001',
+        'http://localhost:5173'
     ],
     credentials: true, // Allow cookies/session
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
