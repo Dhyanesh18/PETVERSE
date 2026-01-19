@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PetVerse Seller Dashboard</title>
+    <link rel="stylesheet" href="/css/homepage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="icon" href="/images/dash/icon.jpg">
+    <link rel="stylesheet" href="/css/products.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <script src="/js/cart.js"></script>
+    <script src="/js/Products.js"></script>
+    <style>
+        :root {
+            /* Modern Color Palette */
+            --primary: rgb(0,180,180);
+            --primary-dark: teal;
+            --secondary: #10B981;
+            --accent: #F59E0B;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --success: #10B981;
+            --background: #F8FAFC;
+            --surface: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #4B5563;
+            --text-tertiary: #6B7280;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            
+            /* Border Radius */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-full: 9999px;
+        }
+
+        body {
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .dashboard-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header Styles */
+        .header {
+            background: var(--surface);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-title .petverse {
+            color: rgb(0,180,180); /* Purple color */
+            font-size: 1.6rem;
+        }
+
+        .header-title .dashboard-text {
+            color: teal;/* Teal color */
+            font-size: 1.6rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .user-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: teal;
+            color: white;
+            border-radius: 9999px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgb(0,180,180);
+            transform: translateY(-1px);
+        }
+
+        .logout-btn {
+            background: #EF4444;
+        }
+
+        .logout-btn:hover {
+            background: #DC2626;
+        }
+
+        .welcome-text {
+            color: #374151;
+            font-weight: 500;
+        }
+
+        .back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background-color: #4F46E5;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .back-home:hover {
+            background-color: #4338CA;
+        }
+
+        .back-home i {
+            margin-right: 4px;
+        }
+
+        /* Modern Color Palette */
+        --primary: #4F46E5;
+        --primary-dark: #4338CA;
+        --secondary: #10B981;
+        --accent: #F59E0B;
+        --danger: #EF4444;
+        --warning: #F59E0B;
+        --success: #10B981;
+        --background: #F3F4F6;
+        --surface: #FFFFFF;
+        --text-primary: #111827;
+        --text-secondary: #4B5563;
+        --text-tertiary: #6B7280;
+        
+        /* Spacing */
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        
+        /* Shadows */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        
+        /* Border Radius */
+        --radius-sm: 0.375rem;
+        --radius-md: 0.5rem;
+        --radius-lg: 0.75rem;
+        --radius-full: 9999px;
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .dashboard-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: var(--spacing-md);
+        }
+
+        /* Modern Dashboard Header */
+        .dashboard-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            margin: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(to right, #ffffff, #e2e8f0);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .welcome-text {
+            font-size: 1.2rem;
+            color: #e2e8f0;
+        }
+
+        .back-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-home:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .back-home i {
+            font-size: 1.2rem;
+        }
+
+        /* Stats Grid */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #4F46E5, #6366F1);
+            border-radius: 50%;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon i {
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Content Sections */
+        .content-section {
+            background: var(--surface);
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: var(--spacing-xl);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: var(--spacing-lg);
+        }
+
+        .data-table th {
+            background-color: rgba(243, 244, 246, 0.5);
+            padding: var(--spacing-md);
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .data-table td {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .data-table tr:hover {
+            background-color: rgba(243, 244, 246, 0.3);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-full);
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .status-badge.pending {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-badge.processing {
+            background-color: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+        }
+
+        .status-badge.delivered {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-badge.cancelled {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--surface);
+            margin: 5% auto;
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: var(--text-primary);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+            .product-image {
+                height: 200px !important;
+            }
+            
+                .product-image {
+            position: relative;
+            width: 100%;
+            padding-top: 0px !important;
+        }
+
+        .product-image-container {
+    position: relative;
+    padding-top: 60%; /* Reduced from 75% */
+    background: #f8f9fa;
+    max-height: 200px; /* Added max-height constraint */
+    overflow: hidden;
+}
+
+/* Make images fit better in the container */
+.product-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Compact product info section */
+.product-info {
+    padding: 0.75rem; /* Reduced from 1rem */
+}
+
+/* Adjust price and stock layout */
+.price-stock {
+    margin-bottom: 0.25rem; /* Reduced from 0.5rem */
+}
+
+/* Make product title more compact */
+.product-title {
+    font-size: 0.8125rem; /* Slightly smaller */
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+}
+
+/* Compact action buttons */
+.product-actions {
+    padding-top: 0.25rem;
+}
+
+/* For pet cards specifically */
+.product-card .product-image-container {
+    padding-top: 70%; /* Slightly taller aspect ratio for pets */
+}
+
+/* Pet details section */
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .product-image-container {
+        padding-top: 70%; /* Slightly taller on mobile */
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* More compact grid */
+        gap: 1rem; /* Smaller gap between items */
+    }
+}
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card, .content-section {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 1rem 0;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .product-image-container {
+            position: relative;
+            padding-top: 75%;
+            background: #f8f9fa;
+        }
+
+        .product-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .discount-tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #fef3c7;
+            color: #d97706;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-indicator.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-indicator.inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-details {
+            margin-bottom: 1rem;
+        }
+
+        .price-stock {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .price {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stock {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .stock.low-stock {
+            color: var(--danger);
+        }
+
+        .product-title {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .btn-icon:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            right: calc(100% + 8px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            animation: fadeIn 0.2s ease forwards;
+        }
+
+        .product-image-container img{
+            box-shadow: none;
+        }
+        .product-image-container {
+            border-radius: 10px;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        
+        .pet-card {
+            height: 360px;
+        }
+
+        .pet-title {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: black;
+        }
+
+        .pet-details{
+            display: flex;
+            gap: 120px;
+            margin-bottom: 0;
+        }
+
+        .pet-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 0.5rem;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .btn-edit {
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+        }
+
+        .btn-deactivate {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 640px) {
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+        }
+
+        /* Profile Section Styles */
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background-color: rgba(243, 244, 246, 0.5);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            background-color: rgba(243, 244, 246, 0.8);
+            transform: translateX(4px);
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary);
+            color: white;
+            border-radius: var(--radius-full);
+            font-size: 1.2rem;
+        }
+
+        .info-content {
+            flex: 1;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            min-width: 300px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notification.success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .notification.error {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Navigation Header -->
+    <%- include('partials/header') %>
+
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1 class="header-title">
+                <span class="petverse">PetVerse</span>
+                <span class="dashboard-text">Seller Dashboard</span>
+            </h1>
+            <div class="user-info">
+                <span class="user-name">Welcome, <%= user.name %></span>
+                <form action="/logout" method="POST" style="display: inline;">
+                    <button type="submit" class="nav-btn logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stat-value"><%= products.length %></div>
+                <div class="stat-label">Total Products</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-rupee-sign"></i>
+                </div>
+                <div class="stat-value">₹<%= totalSales.toLocaleString() %></div>
+                <div class="stat-label">Total Sales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-value"><%= pendingOrders %></div>
+                <div class="stat-label">Pending Orders</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-value"><%= rating %>/5</div>
+                <div class="stat-label">Rating</div>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- Profile Information Section -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-user-circle"></i>
+                        Profile Information
+                    </h2>
+                </div>
+                <div class="profile-grid">
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Email Address</div>
+                                <div class="info-value">
+                                    <%= user.email || seller.email || 'N/A' %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Phone Number</div>
+                                <div class="info-value">
+                                    <%= user.phone || seller.phone || 'N/A' %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Business Name</div>
+                                <div class="info-value">
+                                    <%= seller.businessName || 'N/A' %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Business Address</div>
+                                <div class="info-value">
+                                    <%= seller.businessAddress || 'N/A' %>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Average Rating</div>
+                                <div class="info-value">
+                                    <%= rating %>/5
+                                </div>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-label">Total Products</div>
+                                <div class="info-value">
+                                    <%= products.length %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-box"></i> Product Management</h2>
+                    <a href="/seller/products/add" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Product
+                    </a>
+                </div>
+                
+                <div class="products-grid">
+                    <% if(products && products.length > 0) { %>
+                        <% products.forEach(product => { %>
+                            <div class="product-card">
+                                <div class="product-image-container">
+                                    <img src="<%= product.image_url %>" alt="<%= product.title %>" class="product-image">
+                                    <% if(product.dis && product.dis !== '0%') { %>
+                                        <span class="discount-tag"><%= product.dis %> OFF</span>
+                                    <% } %>
+                                    <span class="status-indicator <%= product.status.toLowerCase() %>">
+                                        <i class="fas fa-circle"></i> <%= product.status %>
+                                    </span>
+                                </div>
+                                <div class="product-info">
+                                    <div class="product-details">
+                                        <div class="price-stock">
+                                            <span class="price">₹<%= product.price %></span>
+                                            <span class="stock <%= product.stock < 5 ? 'low-stock' : '' %>">
+                                                <%= product.stock %> units
+                                            </span>
+                                        </div>
+                                        <div class="product-title"><%= product.title %></div>
+                                    </div>
+                                    <div class="product-actions">
+                                        <button class="btn btn-icon btn-edit" data-tooltip="Edit Product" onclick="editProduct('<%= product._id %>')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-icon btn-deactivate" data-tooltip="<%= product.status === 'active' ? 'Deactivate' : 'Activate' %>" onclick="toggleProductStatus('<%= product._id %>')">
+                                            <i class="fas fa-power-off"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>No products found. Add your first product!</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-box"></i> Pet Management</h2>
+                    <a href="/seller/pets/add" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Pet
+                    </a>
+                </div>
+                
+                <div class="products-grid">
+                    <% if(pets && pets.length > 0) { %>
+                        <% pets.forEach(pet => { %>
+                            <div class="pet-card product-card">
+                                <div class="product-image-container">
+                                        <% if (pet.images && pet.images.length > 0) { %>
+                                        <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
+                                        alt="<%= pet.name %>" class="product-image">
+                    <% } else { %>
+                        <img src="/images/default-pet.jpg" alt="No image available" class="product-image">
+                    <% } %>
+                                </div>
+                                <div class="pet-info product-info">
+                                    <div class="pet-details product-details">
+                                        <div class="price-stock">
+                                            <span class="price">₹<%= pet.price %></span>
+                                        </div>
+                                        <div class="pet-dtls">
+                                            <div class="pet-title product-title"><%= pet.name %></div>
+                                            
+                                        </div>
+                                    </div>
+                                    <div class="pet-actions product-actions">
+                                        <div>
+                                            <div class="product-title"><%= pet.category %></div>
+                                            <div class="product-title"><%= pet.breed %></div>
+                                        </div>
+                                        <button class="btn btn-icon btn-edit" data-tooltip="Edit Pet" onclick="editPet('<%= pet._id %>')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>No products found. Add your first product!</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <h2><i class="fas fa-shopping-bag"></i> Recent Orders</h2>
+                <% if(sellerOrders && sellerOrders.length > 0) { %>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Products</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% sellerOrders.forEach(order => { %>
+                                <tr data-id="<%= order._id %>">
+                                    <td>#<%= order.orderNumber || order._id %></td>
+                                    <td><%= order.customer.name %></td>
+                                    <td>
+                                        <% order.items.filter(item => item.seller.toString() === user._id.toString()).forEach(item => { %>
+                                            <div class="order-item">
+                                                <%= item.product.name %> 
+                                                <span class="quantity">x<%= item.quantity %></span>
+                                            </div>
+                                        <% }); %>
+                                    </td>
+                                    <td>₹<%= order.total.toLocaleString() %></td>
+                                    <td>
+                                        <select class="order-status-select status-badge <%= order.status.toLowerCase() %>" style="border: none; background: transparent; font-weight: 500; cursor: pointer;">
+                                            <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                            <option value="processing" <%= order.status === 'processing' ? 'selected' : '' %>>Processing</option>
+                                            <option value="shipped" <%= order.status === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                                            <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                            <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                        </select>
+                                    </td>
+                                    <td class="actions">
+                                        <button class="btn btn-primary btn-sm update-order-status">
+                                            <i class="fas fa-save"></i> Update
+                                        </button>
+                                        <button class="btn btn-info btn-sm" onclick="viewOrderDetails('<%= order._id %>')">
+                                            <i class="fas fa-eye"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <div class="empty-state">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>No orders received yet.</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="content-section">
+                <h2><i class="fas fa-star"></i> Customer Reviews</h2>
+                <div class="reviews-grid">
+                    <% if(reviews && reviews.length > 0) { %>
+                        <% reviews.forEach(review => { %>
+                            <div class="review-card">
+                                <div class="review-header">
+                                    <div class="product-info">
+                                        <h4><%= review.product.name %></h4>
+                                        <div class="review-date">
+                                            <i class="far fa-calendar-alt"></i>
+                                            <%= new Date(review.createdAt).toLocaleDateString() %>
+                                        </div>
+                                    </div>
+                                    <div class="review-rating">
+                                        <% for(let i = 0; i < 5; i++) { %>
+                                            <i class="fas fa-star <%= i < review.rating ? 'filled' : '' %>"></i>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                <div class="review-content">
+                                    <p><%= review.comment %></p>
+                                </div>
+                                <% if(review.reply) { %>
+                                    <div class="review-reply">
+                                        <i class="fas fa-reply"></i>
+                                        <strong>Your Reply:</strong>
+                                        <p><%= review.reply %></p>
+                                    </div>
+                                <% } else { %>
+                                    <button class="btn btn-secondary btn-sm" onclick="replyToReview('<%= review._id %>')">
+                                        <i class="fas fa-reply"></i> Reply
+                                    </button>
+                                <% } %>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <i class="fas fa-comment-slash"></i>
+                            <p>No reviews received yet.</p>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reply to Review Modal -->
+    <div id="replyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-reply"></i> Reply to Review</h2>
+                <button type="button" class="close" onclick="closeReplyModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="replyForm" action="/seller/reviews/reply" method="POST">
+                <input type="hidden" id="reviewId" name="reviewId">
+                <div class="form-group">
+                    <label for="replyText">Your Reply</label>
+                    <textarea id="replyText" name="reply" rows="4" required
+                        placeholder="Write your response to the customer's review..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Submit Reply
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeReplyModal()">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <footer id="footer">
+        <div class="footer-container">
+            <div class="footer-logo">
+                <h2>PetVerse</h2>
+                <p>Your one-stop destination for all pet needs</p>
+            </div>
+            <div class="footer-links">
+                <h3>Quick Links</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Shop</a></li>
+                    <li><a href="#">Services</a></li>
+                    <li><a href="#">Events</a></li>
+                    <li><a href="#">Contact Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-social">
+                <h3>Follow Us</h3>
+                <a href="https://facebook.com" target="_blank" class="social-icon">Facebook</a>
+                <a href="https://instagram.com" target="_blank" class="social-icon">Instagram</a>
+                <a href="https://twitter.com" target="_blank" class="social-icon">Twitter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 PetVerse. All Rights Reversed</p>
+        </div>
+    </footer>
+    <script>
+        // Prevent back navigation after logout
+        window.onpageshow = function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        };
+        
+        // Debug the product images when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard loaded, checking products');
+            <% if(products && products.length > 0) { %>
+                <% products.forEach((product, index) => { %>
+                    console.log('Product <%= index %>: <%= product.title %>');
+                    console.log('Image URL type: <%= typeof product.image_url %>');
+                    console.log('Image URL starts with: <%= product.image_url.substring(0, 30) %>...');
+                <% }); %>
+            <% } else { %>
+                console.log('No products found');
+            <% } %>
+        });
+        
+        // Modal functions
+        function openReplyModal(reviewId) {
+            document.getElementById('reviewId').value = reviewId;
+            document.getElementById('replyModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeReplyModal() {
+            document.getElementById('replyModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Product management functions
+        async function editProduct(productId) {
+            window.location.href = `/seller/products/${productId}/edit`;
+        }
+
+        // Pet management functions
+        async function editPet(petId) {
+            window.location.href = `/seller/pets/${petId}/edit`;
+        }
+
+        async function toggleProductStatus(productId) {
+            try {
+                if(confirm('Are you sure you want to change this product\'s status?')) {
+                    const response = await fetch(`/seller/products/${productId}/toggle`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    const data = await response.json();
+                    
+                    if(data.success) {
+                        showNotification('Product status updated successfully', 'success');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showNotification(data.message || 'Failed to update product status', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('An error occurred', 'error');
+            }
+        }
+
+        // Order management functions
+        async function processOrder(orderId) {
+            try {
+                const response = await fetch(`/seller/orders/${orderId}/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const data = await response.json();
+                
+                if(data.success) {
+                    showNotification('Order processed successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification(data.message || 'Failed to process order', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('An error occurred', 'error');
+            }
+        }
+
+        function viewOrderDetails(orderId) {
+            window.location.href = `/seller/orders/${orderId}`;
+        }
+
+        // Order status update handler
+        document.addEventListener('click', async function(e) {
+            if (e.target && e.target.classList.contains('update-order-status')) {
+                const row = e.target.closest('tr');
+                const orderId = row.getAttribute('data-id');
+                const statusSelect = row.querySelector('.order-status-select');
+                const newStatus = statusSelect.value;
+
+                try {
+                    const res = await fetch(`/seller/order/${orderId}/status`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                    const data = await res.json();
+                    if (!res.ok || !data.success) {
+                        showNotification(data.error || 'Failed to update order status', 'error');
+                        return;
+                    }
+                    showNotification('Order status updated successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } catch (err) {
+                    console.error('Error:', err);
+                    showNotification('Network error updating order status', 'error');
+                }
+            }
+        });
+
+        // Notification function
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('replyModal')) {
+                closeReplyModal();
+            }
+        }
+
+        // File input preview
+        const imagesInput = document.getElementById('images');
+        if (imagesInput) {
+            imagesInput.addEventListener('change', function(e) {
+                const files = Array.from(e.target.files);
+                const previewContainer = document.createElement('div');
+                previewContainer.className = 'image-preview';
+                
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const preview = document.createElement('div');
+                        preview.className = 'preview-item';
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="Preview">
+                            <span class="preview-name">${file.name}</span>
+                        `;
+                        previewContainer.appendChild(preview);
+                    }
+                    reader.readAsDataURL(file);
+                });
+
+                const existingPreview = document.querySelector('.image-preview');
+                if (existingPreview) {
+                    existingPreview.remove();
+                }
+                e.target.parentNode.appendChild(previewContainer);
+            });
+        }
+    </script>
+    <script>
+        // Get all dropdown toggles and menus
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
+        const dropdownMenus = document.querySelectorAll('.dropdown-menu');
+
+        // Add click event to each dropdown toggle
+        dropdownToggles.forEach((toggle, index) => {
+            toggle.addEventListener('click', function(event) {
+                event.stopPropagation(); // Prevent this click from triggering the document click handler
+
+                // Close all other dropdown menus first
+                dropdownMenus.forEach((menu, menuIndex) => {
+                    if (menuIndex !== index) {
+                        menu.classList.remove('show');
+                    }
+                });
+        
+            // Toggle the current dropdown menu
+                const currentDropdownMenu = this.nextElementSibling;
+                currentDropdownMenu.classList.toggle('show');
+            });
+        });
+
+    // Close all dropdowns when clicking anywhere else on the page
+        document.addEventListener('click', function(event) {
+            // Check if click is outside of any dropdown
+            if (!event.target.closest('.dropdown')) {
+            // Close all dropdown menus
+                dropdownMenus.forEach(menu => {
+                    if (menu.classList.contains('show')) {
+                        menu.classList.remove('show');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
     fetchPets, 
@@ -22,11 +22,21 @@ const Pets = () => {
     
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const [searchParams] = useSearchParams();
 
     // Fetch pets on mount
     useEffect(() => {
         dispatch(fetchPets());
     }, [dispatch]);
+
+    // Apply category filter from URL params
+    useEffect(() => {
+        const categoryParam = searchParams.get('category');
+        if (categoryParam) {
+            // Apply the category filter
+            dispatch(setPetFilters({ categories: [categoryParam] }));
+        }
+    }, [searchParams, dispatch]);
 
     // Load wishlist when user is authenticated
     useEffect(() => {
@@ -63,6 +73,12 @@ const Pets = () => {
                 ? currentArray.filter(item => item !== value)
                 : [...currentArray, value];
             dispatch(setPetFilters({ [type]: newArray }));
+        } else if (type === 'minPrice' || type === 'maxPrice') {
+            // Prevent negative values for price filters
+            const numValue = parseFloat(value);
+            if (value === '' || (!isNaN(numValue) && numValue >= 0)) {
+                dispatch(setPetFilters({ [type]: value }));
+            }
         } else {
             dispatch(setPetFilters({ [type]: value }));
         }
@@ -153,11 +169,14 @@ const Pets = () => {
         return true;
     });
 
+    // Filter out pets with invalid prices (ensure no negative prices pass through)
+    const validFilteredPets = filteredPets.filter(pet => pet.price >= 0);
+
     // Pagination logic
-    const totalPages = Math.ceil(filteredPets.length / itemsPerPage);
+    const totalPages = Math.ceil(validFilteredPets.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const currentPets = filteredPets.slice(startIndex, endIndex);
+    const currentPets = validFilteredPets.slice(startIndex, endIndex);
 
     // Reset to page 1 when filters change
     useEffect(() => {
@@ -304,6 +323,8 @@ const Pets = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                             <input
                                 type="number"
+                                min="0"
+                                step="1"
                                 value={filters.minPrice}
                                 onChange={(e) => handleFilterChange('minPrice', e.target.value)}
                                 placeholder="Min"
@@ -312,6 +333,8 @@ const Pets = () => {
                             <span className="text-sm">to</span>
                             <input
                                 type="number"
+                                min="0"
+                                step="1"
                                 value={filters.maxPrice}
                                 onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
                                 placeholder="Max"
@@ -382,7 +405,7 @@ const Pets = () => {
                         <div className="text-center py-12">
                             <div className="text-2xl text-gray-600">Loading...</div>
                         </div>
-                    ) : filteredPets.length === 0 ? (
+                    ) : validFilteredPets.length === 0 ? (
                         <div className="text-center py-12">
                             <p className="text-xl text-gray-600">No pets found.</p>
                         </div>
