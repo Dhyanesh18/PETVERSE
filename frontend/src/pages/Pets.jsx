@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
     fetchPets, 
@@ -22,11 +22,21 @@ const Pets = () => {
     
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
+    const [searchParams] = useSearchParams();
 
     // Fetch pets on mount
     useEffect(() => {
         dispatch(fetchPets());
     }, [dispatch]);
+
+    // Apply category filter from URL params
+    useEffect(() => {
+        const categoryParam = searchParams.get('category');
+        if (categoryParam) {
+            // Apply the category filter
+            dispatch(setPetFilters({ categories: [categoryParam] }));
+        }
+    }, [searchParams, dispatch]);
 
     // Load wishlist when user is authenticated
     useEffect(() => {

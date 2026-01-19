@@ -112,7 +112,11 @@ const Homepage = () => {
                             <CategoryCard
                                 key={index}
                                 category={category}
-                                onClick={() => navigate('/pets')}
+                                onClick={() => {
+                                    // Extract category name from the category object
+                                    const categoryName = category.name?.toLowerCase() || '';
+                                    navigate(`/pets?category=${categoryName}`);
+                                }}
                             />
                         ))}
                     </div>
