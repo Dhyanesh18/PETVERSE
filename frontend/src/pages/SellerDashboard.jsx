@@ -4,14 +4,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
 import { setSellerProducts } from '../redux/slices/productSlice';
 import { setSellerPets } from '../redux/slices/petSlice';
-import { fetchSellerDashboard, updateOrderStatus, clearSellerData } from '../redux/slices/sellerSlice';
+import { fetchSellerDashboard, updateOrderStatus, updateSellerProfile } from '../redux/slices/sellerSlice';
 import EditProfileModal from '../components/EditProfileModal';
 import './SellerDashboard.css';
 
 const SellerDashboard = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { user, logout, loading: authLoading } = useAuth();
+    const { user, logout, loading: authLoading, setUser, refreshSession } = useAuth();
     const fetchInitialized = useRef(false);
     
     // Redux state for products and pets
@@ -255,6 +255,8 @@ const SellerDashboard = () => {
 
     const handleSaveProfile = async (formData) => {
         try {
+            console.log('Saving profile with data:', formData);
+            
             const response = await fetch('/api/user/profile', {
                 method: 'PUT',
                 credentials: 'include',
@@ -265,11 +267,29 @@ const SellerDashboard = () => {
             });
 
             const data = await response.json();
+            console.log('Profile update response:', data);
 
             if (response.ok && data.success) {
+                console.log('Updated user data:', data.data.user);
+                
+                // Update the user data in auth context
+                setUser(data.data.user);
+                
+                // Update the seller data in Redux state
+                dispatch(updateSellerProfile({
+                    fullName: data.data.user.fullName,
+                    email: data.data.user.email,
+                    phone: data.data.user.phone,
+                    businessName: data.data.user.businessName,
+                    businessAddress: data.data.user.businessAddress
+                }));
+                
+                console.log('User and seller state updated');
+                
                 alert('Profile updated successfully!');
-                // Refresh seller data
-                fetchSellerData();
+                
+                // Force a session refresh to ensure UI updates
+                await refreshSession();
             } else {
                 throw new Error(data.error || 'Failed to update profile');
             }
@@ -415,7 +435,7 @@ const SellerDashboard = () => {
                                     <div className="info-content">
                                         <div className="info-label">Business Name</div>
                                         <div className="info-value">
-                                            {seller?.businessName || 'N/A'}
+                                            {user?.businessName || seller?.businessName || 'N/A'}
                                         </div>
                                     </div>
                                 </div>
@@ -428,7 +448,7 @@ const SellerDashboard = () => {
                                     <div className="info-content">
                                         <div className="info-label">Business Address</div>
                                         <div className="info-value">
-                                            {seller?.businessAddress || 'N/A'}
+                                            {user?.businessAddress || seller?.businessAddress || 'N/A'}
                                         </div>
                                     </div>
                                 </div>

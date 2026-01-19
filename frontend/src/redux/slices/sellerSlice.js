@@ -66,6 +66,15 @@ const sellerSlice = createSlice({
             state.reviews = [];
             state.error = null;
         },
+        updateSellerProfile: (state, action) => {
+            // Update seller profile information
+            if (state.seller) {
+                state.seller = {
+                    ...state.seller,
+                    ...action.payload
+                };
+            }
+        },
         updateLocalOrderStatus: (state, action) => {
             const { orderId, status } = action.payload;
             const order = state.orders.find(o => o._id === orderId);
@@ -126,6 +135,6 @@ const sellerSlice = createSlice({
     }
 });
 
-export const { clearSellerData, updateLocalOrderStatus, clearError } = sellerSlice.actions;
+export const { clearSellerData, updateSellerProfile, updateLocalOrderStatus, clearError } = sellerSlice.actions;
 
 export default sellerSlice.reducer;
