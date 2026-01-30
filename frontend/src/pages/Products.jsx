@@ -65,6 +65,12 @@ const Products = () => {
                 ? currentArray.filter(item => item !== value)
                 : [...currentArray, value];
             dispatch(setProductFilters({ [type]: newArray }));
+        } else if (type === 'minPrice' || type === 'maxPrice') {
+            // Prevent negative values for price filters
+            const numValue = parseFloat(value);
+            if (value === '' || (!isNaN(numValue) && numValue >= 0)) {
+                dispatch(setProductFilters({ [type]: value }));
+            }
         } else {
             dispatch(setProductFilters({ [type]: value }));
         }
@@ -303,6 +309,8 @@ const Products = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                             <input
                                 type="number"
+                                min="0"
+                                step="1"
                                 value={filters.minPrice}
                                 onChange={(e) => handleFilterChange('minPrice', e.target.value)}
                                 placeholder="Min"
@@ -311,6 +319,8 @@ const Products = () => {
                             <span className="text-sm">to</span>
                             <input
                                 type="number"
+                                min="0"
+                                step="1"
                                 value={filters.maxPrice}
                                 onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
                                 placeholder="Max"
