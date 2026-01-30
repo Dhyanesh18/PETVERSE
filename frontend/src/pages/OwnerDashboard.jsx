@@ -6,7 +6,7 @@ import EditProfileModal from '../components/EditProfileModal';
 import './OwnerDashboard.css';
 
 const OwnerDashboard = () => {
-    const { user, logout, isAuthenticated } = useAuth();
+    const { user, logout, isAuthenticated, setUser, refreshSession } = useAuth();
     const navigate = useNavigate();
     const fetchInitialized = useRef(false);
     const isMounted = useRef(true);
@@ -543,9 +543,13 @@ const OwnerDashboard = () => {
             const data = await response.json();
             
             if (response.ok && data.success) {
+                // Update the user data in auth context
+                setUser(data.data.user);
+                
                 showNotification('Profile updated successfully!', 'success');
-                // Don't refetch - user data will be updated through context
-                // fetchDashboardData(); // REMOVE THIS LINE
+                
+                // Force a session refresh to ensure UI updates
+                await refreshSession();
             } else {
                 throw new Error(data.error || 'Failed to update profile');
             }
