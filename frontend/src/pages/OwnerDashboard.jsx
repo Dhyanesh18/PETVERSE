@@ -1060,57 +1060,61 @@ const OwnerDashboard = () => {
                 </div>
 
                 {dashboardData.bookings.length > 0 ? (
-                    <table className="service-appointment-table">
-                        <thead>
-                            <tr>
-                                <th>Service ID</th>
-                                <th>Service Name</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {dashboardData.bookings.map((booking, index) => (
-                                <tr key={booking._id || booking.id || index}>
-                                    <td>#{(booking._id || booking.id || 'Unknown').toString().substring(0, 8)}...</td>
-                                    <td>
-                                        <div className="order-product">
-                                            <div className="service-icon">
-                                                <i className={`fas fa-${
-                                                    (booking.serviceType || booking.service?.type) === 'Grooming' ? 'cut' :
-                                                    (booking.serviceType || booking.service?.type) === 'Veterinary' ? 'stethoscope' :
-                                                    (booking.serviceType || booking.service?.type) === 'Training' ? 'dumbbell' : 'paw'
-                                                }`}></i>
-                                            </div>
-                                            <div className="product-info">
-                                                <span className="product-name">{booking.service?.name || booking.serviceName || 'Service'}</span>
-                                                <span className="product-meta">Provider: {booking.service?.providerName || 'Unknown Provider'}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="date-badge">
-                                            <i className="far fa-calendar-alt"></i>
-                                            {booking.date || booking.bookingDate || 'Not set'}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="time-badge">
-                                            <i className="far fa-clock"></i>
-                                            {booking.time || 'Not set'}
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span className={`status-badge ${getStatusColor(booking.status || 'pending')}`}>
-                                            <i className="fas fa-check-circle"></i>
-                                            {booking.status || 'pending'}
-                                        </span>
-                                    </td>
+                    <div className="table-wrapper">
+                        <table className="service-appointment-table">
+                            <thead>
+                                <tr>
+                                    <th>Service ID</th>
+                                    <th>Service Name</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {dashboardData.bookings.map((booking, index) => (
+                                    <tr key={booking._id || booking.id || index}>
+                                        <td className="service-id-cell">
+                                            <span className="id-text">#{(booking._id || booking.id || 'Unknown').toString().substring(0, 10)}...</span>
+                                        </td>
+                                        <td className="service-name-cell">
+                                            <div className="service-content">
+                                                <div className="service-icon">
+                                                    <i className={`fas fa-${
+                                                        (booking.serviceType || booking.service?.type) === 'Grooming' ? 'cut' :
+                                                        (booking.serviceType || booking.service?.type) === 'Veterinary' ? 'stethoscope' :
+                                                        (booking.serviceType || booking.service?.type) === 'Training' ? 'dumbbell' : 'paw'
+                                                    }`}></i>
+                                                </div>
+                                                <div className="service-details">
+                                                    <div className="service-name">{booking.service?.name || booking.serviceName || 'Pet Service'}</div>
+                                                    <div className="service-provider">Provider: {booking.service?.providerName || 'Unknown Provider'}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="date-cell">
+                                            <div className="date-badge">
+                                                <i className="far fa-calendar-alt"></i>
+                                                <span>{booking.date || booking.bookingDate || 'Not set'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="time-cell">
+                                            <div className="time-badge">
+                                                <i className="far fa-clock"></i>
+                                                <span>{booking.time || 'Not set'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="status-cell">
+                                            <span className={`status-badge ${getStatusColor(booking.status || 'pending')}`}>
+                                                <i className="fas fa-circle"></i>
+                                                {(booking.status || 'pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 ) : (
                     <div className="empty-state service-empty-state">
                         <div className="empty-icon">

@@ -12,3 +12,4 @@ router.post('/verify-login-otp', otpController.verifyLoginOTP);
 router.post('/resend-otp', otpController.resendOTP);
 
 module.exports = router;
+    

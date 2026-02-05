@@ -5,6 +5,20 @@ const Pet = require('../models/pets');
 const Event = require('../models/event');
 const User = require('../models/users');
 
+// CORS middleware for all image routes
+router.use((req, res, next) => {
+    res.set('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.set('Access-Control-Allow-Credentials', 'true');
+    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
+
 // Get product image by index
 router.get('/product/:productId/:index', async (req, res) => {
     try {
