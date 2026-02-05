@@ -1565,4 +1565,79 @@ router.patch('/pets/:petId/toggle-status', isAuthenticated, isSeller, async (req
     }
 });
 
+// Get all chats for seller
+router.get('/chats', isAuthenticated, isSeller, async (req, res) => {
+    try {
+        const Chat = require('../models/chat');
+        
+        // Find all chats where the seller matches
+        const chats = await Chat.find({ seller: req.user._id })
+            .populate('customer', 'name fullName email phone')
+            .populate('orderId', 'orderNumber totalAmount status items createdAt')
+            .sort({ lastMessageAt: -1 })
+            .lean();
+
+        // Count unread messages for each chat
+        const chatsWithUnread = chats.map(chat => {
+            const unreadCount = chat.messages.filter(
+                msg => msg.sender.toString() !== req.user._id.toString() && !msg.read
+            ).length;
+            
+            return {
+                ...chat,
+                unreadCount,
+                lastMessage: chat.messages[chat.messages.length - 1] || null
+            };
+        });
+
+        res.json({
+            success: true,
+            data: {
+                chats: chatsWithUnread,
+                totalChats: chatsWithUnread.length,
+                unreadChats: chatsWithUnread.filter(c => c.unreadCount > 0).length
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching seller chats:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching chats',
+            message: error.message
+        });
+    }
+});
+
+// Delete a chat
+router.delete('/chats/:chatId', isAuthenticated, isSeller, async (req, res) => {
+    try {
+        const Chat = require('../models/chat');
+        const { chatId } = req.params;
+        
+        // Find chat and verify seller owns it
+        const chat = await Chat.findOne({ _id: chatId, seller: req.user._id });
+        
+        if (!chat) {
+            return res.status(404).json({
+                success: false,
+                error: 'Chat not found or unauthorized'
+            });
+        }
+
+        await Chat.findByIdAndDelete(chatId);
+
+        res.json({
+            success: true,
+            message: 'Chat deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting chat:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error deleting chat',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;

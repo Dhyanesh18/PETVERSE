@@ -6,6 +6,7 @@ import { setSellerProducts } from '../redux/slices/productSlice';
 import { setSellerPets } from '../redux/slices/petSlice';
 import { fetchSellerDashboard, updateOrderStatus, updateSellerProfile } from '../redux/slices/sellerSlice';
 import EditProfileModal from '../components/EditProfileModal';
+import SellerChatModal from '../components/SellerChatModal';
 import './SellerDashboard.css';
 
 const SellerDashboard = () => {
@@ -29,6 +30,9 @@ const SellerDashboard = () => {
     
     // Local state
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [chats, setChats] = useState([]);
+    const [selectedChat, setSelectedChat] = useState(null);
+    const [isChatModalOpen, setIsChatModalOpen] = useState(false);
     
     // Combine loading states
     const loading = sellerLoading || productsLoading || petsLoading;
@@ -63,6 +67,9 @@ const SellerDashboard = () => {
             console.log('Orders data:', result.recentOrders);
             console.log('Products data:', result.products);
             console.log('Pets data:', result.pets);
+
+            // Fetch seller chats
+            fetchSellerChats();
         } catch (error) {
             console.error('Error fetching seller data:', error);
             console.error('Error details:', error);
@@ -79,6 +86,63 @@ const SellerDashboard = () => {
             }
         }
     }, [navigate, user, dispatch]);
+
+    const fetchSellerChats = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+            const response = await fetch(`${API_URL}/api/seller/chats`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                setChats(data.data.chats || []);
+                console.log('Seller chats loaded:', data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching seller chats:', error);
+        }
+    };
+
+    const handleOpenChat = (chat) => {
+        setSelectedChat(chat);
+        setIsChatModalOpen(true);
+    };
+
+    const handleCloseChat = () => {
+        setIsChatModalOpen(false);
+        setSelectedChat(null);
+        // Refresh chats to update unread count
+        fetchSellerChats();
+    };
+
+    const handleDeleteChat = async (chatId, e) => {
+        e.stopPropagation(); // Prevent opening chat when clicking delete
+        
+        if (!confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
+            return;
+        }
+
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+            const response = await fetch(`${API_URL}/api/seller/chats/${chatId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                // Remove chat from local state
+                setChats(prevChats => prevChats.filter(c => c._id !== chatId));
+                console.log('Chat deleted successfully');
+            } else {
+                alert('Failed to delete chat: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error deleting chat:', error);
+            alert('Failed to delete chat');
+        }
+    };
 
     // Fetch seller data on component mount
     useEffect(() => {
@@ -330,16 +394,24 @@ const SellerDashboard = () => {
                 <div className="dashboard-stats">
                     <div
                         className="stat-card clickable-stat-card"
-                        onClick={() => handleStatsCardClick('totalProducts')}
+                        onClick={() => {
+                            const chatSection = document.getElementById('chat-section');
+                            if (chatSection) {
+                                chatSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                chatSection.style.backgroundColor = '#f0fdf4';
+                                setTimeout(() => {
+                                    chatSection.style.backgroundColor = '';
+                                }, 2000);
+                            }
+                        }}
                         role="button"
                         tabIndex={0}
-                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalProducts')}
                     >
                         <div className="stat-icon">
-                            <i className="fas fa-box"></i>
+                            <i className="fas fa-comments"></i>
                         </div>
-                        <div className="stat-value">{statistics.totalProducts + statistics.totalPets}</div>
-                        <div className="stat-label">Total Items</div>
+                        <div className="stat-value">{chats.filter(c => c.unreadCount > 0).length}</div>
+                        <div className="stat-label">Unread Chats</div>
                     </div>
                     <div
                         className="stat-card clickable-stat-card"
@@ -793,6 +865,74 @@ const SellerDashboard = () => {
                         )}
                     </div>
 
+                    {/* Customer Messages Section */}
+                    <div id="chat-section" className="content-section">
+                        <div className="section-header">
+                            <h2><i className="fas fa-comments"></i> Customer Messages</h2>
+                            <div className="orders-stats">
+                                <span className="stat-badge pending">
+                                    <i className="fas fa-envelope"></i>
+                                    {chats.filter(c => c.unreadCount > 0).length} Unread
+                                </span>
+                            </div>
+                        </div>
+
+                        {chats && chats.filter(c => c.unreadCount > 0).length > 0 ? (
+                            <div className="chats-list">
+                                {chats.filter(c => c.unreadCount > 0).map((chat) => (
+                                    <div 
+                                        key={chat._id} 
+                                        className={`chat-item ${chat.unreadCount > 0 ? 'unread' : ''}`}
+                                        onClick={() => handleOpenChat(chat)}
+                                    >
+                                        <div className="chat-item-header">
+                                            <div className="customer-info">
+                                                <i className="fas fa-user-circle"></i>
+                                                <div className="customer-details">
+                                                    <h4>{chat.customer?.name || chat.customer?.fullName || 'Customer'}</h4>
+                                                    <span className="order-reference">
+                                                        Order #{chat.orderId?.orderNumber || chat.orderId?._id?.slice(-6)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="chat-item-meta">
+                                                {chat.unreadCount > 0 && (
+                                                    <span className="unread-badge">{chat.unreadCount}</span>
+                                                )}
+                                                <span className="chat-time">
+                                                    {new Date(chat.lastMessageAt || chat.updatedAt).toLocaleDateString()}
+                                                </span>
+                                                <button 
+                                                    className="chat-delete-btn"
+                                                    onClick={(e) => handleDeleteChat(chat._id, e)}
+                                                    title="Delete chat"
+                                                >
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="chat-item-preview">
+                                            <p>{chat.lastMessage?.content || 'No messages yet'}</p>
+                                        </div>
+                                        <div className="chat-item-footer">
+                                            <span className="order-amount">
+                                                ₹{chat.orderId?.totalAmount?.toLocaleString()}
+                                            </span>
+                                            <button className="chat-open-btn">
+                                                <i className="fas fa-comments"></i> Open Chat
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="empty-state">
+                                <i className="fas fa-comment-slash"></i>
+                                <p>{chats.length > 0 ? 'All messages have been read!' : 'No customer messages yet.'}</p>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Customer Reviews Section */}
                     <div id="reviews-section" className="content-section">
                         <div className="section-header">
@@ -863,6 +1003,16 @@ const SellerDashboard = () => {
                 user={{ ...user, ...seller }}
                 onSave={handleSaveProfile}
             />
+
+            {/* Seller Chat Modal */}
+            {selectedChat && (
+                <SellerChatModal
+                    isOpen={isChatModalOpen}
+                    onClose={handleCloseChat}
+                    chat={selectedChat}
+                    seller={user}
+                />
+            )}
         </div>
     );
 };
