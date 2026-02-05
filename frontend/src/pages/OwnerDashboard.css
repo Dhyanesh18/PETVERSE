@@ -751,82 +751,270 @@ html::-webkit-scrollbar, body::-webkit-scrollbar {
     z-index: 0;
 }
 
+/* Service Appointments Table Wrapper */
+.table-wrapper {
+    background: white;
+    border-radius: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-top: 1.5rem;
+}
+
+/* Hide scrollbar but keep functionality */
+.table-wrapper::-webkit-scrollbar {
+    height: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Service Appointments Table */
 .service-appointment-table {
     width: 100%;
-    border-collapse: separate;
+    border-collapse: collapse;
     border-spacing: 0;
-    margin-top: var(--spacing-lg);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.service-appointment-table thead {
+    background: linear-gradient(135deg, #f0fdfa 0%, #e6f7f4 100%);
+    border-bottom: 2px solid #d1fae5;
 }
 
 .service-appointment-table th {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(52, 211, 153, 0.1));
-    padding: 16px;
+    padding: 14px 16px;
     text-align: left;
     font-weight: 600;
-    color: var(--text-secondary);
-    border-bottom: 2px solid rgba(16, 185, 129, 0.1);
-    position: relative;
+    font-size: 0.875rem;
+    color: #065f46;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.service-appointment-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+}
+
+.service-appointment-table tbody tr:hover {
+    background-color: #f8fffe;
+    box-shadow: inset 3px 0 0 #10b981;
+}
+
+.service-appointment-table tbody tr:last-child {
+    border-bottom: none;
 }
 
 .service-appointment-table td {
-    padding: 16px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
+    padding: 12px 16px;
+    vertical-align: middle;
+    font-size: 0.9rem;
 }
 
-.service-appointment-table tr:hover td {
-    background-color: rgba(16, 185, 129, 0.02);
-    transform: translateX(4px);
+/* Service ID Cell */
+.service-id-cell {
+    width: 15%;
+}
+
+.id-text {
+    font-family: 'Courier New', monospace;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Service Name Cell */
+.service-name-cell {
+    width: 35%;
+}
+
+.service-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .service-icon {
-    width: 45px;
-    height: 45px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--secondary), #34D399);
+    background: linear-gradient(135deg, #10b981, #059669);
     color: white;
-    border-radius: var(--radius-full);
-    font-size: 1.2rem;
-    margin-right: var(--spacing-md);
-    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
-    transition: transform 0.3s ease;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+    transition: transform 0.2s ease;
 }
 
-.order-product:hover .service-icon {
-    transform: scale(1.1) rotate(5deg);
+.service-appointment-table tbody tr:hover .service-icon {
+    transform: scale(1.05);
 }
 
-.date-badge, .time-badge {
+.service-details {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.service-name {
+    font-weight: 600;
+    color: #111827;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.service-provider {
+    font-size: 0.8rem;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Date Cell */
+.date-cell {
+    width: 18%;
 }
 
 .date-badge {
-    background-color: rgba(79, 70, 229, 0.08);
-    color: #4F46E5;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #ede9fe;
+    color: #6d28d9;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.date-badge i {
+    font-size: 0.875rem;
+}
+
+/* Time Cell */
+.time-cell {
+    width: 15%;
 }
 
 .time-badge {
-    background-color: rgba(245, 158, 11, 0.08);
-    color: #F59E0B;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #fef3c7;
+    color: #b45309;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
 }
 
-.service-appointment-table tr:hover .date-badge {
-    background-color: rgba(79, 70, 229, 0.12);
+.time-badge i {
+    font-size: 0.875rem;
 }
 
-.service-appointment-table tr:hover .time-badge {
-    background-color: rgba(245, 158, 11, 0.12);
+/* Status Cell */
+.status-cell {
+    width: 17%;
+}
+
+.service-appointment-table .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.service-appointment-table .status-badge i {
+    font-size: 0.65rem;
+}
+
+/* Hover Effects */
+.service-appointment-table tbody tr:hover .date-badge {
+    background-color: #ddd6fe;
+    transform: translateX(2px);
+}
+
+.service-appointment-table tbody tr:hover .time-badge {
+    background-color: #fde68a;
+    transform: translateX(2px);
+}
+
+.service-appointment-table tbody tr:hover .status-badge {
+    transform: translateX(2px);
+}
+
+/* Responsive adjustments for Service Appointments */
+@media (max-width: 1024px) {
+    .service-appointment-table th,
+    .service-appointment-table td {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+
+    .service-icon {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        font-size: 0.9rem;
+    }
+
+    .service-name {
+        font-size: 0.9rem;
+    }
+
+    .service-provider {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .table-wrapper {
+        margin-left: -1rem;
+        margin-right: -1rem;
+        border-radius: 0;
+    }
+
+    .service-appointment-table {
+        min-width: 700px;
+    }
+
+    .service-appointment-table th,
+    .service-appointment-table td {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+    }
+
+    .service-icon {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        font-size: 0.85rem;
+    }
 }
 
 /* Empty State */

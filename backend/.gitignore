@@ -4,9 +4,10 @@ node_modules/
 .DS_Store
 *.log
 npm-debug.log*
-
+.env.example
 #Local development files
 .vscode/
 apps/
+
 
 

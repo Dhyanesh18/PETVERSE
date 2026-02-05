@@ -3,12 +3,60 @@ const mongoose = require('mongoose');
 const session = require('express-session');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rfs = require('rotating-file-stream');
+const mongoSanitize = require('express-mongo-sanitize');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
+const csurf = require('csurf');
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 dotenv.config();
 
 const app = express();
 
+// ===== THIRD-PARTY MIDDLEWARE =====
+
+// 1. Security headers with Helmet
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP to allow cross-origin resources
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" } // Allow cross-origin resources
+}));
+
+// 2. Compression middleware
+app.use(compression());
+
+// 3. Rate limiting - Global
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api/', globalLimiter);
+
+// 4. Create rotating write stream for access logs
+const logsDir = path.join(__dirname, '../logs');
+if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+}
+
+const accessLogStream = rfs.createStream('access.log', {
+    interval: '1d', // Rotate daily
+    path: logsDir,
+    maxFiles: 30 // Keep 30 days of logs
+});
+
+// 5. HTTP request logger - Morgan
+app.use(morgan('combined', { stream: accessLogStream })); // File logging
+app.use(morgan('dev')); // Console logging
+
+// 6. CORS configuration
 const corsOptions = {
     origin: [
         process.env.FRONTEND_URL || 'http://localhost:3000', 
@@ -17,30 +65,70 @@ const corsOptions = {
     ],
     credentials: true, // Allow cookies/session
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'CSRF-Token'],
     exposedHeaders: ['set-cookie']
 };
-
 app.use(cors(corsOptions));
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+// ===== BUILT-IN MIDDLEWARE =====
 
+// 7. Body parsers
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '10mb' }));
+
+// 8. Static file serving
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
+// 9. Data sanitization against NoSQL injection
+app.use(mongoSanitize({
+    replaceWith: '_',
+    onSanitize: ({ req, key }) => {
+        console.warn(`Sanitized potentially malicious input: ${key}`);
+    }
+}));
+
+// ===== APPLICATION-LEVEL MIDDLEWARE =====
+
+// 10. Session management
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
     saveUninitialized: false, 
     cookie: {
-        secure: false,
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 1 day
-        sameSite: 'lax'
+        sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
     },
     name: 'petverse.sid' 
 }));
 
+// 11. CSRF Protection (excluding API routes for API clients, but you can customize)
+const csrfProtection = csurf({ 
+    cookie: false // Using session-based CSRF
+});
+
+// Apply CSRF to non-API routes only (if you have web forms)
+// For API routes, you may want to skip CSRF or use token-based auth instead
+app.use((req, res, next) => {
+    // Skip CSRF for API routes - typically APIs use JWT/token auth
+    if (req.path.startsWith('/api/')) {
+        return next();
+    }
+    csrfProtection(req, res, next);
+});
+
+// 12. Make CSRF token available to views
+app.use((req, res, next) => {
+    if (req.csrfToken) {
+        res.locals.csrfToken = req.csrfToken();
+    }
+    next();
+});
+
+// ===== CUSTOM MIDDLEWARE =====
+
+// 13. User authentication middleware - Attach user to req
 app.use(async (req, res, next) => {
     if (req.session.userId) {
         try {
@@ -159,25 +247,13 @@ app.get('/api', (req, res) => {
     });
 });
 
+// ===== ERROR HANDLING MIDDLEWARE =====
+
 // 404 Handler
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        error: 'Endpoint not found',
-        path: req.path,
-        method: req.method
-    });
-});
+app.use(notFoundHandler);
 
 // Global Error Handler
-app.use((err, req, res, next) => {
-    console.error('Global error handler:', err);
-    res.status(err.status || 500).json({
-        success: false,
-        error: err.message || 'Internal server error',
-        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-    });
-});
+app.use(errorHandler);
 
 
 // Server Startup
