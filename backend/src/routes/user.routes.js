@@ -1412,6 +1412,64 @@ router.patch('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
     }
 });
 
+// Update order address (only before shipping)
+router.patch('/orders/:orderId/address', isAuthenticated, async (req, res) => {
+    try {
+        const { shippingAddress } = req.body;
+
+        if (!shippingAddress) {
+            return res.status(400).json({
+                success: false,
+                error: 'Shipping address is required'
+            });
+        }
+
+        const order = await Order.findOne({
+            _id: req.params.orderId,
+            customer: req.user._id
+        });
+
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                error: 'Order not found'
+            });
+        }
+
+        // Check if order can be edited
+        if (order.status === 'shipped' || order.status === 'out_for_delivery' || 
+            order.status === 'delivered' || order.status === 'completed' || 
+            order.status === 'cancelled') {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot update address after order has been shipped'
+            });
+        }
+
+        // Update address
+        order.shippingAddress = shippingAddress;
+        await order.save();
+
+        res.json({
+            success: true,
+            message: 'Shipping address updated successfully',
+            data: {
+                order: {
+                    _id: order._id,
+                    shippingAddress: order.shippingAddress
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error updating order address:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error updating order address',
+            message: error.message
+        });
+    }
+});
+
 router.get('/order-confirmation/:orderId', isAuthenticated, async (req, res) => {
     try {
         const order = await Order.findById(req.params.orderId)

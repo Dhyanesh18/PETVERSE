@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Header from '../components/Header';
+import ChatModal from '../components/ChatModal';
 
 const UserOrderDetails = () => {
     const navigate = useNavigate();
     const { orderId } = useParams();
     const { user } = useAuth();
+    const [isChatOpen, setIsChatOpen] = useState(false);
 
     const getDashboardUrl = () => {
         if (!user) return '/home';
@@ -73,19 +75,126 @@ const UserOrderDetails = () => {
         }
     };
 
-    const cancelOrder = () => {
-        if (window.confirm('Are you sure you want to cancel this order?')) {
-            // Implement cancel order logic
-            alert('Cancel order functionality coming soon!');
+    const cancelOrder = async () => {
+        if (!order) return;
+
+        // Check if order can be cancelled
+        if (order.status === 'delivered' || order.status === 'completed') {
+            alert('Cannot cancel delivered or completed orders. Please contact support for returns.');
+            return;
+        }
+
+        if (order.status === 'cancelled') {
+            alert('This order is already cancelled.');
+            return;
+        }
+
+        const confirmCancel = window.confirm(
+            'Are you sure you want to cancel this order?\n\n' +
+            (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid' 
+                ? `Amount ₹${order.totalAmount.toLocaleString()} will be refunded to your wallet.`
+                : 'This action cannot be undone.')
+        );
+
+        if (!confirmCancel) return;
+
+        try {
+            const response = await fetch(`/api/user/orders/${orderId}/cancel`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert(
+                    'Order cancelled successfully!' +
+                    (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid'
+                        ? `\n\nRefund of ₹${order.totalAmount.toLocaleString()} has been credited to your wallet.`
+                        : '')
+                );
+                // Refresh order details
+                fetchOrderDetails();
+            } else {
+                alert(`Failed to cancel order: ${data.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+            alert('Error cancelling order. Please try again or contact support.');
         }
     };
 
-    const editOrder = () => {
-        alert('Edit order functionality coming soon!');
+    const editOrder = async () => {
+        if (!order) return;
+
+        // Check if order can be edited
+        if (order.status === 'shipped' || order.status === 'out_for_delivery' || 
+            order.status === 'delivered' || order.status === 'completed' || order.status === 'cancelled') {
+            alert('Cannot edit order after it has been shipped.');
+            return;
+        }
+
+        // Create a form-like prompt for address fields
+        const currentAddr = order.shippingAddress || {};
+        const street = prompt('Street Address:', currentAddr.street || '');
+        if (street === null) return; // User cancelled
+
+        const city = prompt('City:', currentAddr.city || '');
+        if (city === null) return;
+
+        const state = prompt('State:', currentAddr.state || '');
+        if (state === null) return;
+
+        const zipCode = prompt('Zip Code:', currentAddr.zipCode || '');
+        if (zipCode === null) return;
+
+        const phoneNo = prompt('Phone Number:', currentAddr.phoneNo || '');
+        if (phoneNo === null) return;
+
+        if (!street || !city || !state || !zipCode || !phoneNo) {
+            alert('All address fields are required.');
+            return;
+        }
+
+        const newAddress = {
+            street: street.trim(),
+            city: city.trim(),
+            state: state.trim(),
+            zipCode: zipCode.trim(),
+            phoneNo: phoneNo.trim()
+        };
+
+        try {
+            const response = await fetch(`/api/user/orders/${orderId}/address`, {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ shippingAddress: newAddress })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert('Shipping address updated successfully!');
+                // Refresh order details
+                fetchOrderDetails();
+            } else {
+                alert(`Failed to update address: ${data.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error updating order address:', error);
+            alert('Error updating address. Please try again or contact support.');
+        }
     };
 
-    const showComingSoon = () => {
-        alert('Chat feature coming soon! For now, you can contact us through email or phone.');
+    const chatWithUs = () => {
+        // Open chat modal
+        setIsChatOpen(true);
     };
 
     const getStepStatus = (stepName, orderStatus) => {
@@ -409,23 +518,33 @@ const UserOrderDetails = () => {
                                 Cancel Order
                             </button>
                         )}
+                        {(order.status === 'pending' || order.status === 'confirmed' || order.status === 'processing') && (
+                            <button 
+                                onClick={editOrder}
+                                className="flex items-center gap-2 px-6 py-3 bg-blue-100 text-blue-700 rounded-full font-semibold hover:bg-blue-200 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-md"
+                            >
+                                <i className="fas fa-edit"></i>
+                                Edit Address
+                            </button>
+                        )}
                         <button 
-                            onClick={editOrder}
-                            className="flex items-center gap-2 px-6 py-3 bg-blue-100 text-blue-700 rounded-full font-semibold hover:bg-blue-200 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-md"
-                        >
-                            <i className="fas fa-edit"></i>
-                            Edit Order
-                        </button>
-                        <button 
-                            onClick={showComingSoon}
+                            onClick={chatWithUs}
                             className="flex items-center gap-2 px-6 py-3 bg-green-100 text-green-700 rounded-full font-semibold hover:bg-green-200 transition-all duration-200 transform hover:-translate-y-1 hover:shadow-md"
                         >
                             <i className="fas fa-comments"></i>
-                            Chat with us
+                            Contact Support
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Chat Modal */}
+            <ChatModal
+                isOpen={isChatOpen}
+                onClose={() => setIsChatOpen(false)}
+                order={order}
+                user={user}
+            />
         </div>
     );
 };

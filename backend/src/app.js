@@ -258,7 +258,124 @@ app.use(errorHandler);
 
 // Server Startup
 const port = process.env.PORT || 8080;
-app.listen(port, () => {
+const http = require('http');
+const socketIo = require('socket.io');
+
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: [
+            process.env.FRONTEND_URL || 'http://localhost:3000',
+            'http://localhost:3001',
+            'http://localhost:5173'
+        ],
+        credentials: true,
+        methods: ['GET', 'POST']
+    }
+});
+
+// Socket.io connection handling
+const Chat = require('./models/chat');
+
+io.on('connection', (socket) => {
+    console.log('New client connected:', socket.id);
+
+    // Join chat room
+    socket.on('joinChat', async ({ orderId, userId, userRole }) => {
+        try {
+            socket.join(`order_${orderId}`);
+            console.log(`User ${userId} (${userRole}) joined chat for order ${orderId}`);
+            
+            // Load existing messages
+            const chat = await Chat.findOne({ orderId })
+                .populate('customer', 'fullName email')
+                .populate('seller', 'fullName businessName email');
+            
+            if (chat) {
+                socket.emit('chatHistory', chat.messages);
+            }
+        } catch (error) {
+            console.error('Error joining chat:', error);
+            socket.emit('error', 'Failed to join chat');
+        }
+    });
+
+    // Send message
+    socket.on('sendMessage', async ({ orderId, senderId, message }) => {
+        try {
+            let chat = await Chat.findOne({ orderId });
+            
+            if (!chat) {
+                // Get order details to create chat
+                const Order = require('./models/order');
+                const order = await Order.findById(orderId);
+                
+                if (!order) {
+                    socket.emit('error', 'Order not found');
+                    return;
+                }
+                
+                chat = new Chat({
+                    orderId,
+                    customer: order.customer,
+                    seller: order.seller
+                });
+            }
+            
+            const newMessage = {
+                sender: senderId,
+                content: message,
+                timestamp: new Date(),
+                read: false
+            };
+            
+            chat.messages.push(newMessage);
+            chat.lastMessage = new Date();
+            await chat.save();
+            
+            // Populate sender info
+            await chat.populate('messages.sender', 'fullName businessName');
+            const populatedMessage = chat.messages[chat.messages.length - 1];
+            
+            // Emit to all users in the room
+            io.to(`order_${orderId}`).emit('newMessage', {
+                _id: populatedMessage._id,
+                sender: {
+                    _id: populatedMessage.sender._id,
+                    name: populatedMessage.sender.fullName || populatedMessage.sender.businessName
+                },
+                content: populatedMessage.content,
+                timestamp: populatedMessage.timestamp
+            });
+        } catch (error) {
+            console.error('Error sending message:', error);
+            socket.emit('error', 'Failed to send message');
+        }
+    });
+
+    // Mark messages as read
+    socket.on('markAsRead', async ({ orderId, userId }) => {
+        try {
+            const chat = await Chat.findOne({ orderId });
+            if (chat) {
+                chat.messages.forEach(msg => {
+                    if (msg.sender.toString() !== userId.toString()) {
+                        msg.read = true;
+                    }
+                });
+                await chat.save();
+            }
+        } catch (error) {
+            console.error('Error marking messages as read:', error);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+    });
+});
+
+server.listen(port, () => {
     console.log(`PetVerse API Server Running
       Port: ${port.toString().padEnd(30)}║
       Mode: ${(process.env.NODE_ENV || 'development').padEnd(30)}
@@ -266,4 +383,4 @@ app.listen(port, () => {
     `);
 });
 
-module.exports = app;
+module.exports = { app, io };
