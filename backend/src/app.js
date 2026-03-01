@@ -52,7 +52,7 @@ const accessLogStream = rfs.createStream('access.log', {
     maxFiles: 30 // Keep 30 days of logs
 });
 
-// 5. HTTP request logger - Morgan
+// 5. HTTP request logger - Morgan  
 app.use(morgan('combined', { stream: accessLogStream })); // File logging
 app.use(morgan('dev')); // Console logging
 
@@ -103,22 +103,19 @@ app.use(session({
     name: 'petverse.sid' 
 }));
 
-// 11. CSRF Protection (excluding API routes for API clients, but you can customize)
+// 11. CSRF Protection 
 const csrfProtection = csurf({ 
     cookie: false // Using session-based CSRF
 });
 
-// Apply CSRF to non-API routes only (if you have web forms)
-// For API routes, you may want to skip CSRF or use token-based auth instead
+
 app.use((req, res, next) => {
-    // Skip CSRF for API routes - typically APIs use JWT/token auth
     if (req.path.startsWith('/api/')) {
         return next();
     }
     csrfProtection(req, res, next);
 });
 
-// 12. Make CSRF token available to views
 app.use((req, res, next) => {
     if (req.csrfToken) {
         res.locals.csrfToken = req.csrfToken();

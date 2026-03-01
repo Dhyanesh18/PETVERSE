@@ -71,6 +71,21 @@ export const fetchAdminDashboard = createAsyncThunk(
     }
 );
 
+export const fetchAnalytics = createAsyncThunk(
+    'admin/fetchAnalytics',
+    async (_, { rejectWithValue }) => {
+        try {
+            console.log('Fetching analytics from API...');
+            const response = await apiClient.get('/admin/analytics');
+            console.log('Analytics API response:', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Analytics fetch error:', error);
+            return rejectWithValue(error.response?.data || { message: 'Failed to fetch analytics' });
+        }
+    }
+);
+
 export const approveItem = createAsyncThunk(
     'admin/approveItem',
     async ({ id, type }, { rejectWithValue }) => {
@@ -100,13 +115,19 @@ const adminSlice = createSlice({
     name: 'admin',
     initialState: {
         dashboardData: null,
+        analyticsData: null,
         loading: false,
+        analyticsLoading: false,
         error: null,
+        analyticsError: null,
         activeTab: 'dashboard'
     },
     reducers: {
         setActiveTab: (state, action) => {
             state.activeTab = action.payload;
+        },
+        clearAnalyticsError: (state) => {
+            state.analyticsError = null;
         },
         clearError: (state) => {
             state.error = null;
@@ -156,9 +177,25 @@ const adminSlice = createSlice({
             })
             .addCase(updateAdminOrderStatus.rejected, (state, action) => {
                 state.error = action.payload?.message || 'Failed to update order status';
+            })
+            .addCase(fetchAnalytics.pending, (state) => {
+                console.log('Analytics fetch pending...');
+                state.analyticsLoading = true;
+                state.analyticsError = null;
+            })
+            .addCase(fetchAnalytics.fulfilled, (state, action) => {
+                console.log('Analytics fetch fulfilled:', action.payload);
+                state.analyticsLoading = false;
+                state.analyticsData = action.payload;
+                state.analyticsError = null;
+            })
+            .addCase(fetchAnalytics.rejected, (state, action) => {
+                console.error('Analytics fetch rejected:', action.payload);
+                state.analyticsLoading = false;
+                state.analyticsError = action.payload?.message || 'Failed to load analytics';
             });
     }
 });
 
-export const { setActiveTab, clearError } = adminSlice.actions;
+export const { setActiveTab, clearError, clearAnalyticsError } = adminSlice.actions;
 export default adminSlice.reducer;

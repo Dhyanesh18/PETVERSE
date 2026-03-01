@@ -40,7 +40,16 @@ const Login = () => {
             try {
                 const response = await api.get('/auth/check-session');
                 if (response.data.success && response.data.isLoggedIn) {
-                    // If user is already logged in, redirect appropriately
+                    // Get user role
+                    const role = response.data.userRole;
+                    
+                    // Admin should ALWAYS go to admin dashboard first
+                    if (role === 'admin') {
+                        navigate('/admin/dashboard', { replace: true });
+                        return;
+                    }
+                    
+                    // For non-admin users, check if they were trying to access a specific page
                     const validFrom = from && 
                         !from.includes('/login') && 
                         !from.includes('/signup') && 
@@ -53,7 +62,6 @@ const Login = () => {
                     }
                     
                     // Redirect to role-based dashboard
-                    const role = response.data.userRole;
                     switch(role) {
                         case 'owner':
                             navigate('/dashboard', { replace: true });
@@ -63,9 +71,6 @@ const Login = () => {
                             break;
                         case 'service_provider':
                             navigate('/service-provider/dashboard', { replace: true });
-                            break;
-                        case 'admin':
-                            navigate('/admin/dashboard', { replace: true });
                             break;
                         default:
                             navigate('/home', { replace: true });
@@ -240,33 +245,37 @@ const Login = () => {
                 const role = response.data.user?.role || response.data.userRole;
                 console.log('Redirecting with role:', role);
                 
-                // Determine redirect path with fallback to 'from' if valid
+                // Determine redirect path
                 let redirectPath = '/home';
-                const shouldUseFrom = from && 
-                    !from.includes('/dashboard') && 
-                    !from.includes('/login') && 
-                    !from.includes('/signup') && 
-                    from !== '/unauthorized';
-
-                if (shouldUseFrom) {
-                    redirectPath = from;
+                
+                // Admin should ALWAYS go to admin dashboard first
+                if (role === 'admin') {
+                    redirectPath = '/admin/dashboard';
                 } else {
-                    // Use role-based dashboard
-                    switch(role) {
-                        case 'owner':
-                            redirectPath = '/dashboard';
-                            break;
-                        case 'seller':
-                            redirectPath = '/seller/dashboard';
-                            break;
-                        case 'service_provider':
-                            redirectPath = '/service-provider/dashboard';
-                            break;
-                        case 'admin':
-                            redirectPath = '/admin/dashboard';
-                            break;
-                        default:
-                            redirectPath = '/home';
+                    // For non-admin users, use 'from' if valid, otherwise role-based dashboard
+                    const shouldUseFrom = from && 
+                        !from.includes('/dashboard') && 
+                        !from.includes('/login') && 
+                        !from.includes('/signup') && 
+                        from !== '/unauthorized';
+
+                    if (shouldUseFrom) {
+                        redirectPath = from;
+                    } else {
+                        // Use role-based dashboard
+                        switch(role) {
+                            case 'owner':
+                                redirectPath = '/dashboard';
+                                break;
+                            case 'seller':
+                                redirectPath = '/seller/dashboard';
+                                break;
+                            case 'service_provider':
+                                redirectPath = '/service-provider/dashboard';
+                                break;
+                            default:
+                                redirectPath = '/home';
+                        }
                     }
                 }
 

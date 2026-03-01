@@ -6,7 +6,7 @@ import { useCart } from '../hooks/useCart';
 import api from '../utils/api';
 
 const Navbar = () => {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const { cartCount } = useCart();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -157,20 +157,23 @@ const Navbar = () => {
 
                     {/* Icons (Cart and User) */}
                     <div className="hidden lg:flex items-center gap-8 ml-auto">
-                        <Link 
-                            to="/cart" 
-                            className="relative text-white text-xl hover:scale-125 transition-transform duration-300"
-                            style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)', filter: 'none' }}
-                            onMouseEnter={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))'}
-                            onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
-                        >
-                            <FaShoppingCart />
-                            {cartCount > 0 && (
-                                <span className="absolute -top-2 -right-2 bg-linear-to-br from-red-500 to-pink-600 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1.5 shadow-lg">
-                                    {cartCount}
-                                </span>
-                            )}
-                        </Link>
+                        {/* Hide cart for admin users */}
+                        {!isAdmin && (
+                            <Link 
+                                to="/cart" 
+                                className="relative text-white text-xl hover:scale-125 transition-transform duration-300"
+                                style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)', filter: 'none' }}
+                                onMouseEnter={(e) => e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))'}
+                                onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
+                            >
+                                <FaShoppingCart />
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-linear-to-br from-red-500 to-pink-600 text-white text-xs font-bold rounded-full min-w-5 h-5 flex items-center justify-center px-1.5 shadow-lg">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </Link>
+                        )}
                         <Link 
                             to={getDashboardUrl()} 
                             className="text-white text-xl hover:scale-125 transition-transform duration-300"

@@ -5,6 +5,7 @@ import { fetchAdminDashboard, setActiveTab } from '../redux/slices/adminSlice';
 import { logout } from '../redux/slices/authSlice';
 import { useAuth } from '../hooks/useAuth';
 import DashboardOverview from '../components/admin/DashboardOverview';
+import Analytics from '../components/admin/Analytics';
 import PendingApplications from '../components/admin/PendingApplications';
 import ApprovedApplications from '../components/admin/ApprovedApplications';
 import RejectedApplications from '../components/admin/RejectedApplications';
@@ -98,6 +99,9 @@ const AdminDashboard = () => {
                             <li className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => handleTabChange('dashboard')}>
                                 <i className="fas fa-tachometer-alt"></i> Dashboard Overview
                             </li>
+                            <li className={activeTab === 'analytics' ? 'active' : ''} onClick={() => handleTabChange('analytics')}>
+                                <i className="fas fa-chart-line"></i> Analytics
+                            </li>
                             <li className={activeTab === 'pending' ? 'active' : ''} onClick={() => handleTabChange('pending')}>
                                 <i className="fas fa-clock"></i> Pending Applications
                             </li>
@@ -166,6 +170,7 @@ const AdminDashboard = () => {
 
                     <div className="admin-content-wrapper">
                         {activeTab === 'dashboard' && <DashboardOverview data={data} />}
+                        {activeTab === 'analytics' && <Analytics />}
                         {activeTab === 'pending' && <PendingApplications data={data} />}
                         {activeTab === 'approved' && <ApprovedApplications data={data} filters={{ types: { pet: true, product: true, service: true }, dateRange: {} }} />}
                         {activeTab === 'rejected' && <RejectedApplications data={data} filters={{ types: { pet: true, product: true, service: true }, dateRange: {} }} />}
