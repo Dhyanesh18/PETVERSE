@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getServiceProviderDashboard, updateBookingStatus } from '../services/serviceProviderService';
-import { FaStar, FaCommentAlt, FaCalendarCheck, FaHistory, FaUser, FaEnvelope, FaIdCard, FaBriefcase, FaPhone, FaCalendar, FaPlusCircle, FaSignOutAlt, FaPaw, FaCalendarTimes, FaHome, FaChartBar, FaWallet, FaCog, FaBars, FaTimes, FaBan, FaCalendarAlt } from 'react-icons/fa';
+import { FaStar, FaCommentAlt, FaCalendarCheck, FaHistory, FaUser, FaEnvelope, FaIdCard, FaBriefcase, FaPhone, FaCalendar, FaPlusCircle, FaSignOutAlt, FaPaw, FaCalendarTimes, FaHome, FaChartBar, FaWallet, FaCog, FaBars, FaTimes, FaBan, FaCalendarAlt, FaUsers, FaTrophy, FaArrowUp, FaArrowDown, FaMinus } from 'react-icons/fa';
 import ScheduleManager from '../components/ScheduleManager';
 import { ServiceProviderDashboardSkeleton } from '../components/Skeleton';
 
@@ -15,6 +15,7 @@ const ServiceProviderDashboard = () => {
     const [activeSection, setActiveSection] = useState('overview');
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [cancellingBooking, setCancellingBooking] = useState(null);
+    const [analyticsFilter, setAnalyticsFilter] = useState('all');
 
     useEffect(() => {
         fetchDashboardData();
@@ -87,6 +88,85 @@ const ServiceProviderDashboard = () => {
         });
     };
 
+    const { provider, statistics, bookings, recentReviews } = dashboardData || {};
+
+    // ── Analytics computations ─────────────────────────────────────────────
+    // useMemo must be called unconditionally (Rules of Hooks), so it lives
+    // before any early returns. Null-safe guards handle the loading/error cases.
+    const analyticsData = useMemo(() => {
+        const allPast = bookings?.past || [];
+        const allUpcoming = bookings?.upcoming || [];
+        const allBookings = [...allPast, ...allUpcoming];
+
+        const now = new Date();
+        const filterDate = (d) => {
+            if (analyticsFilter === 'month') {
+                const cutoff = new Date(now.getFullYear(), now.getMonth(), 1);
+                return new Date(d) >= cutoff;
+            }
+            if (analyticsFilter === '3months') {
+                const cutoff = new Date(now);
+                cutoff.setMonth(cutoff.getMonth() - 3);
+                return new Date(d) >= cutoff;
+            }
+            return true;
+        };
+
+        const filtered = allBookings.filter(b => filterDate(b.date));
+        const filteredPast = allPast.filter(b => filterDate(b.date));
+
+        // Unique customers from filtered past bookings
+        const customerMap = {};
+        filteredPast.forEach(b => {
+            const id = b.customer?.email || b.customer?.name || 'unknown';
+            if (!customerMap[id]) {
+                customerMap[id] = {
+                    name: b.customer?.name || 'Customer',
+                    email: b.customer?.email || '—',
+                    lastBooking: b.date,
+                    totalBookings: 0,
+                    status: b.status,
+                };
+            }
+            customerMap[id].totalBookings += 1;
+            if (new Date(b.date) > new Date(customerMap[id].lastBooking)) {
+                customerMap[id].lastBooking = b.date;
+                customerMap[id].status = b.status;
+            }
+        });
+        const customers = Object.values(customerMap).sort(
+            (a, b) => new Date(b.lastBooking) - new Date(a.lastBooking)
+        );
+
+        // Status breakdown
+        const completed = filtered.filter(b => b.status === 'completed' || b.status === 'Completed').length;
+        const cancelled = filtered.filter(b => b.status === 'cancelled' || b.status === 'Cancelled').length;
+        const confirmed = filtered.filter(b => b.status === 'confirmed' || b.status === 'Confirmed').length;
+        const pending = filtered.length - completed - cancelled - confirmed;
+
+        // Monthly trend (last 6 months)
+        const monthTrend = [];
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const label = d.toLocaleString('default', { month: 'short' });
+            const count = allBookings.filter(b => {
+                const bd = new Date(b.date);
+                return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth();
+            }).length;
+            monthTrend.push({ label, count });
+        }
+        const maxTrend = Math.max(...monthTrend.map(m => m.count), 1);
+
+        // Revenue estimate for filtered period (using per-booking avg from statistics)
+        const pricePerBooking = statistics?.estimatedRevenue && statistics?.completedBookings
+            ? (parseFloat(statistics.estimatedRevenue) / statistics.completedBookings)
+            : 0;
+        const filteredRevenue = (completed * pricePerBooking).toFixed(2);
+
+        return { filtered, customers, completed, cancelled, confirmed, pending, monthTrend, maxTrend, filteredRevenue };
+    }, [bookings, analyticsFilter, statistics]);
+
+    // Early returns AFTER all hooks
     if (loading) return <ServiceProviderDashboardSkeleton />;
 
     if (error) {
@@ -98,7 +178,7 @@ const ServiceProviderDashboard = () => {
                     <p className="text-gray-600 mb-4">{error}</p>
                     <button
                         onClick={fetchDashboardData}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-full hover:bg-indigo-700 transition-colors"
+                        className="bg-teal-600 text-white px-6 py-2 rounded-full hover:bg-teal-700 transition-colors"
                     >
                         Try Again
                     </button>
@@ -106,8 +186,6 @@ const ServiceProviderDashboard = () => {
             </div>
         );
     }
-
-    const { provider, statistics, bookings, recentReviews } = dashboardData || {};
 
     const sidebarItems = [
         { id: 'overview', icon: FaHome, label: 'Overview', description: 'Dashboard Summary' },
@@ -142,7 +220,7 @@ const ServiceProviderDashboard = () => {
                     {sidebarOpen && (
                         <button
                             onClick={() => setSidebarOpen(false)}
-                            className="absolute right-4 top-4 bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md hover:bg-indigo-700 transition-all hover:scale-110 z-50"
+                            className="absolute right-4 top-4 bg-teal-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md hover:bg-teal-700 transition-all hover:scale-110 z-50"
                             title="Close navigation"
                         >
                             <FaTimes size={16} />
@@ -171,14 +249,14 @@ const ServiceProviderDashboard = () => {
                                 onClick={() => scrollToSection(item.id)}
                                 className={`w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-lg transition-all duration-200 ${
                                     activeSection === item.id
-                                        ? 'bg-indigo-600 text-white shadow-md'
-                                        : 'text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'
+                                        ? 'bg-teal-600 text-white shadow-md'
+                                        : 'text-gray-700 hover:bg-teal-50 hover:text-teal-600'
                                 }`}
                             >
                                 <item.icon className="text-xl flex-shrink-0" />
                                 <div className="text-left">
                                     <div className="font-semibold text-sm">{item.label}</div>
-                                    <div className={`text-xs ${activeSection === item.id ? 'text-indigo-100' : 'text-gray-500'}`}>
+                                    <div className={`text-xs ${activeSection === item.id ? 'text-teal-100' : 'text-gray-500'}`}>
                                         {item.description}
                                     </div>
                                 </div>
@@ -204,7 +282,7 @@ const ServiceProviderDashboard = () => {
                 {!sidebarOpen && (
                     <button
                         onClick={() => setSidebarOpen(true)}
-                        className="fixed left-4 top-24 bg-indigo-600 text-white rounded-full p-3 shadow-lg hover:bg-indigo-700 transition-all z-50 hover:scale-110"
+                        className="fixed left-4 top-24 bg-teal-600 text-white rounded-full p-3 shadow-lg hover:bg-teal-700 transition-all z-50 hover:scale-110"
                         title="Open Navigation"
                     >
                         <FaBars size={18} />
@@ -218,7 +296,7 @@ const ServiceProviderDashboard = () => {
                         <header id="overview" className="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <h1 className="text-3xl font-bold flex items-center gap-2">
-                                    <span className="text-indigo-600">PetVerse</span>
+                                    <span className="text-teal-600">PetVerse</span>
                                     <span className="text-green-600">Service Provider Dashboard</span>
                                 </h1>
                                 <div className="flex flex-wrap items-center gap-3">
@@ -228,7 +306,7 @@ const ServiceProviderDashboard = () => {
                                     {user?.role === 'service_provider' && (
                                         <Link
                                             to="/events/add"
-                                            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-all hover:scale-105 font-medium shadow-md"
+                                            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-full hover:bg-teal-700 transition-all hover:scale-105 font-medium shadow-md"
                                         >
                                             <FaPlusCircle />
                                             Create Event
@@ -241,7 +319,7 @@ const ServiceProviderDashboard = () => {
                         {/* Stats Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1">
-                        <FaStar className="text-4xl text-indigo-600 mb-3" />
+                        <FaStar className="text-4xl text-teal-600 mb-3" />
                         <div className="text-3xl font-bold text-gray-800 mb-1">
                             {statistics?.averageRating || '0'}/5
                         </div>
@@ -257,7 +335,7 @@ const ServiceProviderDashboard = () => {
                     </div>
                     
                     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1">
-                        <FaCalendarCheck className="text-4xl text-blue-600 mb-3" />
+                        <FaCalendarCheck className="text-4xl text-teal-500 mb-3" />
                         <div className="text-3xl font-bold text-gray-800 mb-1">
                             {statistics?.upcomingBookings || '0'}
                         </div>
@@ -265,7 +343,7 @@ const ServiceProviderDashboard = () => {
                     </div>
                     
                     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-all hover:-translate-y-1">
-                        <FaHistory className="text-4xl text-purple-600 mb-3" />
+                        <FaHistory className="text-4xl text-cyan-600 mb-3" />
                         <div className="text-3xl font-bold text-gray-800 mb-1">
                             {statistics?.completedBookings || '0'}
                         </div>
@@ -277,14 +355,14 @@ const ServiceProviderDashboard = () => {
                         <section id="profile" className="bg-white rounded-xl shadow-sm p-8 mb-8 border border-gray-100 scroll-mt-24">
                             <div className="mb-6">
                                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-                                    <FaUser className="text-indigo-600" />
+                                    <FaUser className="text-teal-600" />
                                     Profile Information
                                 </h2>
                             </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all hover:translate-x-1">
-                                <div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center flex-shrink-0">
+                                <div className="w-10 h-10 bg-teal-600 text-white rounded-full flex items-center justify-center flex-shrink-0">
                                     <FaUser />
                                 </div>
                                 <div className="flex-1">
@@ -296,7 +374,7 @@ const ServiceProviderDashboard = () => {
                             </div>
                             
                             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all hover:translate-x-1">
-                                <div className="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center flex-shrink-0">
+                                <div className="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center flex-shrink-0">
                                     <FaEnvelope />
                                 </div>
                                 <div className="flex-1">
@@ -308,7 +386,7 @@ const ServiceProviderDashboard = () => {
                             </div>
                             
                             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all hover:translate-x-1">
-                                <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center flex-shrink-0">
+                                <div className="w-10 h-10 bg-cyan-600 text-white rounded-full flex items-center justify-center flex-shrink-0">
                                     <FaIdCard />
                                 </div>
                                 <div className="flex-1">
@@ -322,7 +400,7 @@ const ServiceProviderDashboard = () => {
                         
                         <div className="space-y-4">
                             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all hover:translate-x-1">
-                                <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center flex-shrink-0">
+                                <div className="w-10 h-10 bg-teal-700 text-white rounded-full flex items-center justify-center flex-shrink-0">
                                     <FaBriefcase />
                                 </div>
                                 <div className="flex-1">
@@ -364,7 +442,7 @@ const ServiceProviderDashboard = () => {
                         <section id="schedule" className="bg-white rounded-xl shadow-sm p-8 mb-8 border border-gray-100 scroll-mt-24">
                             <div className="mb-6">
                                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-                                    <FaCalendarAlt className="text-indigo-600" />
+                                    <FaCalendarAlt className="text-teal-600" />
                                     Manage Availability
                                 </h2>
                                 <p className="text-sm text-gray-500 mt-1">
@@ -378,7 +456,7 @@ const ServiceProviderDashboard = () => {
                         <section id="upcoming" className="bg-white rounded-xl shadow-sm p-8 mb-8 border border-gray-100 scroll-mt-24">
                             <div className="mb-6">
                                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-                                    <FaCalendarCheck className="text-blue-600" />
+                                    <FaCalendarCheck className="text-teal-600" />
                                     Upcoming Bookings
                                 </h2>
                             </div>
@@ -415,7 +493,7 @@ const ServiceProviderDashboard = () => {
                                                 <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                                                     booking.status === 'cancelled' 
                                                         ? 'bg-red-100 text-red-800' 
-                                                        : 'bg-blue-100 text-blue-800'
+                                                        : 'bg-teal-100 text-teal-800'
                                                 }`}>
                                                     {booking.status || 'Confirmed'}
                                                 </span>
@@ -450,7 +528,7 @@ const ServiceProviderDashboard = () => {
                         <section id="history" className="bg-white rounded-xl shadow-sm p-8 mb-8 border border-gray-100 scroll-mt-24">
                             <div className="mb-6">
                                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-                                    <FaHistory className="text-purple-600" />
+                                    <FaHistory className="text-teal-600" />
                                     Past Bookings
                                 </h2>
                             </div>
@@ -505,7 +583,7 @@ const ServiceProviderDashboard = () => {
                             <section id="reviews" className="bg-white rounded-xl shadow-sm p-8 border border-gray-100 scroll-mt-24">
                                 <div className="mb-6">
                                     <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-                                        <FaCommentAlt className="text-green-600" />
+                                        <FaCommentAlt className="text-teal-500" />
                                         Recent Reviews
                                     </h2>
                                 </div>
@@ -539,30 +617,200 @@ const ServiceProviderDashboard = () => {
                             </section>
                         )}
 
-                        {/* Analytics Section - Placeholder */}
+                        {/* Analytics Section */}
                         <section id="analytics" className="bg-white rounded-xl shadow-sm p-8 border border-gray-100 scroll-mt-24">
-                            <div className="mb-6">
+                            {/* Header + Filter */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                                 <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
                                     <FaChartBar className="text-yellow-600" />
                                     Analytics & Performance
                                 </h2>
+                                <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+                                    {[
+                                        { key: 'month', label: 'This Month' },
+                                        { key: '3months', label: 'Last 3 Months' },
+                                        { key: 'all', label: 'All Time' },
+                                    ].map(f => (
+                                        <button
+                                            key={f.key}
+                                            onClick={() => setAnalyticsFilter(f.key)}
+                                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                                analyticsFilter === f.key
+                                                    ? 'bg-white text-teal-700 shadow font-semibold'
+                                                    : 'text-gray-500 hover:text-gray-700'
+                                            }`}
+                                        >
+                                            {f.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                                    <h3 className="font-semibold text-gray-700 mb-2">Total Bookings</h3>
-                                    <p className="text-3xl font-bold text-blue-600">{statistics?.totalBookings || 0}</p>
-                                    <p className="text-sm text-gray-600 mt-1">All time</p>
+
+                            {/* KPI Cards */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                <div className="p-5 bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl">
+                                    <p className="text-xs text-teal-600 font-semibold uppercase tracking-wide mb-1">Bookings</p>
+                                    <p className="text-3xl font-bold text-teal-700">{analyticsData.filtered.length}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{analyticsFilter === 'month' ? 'This month' : analyticsFilter === '3months' ? 'Last 3 months' : 'All time'}</p>
                                 </div>
-                                <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
-                                    <h3 className="font-semibold text-gray-700 mb-2">Wallet Balance</h3>
-                                    <p className="text-3xl font-bold text-green-600">₹{statistics?.walletBalance || '0.00'}</p>
-                                    <p className="text-sm text-gray-600 mt-1">Available balance</p>
+                                <div className="p-5 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+                                    <p className="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">Completed</p>
+                                    <p className="text-3xl font-bold text-green-700">{analyticsData.completed}</p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {analyticsData.filtered.length
+                                            ? `${Math.round((analyticsData.completed / analyticsData.filtered.length) * 100)}% completion rate`
+                                            : 'No bookings'}
+                                    </p>
                                 </div>
-                                <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg">
-                                    <h3 className="font-semibold text-gray-700 mb-2">Estimated Revenue</h3>
-                                    <p className="text-3xl font-bold text-purple-600">₹{statistics?.estimatedRevenue || '0.00'}</p>
-                                    <p className="text-sm text-gray-600 mt-1">Total earnings</p>
+                                <div className="p-5 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+                                    <p className="text-xs text-purple-600 font-semibold uppercase tracking-wide mb-1">Client Reach</p>
+                                    <p className="text-3xl font-bold text-purple-700">{analyticsData.customers.length}</p>
+                                    <p className="text-xs text-gray-500 mt-1">In selected period</p>
                                 </div>
+                                <div className="p-5 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl">
+                                    <p className="text-xs text-yellow-600 font-semibold uppercase tracking-wide mb-1">Avg Rating</p>
+                                    <p className="text-3xl font-bold text-yellow-700">{statistics?.averageRating || '—'}</p>
+                                    <p className="text-xs text-gray-500 mt-1">Out of 5.0</p>
+                                </div>
+                            </div>
+
+                            {/* Booking Trend + Status Breakdown */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                                {/* Monthly Trend */}
+                                <div className="bg-gray-50 rounded-xl p-6">
+                                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                                        <FaCalendarAlt className="text-teal-500" /> Monthly Booking Trend
+                                    </h3>
+                                    <div className="flex items-end gap-2 h-36">
+                                        {analyticsData.monthTrend.map((m, i) => (
+                                            <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                                                <span className="text-xs font-medium text-teal-700">
+                                                    {m.count > 0 ? m.count : ''}
+                                                </span>
+                                                <div
+                                                    className="w-full rounded-t-md bg-gradient-to-t from-teal-600 to-teal-400 transition-all duration-500"
+                                                    style={{ height: `${Math.max((m.count / analyticsData.maxTrend) * 100, m.count > 0 ? 8 : 2)}%` }}
+                                                />
+                                                <span className="text-xs text-gray-500">{m.label}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Status Breakdown */}
+                                <div className="bg-gray-50 rounded-xl p-6">
+                                    <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                                        <FaTrophy className="text-yellow-500" /> Booking Status Breakdown
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {[
+                                            { label: 'Completed', count: analyticsData.completed, color: 'bg-green-500' },
+                                            { label: 'Confirmed', count: analyticsData.confirmed, color: 'bg-teal-500' },
+                                            { label: 'Pending', count: analyticsData.pending, color: 'bg-yellow-400' },
+                                            { label: 'Cancelled', count: analyticsData.cancelled, color: 'bg-red-400' },
+                                        ].map(s => {
+                                            const total = analyticsData.filtered.length || 1;
+                                            const pct = Math.round((s.count / total) * 100);
+                                            return (
+                                                <div key={s.label}>
+                                                    <div className="flex justify-between text-sm mb-1">
+                                                        <span className="text-gray-600 font-medium">{s.label}</span>
+                                                        <span className="text-gray-500">{s.count} ({pct}%)</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                                                        <div
+                                                            className={`h-2.5 rounded-full ${s.color} transition-all duration-500`}
+                                                            style={{ width: `${pct}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Revenue Cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                                <div className="p-5 bg-white border border-gray-200 rounded-xl">
+                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Wallet Balance</p>
+                                    <p className="text-2xl font-bold text-green-600">₹{statistics?.walletBalance || '0.00'}</p>
+                                    <p className="text-xs text-gray-400 mt-1">Available</p>
+                                </div>
+                                <div className="p-5 bg-white border border-gray-200 rounded-xl">
+                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Total Revenue</p>
+                                    <p className="text-2xl font-bold text-cyan-600">₹{statistics?.estimatedRevenue || '0.00'}</p>
+                                    <p className="text-xs text-gray-400 mt-1">All time earnings</p>
+                                </div>
+                                <div className="p-5 bg-white border border-gray-200 rounded-xl">
+                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Period Revenue</p>
+                                    <p className="text-2xl font-bold text-purple-600">₹{analyticsData.filteredRevenue}</p>
+                                    <p className="text-xs text-gray-400 mt-1">{analyticsFilter === 'month' ? 'This month' : analyticsFilter === '3months' ? 'Last 3 months' : 'All time'}</p>
+                                </div>
+                            </div>
+
+                            {/* Recent Customers */}
+                            <div>
+                                <h3 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                                    <FaUsers className="text-purple-500" /> Recent Customers
+                                    <span className="ml-1 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">
+                                        {analyticsData.customers.length}
+                                    </span>
+                                </h3>
+                                {analyticsData.customers.length > 0 ? (
+                                    <div className="overflow-x-auto rounded-xl border border-gray-100">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="bg-gray-50">
+                                                    <th className="text-left p-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">#</th>
+                                                    <th className="text-left p-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Customer</th>
+                                                    <th className="text-left p-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</th>
+                                                    <th className="text-left p-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Last Booking</th>
+                                                    <th className="text-left p-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Bookings</th>
+                                                    <th className="text-left p-4 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {analyticsData.customers.slice(0, 10).map((c, i) => (
+                                                    <tr key={i} className="border-t border-gray-50 hover:bg-gray-50 transition-colors">
+                                                        <td className="p-4 text-gray-400 font-medium">{i + 1}</td>
+                                                        <td className="p-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-8 h-8 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                                                                    {c.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <span className="font-medium text-gray-800">{c.name}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-4 text-gray-500">{c.email}</td>
+                                                        <td className="p-4 text-gray-600">{formatDate(c.lastBooking)}</td>
+                                                        <td className="p-4">
+                                                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-teal-50 text-teal-700 font-bold text-xs">
+                                                                {c.totalBookings}
+                                                            </span>
+                                                        </td>
+                                                        <td className="p-4">
+                                                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                                c.status === 'completed' || c.status === 'Completed'
+                                                                    ? 'bg-green-100 text-green-700'
+                                                                    : c.status === 'cancelled' || c.status === 'Cancelled'
+                                                                    ? 'bg-red-100 text-red-700'
+                                                                    : 'bg-teal-100 text-teal-700'
+                                                            }`}>
+                                                                {c.status || 'Confirmed'}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-10 bg-gray-50 rounded-xl">
+                                        <FaUsers className="text-4xl text-gray-300 mx-auto mb-3" />
+                                        <p className="text-gray-500">No customer data for this period</p>
+                                    </div>
+                                )}
                             </div>
                         </section>
                     </div>
