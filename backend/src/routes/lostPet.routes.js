@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const lostPetController = require('../controllers/lostPet.controller');
+const foundClaimController = require('../controllers/foundClaim.controller');
 
 // Configure multer for image uploads
 const upload = multer({
@@ -9,6 +10,21 @@ const upload = multer({
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB per file
         files: 5
+    },
+    fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+            return cb(new Error('Only image files are allowed'), false);
+        }
+        cb(null, true);
+    }
+});
+
+// Configure multer for claim images (up to 3 images)
+const claimUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB per file
+        files: 3
     },
     fileFilter: (req, file, cb) => {
         if (!file.mimetype.startsWith('image/')) {
@@ -35,12 +51,20 @@ router.get('/', lostPetController.getAllLostPets);
 router.get('/:id', lostPetController.getLostPetById);
 router.get('/image/:id/:index', lostPetController.getLostPetImage);
 
-// Protected routes
+// Protected routes - Lost Pet Management
 router.post('/create', isAuthenticated, upload.array('images', 5), lostPetController.createLostPet);
 router.get('/user/my-posts', isAuthenticated, lostPetController.getUserLostPets);
 router.put('/:id', isAuthenticated, upload.array('images', 5), lostPetController.updateLostPet);
 router.patch('/:id/status', isAuthenticated, lostPetController.updateStatus);
 router.post('/:id/comment', isAuthenticated, lostPetController.addComment);
 router.delete('/:id', isAuthenticated, lostPetController.deleteLostPet);
+
+// Protected routes - Found Claims
+router.post('/:lostPetId/claim', isAuthenticated, claimUpload.array('images', 3), foundClaimController.submitFoundClaim);
+router.get('/:lostPetId/claims', isAuthenticated, foundClaimController.getClaimsForLostPet);
+router.post('/claims/:claimId/review', isAuthenticated, foundClaimController.reviewClaim);
+router.get('/claims/:claimId/contact', isAuthenticated, foundClaimController.getApprovedContact);
+router.get('/claims/image/:claimId/:index', isAuthenticated, foundClaimController.getClaimImage);
+router.get('/user/my-claims', isAuthenticated, foundClaimController.getUserClaims);
 
 module.exports = router;

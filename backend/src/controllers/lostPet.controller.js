@@ -23,6 +23,24 @@ exports.createLostPet = async (req, res) => {
             });
         }
 
+        // Parse verification questions from request
+        const verificationQuestions = [];
+        if (req.body.verificationQuestions) {
+            try {
+                const questions = JSON.parse(req.body.verificationQuestions);
+                questions.forEach(q => {
+                    if (q.question && q.answer) {
+                        verificationQuestions.push({
+                            question: q.question.trim(),
+                            answer: q.answer.trim()
+                        });
+                    }
+                });
+            } catch (e) {
+                console.error('Error parsing verification questions:', e);
+            }
+        }
+
         const lostPetData = {
             ...req.body,
             lastSeenLocation: {
@@ -44,7 +62,9 @@ exports.createLostPet = async (req, res) => {
                 data: file.buffer,
                 contentType: file.mimetype
             })),
-            postedBy: req.user._id
+            postedBy: req.user._id,
+            verificationQuestions,
+            hideContactInfo: req.body.hideContactInfo !== 'false' // Default to true
         };
 
         const newLostPet = await LostPet.create(lostPetData);
@@ -156,7 +176,8 @@ exports.getLostPetById = async (req, res) => {
 
         const lostPet = await LostPet.findById(id)
             .populate('postedBy', 'fullName email phone')
-            .populate('comments.user', 'fullName');
+            .populate('comments.user', 'fullName')
+            .lean();
 
         if (!lostPet) {
             return res.status(404).json({
@@ -165,13 +186,58 @@ exports.getLostPetById = async (req, res) => {
             });
         }
 
-        // Increment view count
-        lostPet.views = (lostPet.views || 0) + 1;
-        await lostPet.save();
+        // Increment view count (do this in background)
+        LostPet.findByIdAndUpdate(id, { $inc: { views: 1 } }).exec();
+
+        // Check if user has permission to view contact info
+        let canViewContact = false;
+        let userApprovedClaim = null;
+        
+        if (req.user) {
+            // Owner can always see contact
+            if (lostPet.postedBy._id.toString() === req.user._id.toString()) {
+                canViewContact = true;
+            } else {
+                // Check if user has an approved claim
+                const FoundClaim = require('../models/foundClaim');
+                userApprovedClaim = await FoundClaim.findOne({
+                    lostPetPost: id,
+                    claimedBy: req.user._id,
+                    status: 'approved'
+                });
+                
+                if (userApprovedClaim) {
+                    canViewContact = true;
+                }
+            }
+        }
+
+        // Hide contact info if not authorized or if hideContactInfo is true
+        if (lostPet.hideContactInfo && !canViewContact) {
+            lostPet.contactInfo = null;
+        }
+
+        // Remove verification answers (only questions should be visible)
+        if (lostPet.verificationQuestions && Array.isArray(lostPet.verificationQuestions)) {
+            lostPet.verificationQuestions = lostPet.verificationQuestions.map(vq => ({
+                question: vq.question,
+                _id: vq._id
+            }));
+        } else {
+            lostPet.verificationQuestions = [];
+        }
+
+        // Add flags for frontend
+        const response = {
+            ...lostPet,
+            canViewContact,
+            isOwner: req.user && lostPet.postedBy._id.toString() === req.user._id.toString(),
+            userApprovedClaim: userApprovedClaim ? userApprovedClaim._id : null
+        };
 
         res.json({
             success: true,
-            data: lostPet
+            data: response
         });
     } catch (error) {
         console.error('Error fetching lost pet:', error);

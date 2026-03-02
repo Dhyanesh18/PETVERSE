@@ -124,7 +124,31 @@ const lostPetSchema = new mongoose.Schema({
             type: Date,
             default: Date.now
         }
-    }]
+    }],
+    verificationQuestions: [{
+        question: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        answer: {
+            type: String,
+            required: true,
+            trim: true
+        }
+    }],
+    hideContactInfo: {
+        type: Boolean,
+        default: true  // Contact info hidden by default until verification
+    },
+    foundClaims: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'FoundClaim'
+    }],
+    pendingClaimsCount: {
+        type: Number,
+        default: 0
+    }
 }, {
     timestamps: true
 });

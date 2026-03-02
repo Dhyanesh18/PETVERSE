@@ -309,20 +309,38 @@ function generateProductCategoriesData(products) {
 
 async function generateMonthlyRevenue() {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const revenues = [];
-    const userWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
-    let baseRevenue = 0;
+    const currentMonth = new Date().getMonth();
+    const monthlyRevenue = Array(12).fill(0);
+    
+    try {
+        // Get all orders to calculate real revenue
+        const Order = require('../models/order');
+        const orders = await Order.find({ status: { $ne: 'cancelled' } });
+        
+        orders.forEach(order => {
+            const createdDate = new Date(order.createdAt);
+            const monthIndex = createdDate.getMonth();
+            const yearDiff = new Date().getFullYear() - createdDate.getFullYear();
+            
+            // Only include orders from the past year
+            if (yearDiff === 0 || (yearDiff === 1 && currentMonth < monthIndex)) {
+                const adjustedMonthIndex = (monthIndex - currentMonth + 12) % 12;
+                monthlyRevenue[adjustedMonthIndex] += order.totalAmount;
+            }
+        });
+    } catch (err) {
+        console.error('Error calculating monthly revenue:', err);
+    }
+    
+    // Adjust month labels to start with oldest month
+    const adjustedMonths = [];
     for (let i = 0; i < 12; i++) {
-        if (i === 10) {
-            revenues.push(userWallet.balance - 10000);
-        } else {
-            revenues.push(baseRevenue);
-        }
+        adjustedMonths.push(months[(currentMonth - 11 + i + 12) % 12]);
     }
     
     return {
-        labels: months,
-        data: revenues
+        labels: adjustedMonths,
+        data: monthlyRevenue
     };
 }
 
@@ -911,5 +929,356 @@ router.delete('/user/:userId', adminAuth, async (req, res) => {
         res.status(500).json({ success: false, error: err.message });
     }
 });
+
+// Get comprehensive analytics data
+router.get('/analytics', adminAuth, async (req, res) => {
+    try {
+        console.log('Fetching comprehensive analytics...');
+        
+        // Models
+        const Product = require('../models/products');
+        const Pet = require('../models/pets');
+        const Service = require('../models/Service');
+        const Booking = require('../models/Booking');
+        const Event = require('../models/event');
+        
+        // ============ SERVICE ANALYTICS ============
+        const serviceTransactions = await Transaction.find({
+            type: { $in: ['service_payment', 'event_payment'] }
+        }).populate('from to');
+        
+        const totalServiceRevenue = serviceTransactions.reduce((sum, t) => sum + t.amount, 0);
+        
+        const bookings = await Booking.find().populate('service user');
+        const totalBookings = bookings.length;
+        
+        // Top service providers by revenue
+        const serviceProviderRevenue = {};
+        serviceTransactions
+            .filter(t => t.type === 'service_payment')
+            .forEach(t => {
+                const providerId = t.to?._id?.toString();
+                if (providerId) {
+                    if (!serviceProviderRevenue[providerId]) {
+                        serviceProviderRevenue[providerId] = {
+                            provider: t.to,
+                            revenue: 0,
+                            count: 0
+                        };
+                    }
+                    serviceProviderRevenue[providerId].revenue += t.amount;
+                    serviceProviderRevenue[providerId].count += 1;
+                }
+            });
+        
+        const topServiceProviders = Object.values(serviceProviderRevenue)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 10)
+            .map(sp => ({
+                id: sp.provider._id,
+                name: sp.provider.fullName,
+                email: sp.provider.email,
+                revenue: sp.revenue,
+                bookingsCount: sp.count
+            }));
+        
+        // Service revenue by month (last 12 months)
+        const serviceRevenueByMonth = await getRevenueByMonth(serviceTransactions);
+        
+        // Service types breakdown
+        const services = await Service.find().populate('provider');
+        const serviceTypeBreakdown = {};
+        services.forEach(service => {
+            const type = service.serviceType || 'other';
+            serviceTypeBreakdown[type] = (serviceTypeBreakdown[type] || 0) + 1;
+        });
+        
+        // ============ SELLER ANALYTICS ============
+        const orders = await Order.find({ status: { $ne: 'cancelled' } })
+            .populate('customer seller items.product');
+        
+        const totalOrderRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+        const totalOrders = orders.length;
+        
+        // Top sellers by revenue
+        const sellerRevenue = {};
+        orders.forEach(order => {
+            const sellerId = order.seller?._id?.toString();
+            if (sellerId) {
+                if (!sellerRevenue[sellerId]) {
+                    sellerRevenue[sellerId] = {
+                        seller: order.seller,
+                        revenue: 0,
+                        orderCount: 0
+                    };
+                }
+                sellerRevenue[sellerId].revenue += order.totalAmount;
+                sellerRevenue[sellerId].orderCount += 1;
+            }
+        });
+        
+        const topSellers = Object.values(sellerRevenue)
+            .sort((a, b) => b.revenue - a.revenue)
+            .slice(0, 10)
+            .map(s => ({
+                id: s.seller._id,
+                name: s.seller.fullName,
+                email: s.seller.email,
+                revenue: s.revenue,
+                orderCount: s.orderCount,
+                avgOrderValue: s.orderCount > 0 ? (s.revenue / s.orderCount).toFixed(2) : 0
+            }));
+        
+        // Seller revenue by month
+        const sellerRevenueByMonth = await getRevenueByMonthFromOrders(orders);
+        
+        // ============ PRODUCT ANALYTICS ============
+        // Calculate product sales from orders
+        const productSales = {};
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const productId = item.product?._id?.toString();
+                if (productId && item.itemType === 'Product') {
+                    if (!productSales[productId]) {
+                        productSales[productId] = {
+                            product: item.product,
+                            totalRevenue: 0,
+                            totalQuantity: 0,
+                            orderCount: 0
+                        };
+                    }
+                    productSales[productId].totalRevenue += item.price * item.quantity;
+                    productSales[productId].totalQuantity += item.quantity;
+                    productSales[productId].orderCount += 1;
+                }
+            });
+        });
+        
+        const bestProducts = Object.values(productSales)
+            .sort((a, b) => b.totalRevenue - a.totalRevenue)
+            .slice(0, 10)
+            .map(p => ({
+                id: p.product._id,
+                name: p.product.name,
+                category: p.product.category,
+                brand: p.product.brand,
+                totalRevenue: p.totalRevenue,
+                totalQuantity: p.totalQuantity,
+                orderCount: p.orderCount,
+                avgRating: p.product.avgRating || 0
+            }));
+        
+        // Product category performance
+        const categoryPerformance = {};
+        Object.values(productSales).forEach(ps => {
+            const category = ps.product.category || 'Other';
+            if (!categoryPerformance[category]) {
+                categoryPerformance[category] = {
+                    revenue: 0,
+                    quantity: 0,
+                    products: 0
+                };
+            }
+            categoryPerformance[category].revenue += ps.totalRevenue;
+            categoryPerformance[category].quantity += ps.totalQuantity;
+            categoryPerformance[category].products += 1;
+        });
+        
+        // ============ CUSTOMER ANALYTICS ============
+        const customerRevenue = {};
+        orders.forEach(order => {
+            const customerId = order.customer?._id?.toString();
+            if (customerId) {
+                if (!customerRevenue[customerId]) {
+                    customerRevenue[customerId] = {
+                        customer: order.customer,
+                        totalSpent: 0,
+                        orderCount: 0
+                    };
+                }
+                customerRevenue[customerId].totalSpent += order.totalAmount;
+                customerRevenue[customerId].orderCount += 1;
+            }
+        });
+        
+        const topCustomers = Object.values(customerRevenue)
+            .sort((a, b) => b.totalSpent - a.totalSpent)
+            .slice(0, 10)
+            .map(c => ({
+                id: c.customer._id,
+                name: c.customer.fullName,
+                email: c.customer.email,
+                totalSpent: c.totalSpent,
+                orderCount: c.orderCount,
+                avgOrderValue: c.orderCount > 0 ? (c.totalSpent / c.orderCount).toFixed(2) : 0
+            }));
+        
+        // ============ EVENT ANALYTICS ============
+        const events = await Event.find().populate('organizer attendees.user');
+        const eventRevenue = events.reduce((sum, event) => {
+            return sum + (event.entryFee * event.attendees.length);
+        }, 0);
+        
+        const totalEvents = events.length;
+        const totalAttendees = events.reduce((sum, event) => sum + event.attendees.length, 0);
+        
+        const upcomingEvents = events.filter(e => new Date(e.eventDate) > new Date()).length;
+        const pastEvents = events.filter(e => new Date(e.eventDate) <= new Date()).length;
+        
+        // ============ OVERALL PLATFORM METRICS ============
+        const allTransactions = await Transaction.find();
+        const totalPlatformRevenue = totalServiceRevenue + totalOrderRevenue + eventRevenue;
+        
+        // Commission calculation (admin's revenue)
+        const adminCommissions = await Transaction.find({ type: 'commission' });
+        const totalCommissions = adminCommissions.reduce((sum, t) => sum + t.amount, 0);
+        
+        // Get admin wallet - use current logged-in admin
+        const adminWallet = await Wallet.findOne({ user: req.user._id });
+        
+        // Payment method distribution from orders
+        const paymentMethodDist = {};
+        orders.forEach(order => {
+            const method = order.paymentMethod || 'unknown';
+            paymentMethodDist[method] = (paymentMethodDist[method] || 0) + 1;
+        });
+        
+        // Order status distribution
+        const orderStatusDist = {};
+        orders.forEach(order => {
+            const status = order.status || 'unknown';
+            orderStatusDist[status] = (orderStatusDist[status] || 0) + 1;
+        });
+        
+        // ============ RESPONSE ============
+        res.json({
+            success: true,
+            data: {
+                // Service Analytics
+                serviceAnalytics: {
+                    totalRevenue: totalServiceRevenue,
+                    totalBookings: totalBookings,
+                    totalServices: services.length,
+                    topServiceProviders,
+                    revenueByMonth: serviceRevenueByMonth,
+                    serviceTypeBreakdown
+                },
+                
+                // Seller Analytics
+                sellerAnalytics: {
+                    totalRevenue: totalOrderRevenue,
+                    totalOrders: totalOrders,
+                    topSellers,
+                    revenueByMonth: sellerRevenueByMonth,
+                    avgOrderValue: totalOrders > 0 ? (totalOrderRevenue / totalOrders).toFixed(2) : 0
+                },
+                
+                // Product Analytics
+                productAnalytics: {
+                    bestProducts,
+                    categoryPerformance,
+                    totalProducts: await Product.countDocuments()
+                },
+                
+                // Customer Analytics
+                customerAnalytics: {
+                    topCustomers,
+                    totalCustomers: Object.keys(customerRevenue).length,
+                    avgCustomerValue: Object.keys(customerRevenue).length > 0 
+                        ? (totalOrderRevenue / Object.keys(customerRevenue).length).toFixed(2) 
+                        : 0
+                },
+                
+                // Event Analytics
+                eventAnalytics: {
+                    totalRevenue: eventRevenue,
+                    totalEvents,
+                    totalAttendees,
+                    upcomingEvents,
+                    pastEvents,
+                    avgAttendeesPerEvent: totalEvents > 0 ? (totalAttendees / totalEvents).toFixed(1) : 0
+                },
+                
+                // Overall Platform Metrics
+                platformMetrics: {
+                    totalRevenue: totalPlatformRevenue,
+                    totalCommissions,
+                    adminBalance: adminWallet?.balance || 0,
+                    totalTransactions: allTransactions.length,
+                    paymentMethodDistribution: paymentMethodDist,
+                    orderStatusDistribution: orderStatusDist
+                }
+            }
+        });
+        
+    } catch (err) {
+        console.error('Analytics error:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch analytics',
+            message: err.message
+        });
+    }
+});
+
+// Helper function to get revenue by month from transactions
+async function getRevenueByMonth(transactions) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentMonth = new Date().getMonth();
+    const monthlyRevenue = Array(12).fill(0);
+    
+    transactions.forEach(transaction => {
+        const createdDate = new Date(transaction.createdAt);
+        const monthIndex = createdDate.getMonth();
+        const yearDiff = new Date().getFullYear() - createdDate.getFullYear();
+        
+        // Only include transactions from the past year
+        if (yearDiff === 0 || (yearDiff === 1 && currentMonth < monthIndex)) {
+            const adjustedMonthIndex = (monthIndex - currentMonth + 12) % 12;
+            monthlyRevenue[adjustedMonthIndex] += transaction.amount;
+        }
+    });
+    
+    // Adjust month labels to start with oldest month
+    const adjustedMonths = [];
+    for (let i = 0; i < 12; i++) {
+        adjustedMonths.push(months[(currentMonth - 11 + i + 12) % 12]);
+    }
+    
+    return {
+        labels: adjustedMonths,
+        data: monthlyRevenue
+    };
+}
+
+// Helper function to get revenue by month from orders
+async function getRevenueByMonthFromOrders(orders) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentMonth = new Date().getMonth();
+    const monthlyRevenue = Array(12).fill(0);
+    
+    orders.forEach(order => {
+        const createdDate = new Date(order.createdAt);
+        const monthIndex = createdDate.getMonth();
+        const yearDiff = new Date().getFullYear() - createdDate.getFullYear();
+        
+        // Only include orders from the past year
+        if (yearDiff === 0 || (yearDiff === 1 && currentMonth < monthIndex)) {
+            const adjustedMonthIndex = (monthIndex - currentMonth + 12) % 12;
+            monthlyRevenue[adjustedMonthIndex] += order.totalAmount;
+        }
+    });
+    
+    // Adjust month labels to start with oldest month
+    const adjustedMonths = [];
+    for (let i = 0; i < 12; i++) {
+        adjustedMonths.push(months[(currentMonth - 11 + i + 12) % 12]);
+    }
+    
+    return {
+        labels: adjustedMonths,
+        data: monthlyRevenue
+    };
+}
 
 module.exports = router;
