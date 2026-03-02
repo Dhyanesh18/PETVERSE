@@ -5,6 +5,7 @@ const Service = require('../models/Service');
 const Review = require('../models/reviews');
 const User = require('../models/users');
 const Wallet = require('../models/wallet');
+const Availability = require('../models/availability');
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
@@ -581,6 +582,72 @@ router.get('/analytics', isAuthenticated, isServiceProvider, async (req, res) =>
             error: 'Error fetching analytics',
             message: error.message
         });
+    }
+});
+
+// ===== AVAILABILITY MANAGEMENT ROUTES =====
+
+// GET /api/service-provider/availability — fetch current schedule + blocked dates
+router.get('/availability', isAuthenticated, isServiceProvider, async (req, res) => {
+    try {
+        const avail = await Availability.findOne({ serviceProvider: req.user._id }).lean();
+        res.json({ success: true, data: avail || { days: [], blockedDates: [] } });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/service-provider/availability — save weekly day schedule
+router.post('/availability', isAuthenticated, isServiceProvider, async (req, res) => {
+    try {
+        const { days } = req.body;
+        if (!Array.isArray(days)) {
+            return res.status(400).json({ success: false, error: 'days must be an array' });
+        }
+        const avail = await Availability.findOneAndUpdate(
+            { serviceProvider: req.user._id },
+            { $set: { days, updatedAt: Date.now() } },
+            { upsert: true, new: true, runValidators: true }
+        );
+        res.json({ success: true, message: 'Schedule saved successfully', data: avail });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// POST /api/service-provider/availability/block-date — add a blocked date
+router.post('/availability/block-date', isAuthenticated, isServiceProvider, async (req, res) => {
+    try {
+        const { date } = req.body;
+        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return res.status(400).json({ success: false, error: 'Valid date (YYYY-MM-DD) is required' });
+        }
+        const avail = await Availability.findOneAndUpdate(
+            { serviceProvider: req.user._id },
+            { $addToSet: { blockedDates: date }, $set: { updatedAt: Date.now() } },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true, message: `${date} blocked successfully`, data: avail });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+// DELETE /api/service-provider/availability/block-date/:date — remove a blocked date
+router.delete('/availability/block-date/:date', isAuthenticated, isServiceProvider, async (req, res) => {
+    try {
+        const { date } = req.params;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return res.status(400).json({ success: false, error: 'Valid date (YYYY-MM-DD) is required' });
+        }
+        const avail = await Availability.findOneAndUpdate(
+            { serviceProvider: req.user._id },
+            { $pull: { blockedDates: date }, $set: { updatedAt: Date.now() } },
+            { new: true }
+        );
+        res.json({ success: true, message: `${date} unblocked successfully`, data: avail });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
     }
 });
 
