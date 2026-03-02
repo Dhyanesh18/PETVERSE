@@ -66,6 +66,11 @@ exports.getAvailableSlots = async (req, res) => {
     
     // Get service provider's availability
     const providerAvailability = await Availability.findOne({ serviceProvider: serviceId });
+
+    // Check if provider has blocked this specific date
+    if (providerAvailability && providerAvailability.blockedDates && providerAvailability.blockedDates.includes(date)) {
+      return res.json({ availableSlots: [], message: 'Provider is not available on this date' });
+    }
     
     // Default slots if no availability is set
     let allPossibleSlots = [

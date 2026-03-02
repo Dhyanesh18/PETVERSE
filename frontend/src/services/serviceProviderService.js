@@ -42,6 +42,12 @@ export const getAvailability = () => apiClient.get('/api/service-provider/availa
 export const updateAvailability = (availabilityData) => 
     apiClient.post('/api/service-provider/availability', availabilityData);
 
+export const blockDate = (date) =>
+    apiClient.post('/api/service-provider/availability/block-date', { date });
+
+export const unblockDate = (date) =>
+    apiClient.delete(`/api/service-provider/availability/block-date/${date}`);
+
 export default {
     getServiceProviderDashboard,
     getBookings,
@@ -52,5 +58,7 @@ export default {
     replyToReview,
     getWalletBalance,
     getAvailability,
-    updateAvailability
+    updateAvailability,
+    blockDate,
+    unblockDate
 };

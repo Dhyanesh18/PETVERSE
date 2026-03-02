@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getServiceProviderDashboard, updateBookingStatus } from '../services/serviceProviderService';
-import { FaStar, FaCommentAlt, FaCalendarCheck, FaHistory, FaUser, FaEnvelope, FaIdCard, FaBriefcase, FaPhone, FaCalendar, FaPlusCircle, FaSignOutAlt, FaPaw, FaCalendarTimes, FaHome, FaChartBar, FaWallet, FaCog, FaBars, FaTimes, FaBan } from 'react-icons/fa';
+import { FaStar, FaCommentAlt, FaCalendarCheck, FaHistory, FaUser, FaEnvelope, FaIdCard, FaBriefcase, FaPhone, FaCalendar, FaPlusCircle, FaSignOutAlt, FaPaw, FaCalendarTimes, FaHome, FaChartBar, FaWallet, FaCog, FaBars, FaTimes, FaBan, FaCalendarAlt } from 'react-icons/fa';
+import ScheduleManager from '../components/ScheduleManager';
 
 const ServiceProviderDashboard = () => {
     const { user, logout } = useAuth();
@@ -119,6 +120,7 @@ const ServiceProviderDashboard = () => {
     const sidebarItems = [
         { id: 'overview', icon: FaHome, label: 'Overview', description: 'Dashboard Summary' },
         { id: 'profile', icon: FaUser, label: 'Profile', description: 'Your Information' },
+        { id: 'schedule', icon: FaCalendarAlt, label: 'Schedule', description: 'Manage Availability' },
         { id: 'upcoming', icon: FaCalendarCheck, label: 'Upcoming', description: 'Future Bookings' },
         { id: 'history', icon: FaHistory, label: 'History', description: 'Past Bookings' },
         { id: 'reviews', icon: FaCommentAlt, label: 'Reviews', description: 'Customer Feedback' },
@@ -364,6 +366,20 @@ const ServiceProviderDashboard = () => {
                             )}
                         </div>
                             </div>
+                        </section>
+
+                        {/* Schedule Manager Section */}
+                        <section id="schedule" className="bg-white rounded-xl shadow-sm p-8 mb-8 border border-gray-100 scroll-mt-24">
+                            <div className="mb-6">
+                                <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+                                    <FaCalendarAlt className="text-indigo-600" />
+                                    Manage Availability
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Set your weekly working hours with flexible time ranges, and block specific dates when you are unavailable.
+                                </p>
+                            </div>
+                            <ScheduleManager />
                         </section>
 
                         {/* Upcoming Bookings Section */}

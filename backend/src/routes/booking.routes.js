@@ -97,6 +97,21 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
         const providerAvailability = await Availability.findOne({ serviceProvider: serviceId });
         
         console.log('Provider availability found:', !!providerAvailability);
+
+        // Check if provider has explicitly blocked this specific date
+        if (providerAvailability && providerAvailability.blockedDates && providerAvailability.blockedDates.includes(date)) {
+            console.log('Date is blocked by provider:', date);
+            return res.json({
+                success: true,
+                data: {
+                    slots: [],
+                    availableSlots: [],
+                    totalSlots: 0,
+                    bookedSlots: 0,
+                    message: 'Provider is not available on this date'
+                }
+            });
+        }
         
         // Default slots if no availability is set
         let allPossibleSlots = [

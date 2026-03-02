@@ -44,6 +44,15 @@ const availabilitySchema = new mongoose.Schema({
             }
         }]
     }],
+    blockedDates: [{
+        type: String,
+        validate: {
+            validator: function(v) {
+                return /^\d{4}-\d{2}-\d{2}$/.test(v);
+            },
+            message: props => `${props.value} is not a valid date format (YYYY-MM-DD)`
+        }
+    }],
     createdAt: {
         type: Date,
         default: Date.now

@@ -39,7 +39,8 @@ const BookingModal = ({ service, onClose, onSuccess }) => {
             setAvailableSlots(slots);
             
             if (slots.length === 0) {
-                setError('No slots available for this date. Please select another date.');
+                const apiMsg = response.data.data?.message;
+                setError(apiMsg || 'No slots available for this date. Please select another date.');
             }
         } catch (error) {
             console.error('Error fetching slots:', error);
