@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { WalletSkeleton } from '../components/Skeleton';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
 import { 
@@ -177,17 +178,7 @@ const Wallet = () => {
     };
 
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 pt-20">
-                <div className="container mx-auto px-4 py-8">
-                    <div className="text-center py-20">
-                        <div className="text-2xl text-gray-600">Loading wallet...</div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <WalletSkeleton />;
 
     return (
         <div className="min-h-screen bg-gray-50 pt-20">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { ServiceDetailSkeleton } from '../components/Skeleton';
 import { 
     getServiceById, 
     getReviews, 
@@ -182,14 +183,7 @@ const ServiceDetail = () => {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
-                <div className="text-center">
-                    <FaPaw className="text-6xl text-teal-500 animate-bounce mx-auto mb-4" />
-                    <p className="text-xl text-gray-700 font-semibold">Loading Service Details...</p>
-                </div>
-            </div>
-        );
+        return <ServiceDetailSkeleton />;
     }
 
     if (error || !service) {

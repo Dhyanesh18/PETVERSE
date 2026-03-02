@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ProductDetailSkeleton } from '../components/Skeleton';
 import { 
     getProductById, 
     addReview, 
@@ -254,15 +255,7 @@ const ProductDetail = () => {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 pt-20">
-                <div className="container mx-auto px-4 py-8">
-                    <div className="text-center py-20">
-                        <div className="text-2xl text-gray-600">Loading...</div>
-                    </div>
-                </div>
-            </div>
-        );
+        return <ProductDetailSkeleton />;
     }
 
     if (!product) {

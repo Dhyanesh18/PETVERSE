@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { PetDetailSkeleton } from '../components/Skeleton';
 import { getPetById, togglePetWishlist, getWishlist, getPets } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
@@ -155,17 +156,7 @@ const PetDetail = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 pt-20">
-                <div className="container mx-auto px-4 py-8">
-                    <div className="text-center py-20">
-                        <div className="text-2xl text-gray-600">Loading...</div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <PetDetailSkeleton />;
 
     if (!pet && !loading) {
         return (

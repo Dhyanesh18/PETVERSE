@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEventById, registerForEvent, unregisterFromEvent } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
+import { EventDetailSkeleton } from '../components/Skeleton';
 import { 
     FaCalendarAlt, 
     FaClock, 
@@ -139,16 +140,7 @@ const EventDetail = () => {
         });
     };
 
-    if (loading || authLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                    <FaSpinner className="text-6xl text-teal-500 animate-spin mx-auto mb-4" />
-                    <p className="text-xl text-gray-700">Loading event details...</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading || authLoading) return <EventDetailSkeleton />;
 
     if (!event) {
         return (

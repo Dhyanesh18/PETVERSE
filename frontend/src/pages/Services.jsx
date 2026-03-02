@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaStar, FaMapMarkerAlt, FaPhone, FaEnvelope, FaFilter, FaTimes, FaPaw, FaUser, FaComment } from 'react-icons/fa';
+import { ServicesSkeleton } from '../components/Skeleton';
 import { useServiceEvent } from '../hooks/useServiceEvent';
 
 const Services = () => {
@@ -65,14 +66,7 @@ const Services = () => {
     };
 
     if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
-                <div className="text-center">
-                    <FaPaw className="text-6xl text-teal-500 animate-bounce mx-auto mb-4" />
-                    <p className="text-xl text-gray-700 font-semibold">Loading Services...</p>
-                </div>
-            </div>
-        );
+        return <ServicesSkeleton />;
     }
 
     if (error) {
@@ -94,7 +88,7 @@ const Services = () => {
     }
 
     return (
-        <div className="bg-gray-50 min-h-screen" style={{ paddingTop: '75px' }}>
+        <div className="bg-gray-50 min-h-screen" style={{ paddingTop: '80px' }}>
             {/* Hero Section */}
             <section 
                 className="text-white py-20 px-5 text-center relative overflow-hidden bg-cover bg-center"

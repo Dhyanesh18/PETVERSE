@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 // Removed unused imports - using direct fetch calls instead
 import { FaShoppingCart, FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
+import { CartSkeleton } from '../components/Skeleton';
 
 const Cart = () => {
     const navigate = useNavigate();
@@ -89,17 +90,7 @@ const Cart = () => {
 
     const { subtotal = 0, shipping = 0, tax = 0, total = 0, itemCount = 0 } = summary;
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 pt-20">
-                <div className="container mx-auto px-4 py-8">
-                    <div className="text-center py-20">
-                        <div className="text-2xl text-gray-600">Loading cart...</div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <CartSkeleton />;
 
     if (error) {
         return (
