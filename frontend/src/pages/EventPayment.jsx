@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getEventPaymentData, processEventPayment } from '../services/api';
 import { fetchWalletData } from '../redux/slices/walletSlice';
 import { FaCheck, FaCreditCard, FaMobile, FaWallet, FaShieldAlt, FaCalendar, FaClock, FaMapMarker } from 'react-icons/fa';
+import { EventPaymentSkeleton } from '../components/Skeleton';
 
 const EventPayment = () => {
     const { id } = useParams();
@@ -147,16 +148,7 @@ const EventPayment = () => {
         }
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-xl text-gray-700">Loading payment page...</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <EventPaymentSkeleton />;
 
     if (!event) {
         return (

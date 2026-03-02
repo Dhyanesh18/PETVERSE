@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { ProductsGridSkeleton } from '../components/Skeleton';
 import { 
     fetchProducts, 
     toggleProductWishlist as toggleWishlistAction,
@@ -387,9 +388,7 @@ const Products = () => {
 
                     {/* Products Grid */}
                     {loading ? (
-                        <div className="text-center py-12">
-                            <div className="text-2xl text-gray-600">Loading...</div>
-                        </div>
+                        <ProductsGridSkeleton />
                     ) : filteredProducts.length === 0 ? (
                         <div className="text-center py-12">
                             <p className="text-xl text-gray-600">No products found.</p>

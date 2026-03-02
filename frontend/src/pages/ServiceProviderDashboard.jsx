@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { getServiceProviderDashboard, updateBookingStatus } from '../services/serviceProviderService';
 import { FaStar, FaCommentAlt, FaCalendarCheck, FaHistory, FaUser, FaEnvelope, FaIdCard, FaBriefcase, FaPhone, FaCalendar, FaPlusCircle, FaSignOutAlt, FaPaw, FaCalendarTimes, FaHome, FaChartBar, FaWallet, FaCog, FaBars, FaTimes, FaBan, FaCalendarAlt } from 'react-icons/fa';
 import ScheduleManager from '../components/ScheduleManager';
+import { ServiceProviderDashboardSkeleton } from '../components/Skeleton';
 
 const ServiceProviderDashboard = () => {
     const { user, logout } = useAuth();
@@ -86,16 +87,7 @@ const ServiceProviderDashboard = () => {
         });
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                    <FaPaw className="text-6xl text-indigo-500 animate-bounce mx-auto mb-4" />
-                    <p className="text-xl text-gray-700 font-semibold">Loading Dashboard...</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <ServiceProviderDashboardSkeleton />;
 
     if (error) {
         return (

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useServiceEvent } from '../hooks/useServiceEvent';
 import { FaCalendar, FaClock, FaMapMarkerAlt, FaUserFriends, FaSpinner, FaCalendarTimes, FaPlusCircle } from 'react-icons/fa';
+import { SkeletonCard } from '../components/Skeleton';
 
 const Events = () => {
     const navigate = useNavigate();
@@ -169,9 +170,8 @@ const Events = () => {
                         </div>
 
                         {loading ? (
-                            <div className="flex flex-col items-center justify-center py-20">
-                                <FaSpinner className="text-5xl text-teal-500 animate-spin mb-4" />
-                                <p className="text-gray-600 text-lg">Loading events...</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                                {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
                             </div>
                         ) : events.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-lg shadow-md">

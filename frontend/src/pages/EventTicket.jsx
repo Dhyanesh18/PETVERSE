@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEventTicket } from '../services/api';
 import { FaQrcode, FaPrint, FaArrowLeft } from 'react-icons/fa';
+import { EventTicketSkeleton } from '../components/Skeleton';
 
 const EventTicket = () => {
     const { id } = useParams();
@@ -51,16 +52,7 @@ const EventTicket = () => {
         });
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-xl text-gray-700">Loading ticket...</p>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <EventTicketSkeleton />;
 
     if (!ticket) {
         return (

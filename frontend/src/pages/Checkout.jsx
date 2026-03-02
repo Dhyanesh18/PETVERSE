@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getCheckoutData } from '../services/api';
 import { FaShieldAlt, FaWallet, FaArrowLeft } from 'react-icons/fa';
+import { CheckoutSkeleton } from '../components/Skeleton';
 
 // List of all 28 Indian States and 7 Union Territories
 const INDIAN_STATES_AND_UTS = [
@@ -175,18 +176,7 @@ const Checkout = () => {
         total: parseFloat(cart.total || 0)
     };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 pt-20">
-                <div className="container mx-auto px-4 py-8">
-                    <div className="flex justify-center items-center h-64">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-                        <span className="ml-3 text-lg text-gray-600">Loading checkout...</span>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    if (loading) return <CheckoutSkeleton />;
 
     return (
         <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 pt-20">

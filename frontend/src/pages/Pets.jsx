@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { ProductsGridSkeleton } from '../components/Skeleton';
 import { 
     fetchPets, 
     togglePetWishlist as toggleWishlistAction,
@@ -402,9 +403,7 @@ const Pets = () => {
 
                     {/* Products Grid */}
                     {loading ? (
-                        <div className="text-center py-12">
-                            <div className="text-2xl text-gray-600">Loading...</div>
-                        </div>
+                        <ProductsGridSkeleton />
                     ) : validFilteredPets.length === 0 ? (
                         <div className="text-center py-12">
                             <p className="text-xl text-gray-600">No pets found.</p>
