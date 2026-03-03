@@ -10,6 +10,7 @@ const OwnerDashboard = () => {
     const navigate = useNavigate();
     const fetchInitialized = useRef(false);
     const isMounted = useRef(true);
+    const [activeTab, setActiveTab] = useState('dashboard');
     
     // Redirect to login if not authenticated
     useEffect(() => {
@@ -45,6 +46,37 @@ const OwnerDashboard = () => {
     const [currentOrdersPage, setCurrentOrdersPage] = useState(1);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const ordersPerPage = 3;
+    
+    // Search and filter states
+    const [orderSearchQuery, setOrderSearchQuery] = useState('');
+    const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+    
+    // Search states for appointments and events
+    const [appointmentSearchQuery, setAppointmentSearchQuery] = useState('');
+    const [eventSearchQuery, setEventSearchQuery] = useState('');
+    
+    // Pagination states for appointments and events
+    const [currentAppointmentsPage, setCurrentAppointmentsPage] = useState(1);
+    const [currentEventsPage, setCurrentEventsPage] = useState(1);
+    const [currentWishlistPage, setCurrentWishlistPage] = useState(1);
+    const appointmentsPerPage = 5;
+    const eventsPerPage = 5;
+    const wishlistItemsPerPage = 6;
+
+    // Reset orders page when search or filter changes
+    useEffect(() => {
+        setCurrentOrdersPage(1);
+    }, [orderSearchQuery, orderStatusFilter]);
+    
+    // Reset appointments page when search changes
+    useEffect(() => {
+        setCurrentAppointmentsPage(1);
+    }, [appointmentSearchQuery]);
+    
+    // Reset events page when search changes
+    useEffect(() => {
+        setCurrentEventsPage(1);
+    }, [eventSearchQuery]);
 
     const getImageUrl = (item, type = 'product') => {
         if (!item || !item._id) {
@@ -560,6 +592,116 @@ const OwnerDashboard = () => {
         }
     };
 
+    // Filter and search orders in real-time
+    const getFilteredOrders = useCallback(() => {
+        let filtered = [...dashboardData.orders];
+        
+        // Apply status filter
+        if (orderStatusFilter !== 'all') {
+            filtered = filtered.filter(order => 
+                order.status?.toLowerCase() === orderStatusFilter.toLowerCase()
+            );
+        }
+        
+        // Apply search query
+        if (orderSearchQuery.trim()) {
+            const query = orderSearchQuery.toLowerCase();
+            filtered = filtered.filter(order => {
+                const orderNumber = order.orderNumber || order._id.toString().slice(-8);
+                const firstItem = order.items?.[0];
+                const productName = firstItem?.product?.name || '';
+                const totalAmount = (order.totalAmount || 0).toString();
+                
+                return (
+                    orderNumber.toLowerCase().includes(query) ||
+                    productName.toLowerCase().includes(query) ||
+                    totalAmount.includes(query) ||
+                    order.status?.toLowerCase().includes(query)
+                );
+            });
+        }
+        
+        return filtered;
+    }, [dashboardData.orders, orderSearchQuery, orderStatusFilter]);
+
+    // Filter and paginate appointments
+    const getPaginatedAppointments = useCallback(() => {
+        let filtered = [...dashboardData.bookings];
+        
+        // Apply search query
+        if (appointmentSearchQuery.trim()) {
+            const query = appointmentSearchQuery.toLowerCase();
+            filtered = filtered.filter(booking => {
+                const serviceId = (booking._id || '').toString();
+                const serviceName = (booking.service?.name || booking.serviceName || '').toLowerCase();
+                const providerName = (booking.service?.providerName || '').toLowerCase();
+                const serviceType = (booking.serviceType || booking.service?.type || '').toLowerCase();
+                const date = (booking.date || booking.bookingDate || '');
+                const time = (booking.time || '');
+                
+                return (
+                    serviceId.includes(query) ||
+                    serviceName.includes(query) ||
+                    providerName.includes(query) ||
+                    serviceType.includes(query) ||
+                    date.includes(query) ||
+                    time.includes(query)
+                );
+            });
+        }
+        
+        const startIndex = (currentAppointmentsPage - 1) * appointmentsPerPage;
+        const endIndex = startIndex + appointmentsPerPage;
+        return {
+            appointments: filtered.slice(startIndex, endIndex),
+            total: filtered.length
+        };
+    }, [dashboardData.bookings, currentAppointmentsPage, appointmentsPerPage, appointmentSearchQuery]);
+
+    // Filter and paginate events
+    const getPaginatedEvents = useCallback(() => {
+        let filtered = [...dashboardData.registeredEvents];
+        
+        // Apply search query
+        if (eventSearchQuery.trim()) {
+            const query = eventSearchQuery.toLowerCase();
+            filtered = filtered.filter(event => {
+                const title = (event.title || '').toLowerCase();
+                const category = (event.category || '').toLowerCase();
+                const city = (event.city || '').toLowerCase();
+                const date = formatDate(event.date || '').toLowerCase();
+                
+                return (
+                    title.includes(query) ||
+                    category.includes(query) ||
+                    city.includes(query) ||
+                    date.includes(query)
+                );
+            });
+        }
+        
+        const startIndex = (currentEventsPage - 1) * eventsPerPage;
+        const endIndex = startIndex + eventsPerPage;
+        return {
+            events: filtered.slice(startIndex, endIndex),
+            total: filtered.length
+        };
+    }, [dashboardData.registeredEvents, currentEventsPage, eventsPerPage, eventSearchQuery]);
+
+    // Paginate wishlist items (products + pets combined)
+    const getPaginatedWishlist = useCallback(() => {
+        const allWishlistItems = [
+            ...dashboardData.wishlistedProducts.map(item => ({ ...item, type: 'product' })),
+            ...dashboardData.wishlistedPets.map(item => ({ ...item, type: 'pet' }))
+        ];
+        const startIndex = (currentWishlistPage - 1) * wishlistItemsPerPage;
+        const endIndex = startIndex + wishlistItemsPerPage;
+        return {
+            items: allWishlistItems.slice(startIndex, endIndex),
+            total: allWishlistItems.length
+        };
+    }, [dashboardData.wishlistedProducts, dashboardData.wishlistedPets, currentWishlistPage, wishlistItemsPerPage]);
+
     if (loading) {
         return (
             <div className="loading-container">
@@ -568,8 +710,22 @@ const OwnerDashboard = () => {
             </div>
         );
     }
+
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+    };
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
+
     return (
-        <div className="dashboard-container" style={{ marginTop: '169px' }}>
+        <div className="owner-dashboard-container">
             {/* Notifications */}
             {notifications.map(notification => (
                 <div key={notification.id} className={`notification notification-${notification.type}`}>
@@ -585,233 +741,386 @@ const OwnerDashboard = () => {
                 </div>
             ))}
 
-            {/* Header */}
-            <header className="dashboard-header">
-                <h1 className="header-title">
-                    <span className="petverse">PetVerse</span>
-                    <span className="dashboard-text">Owner Dashboard</span>
-                </h1>
-                <div className="user-info">
-                    <span className="user-name">Welcome back, {user?.fullName || user?.username || 'User'}!</span>
-                    <button onClick={logout} className="nav-btn logout-btn">
-                        <i className="fas fa-sign-out-alt"></i>
-                        Logout
-                    </button>
-                </div>
-            </header>
+            <div className="owner-main-container">
+                {/* Sidebar */}
+                <aside className="owner-sidebar">
+                    <div className="sidebar-section">
+                        <h2>Dashboard</h2>
+                        <ul className="owner-menu">
+                            <li className={activeTab === 'dashboard' ? 'active' : ''} onClick={() => handleTabChange('dashboard')}>
+                                <i className="fas fa-tachometer-alt"></i> Dashboard Overview
+                            </li>
+                            <li className={activeTab === 'wishlist' ? 'active' : ''} onClick={() => handleTabChange('wishlist')}>
+                                <i className="fas fa-heart"></i> My Wishlist
+                            </li>
+                            <li className={activeTab === 'orders' ? 'active' : ''} onClick={() => handleTabChange('orders')}>
+                                <i className="fas fa-shopping-bag"></i> My Orders
+                            </li>
+                            <li className={activeTab === 'appointments' ? 'active' : ''} onClick={() => handleTabChange('appointments')}>
+                                <i className="fas fa-calendar-check"></i> Service Appointments
+                            </li>
+                            <li className={activeTab === 'events' ? 'active' : ''} onClick={() => handleTabChange('events')}>
+                                <i className="fas fa-ticket-alt"></i> Registered Events
+                            </li>
+                        </ul>
+                    </div>
 
-            {/* Stats Grid */}
-            <div className="stats-grid">
-                <div 
-                    className="stat-card clickable-stat-card" 
-                    onClick={() => handleStatsCardClick('totalOrders')}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalOrders')}
-                >
-                    <div className="stat-icon">
-                        <i className="fas fa-shopping-bag"></i>
+                    <div className="sidebar-section">
+                        <h2>Account</h2>
+                        <ul className="owner-menu">
+                            <li className={activeTab === 'profile' ? 'active' : ''} onClick={() => handleTabChange('profile')}>
+                                <i className="fas fa-user-circle"></i> Profile Information
+                            </li>
+                        </ul>
                     </div>
-                    <div className="stat-value">{dashboardData.stats.totalOrders}</div>
-                    <div className="stat-label">Total Orders</div>
-                </div>
-                <div 
-                    className="stat-card clickable-stat-card" 
-                    onClick={() => handleStatsCardClick('activeOrders')}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('activeOrders')}
-                >
-                    <div className="stat-icon">
-                        <i className="fas fa-clock"></i>
-                    </div>
-                    <div className="stat-value">{dashboardData.stats.activeOrders}</div>
-                    <div className="stat-label">Active Orders</div>
-                </div>
-                <div 
-                    className="stat-card clickable-stat-card" 
-                    onClick={() => handleStatsCardClick('totalSpent')}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalSpent')}
-                >
-                    <div className="stat-icon">
-                        <i className="fas fa-rupee-sign"></i>
-                    </div>
-                    <div className="stat-value">₹{dashboardData.stats.totalSpent?.toLocaleString('en-IN')}</div>
-                    <div className="stat-label">Total Spent</div>
-                </div>
-                <div 
-                    className="stat-card clickable-stat-card" 
-                    onClick={() => handleStatsCardClick('walletBalance')}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('walletBalance')}
-                >
-                    <div className="stat-icon">
-                        <i className="fas fa-rupee-sign"></i>
-                    </div>
-                    <div className="stat-value">₹ {dashboardData.stats.walletAmount}</div>
-                    <div className="stat-label">Wallent Balance</div>
-                </div>
-            </div>
 
-            {/* Wishlist Section */}
-            <section className="section">
+                    <div className="sidebar-section">
+                        <h2>Financial</h2>
+                        <ul className="owner-menu">
+                            <li onClick={() => navigate('/wallet')}>
+                                <i className="fas fa-wallet"></i> Wallet
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div className="sidebar-section">
+                        <ul className="owner-menu">
+                            <li onClick={handleLogout} className="logout-btn">
+                                <i className="fas fa-sign-out-alt"></i> Logout
+                            </li>
+                        </ul>
+                    </div>
+                </aside>
+
+                {/* Main Content */}
+                <main className="owner-content">
+                    <header className="owner-header">
+                        <h1>{activeTab === 'dashboard' ? 'Owner Dashboard' :
+                            activeTab === 'wishlist' ? 'My Wishlist' :
+                            activeTab === 'orders' ? 'My Orders' :
+                            activeTab === 'appointments' ? 'Service Appointments' :
+                            activeTab === 'events' ? 'Registered Events' :
+                            activeTab === 'profile' ? 'Profile Information' : 'Owner Dashboard'
+                        }</h1>
+                        <div className="owner-user-info">
+                            <span>Welcome, {user?.fullName || 'Owner'}!</span>
+                        </div>
+                    </header>
+
+                    <div className="owner-content-wrapper">
+                        {/* Dashboard Overview Tab */}
+                        {activeTab === 'dashboard' && (
+                            <>
+                                {/* Stats Grid */}
+                                <div className="stats-grid">
+                                    <div 
+                                        className="stat-card clickable-stat-card" 
+                                        onClick={() => handleStatsCardClick('totalOrders')}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalOrders')}
+                                    >
+                                        <div className="stat-icon">
+                                            <i className="fas fa-shopping-bag"></i>
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{dashboardData.stats.totalOrders}</div>
+                                            <div className="stat-label">Total Orders</div>
+                                        </div>
+                                    </div>
+                                    <div 
+                                        className="stat-card clickable-stat-card" 
+                                        onClick={() => handleStatsCardClick('activeOrders')}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('activeOrders')}
+                                    >
+                                        <div className="stat-icon">
+                                            <i className="fas fa-clock"></i>
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">{dashboardData.stats.activeOrders}</div>
+                                            <div className="stat-label">Active Orders</div>
+                                        </div>
+                                    </div>
+                                    <div 
+                                        className="stat-card clickable-stat-card" 
+                                        onClick={() => handleStatsCardClick('totalSpent')}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('totalSpent')}
+                                    >
+                                        <div className="stat-icon">
+                                            <i className="fas fa-rupee-sign"></i>
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">₹{dashboardData.stats.totalSpent?.toLocaleString('en-IN')}</div>
+                                            <div className="stat-label">Total Spent</div>
+                                        </div>
+                                    </div>
+                                    <div 
+                                        className="stat-card clickable-stat-card" 
+                                        onClick={() => handleStatsCardClick('walletBalance')}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleStatsCardClick('walletBalance')}
+                                    >
+                                        <div className="stat-icon">
+                                            <i className="fas fa-wallet"></i>
+                                        </div>
+                                        <div className="stat-info">
+                                            <div className="stat-value">₹{dashboardData.stats.walletAmount}</div>
+                                            <div className="stat-label">Wallet Balance</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Recent Orders Section */}
+                                <section className="section">
+                                    <div className="section-header">
+                                        <h2 className="section-title">
+                                            <i className="fas fa-shopping-cart"></i>
+                                            Recent Orders
+                                        </h2>
+                                    </div>
+
+                                    {dashboardData.orders.length > 0 ? (
+                                        <div className="simple-orders-table-container">
+                                            <table className="simple-orders-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Order ID</th>
+                                                        <th>Product</th>
+                                                        <th>Date</th>
+                                                        <th>Amount</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {dashboardData.orders.slice(0, 4).map(order => {
+                                                        const firstItem = order.items?.[0];
+                                                        const productName = firstItem?.product?.name || 'Product Item';
+                                                        const totalItems = order.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
+                                                        
+                                                        return (
+                                                            <tr key={order._id} className="simple-table-row">
+                                                                <td className="order-id-cell">
+                                                                    <span className="simple-order-id">
+                                                                        #{order.orderNumber || order._id.toString().slice(-8).toUpperCase()}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="product-cell">
+                                                                    <div className="simple-product-info">
+                                                                        <div className="simple-product-image">
+                                                                            <SmartImage 
+                                                                                item={firstItem?.product || firstItem}
+                                                                                type="product"
+                                                                                alt={productName}
+                                                                                className="table-product-img"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="simple-product-details">
+                                                                            <span className="simple-product-name">{productName}</span>
+                                                                            {order.items && order.items.length > 1 && (
+                                                                                <span className="simple-additional-items">+{order.items.length - 1} more items</span>
+                                                                            )}
+                                                                            <span className="simple-quantity">Qty: {totalItems}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="date-cell">
+                                                                    <span className="simple-date">
+                                                                        {order.orderDate || formatDate(order.createdAt)}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="amount-cell">
+                                                                    <span className="simple-amount">₹{(order.totalAmount || 0).toLocaleString()}</span>
+                                                                </td>
+                                                                <td className="status-cell">
+                                                                    <span className={`simple-status-badge status-${order.status || 'pending'}`}>
+                                                                        {(order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1)}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="empty-state">
+                                            <i className="fas fa-shopping-bag"></i>
+                                            <p>No orders found. Start shopping!</p>
+                                            <a href="/products" className="btn btn-primary">
+                                                <i className="fas fa-shopping-cart"></i> Shop Now
+                                            </a>
+                                        </div>
+                                    )}
+                                </section>
+                            </>
+                        )}
+
+                        {/* Wishlist Tab */}
+                        {activeTab === 'wishlist' && (
+                            <section className="section">
                 <div className="section-header">
                     <h2 className="section-title">
                         <i className="fas fa-heart"></i>
                         My Wishlist
                     </h2>
                 </div>
-                <div className="wishlist-grid">
-                    {/* Wishlisted Products */}
-                    {dashboardData.wishlistedProducts.map(product => (
-                        <div
-                            key={product._id}
-                            className="wishlist-card"
-                            onClick={(e) => {
-                                if (!e.target.closest('.wishlist-action')) {
-                                    navigate(`/product/${product._id}`);
-                                }
-                            }}
-                        >
-                            <div className="wishlist-image-container">
-                                <SmartImage 
-                                    item={product}
-                                    type="product"
-                                    alt={product.name}
-                                    className="wishlist-image"
-                                />
-                            </div>
-                            <div className="wishlist-content">
-                                <h3 className="wishlist-title">{product.name}</h3>
-                                <p className="wishlist-brand">{product.brand || 'Pet Brand'}</p>
-                                
-                                {/* Price */}
-                                <div className="wishlist-price">
-                                    {product.discount && product.discount > 0 ? (
-                                        <div className="price-container">
-                                            <span className="price-original">₹{product.price.toFixed(2)}</span>
-                                            <span className="price-current">
-                                                ₹{(product.price * (1 - product.discount / 100)).toFixed(2)}
-                                            </span>
-                                            <span className="price-discount">
-                                                {product.discount}% OFF
-                                            </span>
+                
+                {(() => {
+                    const { items: paginatedItems, total } = getPaginatedWishlist();
+                    const totalPages = Math.ceil(total / wishlistItemsPerPage);
+                    
+                    return total > 0 ? (
+                        <>
+                            <div className="wishlist-grid">
+                                {paginatedItems.map(item => (
+                                    <div
+                                        key={item._id}
+                                        className="wishlist-card"
+                                        onClick={(e) => {
+                                            if (!e.target.closest('.wishlist-action')) {
+                                                navigate(item.type === 'pet' ? `/seller/detail/${item._id}` : `/product/${item._id}`);
+                                            }
+                                        }}
+                                    >
+                                        <div className="wishlist-image-container">
+                                            <SmartImage 
+                                                item={item}
+                                                type={item.type}
+                                                alt={item.name}
+                                                className="wishlist-image"
+                                            />
                                         </div>
-                                    ) : (
-                                        <span className="price-current">
-                                            ₹{product.price.toFixed(2)}
-                                        </span>
-                                    )}
-                                </div>
+                                        <div className="wishlist-content">
+                                            <h3 className="wishlist-title">{item.name}</h3>
+                                            <p className="wishlist-brand">{item.brand || item.breed || item.category || 'Pet Brand'}</p>
+                                            
+                                            {item.type === 'pet' && (
+                                                <p className="wishlist-meta">Age: {item.age} | {item.gender || 'N/A'}</p>
+                                            )}
+                                            
+                                            {/* Price */}
+                                            <div className="wishlist-price">
+                                                {item.discount && item.discount > 0 ? (
+                                                    <div className="price-container">
+                                                        <span className="price-original">₹{item.price.toFixed(2)}</span>
+                                                        <span className="price-current">
+                                                            ₹{(item.price * (1 - item.discount / 100)).toFixed(2)}
+                                                        </span>
+                                                        <span className="price-discount">
+                                                            {item.discount}% OFF
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="price-current">
+                                                        ₹{item.price.toFixed(2)}
+                                                    </span>
+                                                )}
+                                            </div>
 
-                                {/* Stock */}
-                                <div className="wishlist-stock">
-                                    {product.stock === 0 ? (
-                                        <span className="stock-out">Out of Stock</span>
-                                    ) : product.stock <= 5 ? (
-                                        <span className="stock-low">In Stock</span>
-                                    ) : (
-                                        <span className="stock-available">In Stock</span>
-                                    )}
-                                </div>
+                                            {/* Stock/Availability */}
+                                            <div className="wishlist-stock">
+                                                {item.type === 'pet' ? (
+                                                    <span className="stock-available">Available</span>
+                                                ) : item.stock === 0 ? (
+                                                    <span className="stock-out">Out of Stock</span>
+                                                ) : item.stock <= 5 ? (
+                                                    <span className="stock-low">In Stock</span>
+                                                ) : (
+                                                    <span className="stock-available">In Stock</span>
+                                                )}
+                                            </div>
 
-                                <div className="wishlist-action wishlist-buttons">
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleAddToCart(product._id);
-                                        }}
-                                        disabled={product.stock === 0}
-                                        className={`wishlist-btn-primary ${product.stock === 0 ? 'disabled' : ''}`}
-                                    >
-                                        ADD TO CART
-                                    </button>
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemoveFromWishlist(product._id, 'product');
-                                        }}
-                                        className="wishlist-btn-heart"
-                                    >
-                                        <i className="fas fa-heart"></i>
-                                    </button>
-                                </div>
+                                            <div className="wishlist-action wishlist-buttons">
+                                                {item.type === 'product' ? (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleAddToCart(item._id);
+                                                        }}
+                                                        disabled={item.stock === 0}
+                                                        className={`wishlist-btn-primary ${item.stock === 0 ? 'disabled' : ''}`}
+                                                    >
+                                                        ADD TO CART
+                                                    </button>
+                                                ) : (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/seller/detail/${item._id}`);
+                                                        }}
+                                                        className="wishlist-btn-primary"
+                                                    >
+                                                        VIEW DETAILS
+                                                    </button>
+                                                )}
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleRemoveFromWishlist(item._id, item.type);
+                                                    }}
+                                                    className="wishlist-btn-heart"
+                                                >
+                                                    <i className="fas fa-heart"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        </div>
-                    ))}
-
-                    {/* Wishlisted Pets */}
-                    {dashboardData.wishlistedPets.map(pet => (
-                        <div
-                            key={pet._id}
-                            className="wishlist-card"
-                            onClick={(e) => {
-                                if (!e.target.closest('.wishlist-action')) {
-                                    navigate(`/seller/detail/${pet._id}`);
-                                }
-                            }}
-                        >
-                            <div className="wishlist-image-container">
-                                <SmartImage 
-                                    item={pet}
-                                    type="pet"
-                                    alt={pet.name}
-                                    className="wishlist-image"
-                                />
-                            </div>
-                            <div className="wishlist-content">
-                                <h3 className="wishlist-title">{pet.name}</h3>
-                                <p className="wishlist-brand">{pet.breed || pet.category}</p>
-                                <p className="wishlist-meta">Age: {pet.age} | N/A</p>
-                                
-                                {/* Price */}
-                                <div className="wishlist-price">
-                                    <span className="price-current">₹{pet.price.toFixed(2)}</span>
-                                </div>
-
-                                {/* Availability */}
-                                <div className="wishlist-stock">
-                                    <span className="stock-available">Available</span>
-                                </div>
-
-                                <div className="wishlist-action wishlist-buttons">
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(`/seller/detail/${pet._id}`);
-                                        }}
-                                        className="wishlist-btn-primary"
+                            
+                            {/* Pagination */}
+                            {total > wishlistItemsPerPage && (
+                                <div className="pagination-controls">
+                                    <button
+                                        onClick={() => setCurrentWishlistPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentWishlistPage === 1}
+                                        className="pagination-btn"
                                     >
-                                        VIEW DETAILS
+                                        <i className="fas fa-chevron-left"></i>
                                     </button>
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemoveFromWishlist(pet._id, 'pet');
-                                        }}
-                                        className="wishlist-btn-heart"
+                                    
+                                    {Array.from({ length: totalPages }, (_, i) => (
+                                        <button
+                                            key={i + 1}
+                                            onClick={() => setCurrentWishlistPage(i + 1)}
+                                            className={`pagination-btn ${currentWishlistPage === i + 1 ? 'active' : ''}`}
+                                        >
+                                            {i + 1}
+                                        </button>
+                                    ))}
+                                    
+                                    <button
+                                        onClick={() => setCurrentWishlistPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentWishlistPage === totalPages}
+                                        className="pagination-btn"
                                     >
-                                        <i className="fas fa-heart"></i>
+                                        <i className="fas fa-chevron-right"></i>
                                     </button>
                                 </div>
+                            )}
+                            
+                            {/* Results info */}
+                            <div className="results-info">
+                                Showing {((currentWishlistPage - 1) * wishlistItemsPerPage) + 1} - {Math.min(currentWishlistPage * wishlistItemsPerPage, total)} of {total} items
                             </div>
-                        </div>
-                    ))}
-
-                    {/* Empty State */}
-                    {dashboardData.wishlistedProducts.length === 0 && dashboardData.wishlistedPets.length === 0 && (
+                        </>
+                    ) : (
                         <div className="empty-state">
                             <i className="fas fa-heart-broken"></i>
                             <p>No items in your wishlist yet.</p>
                         </div>
-                    )}
-                </div>
+                    );
+                })()}
             </section>
+                        )}
 
-            {/* Registered Events Section */}
+                        {/* Registered Events Tab */}
+                        {activeTab === 'events' && (
             <section className="section">
                 <div className="section-header">
                     <h2 className="section-title">
@@ -821,19 +1130,49 @@ const OwnerDashboard = () => {
                 </div>
 
                 {dashboardData.registeredEvents.length > 0 ? (
-                    <table className="orders-table">
-                        <thead>
-                            <tr>
-                                <th>Event</th>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>City</th>
-                                <th>Ticket</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {dashboardData.registeredEvents.map(event => (
-                                <tr key={event._id}>
+                    <>
+                    {/* Search Controls */}
+                    <div className="search-filter-controls">
+                        <div className="search-box">
+                            <i className="fas fa-search"></i>
+                            <input
+                                type="text"
+                                placeholder="Search by event name, category, city..."
+                                value={eventSearchQuery}
+                                onChange={(e) => setEventSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                            {eventSearchQuery && (
+                                <button
+                                    onClick={() => setEventSearchQuery('')}
+                                    className="clear-search"
+                                    aria-label="Clear search"
+                                >
+                                    <i className="fas fa-times"></i>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {(() => {
+                        const { events, total } = getPaginatedEvents();
+                        const totalPages = Math.ceil(total / eventsPerPage);
+
+                        return total > 0 ? (
+                            <>
+                        <table className="orders-table">
+                            <thead>
+                                <tr>
+                                    <th>Event</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>City</th>
+                                    <th>Ticket</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {events.map(event => (
+                                    <tr key={event._id}>
                                     <td>
                                         {event.title} 
                                         <span className="product-meta"> ({event.category})</span>
@@ -850,6 +1189,59 @@ const OwnerDashboard = () => {
                             ))}
                         </tbody>
                     </table>
+                    
+                    {/* Pagination */}
+                    {total > eventsPerPage && (
+                        <div className="pagination-controls">
+                            <button
+                                onClick={() => setCurrentEventsPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentEventsPage === 1}
+                                className="pagination-btn"
+                            >
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            
+                            {Array.from({ length: totalPages }, (_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => setCurrentEventsPage(i + 1)}
+                                    className={`pagination-btn ${currentEventsPage === i + 1 ? 'active' : ''}`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                            
+                            <button
+                                onClick={() => setCurrentEventsPage(prev => 
+                                    Math.min(prev + 1, totalPages)
+                                )}
+                                disabled={currentEventsPage === totalPages}
+                                className="pagination-btn"
+                            >
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    )}
+                    
+                    {/* Results info */}
+                    <div className="results-info">
+                        Showing {((currentEventsPage - 1) * eventsPerPage) + 1} - {Math.min(currentEventsPage * eventsPerPage, total)} of {total} events
+                    </div>
+                    </>
+                        ) : (
+                            <div className="empty-state">
+                                <i className="fas fa-search"></i>
+                                <p>No events found matching your search criteria.</p>
+                                <button 
+                                    onClick={() => setEventSearchQuery('')}
+                                    className="btn btn-secondary"
+                                >
+                                    Clear Search
+                                </button>
+                            </div>
+                        );
+                    })()}
+                    </>
                 ) : (
                     <div className="empty-state">
                         <i className="fas fa-ticket-alt"></i>
@@ -860,8 +1252,10 @@ const OwnerDashboard = () => {
                     </div>
                 )}
             </section>
+                        )}
 
-            {/* Profile Information Section */}
+                        {/* Profile Information Tab */}
+                        {activeTab === 'profile' && (
             <section className="section">
                 <div className="section-header">
                     <h2 className="section-title">
@@ -967,90 +1361,10 @@ const OwnerDashboard = () => {
                     </div>
                 </div>
             </section>
+                        )}
 
-            <section className="section">
-                <div className="section-header">
-                    <h2 className="section-title">
-                        <i className="fas fa-shopping-cart"></i>
-                        Recent Orders
-                    </h2>
-                </div>
-
-                {dashboardData.orders.length > 0 ? (
-                    <div className="simple-orders-table-container">
-                        <table className="simple-orders-table">
-                            <thead>
-                                <tr>
-                                    <th>Order ID</th>
-                                    <th>Product</th>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {dashboardData.orders.slice(0, 4).map(order => {
-                                    const firstItem = order.items?.[0];
-                                    const productName = firstItem?.product?.name || 'Product Item';
-                                    const totalItems = order.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) || 0;
-                                    
-                                    return (
-                                        <tr key={order._id} className="simple-table-row">
-                                            <td className="order-id-cell">
-                                                <span className="simple-order-id">
-                                                    #{order.orderNumber || order._id.toString().slice(-8).toUpperCase()}
-                                                </span>
-                                            </td>
-                                            <td className="product-cell">
-                                                <div className="simple-product-info">
-                                                    <div className="simple-product-image">
-                                                        <SmartImage 
-                                                            item={firstItem?.product || firstItem}
-                                                            type="product"
-                                                            alt={productName}
-                                                            className="table-product-img"
-                                                        />
-                                                    </div>
-                                                    <div className="simple-product-details">
-                                                        <span className="simple-product-name">{productName}</span>
-                                                        {order.items && order.items.length > 1 && (
-                                                            <span className="simple-additional-items">+{order.items.length - 1} more items</span>
-                                                        )}
-                                                        <span className="simple-quantity">Qty: {totalItems}</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="date-cell">
-                                                <span className="simple-date">
-                                                    {order.orderDate || formatDate(order.createdAt)}
-                                                </span>
-                                            </td>
-                                            <td className="amount-cell">
-                                                <span className="simple-amount">₹{(order.totalAmount || 0).toLocaleString()}</span>
-                                            </td>
-                                            <td className="status-cell">
-                                                <span className={`simple-status-badge status-${order.status || 'pending'}`}>
-                                                    {(order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1)}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="empty-state">
-                        <i className="fas fa-shopping-bag"></i>
-                        <p>No orders found. Start shopping!</p>
-                        <a href="/products" className="btn btn-primary">
-                            <i className="fas fa-shopping-cart"></i> Shop Now
-                        </a>
-                    </div>
-                )}
-            </section>
-
-            {/* Service Appointments Section */}
+                        {/* Service Appointments Tab */}
+                        {activeTab === 'appointments' && (
             <section className="section service-section">
                 <div className="section-header">
                     <h2 className="section-title">
@@ -1060,6 +1374,36 @@ const OwnerDashboard = () => {
                 </div>
 
                 {dashboardData.bookings.length > 0 ? (
+                    <>
+                    {/* Search Controls */}
+                    <div className="search-filter-controls">
+                        <div className="search-box">
+                            <i className="fas fa-search"></i>
+                            <input
+                                type="text"
+                                placeholder="Search by service, provider, date..."
+                                value={appointmentSearchQuery}
+                                onChange={(e) => setAppointmentSearchQuery(e.target.value)}
+                                className="search-input"
+                            />
+                            {appointmentSearchQuery && (
+                                <button
+                                    onClick={() => setAppointmentSearchQuery('')}
+                                    className="clear-search"
+                                    aria-label="Clear search"
+                                >
+                                    <i className="fas fa-times"></i>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {(() => {
+                        const { appointments, total } = getPaginatedAppointments();
+                        const totalPages = Math.ceil(total / appointmentsPerPage);
+
+                        return total > 0 ? (
+                            <>
                     <div className="table-wrapper">
                         <table className="service-appointment-table">
                             <thead>
@@ -1072,7 +1416,7 @@ const OwnerDashboard = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {dashboardData.bookings.map((booking, index) => (
+                                {appointments.map((booking, index) => (
                                     <tr key={booking._id || booking.id || index}>
                                         <td className="service-id-cell">
                                             <span className="id-text">#{(booking._id || booking.id || 'Unknown').toString().substring(0, 10)}...</span>
@@ -1115,6 +1459,59 @@ const OwnerDashboard = () => {
                             </tbody>
                         </table>
                     </div>
+                    
+                    {/* Pagination */}
+                    {total > appointmentsPerPage && (
+                        <div className="pagination-controls">
+                            <button
+                                onClick={() => setCurrentAppointmentsPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentAppointmentsPage === 1}
+                                className="pagination-btn"
+                            >
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            
+                            {Array.from({ length: totalPages }, (_, i) => (
+                                <button
+                                    key={i + 1}
+                                    onClick={() => setCurrentAppointmentsPage(i + 1)}
+                                    className={`pagination-btn ${currentAppointmentsPage === i + 1 ? 'active' : ''}`}
+                                >
+                                    {i + 1}
+                                </button>
+                            ))}
+                            
+                            <button
+                                onClick={() => setCurrentAppointmentsPage(prev => 
+                                    Math.min(prev + 1, totalPages)
+                                )}
+                                disabled={currentAppointmentsPage === totalPages}
+                                className="pagination-btn"
+                            >
+                                <i className="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    )}
+                    
+                    {/* Results info */}
+                    <div className="results-info">
+                        Showing {((currentAppointmentsPage - 1) * appointmentsPerPage) + 1} - {Math.min(currentAppointmentsPage * appointmentsPerPage, total)} of {total} appointments
+                    </div>
+                    </>
+                        ) : (
+                            <div className="empty-state">
+                                <i className="fas fa-search"></i>
+                                <p>No appointments found matching your search criteria.</p>
+                                <button 
+                                    onClick={() => setAppointmentSearchQuery('')}
+                                    className="btn btn-secondary"
+                                >
+                                    Clear Search
+                                </button>
+                            </div>
+                        );
+                    })()}
+                    </>
                 ) : (
                     <div className="empty-state service-empty-state">
                         <div className="empty-icon">
@@ -1129,8 +1526,10 @@ const OwnerDashboard = () => {
                     </div>
                 )}
             </section>
+                        )}
 
-            {/* My Orders Section */}
+                        {/* My Orders Tab */}
+                        {activeTab === 'orders' && (
             <section className="section my-orders-section">
                 <div className="section-header">
                     <h2 className="section-title">
@@ -1138,12 +1537,56 @@ const OwnerDashboard = () => {
                     </h2>
                 </div>
 
-                {dashboardData.orders.length > 0 ? (
+                {/* Search and Filter Controls */}
+                <div className="orders-controls">
+                    <div className="search-box">
+                        <i className="fas fa-search"></i>
+                        <input
+                            type="text"
+                            placeholder="Search by order ID, product name, or amount..."
+                            value={orderSearchQuery}
+                            onChange={(e) => setOrderSearchQuery(e.target.value)}
+                            className="search-input"
+                        />
+                        {orderSearchQuery && (
+                            <button 
+                                className="clear-search"
+                                onClick={() => setOrderSearchQuery('')}
+                                aria-label="Clear search"
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
+                        )}
+                    </div>
+                    <div className="filter-box">
+                        <i className="fas fa-filter"></i>
+                        <select
+                            value={orderStatusFilter}
+                            onChange={(e) => setOrderStatusFilter(e.target.value)}
+                            className="filter-select"
+                        >
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+
+                {(() => {
+                    const filteredOrders = getFilteredOrders();
+                    const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+                    const paginatedOrders = filteredOrders.slice(
+                        (currentOrdersPage - 1) * ordersPerPage,
+                        currentOrdersPage * ordersPerPage
+                    );
+
+                    return filteredOrders.length > 0 ? (
                     <>
                         <div className="orders-list-clean">
-                            {dashboardData.orders
-                                .slice((currentOrdersPage - 1) * ordersPerPage, currentOrdersPage * ordersPerPage)
-                                .map(order => (
+                            {paginatedOrders.map(order => (
                                 <div key={order._id} className="order-card-clean">
                                     <div className="order-header-clean">
                                         <div className="order-info-left">
@@ -1197,26 +1640,24 @@ const OwnerDashboard = () => {
                         </div>
                         
                         {/* Pagination */}
-                        {dashboardData.orders.length > ordersPerPage && (
-                            <div className="flex justify-center mt-8 gap-1">
+                        {filteredOrders.length > ordersPerPage && (
+                            <div className="pagination-controls">
                                 {/* Previous button */}
                                 <button
                                     onClick={() => setCurrentOrdersPage(prev => Math.max(prev - 1, 1))}
                                     disabled={currentOrdersPage === 1}
-                                    className="px-3 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="pagination-btn"
                                 >
                                     <i className="fas fa-chevron-left"></i>
                                 </button>
                                 
                                 {/* Page numbers */}
-                                {Array.from({ length: Math.ceil(dashboardData.orders.length / ordersPerPage) }, (_, i) => (
+                                {Array.from({ length: totalPages }, (_, i) => (
                                     <button
                                         key={i + 1}
                                         onClick={() => setCurrentOrdersPage(i + 1)}
-                                        className={`px-3 py-2 border rounded ${
-                                            currentOrdersPage === i + 1
-                                                ? 'bg-teal-600 text-white border-teal-600'
-                                                : 'bg-white border-gray-300 hover:bg-gray-50'
+                                        className={`pagination-btn ${
+                                            currentOrdersPage === i + 1 ? 'active' : ''
                                         }`}
                                     >
                                         {i + 1}
@@ -1225,35 +1666,73 @@ const OwnerDashboard = () => {
                                 
                                 {/* Next button */}
                                 <button
-                                    onClick={() => setCurrentOrdersPage(prev => 
-                                        Math.min(prev + 1, Math.ceil(dashboardData.orders.length / ordersPerPage))
-                                    )}
-                                    disabled={currentOrdersPage === Math.ceil(dashboardData.orders.length / ordersPerPage)}
-                                    className="px-3 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => setCurrentOrdersPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentOrdersPage === totalPages}
+                                    className="pagination-btn"
                                 >
                                     <i className="fas fa-chevron-right"></i>
                                 </button>
                             </div>
                         )}
+
+                        {/* Results info */}
+                        <div className="results-info">
+                            Showing {((currentOrdersPage - 1) * ordersPerPage) + 1} - {Math.min(currentOrdersPage * ordersPerPage, filteredOrders.length)} of {filteredOrders.length} orders
+                            {(orderSearchQuery || orderStatusFilter !== 'all') && (
+                                <button 
+                                    className="clear-filters-btn"
+                                    onClick={() => {
+                                        setOrderSearchQuery('');
+                                        setOrderStatusFilter('all');
+                                        setCurrentOrdersPage(1);
+                                    }}
+                                >
+                                    <i className="fas fa-times"></i> Clear Filters
+                                </button>
+                            )}
+                        </div>
                     </>
                 ) : (
                     <div className="empty-state">
                         <i className="fas fa-shopping-bag"></i>
-                        <h3>No orders yet</h3>
-                        <p>Start shopping and your orders will appear here!</p>
-                        <div className="empty-actions">
-                            <a href="/products" className="btn btn-primary">
-                                <i className="fas fa-shopping-cart"></i>
-                                Shop Products
-                            </a>
-                            <a href="/pets" className="btn btn-secondary">
-                                <i className="fas fa-paw"></i>
-                                Browse Pets
-                            </a>
-                        </div>
+                        <h3>No orders found</h3>
+                        <p>
+                            {orderSearchQuery || orderStatusFilter !== 'all' 
+                                ? 'No orders match your search criteria. Try adjusting your filters.' 
+                                : 'Start shopping and your orders will appear here!'
+                            }
+                        </p>
+                        {(orderSearchQuery || orderStatusFilter !== 'all') ? (
+                            <button 
+                                className="btn btn-primary"
+                                onClick={() => {
+                                    setOrderSearchQuery('');
+                                    setOrderStatusFilter('all');
+                                    setCurrentOrdersPage(1);
+                                }}
+                            >
+                                <i className="fas fa-times"></i> Clear Filters
+                            </button>
+                        ) : (
+                            <div className="empty-actions">
+                                <a href="/products" className="btn btn-primary">
+                                    <i className="fas fa-shopping-cart"></i>
+                                    Shop Products
+                                </a>
+                                <a href="/pets" className="btn btn-secondary">
+                                    <i className="fas fa-paw"></i>
+                                    Browse Pets
+                                </a>
+                            </div>
+                        )}
                     </div>
-                )}
+                );
+                })()}
             </section>
+                        )}
+                    </div>
+                </main>
+            </div>
 
             {/* Edit Profile Modal */}
             <EditProfileModal
