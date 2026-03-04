@@ -1565,7 +1565,7 @@ router.patch('/pets/:petId/toggle-status', isAuthenticated, isSeller, async (req
     }
 });
 
-// Get all chats for seller
+// Get all chats for seller (order-based)
 router.get('/chats', isAuthenticated, isSeller, async (req, res) => {
     try {
         const Chat = require('../models/chat');
@@ -1603,6 +1603,53 @@ router.get('/chats', isAuthenticated, isSeller, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Error fetching chats',
+            message: error.message
+        });
+    }
+});
+
+// Get all pet inquiries for seller (pre-purchase inquiries)
+router.get('/inquiries', isAuthenticated, isSeller, async (req, res) => {
+    try {
+        const Inquiry = require('../models/inquiry');
+        
+        // Find all inquiries where the seller matches
+        const inquiries = await Inquiry.find({ 
+            seller: req.user._id,
+            status: 'active'
+        })
+            .populate('customer', 'fullName username email phone')
+            .populate('petId', 'name breed images price')
+            .populate('messages.sender', 'fullName username businessName')
+            .sort({ lastMessage: -1 })
+            .lean();
+
+        // Count unread messages for each inquiry
+        const inquiriesWithUnread = inquiries.map(inquiry => {
+            const unreadCount = inquiry.messages.filter(
+                msg => msg.sender.toString() !== req.user._id.toString() && !msg.read
+            ).length;
+            
+            return {
+                ...inquiry,
+                unreadCount,
+                lastMessage: inquiry.messages[inquiry.messages.length - 1] || null
+            };
+        });
+
+        res.json({
+            success: true,
+            data: {
+                inquiries: inquiriesWithUnread,
+                totalInquiries: inquiriesWithUnread.length,
+                unreadInquiries: inquiriesWithUnread.filter(i => i.unreadCount > 0).length
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching seller inquiries:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error fetching inquiries',
             message: error.message
         });
     }

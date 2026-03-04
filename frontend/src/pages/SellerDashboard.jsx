@@ -34,6 +34,7 @@ const SellerDashboard = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [chats, setChats] = useState([]);
+    const [inquiries, setInquiries] = useState([]);
     const [selectedChat, setSelectedChat] = useState(null);
     const [isChatModalOpen, setIsChatModalOpen] = useState(false);
     
@@ -71,6 +72,7 @@ const SellerDashboard = () => {
             dispatch(setSellerPets(result.pets || []));
 
             fetchSellerChats();
+            fetchSellerInquiries();
         } catch (error) {
             console.error('Error fetching seller data:', error);
 
@@ -104,15 +106,52 @@ const SellerDashboard = () => {
         }
     };
 
+    const fetchSellerInquiries = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+            const response = await fetch(`${API_URL}/api/seller/inquiries`, {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                setInquiries(data.data.inquiries || []);
+                console.log('Seller inquiries loaded:', data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching seller inquiries:', error);
+        }
+    };
+
     const handleOpenChat = (chat) => {
         setSelectedChat(chat);
         setIsChatModalOpen(true);
+        
+        // Update local state to mark as read immediately
+        if (chat.isPetInquiry) {
+            setInquiries(prevInquiries => 
+                prevInquiries.map(inquiry => 
+                    inquiry._id === chat._id 
+                        ? { ...inquiry, unreadCount: 0 }
+                        : inquiry
+                )
+            );
+        } else {
+            setChats(prevChats => 
+                prevChats.map(c => 
+                    c._id === chat._id 
+                        ? { ...c, unreadCount: 0 }
+                        : c
+                )
+            );
+        }
     };
 
     const handleCloseChat = () => {
         setIsChatModalOpen(false);
         setSelectedChat(null);
         fetchSellerChats();
+        fetchSellerInquiries();
     };
 
     const handleDeleteChat = async (chatId, e) => {
@@ -304,7 +343,13 @@ const SellerDashboard = () => {
     }
 
     // Dashboard Overview Component
-    const renderDashboardOverview = () => (
+    const renderDashboardOverview = () => {
+        // Calculate total unread messages from both chats and inquiries
+        const unreadChatsCount = chats.filter(c => c.unreadCount > 0).length;
+        const unreadInquiriesCount = inquiries.filter(i => i.unreadCount > 0).length;
+        const totalUnreadMessages = unreadChatsCount + unreadInquiriesCount;
+
+        return (
         <>
             {/* Stats Grid */}
             <div className="dashboard-stats-overview">
@@ -313,7 +358,7 @@ const SellerDashboard = () => {
                         <i className="fas fa-comments"></i>
                     </div>
                     <div className="stat-content">
-                        <div className="stat-value">{chats.filter(c => c.unreadCount > 0).length}</div>
+                        <div className="stat-value">{totalUnreadMessages}</div>
                         <div className="stat-label">Unread Chats</div>
                     </div>
                 </div>
@@ -446,7 +491,8 @@ const SellerDashboard = () => {
                 </div>
             </div>
         </>
-    );
+        );
+    };
 
     // Product Management Component
     const renderProductManagement = () => {
@@ -741,11 +787,21 @@ const SellerDashboard = () => {
 
     // Customer Chats Component
     const renderCustomerChats = () => {
-        const unreadChats = chats.filter(c => c.unreadCount > 0);
-        const totalPages = Math.ceil(unreadChats.length / itemsPerPage);
+        // Combine chats and inquiries
+        const allMessages = [
+            ...chats.map(chat => ({ ...chat, type: 'order', isPetInquiry: false })),
+            ...inquiries.map(inquiry => ({ ...inquiry, type: 'inquiry', isPetInquiry: true }))
+        ].sort((a, b) => {
+            const dateA = new Date(a.lastMessage?.timestamp || a.lastMessage || a.updatedAt);
+            const dateB = new Date(b.lastMessage?.timestamp || b.lastMessage || b.updatedAt);
+            return dateB - dateA;
+        });
+
+        const unreadMessages = allMessages.filter(m => m.unreadCount > 0);
+        const totalPages = Math.ceil(unreadMessages.length / itemsPerPage);
         const startIndex = (currentChatPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        const paginatedChats = unreadChats.slice(startIndex, endIndex);
+        const paginatedMessages = unreadMessages.slice(startIndex, endIndex);
 
         return (
             <div className="content-section">
@@ -754,52 +810,73 @@ const SellerDashboard = () => {
                 <div className="orders-stats">
                     <span className="stat-badge pending">
                         <i className="fas fa-envelope"></i>
-                        {unreadChats.length} Unread
+                        {unreadMessages.length} Unread
                     </span>
                 </div>
             </div>
 
-            {paginatedChats && paginatedChats.length > 0 ? (
+            {paginatedMessages && paginatedMessages.length > 0 ? (
                 <div className="chats-list">
-                    {paginatedChats.map((chat) => (
+                    {paginatedMessages.map((message) => (
                         <div 
-                            key={chat._id} 
-                            className={`chat-item ${chat.unreadCount > 0 ? 'unread' : ''}`}
-                            onClick={() => handleOpenChat(chat)}
+                            key={message._id} 
+                            className={`chat-item ${message.unreadCount > 0 ? 'unread' : ''}`}
+                            onClick={() => handleOpenChat(message)}
                         >
                             <div className="chat-item-header">
                                 <div className="customer-info">
                                     <i className="fas fa-user-circle"></i>
                                     <div className="customer-details">
-                                        <h4>{chat.customer?.name || chat.customer?.fullName || 'Customer'}</h4>
+                                        <h4>{message.customer?.name || message.customer?.fullName || message.customer?.username || 'Customer'}</h4>
                                         <span className="order-reference">
-                                            Order #{chat.orderId?.orderNumber || chat.orderId?._id?.slice(-6)}
+                                            {message.isPetInquiry ? (
+                                                <>
+                                                    <i className="fas fa-paw"></i> About: {message.petId?.name || 'Pet'}
+                                                </>
+                                            ) : (
+                                                <>Order #{message.orderId?.orderNumber || message.orderId?._id?.slice(-6)}</>
+                                            )}
                                         </span>
                                     </div>
                                 </div>
                                 <div className="chat-item-meta">
-                                    {chat.unreadCount > 0 && (
-                                        <span className="unread-badge">{chat.unreadCount}</span>
+                                    {message.unreadCount > 0 && (
+                                        <span className="unread-badge">{message.unreadCount}</span>
                                     )}
                                     <span className="chat-time">
-                                        {new Date(chat.lastMessageAt || chat.updatedAt).toLocaleDateString()}
+                                        {new Date(message.lastMessage?.timestamp || message.lastMessage || message.updatedAt).toLocaleDateString()}
                                     </span>
-                                    <button 
-                                        className="chat-delete-btn"
-                                        onClick={(e) => handleDeleteChat(chat._id, e)}
-                                        title="Delete chat"
-                                    >
-                                        <i className="fas fa-trash"></i>
-                                    </button>
+                                    {!message.isPetInquiry && (
+                                        <button 
+                                            className="chat-delete-btn"
+                                            onClick={(e) => handleDeleteChat(message._id, e)}
+                                            title="Delete chat"
+                                        >
+                                            <i className="fas fa-trash"></i>
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                             <div className="chat-item-preview">
-                                <p>{chat.lastMessage?.content || 'No messages yet'}</p>
+                                <p>{message.lastMessage?.content || 'No messages yet'}</p>
                             </div>
                             <div className="chat-item-footer">
-                                <span className="order-amount">
-                                    ₹{chat.orderId?.totalAmount?.toLocaleString()}
-                                </span>
+                                {message.isPetInquiry ? (
+                                    <>
+                                        <span className="inquiry-badge">
+                                            <i className="fas fa-question-circle"></i> Pet Inquiry
+                                        </span>
+                                        {message.petId?.price && (
+                                            <span className="order-amount">
+                                                ₹{message.petId.price.toLocaleString()}
+                                            </span>
+                                        )}
+                                    </>
+                                ) : (
+                                    <span className="order-amount">
+                                        ₹{message.orderId?.totalAmount?.toLocaleString()}
+                                    </span>
+                                )}
                                 <button className="chat-open-btn">
                                     <i className="fas fa-comments"></i> Open Chat
                                 </button>
@@ -810,10 +887,10 @@ const SellerDashboard = () => {
             ) : (
                 <div className="empty-state">
                     <i className="fas fa-comment-slash"></i>
-                    <p>{chats.length > 0 ? 'All messages have been read!' : 'No customer messages yet.'}</p>
+                    <p>{allMessages.length > 0 ? 'All messages have been read!' : 'No customer messages yet.'}</p>
                 </div>
             )}
-            {unreadChats.length > 0 && (
+            {unreadMessages.length > 0 && (
                 <Pagination
                     currentPage={currentChatPage}
                     totalPages={totalPages}
@@ -917,9 +994,12 @@ const SellerDashboard = () => {
                             </li>
                             <li className={activeTab === 'chats' ? 'active' : ''} onClick={() => handleTabChange('chats')}>
                                 <i className="fas fa-comments"></i> Customer Messages
-                                {chats.filter(c => c.unreadCount > 0).length > 0 && (
-                                    <span className="notification-badge">{chats.filter(c => c.unreadCount > 0).length}</span>
-                                )}
+                                {(() => {
+                                    const totalUnread = chats.filter(c => c.unreadCount > 0).length + inquiries.filter(i => i.unreadCount > 0).length;
+                                    return totalUnread > 0 && (
+                                        <span className="notification-badge">{totalUnread}</span>
+                                    );
+                                })()}
                             </li>
                         </ul>
                     </div>

@@ -212,7 +212,6 @@ app.use('/api/lost-pets', lostPetRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/forgot-password', forgotPasswordRoutes);
 
-
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
@@ -273,11 +272,12 @@ const io = socketIo(server, {
 
 // Socket.io connection handling
 const Chat = require('./models/chat');
+const Inquiry = require('./models/inquiry');
 
 io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
 
-    // Join chat room
+    // Join chat room for orders
     socket.on('joinChat', async ({ orderId, userId, userRole }) => {
         try {
             socket.join(`order_${orderId}`);
@@ -297,7 +297,34 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Send message
+    // Join chat room for pet inquiries
+    socket.on('joinPetChat', async ({ petId, customerId, sellerId }) => {
+        try {
+            const roomName = `pet_${petId}_${customerId}_${sellerId}`;
+            socket.join(roomName);
+            console.log(`Customer ${customerId} joined pet inquiry for pet ${petId}`);
+            
+            // Load existing inquiry messages
+            const inquiry = await Inquiry.findOne({ 
+                petId, 
+                customer: customerId, 
+                seller: sellerId,
+                status: 'active'
+            })
+                .populate('customer', 'fullName username email')
+                .populate('seller', 'fullName businessName username email')
+                .populate('messages.sender', 'fullName businessName username');
+            
+            if (inquiry) {
+                socket.emit('chatHistory', inquiry.messages);
+            }
+        } catch (error) {
+            console.error('Error joining pet chat:', error);
+            socket.emit('error', 'Failed to join pet chat');
+        }
+    });
+
+    // Send message for orders
     socket.on('sendMessage', async ({ orderId, senderId, message }) => {
         try {
             let chat = await Chat.findOne({ orderId });
@@ -350,6 +377,65 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Send message for pet inquiries
+    socket.on('sendPetMessage', async ({ petId, customerId, sellerId, senderId, message }) => {
+        try {
+            const Pet = require('./models/pets');
+            const pet = await Pet.findById(petId);
+            
+            if (!pet) {
+                socket.emit('error', 'Pet not found');
+                return;
+            }
+
+            let inquiry = await Inquiry.findOne({ 
+                petId, 
+                customer: customerId, 
+                seller: sellerId,
+                status: 'active'
+            });
+            
+            if (!inquiry) {
+                inquiry = new Inquiry({
+                    petId,
+                    customer: customerId,
+                    seller: sellerId
+                });
+            }
+            
+            const newMessage = {
+                sender: senderId,
+                content: message,
+                timestamp: new Date(),
+                read: false
+            };
+            
+            inquiry.messages.push(newMessage);
+            inquiry.lastMessage = new Date();
+            await inquiry.save();
+            
+            // Populate sender info
+            await inquiry.populate('messages.sender', 'fullName businessName username');
+            const populatedMessage = inquiry.messages[inquiry.messages.length - 1];
+            
+            const roomName = `pet_${petId}_${customerId}_${sellerId}`;
+            
+            // Emit to all users in the room
+            io.to(roomName).emit('newMessage', {
+                _id: populatedMessage._id,
+                sender: {
+                    _id: populatedMessage.sender._id,
+                    name: populatedMessage.sender.fullName || populatedMessage.sender.businessName || populatedMessage.sender.username
+                },
+                content: populatedMessage.content,
+                timestamp: populatedMessage.timestamp
+            });
+        } catch (error) {
+            console.error('Error sending pet message:', error);
+            socket.emit('error', 'Failed to send message');
+        }
+    });
+
     // Mark messages as read
     socket.on('markAsRead', async ({ orderId, userId }) => {
         try {
@@ -364,6 +450,35 @@ io.on('connection', (socket) => {
             }
         } catch (error) {
             console.error('Error marking messages as read:', error);
+        }
+    });
+
+    // Mark pet inquiry messages as read
+    socket.on('markPetInquiryAsRead', async ({ petId, customerId, sellerId, userId }) => {
+        try {
+            const inquiry = await Inquiry.findOne({ 
+                petId, 
+                customer: customerId, 
+                seller: sellerId,
+                status: 'active'
+            });
+            
+            if (inquiry) {
+                let hasChanges = false;
+                inquiry.messages.forEach(msg => {
+                    if (msg.sender.toString() !== userId.toString() && !msg.read) {
+                        msg.read = true;
+                        hasChanges = true;
+                    }
+                });
+                
+                if (hasChanges) {
+                    await inquiry.save();
+                    console.log(`Marked pet inquiry messages as read for inquiry ${inquiry._id}`);
+                }
+            }
+        } catch (error) {
+            console.error('Error marking pet inquiry messages as read:', error);
         }
     });
 
