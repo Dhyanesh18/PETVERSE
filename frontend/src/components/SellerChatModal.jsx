@@ -11,6 +11,8 @@ const SellerChatModal = ({ isOpen, onClose, chat, seller }) => {
     const [isConnected, setIsConnected] = useState(false);
     const messagesEndRef = useRef(null);
 
+    const isPetInquiry = chat?.isPetInquiry || chat?.type === 'inquiry' || chat?.petId;
+
     // Scroll to bottom of messages
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,29 +35,66 @@ const SellerChatModal = ({ isOpen, onClose, chat, seller }) => {
             console.log('Seller socket connected');
             setIsConnected(true);
             
-            // Join the chat room for this order
-            newSocket.emit('joinChat', {
-                orderId: chat.orderId._id || chat.orderId,
-                userId: seller._id,
-                userRole: 'seller'
-            });
+            if (isPetInquiry) {
+                // Join pet inquiry chat room
+                newSocket.emit('joinPetChat', {
+                    petId: chat.petId._id || chat.petId,
+                    customerId: chat.customer._id || chat.customer,
+                    sellerId: seller._id
+                });
+            } else {
+                // Join the order chat room
+                newSocket.emit('joinChat', {
+                    orderId: chat.orderId._id || chat.orderId,
+                    userId: seller._id,
+                    userRole: 'seller'
+                });
+            }
         });
 
         newSocket.on('chatHistory', (history) => {
             console.log('Received chat history:', history);
             setMessages(history || []);
+            
+            // Mark messages as read when seller opens the chat
+            setTimeout(() => {
+                if (isPetInquiry) {
+                    newSocket.emit('markPetInquiryAsRead', {
+                        petId: chat.petId._id || chat.petId,
+                        customerId: chat.customer._id || chat.customer,
+                        sellerId: seller._id,
+                        userId: seller._id
+                    });
+                } else {
+                    newSocket.emit('markAsRead', {
+                        orderId: chat.orderId._id || chat.orderId,
+                        userId: seller._id
+                    });
+                }
+            }, 500);
         });
 
         newSocket.on('newMessage', (message) => {
             console.log('Received new message:', message);
             setMessages(prev => [...prev, message]);
             
-            // Mark as read if it's from customer
-            if (message.sender !== seller._id) {
-                newSocket.emit('markAsRead', {
-                    orderId: chat.orderId._id || chat.orderId,
-                    userId: seller._id
-                });
+            // Mark as read if it's from customer (not from seller)
+            if (message.sender?._id !== seller._id && message.sender !== seller._id) {
+                setTimeout(() => {
+                    if (isPetInquiry) {
+                        newSocket.emit('markPetInquiryAsRead', {
+                            petId: chat.petId._id || chat.petId,
+                            customerId: chat.customer._id || chat.customer,
+                            sellerId: seller._id,
+                            userId: seller._id
+                        });
+                    } else {
+                        newSocket.emit('markAsRead', {
+                            orderId: chat.orderId._id || chat.orderId,
+                            userId: seller._id
+                        });
+                    }
+                }, 300);
             }
         });
 
@@ -73,35 +112,62 @@ const SellerChatModal = ({ isOpen, onClose, chat, seller }) => {
         return () => {
             newSocket.close();
         };
-    }, [isOpen, chat, seller]);
+    }, [isOpen, chat, seller, isPetInquiry]);
+
+    const handleMarkAsRead = () => {
+        if (!socket || !isConnected) return;
+
+        if (isPetInquiry) {
+            socket.emit('markPetInquiryAsRead', {
+                petId: chat.petId._id || chat.petId,
+                customerId: chat.customer._id || chat.customer,
+                sellerId: seller._id,
+                userId: seller._id
+            });
+        } else {
+            socket.emit('markAsRead', {
+                orderId: chat.orderId._id || chat.orderId,
+                userId: seller._id
+            });
+        }
+        
+        console.log('Messages marked as read');
+    };
 
     const handleSendMessage = (e) => {
         e.preventDefault();
         
         if (!newMessage.trim() || !socket || !isConnected) return;
 
-        const messageData = {
-            orderId: chat.orderId._id || chat.orderId,
-            senderId: seller._id,
-            message: newMessage.trim()
-        };
+        if (isPetInquiry) {
+            const messageData = {
+                petId: chat.petId._id || chat.petId,
+                customerId: chat.customer._id || chat.customer,
+                sellerId: seller._id,
+                senderId: seller._id,
+                message: newMessage.trim()
+            };
 
-        console.log('Sending message:', messageData);
-        socket.emit('sendMessage', messageData);
-        setNewMessage('');
-
-        // Mark as read after seller sends a reply
-        setTimeout(() => {
-            socket.emit('markAsRead', {
+            console.log('Sending pet inquiry message:', messageData);
+            socket.emit('sendPetMessage', messageData);
+        } else {
+            const messageData = {
                 orderId: chat.orderId._id || chat.orderId,
-                userId: seller._id
-            });
-        }, 300);
+                senderId: seller._id,
+                message: newMessage.trim()
+            };
+
+            console.log('Sending order message:', messageData);
+            socket.emit('sendMessage', messageData);
+        }
+
+        setNewMessage('');
     };
 
     if (!isOpen || !chat) return null;
 
     const order = chat.orderId;
+    const pet = chat.petId;
     const customer = chat.customer;
 
     return (
@@ -114,15 +180,31 @@ const SellerChatModal = ({ isOpen, onClose, chat, seller }) => {
                             <i className="fas fa-user-circle"></i>
                         </div>
                         <div className="seller-chat-details">
-                            <h3>{customer?.name || customer?.fullName || 'Customer'}</h3>
+                            <h3>{customer?.name || customer?.fullName || customer?.username || 'Customer'}</h3>
                             <div className="seller-order-info">
-                                <span className="seller-order-id">
-                                    <i className="fas fa-shopping-bag"></i>
-                                    Order #{order?.orderNumber || order?._id?.slice(-6)}
-                                </span>
-                                <span className="seller-order-amount">
-                                    ₹{order?.totalAmount?.toLocaleString()}
-                                </span>
+                                {isPetInquiry ? (
+                                    <>
+                                        <span className="seller-order-id">
+                                            <i className="fas fa-paw"></i>
+                                            About: {pet?.name || 'Pet'}
+                                        </span>
+                                        {pet?.price && (
+                                            <span className="seller-order-amount">
+                                                ₹{pet.price.toLocaleString()}
+                                            </span>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="seller-order-id">
+                                            <i className="fas fa-shopping-bag"></i>
+                                            Order #{order?.orderNumber || order?._id?.slice(-6)}
+                                        </span>
+                                        <span className="seller-order-amount">
+                                            ₹{order?.totalAmount?.toLocaleString()}
+                                        </span>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -131,6 +213,15 @@ const SellerChatModal = ({ isOpen, onClose, chat, seller }) => {
                             <i className={`fas fa-circle ${isConnected ? 'text-green' : 'text-red'}`}></i>
                             {isConnected ? 'Connected' : 'Connecting...'}
                         </span>
+                        <button 
+                            onClick={handleMarkAsRead} 
+                            className="seller-mark-read-btn"
+                            disabled={!isConnected}
+                            title="Mark all messages as read"
+                        >
+                            <i className="fas fa-check-double"></i>
+                            Mark Read
+                        </button>
                         <button onClick={onClose} className="seller-chat-close-btn">
                             <i className="fas fa-times"></i>
                         </button>

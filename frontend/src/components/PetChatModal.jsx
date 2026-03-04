@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import './ChatModal.css';
 
-const ChatModal = ({ isOpen, onClose, order, user }) => {
+const PetChatModal = ({ isOpen, onClose, pet, seller, user }) => {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [socket, setSocket] = useState(null);
@@ -18,21 +18,21 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
     }, [messages]);
 
     useEffect(() => {
-        if (isOpen && order && user) {
+        if (isOpen && pet && seller && user) {
             // Connect to socket
             const socketInstance = io('http://localhost:8080', {
                 withCredentials: true
             });
 
             socketInstance.on('connect', () => {
-                console.log('Socket connected');
+                console.log('Socket connected for pet inquiry');
                 setIsConnected(true);
                 
-                // Join chat room
-                socketInstance.emit('joinChat', {
-                    orderId: order._id,
-                    userId: user.id || user._id,
-                    userRole: user.role
+                // Join pet chat room
+                socketInstance.emit('joinPetChat', {
+                    petId: pet._id,
+                    customerId: user.id || user._id,
+                    sellerId: seller._id || seller
                 });
             });
 
@@ -41,8 +41,10 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
                 
                 // Mark messages as read when customer opens the chat
                 setTimeout(() => {
-                    socketInstance.emit('markAsRead', {
-                        orderId: order._id,
+                    socketInstance.emit('markPetInquiryAsRead', {
+                        petId: pet._id,
+                        customerId: user.id || user._id,
+                        sellerId: seller._id || seller,
                         userId: user.id || user._id
                     });
                 }, 500);
@@ -55,8 +57,10 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
                 const currentUserId = user.id || user._id;
                 if (message.sender?._id !== currentUserId && message.sender !== currentUserId) {
                     setTimeout(() => {
-                        socketInstance.emit('markAsRead', {
-                            orderId: order._id,
+                        socketInstance.emit('markPetInquiryAsRead', {
+                            petId: pet._id,
+                            customerId: user.id || user._id,
+                            sellerId: seller._id || seller,
                             userId: user.id || user._id
                         });
                     }, 300);
@@ -79,15 +83,17 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
                 socketInstance.disconnect();
             };
         }
-    }, [isOpen, order, user]);
+    }, [isOpen, pet, seller, user]);
 
     const handleSendMessage = (e) => {
         e.preventDefault();
         
         if (!newMessage.trim() || !socket || !isConnected) return;
 
-        socket.emit('sendMessage', {
-            orderId: order._id,
+        socket.emit('sendPetMessage', {
+            petId: pet._id,
+            customerId: user.id || user._id,
+            sellerId: seller._id || seller,
             senderId: user.id || user._id,
             message: newMessage.trim()
         });
@@ -104,6 +110,9 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
 
     if (!isOpen) return null;
 
+    const sellerName = seller?.businessName || seller?.fullName || seller?.username || 'Seller';
+    const petName = pet?.name || 'Pet';
+
     return (
         <div className="chat-modal-overlay" onClick={onClose}>
             <div className="chat-modal" onClick={(e) => e.stopPropagation()}>
@@ -111,10 +120,10 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
                     <div className="chat-header-info">
                         <h3>
                             <i className="fas fa-comments"></i>
-                            Chat with {order.seller?.name || 'Seller'}
+                            Chat with {sellerName}
                         </h3>
                         <p className="chat-order-info">
-                            Order #{order.orderNumber || order._id?.substring(0, 8)}
+                            About: {petName}
                         </p>
                     </div>
                     <button className="chat-close-btn" onClick={onClose}>
@@ -138,7 +147,7 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
                     {messages.length === 0 ? (
                         <div className="chat-empty-state">
                             <i className="fas fa-comments"></i>
-                            <p>No messages yet. Start the conversation!</p>
+                            <p>No messages yet. Ask the seller about {petName}!</p>
                         </div>
                     ) : (
                         messages.map((msg, index) => {
@@ -149,7 +158,7 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
                                     className={`chat-message ${isOwnMessage ? 'own-message' : 'other-message'}`}
                                 >
                                     <div className="message-sender">
-                                        {isOwnMessage ? 'You' : (msg.sender?.name || 'Seller')}
+                                        {isOwnMessage ? 'You' : (msg.sender?.name || sellerName)}
                                     </div>
                                     <div className="message-content">{msg.content}</div>
                                     <div className="message-time">
@@ -170,7 +179,7 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyPress={handleKeyPress}
-                        placeholder="Type your message..."
+                        placeholder={`Ask about ${petName}...`}
                         className="chat-input"
                         rows="1"
                         disabled={!isConnected}
@@ -188,4 +197,4 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
     );
 };
 
-export default ChatModal;
+export default PetChatModal;

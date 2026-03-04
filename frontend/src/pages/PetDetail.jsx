@@ -4,19 +4,21 @@ import { PetDetailSkeleton } from '../components/Skeleton';
 import { getPetById, togglePetWishlist, getWishlist, getPets } from '../services/api';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
-import { Truck, XCircle, Wallet, Stethoscope, ShoppingCart, Heart, Clock, Home, Ruler, Palette } from 'lucide-react';
+import { Truck, XCircle, Wallet, Stethoscope, ShoppingCart, Heart, Clock, Home, Ruler, Palette, MessageCircle } from 'lucide-react';
 import { Mars, Venus } from 'lucide-react';
+import PetChatModal from '../components/PetChatModal';
 
 const PetDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const { addToCart } = useCart();
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedImage, setSelectedImage] = useState(0);
     const [similarPets, setSimilarPets] = useState([]);
     const [isWishlisted, setIsWishlisted] = useState(false);
+    const [showChatModal, setShowChatModal] = useState(false);
 
     const fetchPetDetails = useCallback(async () => {
         try {
@@ -154,6 +156,14 @@ const PetDetail = () => {
                 alert(`Failed to add to cart: ${serverError}`);
             }
         }
+    };
+
+    const handleOpenChat = () => {
+        if (!isAuthenticated) {
+            navigate('/login');
+            return;
+        }
+        setShowChatModal(true);
     };
 
     if (loading) return <PetDetailSkeleton />;
@@ -368,6 +378,13 @@ const PetDetail = () => {
                                     <ShoppingCart className="w-5 h-5" />
                                     Add to Cart
                                 </button>
+                                <button
+                                    onClick={handleOpenChat}
+                                    className="px-6 py-4 bg-white border-2 border-teal-600 text-teal-600 hover:bg-teal-50 rounded-lg font-semibold transition flex items-center justify-center gap-2"
+                                >
+                                    <MessageCircle className="w-5 h-5" />
+                                    Contact Seller
+                                </button>
                                 <button 
                                     onClick={handleWishlistToggle}
                                     className={`px-6 py-4 border-2 rounded-lg transition ${
@@ -515,6 +532,15 @@ const PetDetail = () => {
                     )}
                 </div>
             </div>
+
+            {/* Pet Chat Modal */}
+            <PetChatModal
+                isOpen={showChatModal}
+                onClose={() => setShowChatModal(false)}
+                pet={pet}
+                seller={pet?.addedBy}
+                user={user}
+            />
         </div>
     );
 };
