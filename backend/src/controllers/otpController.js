@@ -36,9 +36,23 @@ exports.requestLoginOTP = async (req, res) => {
         // Check if user needs approval (for sellers and service providers)
         if (['seller', 'service_provider'].includes(user.role)) {
             if (user.isApproved === false) {
+                // Check if user is rejected (has rejection reason)
+                if (user.rejectionReason) {
+                    return res.status(403).json({
+                        success: false,
+                        error: 'Your account has been rejected.',
+                        isRejected: true,
+                        rejectionReason: user.rejectionReason,
+                        role: user.role
+                    });
+                }
+                // User is pending approval
                 return res.status(403).json({
                     success: false,
-                    error: 'Your account is pending approval. Please wait for admin verification.'
+                    error: 'Your account is pending admin approval. We will contact you shortly.',
+                    needsApproval: true,
+                    isPending: true,
+                    role: user.role
                 });
             }
         }

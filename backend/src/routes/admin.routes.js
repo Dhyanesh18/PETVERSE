@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const adminAuth = require('../middleware/admin-auth');
 const User = require('../models/users');
+const Seller = require('../models/seller');
+const ServiceProvider = require('../models/serviceProvider');
 const Order = require('../models/order');
 const Transaction = require('../models/transaction');
 const mongoose = require('mongoose');
@@ -13,12 +15,6 @@ router.get('/dashboard', adminAuth, async (req, res) => {
     try {
         console.log('Admin dashboard API called by:', req.user.fullName);
         
-        // Get pending sellers and service providers
-        const pendingUsers = await User.find({
-            role: { $in: ['seller', 'service_provider'] },
-            isApproved: false
-        }).sort({ createdAt: -1 });
-
         // Get all users for the all users tab
         const allUsers = await User.find().sort({ createdAt: -1 });
         
@@ -28,76 +24,131 @@ router.get('/dashboard', adminAuth, async (req, res) => {
         const serviceProviderCount = await User.countDocuments({ role: 'service_provider' });
         const adminCount = await User.countDocuments({ role: 'admin' });
         
-        // Get approved sellers and service providers
-        const approvedSellers = await User.find({ 
-            role: 'seller', 
-            isApproved: true 
+        // Get approved counts for platform summary
+        const approvedSellersCount = await Seller.countDocuments({ isApproved: true });
+        const approvedServiceProvidersCount = await ServiceProvider.countDocuments({ isApproved: true });
+        
+        // Debug: Check all sellers in database
+        const allSellersInDb = await Seller.find().lean();
+        console.log('=== ALL SELLERS IN DATABASE ===');
+        allSellersInDb.forEach(seller => {
+            console.log(`Seller: ${seller.fullName}, Email: ${seller.email}, isApproved: ${seller.isApproved}, Role: ${seller.role}`);
         });
-        
-        const approvedServiceProviders = await User.find({ 
-            role: 'service_provider', 
-            isApproved: true 
-        });
-        
-        const pendingApplications = await generateApplicationsFromUsers(
-            await User.find({
-                role: { $in: ['seller', 'service_provider'] },
-                isApproved: false
-            })
-        );
-        
-        const approvedApplications = await generateApplicationsFromUsers(
-            await User.find({
-                role: { $in: ['seller', 'service_provider'] },
-                isApproved: true
-            })
-        );
+        console.log('================================');
 
-        const rejectedApplications = [];
+        // Get pending, approved, and rejected sellers and service providers - query discriminator models directly
+        const pendingSellers = await Seller.find({
+            isApproved: false,
+            rejectionReason: { $exists: false }
+        }).sort({ createdAt: -1 }).lean();
         
+        const pendingServiceProviders = await ServiceProvider.find({
+            isApproved: false,
+            rejectionReason: { $exists: false }
+        }).sort({ createdAt: -1 }).lean();
+        
+        const pendingApplications = [...pendingSellers, ...pendingServiceProviders];
+        const pendingUsers = pendingApplications; // For backward compatibility
+        
+        // Get approved sellers and service providers
+        const approvedSellersData = await Seller.find({
+            isApproved: true
+        }).sort({ createdAt: -1 }).lean();
+        
+        const approvedServiceProvidersData = await ServiceProvider.find({
+            isApproved: true
+        }).sort({ createdAt: -1 }).lean();
+        
+        const approvedApplications = [...approvedSellersData, ...approvedServiceProvidersData];
+        
+        console.log('Approved Applications:', approvedApplications.length);
+        console.log('Approved Sellers:', approvedSellersData.length);
+        console.log('Approved Service Providers:', approvedServiceProvidersData.length);
+        if (approvedApplications.length > 0) {
+            console.log('Sample approved user:', {
+                role: approvedApplications[0].role,
+                fullName: approvedApplications[0].fullName,
+                email: approvedApplications[0].email,
+                businessName: approvedApplications[0].businessName,
+                serviceType: approvedApplications[0].serviceType,
+                phone: approvedApplications[0].phone
+            });
+        }
+
+        // Get rejected sellers and service providers
+        const rejectedSellers = await Seller.find({
+            isApproved: false,
+            rejectionReason: { $exists: true }
+        }).sort({ createdAt: -1 }).lean();
+        
+        const rejectedServiceProvidersData = await ServiceProvider.find({
+            isApproved: false,
+            rejectionReason: { $exists: true }
+        }).sort({ createdAt: -1 }).lean();
+        
+        const rejectedApplications = [...rejectedSellers, ...rejectedServiceProvidersData];
+        
+        // Get pending and approved pets, products, services
         let products = [];
+        let pendingProducts = [];
+        let approvedProducts = [];
+        let rejectedProducts = [];
         try {
             const Product = require('../models/products');
-            const allProducts = await Product.find().populate('seller').sort({ createdAt: -1 }).limit(10);
-            // Don't transform images - let frontend handle the image URLs
+            const allProducts = await Product.find().populate('seller').sort({ createdAt: -1 });
             products = allProducts.map(product => product.toObject());
+            pendingProducts = products.filter(p => p.isApproved === false && !p.rejectionReason);
+            approvedProducts = products.filter(p => p.isApproved === true);
+            rejectedProducts = products.filter(p => p.isApproved === false && p.rejectionReason);
         } catch (err) {
             console.error('Error loading products:', err);
         }
         
         // Get pets data using the actual Pet model
         let pets = [];
+        let pendingPets = [];
+        let approvedPets = [];
+        let rejectedPets = [];
         try {
             const Pet = require('../models/pets');
-            const allPets = await Pet.find().populate('addedBy').sort({ createdAt: -1 }).limit(10);
-            // Don't transform images - let frontend handle the image URLs  
+            const allPets = await Pet.find().populate('addedBy').sort({ createdAt: -1 });
             pets = allPets.map(pet => pet.toObject());
+            pendingPets = pets.filter(p => p.isApproved === false && !p.rejectionReason);
+            approvedPets = pets.filter(p => p.isApproved === true);
+            rejectedPets = pets.filter(p => p.isApproved === false && p.rejectionReason);
         } catch (err) {
             console.error('Error loading pets:', err);
         }
         
         // Get services data
         let services = [];
+        let pendingServices = [];
+        let approvedServices = [];
+        let rejectedServices = [];
         try {
-            const ServiceProvider = require('../models/serviceProvider');
-            const serviceProviders = await ServiceProvider.find().populate().sort({ createdAt: -1 }).limit(10);
-            
-            // Convert service providers to service offerings
-            services = serviceProviders.map(provider => ({
-                _id: provider._id,
-                name: `${provider.serviceType} Services`,
-                description: `Professional ${provider.serviceType} services`,
-                provider: {
-                    _id: provider._id,
-                    fullName: provider.fullName || 'Service Provider',
-                    serviceType: provider.serviceType,
-                    serviceAddress: provider.serviceAddress
-                },
-                isApproved: provider.isApproved,
-                createdAt: provider.createdAt
+            const Service = require('../models/Service');
+            const allServices = await Service.find().populate('provider').sort({ createdAt: -1 });
+            services = allServices.map(service => ({
+                _id: service._id,
+                name: `${service.serviceType} Services`,
+                description: service.description || `Professional ${service.serviceType} services`,
+                provider: service.provider ? {
+                    _id: service.provider._id,
+                    fullName: service.provider.fullName || 'Service Provider',
+                    serviceType: service.serviceType
+                } : null,
+                serviceType: service.serviceType,
+                rate: service.rate,
+                price: service.rate,
+                isApproved: service.isApproved,
+                rejectionReason: service.rejectionReason,
+                createdAt: service.createdAt
             }));
+            pendingServices = services.filter(s => s.isApproved === false && !s.rejectionReason);
+            approvedServices = services.filter(s => s.isApproved === true);
+            rejectedServices = services.filter(s => s.isApproved === false && s.rejectionReason);
         } catch (err) {
-            console.error('Error loading service providers:', err);
+            console.error('Error loading services:', err);
         }
         
         // Generate user growth data based on user registration dates
@@ -163,13 +214,24 @@ router.get('/dashboard', adminAuth, async (req, res) => {
                 pendingApplications,
                 approvedApplications,
                 rejectedApplications,
+                // Add separate arrays for pending and approved items
+                pendingPets,
+                approvedPets,
+                rejectedPets,
+                pendingProducts,
+                approvedProducts,
+                rejectedProducts,
+                pendingServices,
+                approvedServices,
+                rejectedServices,
                 products,
                 services,
                 pets,
                 orders,
                 stats: {
-                    approved: approvedApplications.length,
-                    pending: pendingApplications.length,
+                    approved: approvedApplications.length + approvedPets.length + approvedProducts.length + approvedServices.length,
+                    pending: pendingApplications.length + pendingPets.length + pendingProducts.length + pendingServices.length,
+                    rejected: rejectedApplications.length + rejectedPets.length + rejectedProducts.length + rejectedServices.length,
                     sellers: sellerCount,
                     totalUsers: allUsers.length,
                     totalProducts: products.length,
@@ -185,8 +247,8 @@ router.get('/dashboard', adminAuth, async (req, res) => {
                 },
                 platformSummary: {
                     totalUsers: allUsers.length,
-                    activeSellers: approvedSellers.length,
-                    serviceProviders: approvedServiceProviders.length,
+                    activeSellers: approvedSellersCount,
+                    serviceProviders: approvedServiceProvidersCount,
                     totalProducts: products.length,
                     petsListed: pets.length,
                 },
@@ -362,6 +424,50 @@ router.get('/users', adminAuth, async (req, res) => {
     }
 });
 
+// API route to get user documents (license/certificate)
+router.get('/user-document/:userId/:docType', adminAuth, async (req, res) => {
+    try {
+        const { userId, docType } = req.params;
+        
+        let user;
+        if (docType === 'license') {
+            user = await Seller.findById(userId);
+            if (!user || !user.license || !user.license.data) {
+                return res.status(404).json({ 
+                    success: false, 
+                    error: 'License document not found' 
+                });
+            }
+            res.setHeader('Content-Type', user.license.contentType || 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="license-${userId}.pdf"`);
+            return res.send(user.license.data);
+        } else if (docType === 'certificate') {
+            user = await ServiceProvider.findById(userId);
+            if (!user || !user.certificate || !user.certificate.data) {
+                return res.status(404).json({ 
+                    success: false, 
+                    error: 'Certificate document not found' 
+                });
+            }
+            res.setHeader('Content-Type', user.certificate.contentType || 'application/pdf');
+            res.setHeader('Content-Disposition', `inline; filename="certificate-${userId}.pdf"`);
+            return res.send(user.certificate.data);
+        } else {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Invalid document type' 
+            });
+        }
+    } catch (err) {
+        console.error('Document retrieval error:', err);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Server error',
+            message: err.message 
+        });
+    }
+});
+
 // API route for approving users
 router.post('/approve-user/:userId', adminAuth, async (req, res) => {
     try {
@@ -374,6 +480,11 @@ router.post('/approve-user/:userId', adminAuth, async (req, res) => {
         }
         
         user.isApproved = true;
+        user.approvedAt = new Date();
+        user.approvedBy = req.user._id;
+        user.rejectionReason = undefined;
+        user.rejectedAt = undefined;
+        user.rejectedBy = undefined;
         await user.save();
         
         res.json({ 
@@ -408,6 +519,8 @@ router.post('/reject-user/:userId', adminAuth, async (req, res) => {
         }
         
         user.isApproved = false;
+        user.rejectedAt = new Date();
+        user.rejectedBy = req.user._id;
         await user.save();
         
         res.json({ 
@@ -869,8 +982,8 @@ router.delete('/product/:id', adminAuth, async (req, res) => {
 // Approve service
 router.post('/approve/service/:id', adminAuth, async (req, res) => {
     try {
-        const ServiceProvider = require('../models/serviceProvider');
-        const service = await ServiceProvider.findById(req.params.id);
+        const Service = require('../models/Service');
+        const service = await Service.findById(req.params.id);
         if (!service) {
             return res.status(404).json({ success: false, error: 'Service not found' });
         }
@@ -887,8 +1000,8 @@ router.post('/approve/service/:id', adminAuth, async (req, res) => {
 // Reject service
 router.post('/reject/service/:id', adminAuth, async (req, res) => {
     try {
-        const ServiceProvider = require('../models/serviceProvider');
-        const service = await ServiceProvider.findById(req.params.id);
+        const Service = require('../models/Service');
+        const service = await Service.findById(req.params.id);
         if (!service) {
             return res.status(404).json({ success: false, error: 'Service not found' });
         }
@@ -906,8 +1019,8 @@ router.post('/reject/service/:id', adminAuth, async (req, res) => {
 // Delete service
 router.delete('/service/:id', adminAuth, async (req, res) => {
     try {
-        const ServiceProvider = require('../models/serviceProvider');
-        const service = await ServiceProvider.findByIdAndDelete(req.params.id);
+        const Service = require('../models/Service');
+        const service = await Service.findByIdAndDelete(req.params.id);
         if (!service) {
             return res.status(404).json({ success: false, error: 'Service not found' });
         }

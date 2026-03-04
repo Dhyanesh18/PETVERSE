@@ -28,15 +28,31 @@ module.exports = {
                 });
             }
             
-            console.log('Session object before login:', req.session);
-    
-            req.session.userId = user._id;
-            req.session.userRole = user.role;
-          
-            console.log('Session after login:', req.session);
-            console.log('User authenticated successfully:', user.email, 'with role:', user.role);
+        // Check if seller or service provider is approved
+        if ((user.role === 'seller' || user.role === 'service_provider') && !user.isApproved) {
+            console.log('Unapproved user attempted login:', req.body.email);
             
-            // Return JSON response with complete user data
+            // Check if user is rejected (has rejection reason)
+            if (user.rejectionReason) {
+                return res.status(403).json({ 
+                    success: false, 
+                    error: 'Your account has been rejected.',
+                    isRejected: true,
+                    rejectionReason: user.rejectionReason,
+                    role: user.role
+                });
+            }
+            
+            // User is pending approval
+            return res.status(403).json({ 
+                success: false, 
+                error: 'Your account is pending admin approval. We will contact you shortly.',
+                needsApproval: true,
+                isPending: true,
+                role: user.role
+            });
+        }
+        
             return res.status(200).json({
                 success: true,
                 message: 'Login successful',

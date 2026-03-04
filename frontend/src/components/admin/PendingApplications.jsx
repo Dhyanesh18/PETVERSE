@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { approveItem, rejectItem, fetchAdminDashboard } from '../../redux/slices/adminSlice';
+import api from '../../utils/api';
 import './DashboardComponents.css';
 
 const PendingApplications = ({ data }) => {
@@ -8,24 +9,42 @@ const PendingApplications = ({ data }) => {
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [filterType, setFilterType] = useState('all'); // 'all', 'users', 'items'
 
     if (!data) return <div>Loading...</div>;
 
-    const pendingItems = [
+    const pendingUsers = (data.pendingUsers || []).map(user => ({ ...user, type: 'user' }));
+    const pendingContentItems = [
         ...(data.pendingPets || []).map(pet => ({ ...pet, type: 'pet' })),
         ...(data.pendingProducts || []).map(product => ({ ...product, type: 'product' })),
         ...(data.pendingServices || []).map(service => ({ ...service, type: 'service' }))
     ];
 
+    // Combine all pending items
+    const allPending = [...pendingUsers, ...pendingContentItems];
+
+    // Apply filter
+    const pendingItems = filterType === 'all' 
+        ? allPending 
+        : filterType === 'users' 
+            ? pendingUsers 
+            : pendingContentItems;
+
     const handleApprove = async (id, type) => {
         if (!window.confirm(`Are you sure you want to approve this ${type}?`)) return;
 
         try {
-            await dispatch(approveItem({ id, type })).unwrap();
-            alert(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully!`);
+            if (type === 'user') {
+                // Use the user approval API
+                await api.post(`/admin/approve-user/${id}`);
+                alert('User approved successfully!');
+            } else {
+                await dispatch(approveItem({ id, type })).unwrap();
+                alert(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully!`);
+            }
             dispatch(fetchAdminDashboard());
         } catch (error) {
-            alert(`Failed to approve ${type}: ${error.message}`);
+            alert(`Failed to approve ${type}: ${error.message || error}`);
         }
     };
 
@@ -41,28 +60,46 @@ const PendingApplications = ({ data }) => {
         }
 
         try {
-            await dispatch(rejectItem({ 
-                id: selectedItem._id, 
-                type: selectedItem.type, 
-                reason: rejectionReason 
-            })).unwrap();
-            alert(`${selectedItem.type.charAt(0).toUpperCase() + selectedItem.type.slice(1)} rejected successfully!`);
+            if (selectedItem.type === 'user') {
+                // Use the user rejection API
+                await api.post(`/admin/reject-user/${selectedItem._id}`, {
+                    rejectionReason
+                });
+                alert('User rejected successfully!');
+            } else {
+                await dispatch(rejectItem({ 
+                    id: selectedItem._id, 
+                    type: selectedItem.type, 
+                    reason: rejectionReason 
+                })).unwrap();
+                alert(`${selectedItem.type.charAt(0).toUpperCase() + selectedItem.type.slice(1)} rejected successfully!`);
+            }
             setRejectModalOpen(false);
             setRejectionReason('');
             setSelectedItem(null);
             dispatch(fetchAdminDashboard());
         } catch (error) {
-            alert(`Failed to reject ${selectedItem.type}: ${error.message}`);
+            alert(`Failed to reject ${selectedItem.type}: ${error.message || error}`);
         }
     };
 
     const getTypeIcon = (type) => {
-        const icons = { pet: 'paw', product: 'box', service: 'concierge-bell' };
+        const icons = { 
+            user: 'user-circle',
+            pet: 'paw', 
+            product: 'box', 
+            service: 'concierge-bell' 
+        };
         return icons[type] || 'question';
     };
 
     const getTypeColor = (type) => {
-        const colors = { pet: 'pink', product: 'orange', service: 'purple' };
+        const colors = { 
+            user: 'teal',
+            pet: 'pink', 
+            product: 'orange', 
+            service: 'purple' 
+        };
         return colors[type] || 'gray';
     };
 
@@ -71,6 +108,28 @@ const PendingApplications = ({ data }) => {
             <div className="applications-header">
                 <h3>Pending Applications ({pendingItems.length})</h3>
                 <p className="applications-subtitle">Review and approve new submissions</p>
+                
+                {/* Filter Buttons */}
+                <div className="filter-buttons">
+                    <button 
+                        className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
+                        onClick={() => setFilterType('all')}
+                    >
+                        <i className="fas fa-list"></i> All ({allPending.length})
+                    </button>
+                    <button 
+                        className={`filter-btn ${filterType === 'users' ? 'active' : ''}`}
+                        onClick={() => setFilterType('users')}
+                    >
+                        <i className="fas fa-users"></i> Users ({pendingUsers.length})
+                    </button>
+                    <button 
+                        className={`filter-btn ${filterType === 'items' ? 'active' : ''}`}
+                        onClick={() => setFilterType('items')}
+                    >
+                        <i className="fas fa-box"></i> Products/Pets/Services ({pendingContentItems.length})
+                    </button>
+                </div>
             </div>
 
             {pendingItems.length === 0 ? (
@@ -89,8 +148,47 @@ const PendingApplications = ({ data }) => {
                             </div>
 
                             <div className="application-content">
-                                <h4 className="application-name">{item.name}</h4>
+                                <h4 className="application-name">
+                                    {item.type === 'user' ? item.fullName : item.name}
+                                </h4>
                                 
+                                {item.type === 'user' && (
+                                    <div className="application-details">
+                                        <p><strong>Role:</strong> {item.role === 'seller' ? 'Seller' : 'Service Provider'}</p>
+                                        <p><strong>Email:</strong> {item.email}</p>
+                                        <p><strong>Phone:</strong> {item.phone}</p>
+                                        {item.role === 'seller' && (
+                                            <>
+                                                <p><strong>Business:</strong> {item.businessName}</p>
+                                                <p><strong>Address:</strong> {item.businessAddress}</p>
+                                                {item.taxId && <p><strong>Tax ID:</strong> {item.taxId}</p>}
+                                                <div className="document-section">
+                                                    <button 
+                                                        className="document-btn"
+                                                        onClick={() => window.open(`/api/admin/user-document/${item._id}/license`, '_blank')}
+                                                    >
+                                                        <i className="fas fa-file-pdf"></i> View Business License
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                        {item.role === 'service_provider' && (
+                                            <>
+                                                <p><strong>Service Type:</strong> {item.serviceType}</p>
+                                                <p><strong>Address:</strong> {item.serviceAddress}</p>
+                                                <div className="document-section">
+                                                    <button 
+                                                        className="document-btn"
+                                                        onClick={() => window.open(`/api/admin/user-document/${item._id}/certificate`, '_blank')}
+                                                    >
+                                                        <i className="fas fa-file-pdf"></i> View Certificate
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+
                                 {item.type === 'pet' && (
                                     <div className="application-details">
                                         <p><strong>Breed:</strong> {item.breed}</p>
@@ -119,7 +217,10 @@ const PendingApplications = ({ data }) => {
                                 <div className="application-meta">
                                     <span className="meta-item">
                                         <i className="fas fa-user"></i>
-                                        {item.seller?.businessName || item.provider?.fullName || 'Unknown'}
+                                        {item.type === 'user' 
+                                            ? item.username 
+                                            : (item.seller?.businessName || item.provider?.fullName || 'Unknown')
+                                        }
                                     </span>
                                     <span className="meta-item">
                                         <i className="fas fa-calendar"></i>

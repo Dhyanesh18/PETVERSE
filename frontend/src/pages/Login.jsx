@@ -214,7 +214,22 @@ const Login = () => {
         } catch (error) {
             console.error('Login error:', error);
             
-            if (error.response?.data?.error) {
+            // Check if error is due to rejection
+            if (error.response?.data?.isRejected) {
+                setErrors(prev => ({
+                    ...prev,
+                    server: `Account Rejected: ${error.response.data.rejectionReason || 'Your account has been rejected by the admin.'}`
+                }));
+            }
+            // Check if error is due to pending approval
+            else if (error.response?.data?.isPending || error.response?.data?.needsApproval) {
+                setErrors(prev => ({
+                    ...prev,
+                    server: 'Your account is pending admin approval. We will contact you shortly.'
+                }));
+            }
+            // Other errors
+            else if (error.response?.data?.error) {
                 setErrors(prev => ({
                     ...prev,
                     server: error.response.data.error
@@ -361,11 +376,38 @@ const Login = () => {
                     <h2 className="text-gray-800 text-2xl font-semibold mb-2">Welcome Back!</h2>
                     <p className="text-gray-600 text-sm">Sign in to continue your pet journey</p>
 
+                    {/* Success Message from Signup */}
+                    {location.state?.message && (
+                        <div className={`mt-4 border-l-4 p-3 rounded flex items-start gap-2 ${
+                            location.state?.needsApproval 
+                                ? 'bg-yellow-50 border-yellow-500 text-yellow-800' 
+                                : 'bg-green-50 border-green-500 text-green-700'
+                        }`}>
+                            <FaExclamationCircle className="mt-0.5 shrink-0" />
+                            <span className="text-sm font-medium">{location.state.message}</span>
+                        </div>
+                    )}
+
                     {/* Server Error Message */}
                     {errors.server && (
-                        <div className="mt-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-3 rounded flex items-start gap-2">
+                        <div className={`mt-4 border-l-4 p-3 rounded flex items-start gap-2 ${
+                            errors.server.includes('pending') || errors.server.includes('approval')
+                                ? 'bg-yellow-50 border-yellow-500 text-yellow-800'
+                                : errors.server.includes('Rejected') || errors.server.includes('rejected')
+                                ? 'bg-red-50 border-red-500 text-red-700'
+                                : 'bg-red-50 border-red-500 text-red-700'
+                        }`}>
                             <FaExclamationCircle className="mt-0.5 shrink-0" />
-                            <span className="text-sm font-medium">{errors.server}</span>
+                            <div className="text-sm font-medium">
+                                {errors.server.includes('Rejected') ? (
+                                    <div>
+                                        <div className="font-bold mb-1">Account Rejected</div>
+                                        <div>{errors.server.replace('Account Rejected: ', '')}</div>
+                                    </div>
+                                ) : (
+                                    errors.server
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

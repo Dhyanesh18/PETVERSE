@@ -40,6 +40,27 @@ const petSchema = new mongoose.Schema({
         type: Boolean, 
         default: true 
     },
+    isApproved: {
+        type: Boolean,
+        default: true
+    },
+    approvedAt: {
+        type: Date
+    },
+    approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    rejectedAt: {
+        type: Date
+    },
+    rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    rejectionReason: {
+        type: String
+    },
     addedBy: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User' 
