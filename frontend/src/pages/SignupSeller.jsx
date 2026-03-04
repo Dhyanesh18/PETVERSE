@@ -121,7 +121,11 @@ const SignupSeller = () => {
 
             if (response.data.success) {
                 navigate('/login', { 
-                    state: { message: 'Registration successful! Please login.' }
+                    state: { 
+                        message: 'Registration successful! Your account is pending admin approval. You will be able to login once approved.',
+                        type: 'success',
+                        needsApproval: true
+                    }
                 });
             }
         } catch (error) {

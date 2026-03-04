@@ -19,6 +19,20 @@ module.exports = (req, res, next) => {
     
     // Check if user is a seller or admin
     if (req.user.role === 'seller' || req.user.role === 'admin') {
+        // If seller, check if approved
+        if (req.user.role === 'seller' && !req.user.isApproved) {
+            console.log('Unapproved seller attempted access:', req.user.email);
+            if (req.originalUrl.startsWith('/api/')) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Your seller account is pending admin approval',
+                    needsApproval: true
+                });
+            }
+            return res.status(403).render('error', { 
+                message: 'Your seller account is pending admin approval. Please wait for approval.' 
+            });
+        }
         console.log('Seller/Admin authenticated:', req.user.email);
         return next();
     }

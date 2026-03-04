@@ -172,8 +172,8 @@ const AdminDashboard = () => {
                         {activeTab === 'dashboard' && <DashboardOverview data={data} />}
                         {activeTab === 'analytics' && <Analytics />}
                         {activeTab === 'pending' && <PendingApplications data={data} />}
-                        {activeTab === 'approved' && <ApprovedApplications data={data} filters={{ types: { pet: true, product: true, service: true }, dateRange: {} }} />}
-                        {activeTab === 'rejected' && <RejectedApplications data={data} filters={{ types: { pet: true, product: true, service: true }, dateRange: {} }} />}
+                        {activeTab === 'approved' && <ApprovedApplications data={data} />}
+                        {activeTab === 'rejected' && <RejectedApplications data={data} />}
                         {activeTab === 'all-users' && <AllUsers data={data} />}
                         {activeTab === 'products' && <ProductsManagement data={data} />}
                         {activeTab === 'services' && <ServicesManagement data={data} />}

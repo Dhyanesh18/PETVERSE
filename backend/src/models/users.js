@@ -44,6 +44,23 @@ const userSchema = new mongoose.Schema({
             return ['seller', 'service_provider'].includes(this.role);
         }
     },
+    approvedAt: {
+        type: Date
+    },
+    approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    rejectionReason: {
+        type: String
+    },
+    rejectedAt: {
+        type: Date
+    },
+    rejectedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     wishlistProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     wishlistPets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pet' }],
     resetPasswordOTP: {

@@ -13,6 +13,27 @@ const serviceSchema = new mongoose.Schema({
   },
   description: String,
   rate: Number,
+  isApproved: {
+    type: Boolean,
+    default: true
+  },
+  approvedAt: {
+    type: Date
+  },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  rejectedAt: {
+    type: Date
+  },
+  rejectedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  rejectionReason: {
+    type: String
+  },
   availableSlots: [{
     date: Date,
     startTime: String,
