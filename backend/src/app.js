@@ -13,6 +13,7 @@ const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const csurf = require('csurf');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const { logWarning } = require('./utils/logger');
 
 dotenv.config();
 
@@ -83,7 +84,13 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use(mongoSanitize({
     replaceWith: '_',
     onSanitize: ({ req, key }) => {
-        console.warn(`Sanitized potentially malicious input: ${key}`);
+        logWarning({
+            message: 'Potentially malicious input detected and sanitized',
+            inputKey: key,
+            url: req.url,
+            method: req.method,
+            timestamp: new Date().toISOString()
+        });
     }
 }));
 

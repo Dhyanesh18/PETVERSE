@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchLostPetById, addComment, updateStatus } from '../redux/slices/lostPetSlice';
 import { useAuth } from '../hooks/useAuth';
-import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaUser, FaPhone, FaEnvelope, FaArrowLeft, FaPaw, FaComment } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaUser, FaPhone, FaEnvelope, FaArrowLeft, FaPaw, FaComment, FaShieldAlt, FaCheckCircle } from 'react-icons/fa';
+import FoundClaimForm from '../components/lostpet/FoundClaimForm';
 
 const LostPetDetail = () => {
     const { id } = useParams();
@@ -18,6 +19,7 @@ const LostPetDetail = () => {
     const [showCommentForm, setShowCommentForm] = useState(false);
     const [comment, setComment] = useState('');
     const [submittingComment, setSubmittingComment] = useState(false);
+    const [showClaimForm, setShowClaimForm] = useState(false);
 
     useEffect(() => {
         dispatch(fetchLostPetById(id));
@@ -321,50 +323,110 @@ const LostPetDetail = () => {
                         <div className="bg-white rounded-lg shadow-md p-6 sticky top-24 space-y-6">
                             <h3 className="text-xl font-bold text-gray-800">Contact Information</h3>
                             
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3 text-gray-600 bg-teal-50 p-3 rounded-lg">
-                                    <FaUser className="text-teal-500 text-xl" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Name</p>
-                                        <p className="font-semibold text-gray-800">{pet.contactInfo.name}</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3 text-gray-600 bg-cyan-50 p-3 rounded-lg">
-                                    <FaPhone className="text-cyan-500 text-xl" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Phone</p>
-                                        <a href={`tel:${pet.contactInfo.phone}`} className="font-semibold text-gray-800 hover:text-teal-600">
-                                            {pet.contactInfo.phone}
-                                        </a>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3 text-gray-600 bg-teal-50 p-3 rounded-lg">
-                                    <FaEnvelope className="text-teal-500 text-xl" />
-                                    <div>
-                                        <p className="text-xs text-gray-500">Email</p>
-                                        <a href={`mailto:${pet.contactInfo.email}`} className="font-semibold text-gray-800 hover:text-teal-600 break-all">
-                                            {pet.contactInfo.email}
-                                        </a>
-                                    </div>
-                                </div>
-
-                                {pet.contactInfo.alternatePhone && (
-                                    <div className="flex items-center gap-3 text-gray-600 bg-cyan-50 p-3 rounded-lg">
-                                        <FaPhone className="text-cyan-500 text-xl" />
-                                        <div>
-                                            <p className="text-xs text-gray-500">Alternate Phone</p>
-                                            <a href={`tel:${pet.contactInfo.alternatePhone}`} className="font-semibold text-gray-800 hover:text-teal-600">
-                                                {pet.contactInfo.alternatePhone}
-                                            </a>
+                            {pet.canViewContact && pet.contactInfo ? (
+                                <>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3 text-gray-600 bg-teal-50 p-3 rounded-lg">
+                                            <FaUser className="text-teal-500 text-xl" />
+                                            <div>
+                                                <p className="text-xs text-gray-500">Name</p>
+                                                <p className="font-semibold text-gray-800">{pet.contactInfo.name}</p>
+                                            </div>
                                         </div>
+
+                                        <div className="flex items-center gap-3 text-gray-600 bg-cyan-50 p-3 rounded-lg">
+                                            <FaPhone className="text-cyan-500 text-xl" />
+                                            <div>
+                                                <p className="text-xs text-gray-500">Phone</p>
+                                                <a href={`tel:${pet.contactInfo.phone}`} className="font-semibold text-gray-800 hover:text-teal-600">
+                                                    {pet.contactInfo.phone}
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3 text-gray-600 bg-teal-50 p-3 rounded-lg">
+                                            <FaEnvelope className="text-teal-500 text-xl" />
+                                            <div>
+                                                <p className="text-xs text-gray-500">Email</p>
+                                                <a href={`mailto:${pet.contactInfo.email}`} className="font-semibold text-gray-800 hover:text-teal-600 break-all">
+                                                    {pet.contactInfo.email}
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        {pet.contactInfo.alternatePhone && (
+                                            <div className="flex items-center gap-3 text-gray-600 bg-cyan-50 p-3 rounded-lg">
+                                                <FaPhone className="text-cyan-500 text-xl" />
+                                                <div>
+                                                    <p className="text-xs text-gray-500">Alternate Phone</p>
+                                                    <a href={`tel:${pet.contactInfo.alternatePhone}`} className="font-semibold text-gray-800 hover:text-teal-600">
+                                                        {pet.contactInfo.alternatePhone}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
+                                    
+                                    {pet.userApprovedClaim && (
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                                            <div className="flex items-center gap-2 text-green-700 mb-2">
+                                                <FaCheckCircle />
+                                                <span className="font-semibold">Claim Approved!</span>
+                                            </div>
+                                            <p className="text-sm text-green-600">
+                                                Your claim has been verified. You can now contact the owner.
+                                            </p>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+                                        <div className="flex items-center gap-2 text-amber-700">
+                                            <FaShieldAlt className="text-xl" />
+                                            <span className="font-semibold">Contact Protected</span>
+                                        </div>
+                                        <p className="text-sm text-amber-700">
+                                            To protect against fraud, contact details are hidden until your claim is verified by the owner.
+                                        </p>
+                                    </div>
+                                    
+                                    {isAuthenticated && !isOwner && pet.status === 'lost' && (
+                                        <button
+                                            onClick={() => setShowClaimForm(true)}
+                                            className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 text-white py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 font-semibold flex items-center justify-center gap-2"
+                                        >
+                                            <FaPaw />
+                                            I Found This Pet
+                                        </button>
+                                    )}
+                                    
+                                    {!isAuthenticated && (
+                                        <div className="text-center text-sm text-gray-600">
+                                            <a href="/login" className="text-teal-600 hover:text-teal-700 font-semibold">
+                                                Login
+                                            </a> to submit a found claim
+                                        </div>
+                                    )}
+                                </>
+                            )}
 
                             {isOwner && pet.status === 'lost' && (
                                 <div className="border-t border-teal-100 pt-6">
+                                    {pet.pendingClaimsCount > 0 && (
+                                        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                            <p className="text-sm text-blue-700 font-semibold">
+                                                {pet.pendingClaimsCount} pending claim{pet.pendingClaimsCount > 1 ? 's' : ''} to review
+                                            </p>
+                                            <button
+                                                onClick={() => navigate(`/lost-found/${id}/claims`)}
+                                                className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                                            >
+                                                Review Claims →
+                                            </button>
+                                        </div>
+                                    )}
+                                    
                                     <h4 className="font-semibold text-gray-800 mb-3">Update Status</h4>
                                     <div className="space-y-2">
                                         <button
@@ -397,6 +459,18 @@ const LostPetDetail = () => {
                     </div>
                 </div>
             </div>
+            
+            {/* Found Claim Form Modal */}
+            {showClaimForm && (
+                <FoundClaimForm
+                    lostPet={pet}
+                    onClose={() => setShowClaimForm(false)}
+                    onSuccess={() => {
+                        setShowClaimForm(false);
+                        dispatch(fetchLostPetById(id));
+                    }}
+                />
+            )}
         </div>
     );
 };

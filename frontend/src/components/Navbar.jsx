@@ -157,8 +157,8 @@ const Navbar = () => {
 
                     {/* Icons (Cart and User) */}
                     <div className="hidden lg:flex items-center gap-8 ml-auto">
-                        {/* Hide cart for admin users */}
-                        {!isAdmin && (
+                        {/* Hide cart for admin users and unauthenticated users */}
+                        {!isAdmin && user && (
                             <Link 
                                 to="/cart" 
                                 className="relative text-white text-xl hover:scale-125 transition-transform duration-300"

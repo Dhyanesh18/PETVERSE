@@ -1,12 +1,21 @@
+const { logError } = require('../utils/logger');
+
 // Global Error Handler Middleware
 const errorHandler = (err, req, res, next) => {
-    console.error('Error occurred:', {
+    const errorData = {
         message: err.message,
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+        errorName: err.name,
         url: req.url,
         method: req.method,
-        timestamp: new Date().toISOString()
-    });
+        statusCode: err.status || 500,
+        userAgent: req.get('user-agent'),
+        ip: req.ip || req.connection.remoteAddress,
+        timestamp: new Date().toISOString(),
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    };
+    
+    // Log error to separate error log file
+    logError(errorData);
 
     // Handle specific error types
     if (err.name === 'ValidationError') {

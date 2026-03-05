@@ -5,6 +5,7 @@ import {
     removeFromCart as removeFromCartAPI, 
     clearCart as clearCartAPI 
 } from '../../services/api';
+import { logout as authLogout } from './authSlice';
 
 // Helper to get cart from localStorage
 const getCartFromLocalStorage = () => {
@@ -190,6 +191,13 @@ const cartSlice = createSlice({
             .addCase(clearCart.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            // Clear cart on logout
+            .addCase(authLogout.fulfilled, (state) => {
+                state.items = [];
+                state.cartCount = 0;
+                state.loading = false;
+                state.error = null;
             });
     },
 });

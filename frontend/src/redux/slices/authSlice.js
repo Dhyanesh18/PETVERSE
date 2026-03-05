@@ -30,6 +30,7 @@ export const checkSession = createAsyncThunk(
             } else {
                 console.log('User not authenticated');
                 localStorage.removeItem('user');
+                localStorage.removeItem('cart');
                 return null;
             }
         } catch (error) {
@@ -40,6 +41,7 @@ export const checkSession = createAsyncThunk(
                 message: error.message
             });
             localStorage.removeItem('user');
+            localStorage.removeItem('cart');
             return rejectWithValue(error.response?.data);
         }
     }
@@ -51,10 +53,12 @@ export const logout = createAsyncThunk(
         try {
             await logoutAPI();
             localStorage.removeItem('user');
+            localStorage.removeItem('cart');
             return null;
         } catch (error) {
             console.error('Logout failed:', error);
             localStorage.removeItem('user');
+            localStorage.removeItem('cart');
             return rejectWithValue(error.response?.data);
         }
     }

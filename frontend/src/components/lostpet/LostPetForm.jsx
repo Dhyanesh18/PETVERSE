@@ -27,6 +27,9 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
     const [images, setImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [verificationQuestions, setVerificationQuestions] = useState([
+        { question: '', answer: '' }
+    ]);
 
     useEffect(() => {
         if (userLocation) {
@@ -70,6 +73,22 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
         setImagePreviews(prev => prev.filter((_, i) => i !== index));
     };
 
+    const addVerificationQuestion = () => {
+        if (verificationQuestions.length < 5) {
+            setVerificationQuestions([...verificationQuestions, { question: '', answer: '' }]);
+        }
+    };
+
+    const removeVerificationQuestion = (index) => {
+        setVerificationQuestions(verificationQuestions.filter((_, i) => i !== index));
+    };
+
+    const handleVerificationChange = (index, field, value) => {
+        const updated = [...verificationQuestions];
+        updated[index][field] = value;
+        setVerificationQuestions(updated);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -87,6 +106,12 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
         images.forEach(image => {
             submitData.append('images', image);
         });
+
+        // Add verification questions (filter out empty ones)
+        const validQuestions = verificationQuestions.filter(vq => vq.question.trim() && vq.answer.trim());
+        if (validQuestions.length > 0) {
+            submitData.append('verificationQuestions', JSON.stringify(validQuestions));
+        }
 
         try {
             await onSubmit(submitData);
@@ -401,6 +426,75 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                 />
                             </div>
                         </div>
+                    </div>
+
+                    {/* Verification Questions */}
+                    <div className="space-y-4 bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <h3 className="text-lg font-semibold text-amber-900 flex items-center gap-2">
+                                    🔐 Security Verification Questions
+                                </h3>
+                                <p className="text-sm text-amber-700 mt-1">
+                                    Add questions to verify that someone genuinely found your pet. Contact details will be hidden until claims are verified. (Optional but recommended)
+                                </p>
+                            </div>
+                        </div>
+
+                        {verificationQuestions.map((vq, index) => (
+                            <div key={index} className="bg-white rounded-lg p-4 space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-semibold text-gray-700">Question {index + 1}</span>
+                                    {verificationQuestions.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeVerificationQuestion(index)}
+                                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                        >
+                                            Remove
+                                        </button>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                                        Question (e.g., "What is my pet's name?", "What color is the collar?")
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={vq.question}
+                                        onChange={(e) => handleVerificationChange(index, 'question', e.target.value)}
+                                        placeholder="Enter verification question"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                                        Answer (will be matched against claimer's response)
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={vq.answer}
+                                        onChange={(e) => handleVerificationChange(index, 'answer', e.target.value)}
+                                        placeholder="Enter correct answer"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+
+                        {verificationQuestions.length < 5 && (
+                            <button
+                                type="button"
+                                onClick={addVerificationQuestion}
+                                className="w-full py-2 border-2 border-dashed border-amber-300 rounded-lg text-amber-700 hover:bg-amber-100 transition-colors font-medium text-sm"
+                            >
+                                + Add Another Question
+                            </button>
+                        )}
+
+                        <p className="text-xs text-amber-600 mt-2">
+                            💡 Tip: Use questions only you would know the answer to, like your pet's nickname, special marks, or what they were wearing.
+                        </p>
                     </div>
 
                     {/* Reward */}
