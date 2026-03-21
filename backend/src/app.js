@@ -16,11 +16,15 @@ const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 
 dotenv.config();
 
+// If the project keeps `.env` under `backend/src/.env` (common when running
+// `node src/app.js` from `backend/`), load it explicitly.
+const localEnvPath = path.join(__dirname, '.env');
+if (fs.existsSync(localEnvPath)) {
+    dotenv.config({ path: localEnvPath });
+}
+
 const app = express();
 
-// ===== THIRD-PARTY MIDDLEWARE =====
-
-// 1. Security headers with Helmet
 app.use(helmet({
     contentSecurityPolicy: false, // Disable CSP to allow cross-origin resources
     crossOriginEmbedderPolicy: false,
@@ -145,26 +149,31 @@ app.use(async (req, res, next) => {
     next();
 });
 
-mongoose.connect(process.env.MONGODB_URI, {
-    maxPoolSize: 10, // Maintain up to 10 socket connections
-    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection failed:', err));
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) {
+    console.warn('MONGODB_URI is not set; skipping MongoDB connection.');
+} else {
+    mongoose.connect(mongoUri, {
+        maxPoolSize: 10, // Maintain up to 10 socket connections
+        serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+        socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    })
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => console.error('MongoDB connection failed:', err));
 
-// Handle MongoDB connection errors
-mongoose.connection.on('error', (err) => {
-    console.error('MongoDB connection error:', err);
-});
+    // Handle MongoDB connection errors
+    mongoose.connection.on('error', (err) => {
+        console.error('MongoDB connection error:', err);
+    });
 
-mongoose.connection.on('disconnected', () => {
-    console.log('MongoDB disconnected');
-});
+    mongoose.connection.on('disconnected', () => {
+        console.log('MongoDB disconnected');
+    });
 
-mongoose.connection.on('reconnected', () => {
-    console.log('MongoDB reconnected');
-});
+    mongoose.connection.on('reconnected', () => {
+        console.log('MongoDB reconnected');
+    });
+}
 
 // API Routes
 const authRoutes = require('./routes/auth.routes');
@@ -189,8 +198,10 @@ const lostPetRoutes = require('./routes/lostPet.routes');
 const otpRoutes = require('./routes/otp.routes');
 const forgotPasswordRoutes = require('./routes/forgotPassword.routes');
 
+// Swagger
+const { setupSwagger } = require('./docs/swagger');
+
 app.use('/api', apiRoutes);
-// Mount routes under /api prefix
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
@@ -242,6 +253,9 @@ app.get('/api', (req, res) => {
         }
     });
 });
+
+// Swagger docs (UI + raw JSON)
+setupSwagger(app);
 
 // ===== ERROR HANDLING MIDDLEWARE =====
 
@@ -487,12 +501,14 @@ io.on('connection', (socket) => {
     });
 });
 
-server.listen(port, () => {
-    console.log(`PetVerse API Server Running
-      Port: ${port.toString().padEnd(30)}║
-      Mode: ${(process.env.NODE_ENV || 'development').padEnd(30)}
-      Docs: http://localhost:${port}/api${' '.repeat(8)}
-    `);
-});
+if (require.main === module) {
+        server.listen(port, () => {
+                console.log(`PetVerse API Server Running
+            Port: ${port.toString().padEnd(30)}║
+            Mode: ${(process.env.NODE_ENV || 'development').padEnd(30)}
+            Docs: http://localhost:${port}/api/docs${' '.repeat(3)}
+        `);
+        });
+}
 
 module.exports = { app, io };
