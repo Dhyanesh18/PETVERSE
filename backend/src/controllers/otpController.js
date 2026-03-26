@@ -73,7 +73,13 @@ exports.requestLoginOTP = async (req, res) => {
         });
 
         // Send OTP email
-        await sendOTPEmail(email, otp, 'login');
+        const emailResult = await sendOTPEmail(email, otp, 'login');
+        if (!emailResult?.success && process.env.NODE_ENV !== 'development') {
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to send OTP email. Please try again.'
+            });
+        }
 
         // Store temporary user data in session for OTP verification
         req.session.tempLoginData = {
@@ -84,13 +90,14 @@ exports.requestLoginOTP = async (req, res) => {
         };
 
         console.log('OTP sent successfully to:', email);
-        console.log('Development OTP:', otp); // Log OTP for development
 
         res.status(200).json({
             success: true,
             message: 'OTP sent to your email address',
             email: email,
-            devOTP: process.env.NODE_ENV === 'development' ? otp : undefined // Send OTP in dev mode
+            devOTP: process.env.NODE_ENV === 'development' ? otp : undefined,
+            emailDelivery: process.env.NODE_ENV === 'development' ? (emailResult?.delivered || (emailResult?.success ? 'smtp' : 'failed')) : undefined,
+            emailError: process.env.NODE_ENV === 'development' && !emailResult?.success ? emailResult?.error : undefined
         });
 
     } catch (error) {
@@ -280,7 +287,13 @@ exports.resendOTP = async (req, res) => {
         });
 
         // Send OTP email
-        await sendOTPEmail(email, otp, purpose);
+        const emailResult = await sendOTPEmail(email, otp, purpose);
+        if (!emailResult?.success && process.env.NODE_ENV !== 'development') {
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to send OTP email. Please try again.'
+            });
+        }
 
         // Update timestamp in session
         if (purpose === 'login' && req.session.tempLoginData) {
@@ -288,12 +301,13 @@ exports.resendOTP = async (req, res) => {
         }
 
         console.log('OTP resent successfully to:', email);
-        console.log('Development OTP:', otp);
 
         res.status(200).json({
             success: true,
             message: 'New OTP sent to your email address',
-            devOTP: process.env.NODE_ENV === 'development' ? otp : undefined
+            devOTP: process.env.NODE_ENV === 'development' ? otp : undefined,
+            emailDelivery: process.env.NODE_ENV === 'development' ? (emailResult?.delivered || (emailResult?.success ? 'smtp' : 'failed')) : undefined,
+            emailError: process.env.NODE_ENV === 'development' && !emailResult?.success ? emailResult?.error : undefined
         });
 
     } catch (error) {
