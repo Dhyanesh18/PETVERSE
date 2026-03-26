@@ -1,65 +1,5 @@
 const User = require('../models/users');
-const crypto = require('crypto');
-const nodemailer = require('nodemailer');
-
-// Helper function to generate 6-digit OTP
-const generateOTP = () => {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
-// Helper function to send OTP via email
-const sendOTPEmail = async (email, otp) => {
-    // Check if email configuration is available
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-        try {
-            // Create transporter with Gmail or other email service
-            const transporter = nodemailer.createTransport({
-                service: 'gmail', // You can change this to other services
-                auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASSWORD
-                }
-            });
-
-            const mailOptions = {
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: 'Password Reset OTP - PetVerse',
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                        <h2 style="color: #FF6B35;">Password Reset Request</h2>
-                        <p>Hello,</p>
-                        <p>You have requested to reset your password. Please use the following OTP to proceed:</p>
-                        <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0; border-radius: 8px;">
-                            <h1 style="color: #FF6B35; letter-spacing: 8px; margin: 0;">${otp}</h1>
-                        </div>
-                        <p><strong>This OTP will expire in 10 minutes.</strong></p>
-                        <p>If you didn't request this password reset, please ignore this email or contact support if you have concerns.</p>
-                        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                        <p style="color: #999; font-size: 12px;">This is an automated message from PetVerse. Please do not reply to this email.</p>
-                    </div>
-                `
-            };
-
-            await transporter.sendMail(mailOptions);
-            console.log(`OTP email sent successfully to ${email}`);
-        } catch (error) {
-            console.error('Error sending email:', error);
-            // Fallback to console logging if email fails
-            console.log(`\n=================================`);
-            console.log(`OTP for ${email}: ${otp}`);
-            console.log(`This OTP will expire in 10 minutes`);
-            console.log(`=================================\n`);
-        }
-    } else {
-        // For development without email configuration, log to console
-        console.log(`\n=================================`);
-        console.log(`OTP for ${email}: ${otp}`);
-        console.log(`This OTP will expire in 10 minutes`);
-        console.log(`(Configure EMAIL_USER and EMAIL_PASSWORD in .env to send actual emails)`);
-        console.log(`=================================\n`);
-    }
-};
+const { generateOTP, sendOTPEmail } = require('../utils/emailService');
 
 module.exports = {
     // Step 1: Send OTP to user's email
@@ -95,11 +35,18 @@ module.exports = {
             await user.save();
 
             // Send OTP via email
-            await sendOTPEmail(email, otp);
+            const emailResult = await sendOTPEmail(email, otp, 'password_reset');
+            if (!emailResult?.success && process.env.NODE_ENV !== 'development') {
+                // Avoid account enumeration: keep response generic
+                console.error('Failed to deliver password reset OTP email:', emailResult?.error);
+            }
 
             return res.status(200).json({
                 success: true,
-                message: 'OTP has been sent to your email'
+                message: 'OTP has been sent to your email',
+                devOTP: process.env.NODE_ENV === 'development' ? otp : undefined,
+                emailDelivery: process.env.NODE_ENV === 'development' ? (emailResult?.delivered || (emailResult?.success ? 'smtp' : 'failed')) : undefined,
+                emailError: process.env.NODE_ENV === 'development' && !emailResult?.success ? emailResult?.error : undefined
             });
 
         } catch (error) {

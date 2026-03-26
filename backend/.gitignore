@@ -1,6 +1,7 @@
 # Node.js/General
 node_modules/
 .env
+src/.env
 .DS_Store
 *.log
 npm-debug.log*
