@@ -1,7 +1,18 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const multer = require('multer');
 const Pet = require('../models/pets');
+
+router.param('id', (req, res, next, id) => {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid pet id'
+        });
+    }
+    next();
+});
 
 // Configure multer for image uploads
 const upload = multer({

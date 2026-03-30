@@ -180,6 +180,7 @@ function buildDiscoveredPaths(app) {
 
     for (const { path: routePath, methods } of discovered) {
         if (!routePath || !routePath.startsWith('/api')) continue;
+        if (routePath.startsWith('/api/docs')) continue;
 
         const openapiPaths = openApiPathsFromExpressPath(routePath);
         for (const openapiPath of openapiPaths) {
@@ -343,26 +344,34 @@ function buildSwaggerSpec(app) {
 }
 
 function setupSwagger(app) {
-    const swaggerSpec = buildSwaggerSpec(app);
-
     app.get('/api/docs.json', (req, res) => {
+        const swaggerSpec = buildSwaggerSpec(app);
         res.setHeader('Content-Type', 'application/json');
+        if (process.env.NODE_ENV !== 'production') {
+            res.setHeader('Cache-Control', 'no-store');
+        }
         res.status(200).json(swaggerSpec);
     });
 
     app.use(
         '/api/docs',
         swaggerUi.serve,
-        swaggerUi.setup(swaggerSpec, {
+        swaggerUi.setup(null, {
             explorer: true,
             swaggerOptions: {
+                url: '/api/docs.json',
                 persistAuthorization: true,
-                displayRequestDuration: true
+                displayRequestDuration: true,
+                requestInterceptor: (req) => {
+                    // Ensure session cookies are sent with "Try it out" requests.
+                    req.credentials = 'include';
+                    return req;
+                }
             }
         })
     );
 
-    return swaggerSpec;
+    return null;
 }
 
 module.exports = {
