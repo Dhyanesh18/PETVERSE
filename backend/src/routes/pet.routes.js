@@ -53,6 +53,71 @@ function isSeller(req, res, next) {
     });
 }
 
+/**
+ * @swagger
+ * /api/pets:
+ *   get:
+ *     tags: [Pets]
+ *     summary: Get all pets with optional filters and pagination
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           enum: [dogs, cats, birds, fish, other]
+ *       - in: query
+ *         name: available
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: gender
+ *         schema:
+ *           type: string
+ *           enum: [male, female]
+ *       - in: query
+ *         name: breed
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *     responses:
+ *       200:
+ *         description: Paginated list of pets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pets:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     pagination:
+ *                       type: object
+ *                     filters:
+ *                       type: object
+ */
 // Get all pets with optional filters (API endpoint)
 router.get('/', async (req, res) => {
     try {
@@ -170,6 +235,32 @@ router.get('/', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/pets/filter-options:
+ *   get:
+ *     tags: [Pets]
+ *     summary: Get available filter options (categories, genders, breeds)
+ *     responses:
+ *       200:
+ *         description: Filter options data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     categories:
+ *                       type: array
+ *                     genders:
+ *                       type: array
+ *                     breeds:
+ *                       type: array
+ */
 // Get filter options (categories, breeds, etc.)
 router.get('/filter-options', async (req, res) => {
     try {
@@ -278,6 +369,100 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/pets/{id}:
+ *   get:
+ *     tags: [Pets]
+ *     summary: Get a single pet by ID with similar pets
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Pet details and similar pets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pet:
+ *                       type: object
+ *                     similarPets:
+ *                       type: array
+ *       404:
+ *         description: Pet not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
+
+/**
+ * @swagger
+ * /api/pets/add:
+ *   post:
+ *     tags: [Pets]
+ *     summary: Create a new pet listing (sellers only)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [name, category, breed, age, gender, price, images]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               breed:
+ *                 type: string
+ *               age:
+ *                 type: string
+ *               gender:
+ *                 type: string
+ *                 enum: [male, female]
+ *               price:
+ *                 type: number
+ *               description:
+ *                 type: string
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Pet images (1-5 files, max 5MB each)
+ *     responses:
+ *       201:
+ *         description: Pet listing created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Missing fields or no image uploaded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Sellers only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Create new pet listing (sellers only)
 router.post('/add', isAuthenticated, isSeller, upload.array('images', 5), async (req, res) => {
     try {
@@ -363,6 +548,38 @@ router.post('/add', isAuthenticated, isSeller, upload.array('images', 5), async 
     }
 });
 
+/**
+ * @swagger
+ * /api/pets/my/listings:
+ *   get:
+ *     tags: [Pets]
+ *     summary: Get all pet listings created by the currently logged-in seller
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Seller's pet listings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     listings:
+ *                       type: array
+ *                     total:
+ *                       type: integer
+ *       403:
+ *         description: Sellers only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get user's own pet listings (sellers)
 router.get('/my/listings', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -400,6 +617,63 @@ router.get('/my/listings', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/pets/{id}:
+ *   patch:
+ *     tags: [Pets]
+ *     summary: Update a pet listing (seller/owner only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               breed:
+ *                 type: string
+ *               age:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               description:
+ *                 type: string
+ *               available:
+ *                 type: boolean
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     responses:
+ *       200:
+ *         description: Pet updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Not authorized to update this listing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Pet not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Update pet listing (owner only)
 router.patch('/:id', isAuthenticated, isSeller, upload.array('images', 5), async (req, res) => {
     try {
@@ -468,6 +742,40 @@ router.patch('/:id', isAuthenticated, isSeller, upload.array('images', 5), async
     }
 });
 
+/**
+ * @swagger
+ * /api/pets/{id}:
+ *   delete:
+ *     tags: [Pets]
+ *     summary: Delete a pet listing (seller/owner only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Pet listing deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Not authorized to delete this listing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Pet not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Delete pet listing (owner only)
 router.delete('/:id', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -504,6 +812,39 @@ router.delete('/:id', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/pets/image/{petId}/{index}:
+ *   get:
+ *     tags: [Pets]
+ *     summary: Serve a pet image by pet ID and image index
+ *     parameters:
+ *       - in: path
+ *         name: petId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: index
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Zero-based image index
+ *     responses:
+ *       200:
+ *         description: Image binary data
+ *         content:
+ *           image/jpeg:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Image not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get pet image (binary data for <img> tags)
 router.get('/image/:petId/:index', async (req, res) => {
     try {
@@ -531,6 +872,37 @@ router.get('/image/:petId/:index', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/pets/category/{category}:
+ *   get:
+ *     tags: [Pets]
+ *     summary: Get all available pets by category
+ *     parameters:
+ *       - in: path
+ *         name: category
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [dogs, cats, birds, fish, other]
+ *     responses:
+ *       200:
+ *         description: Pets in the specified category
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pets:
+ *                       type: array
+ *                     total:
+ *                       type: integer
+ */
 // Get pets by category (alternative endpoint for backwards compatibility)
 router.get('/category/:category', async (req, res) => {
     try {

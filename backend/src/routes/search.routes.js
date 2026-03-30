@@ -195,6 +195,63 @@ async function searchAllCollections(query, limit = 10, options = {}) {
     return results;
 }
 
+/**
+ * @swagger
+ * /api/search:
+ *   get:
+ *     tags: [Search]
+ *     summary: Global search across pets, products, and services
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search query
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [all, pets, products, services]
+ *           default: all
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Search results across all categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pets:
+ *                       type: array
+ *                     products:
+ *                       type: array
+ *                     services:
+ *                       type: array
+ *                     totalResults:
+ *                       type: integer
+ *       400:
+ *         description: Missing search query
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Global search API endpoint (searches all collections)
 router.get('/', async (req, res) => {
     try {
@@ -328,6 +385,58 @@ router.get('/quick', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/search/pets:
+ *   get:
+ *     tags: [Search]
+ *     summary: Search pets by name, breed, or description
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Matching pets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pets:
+ *                       type: array
+ *                     pagination:
+ *                       type: object
+ */
 // Search specific category only
 router.get('/:category', async (req, res) => {
     try {
