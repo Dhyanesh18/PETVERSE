@@ -8,7 +8,35 @@ const upload = multer({
 });
 
 // Login routes ----------------------------------------
-// Check session/authentication status
+
+/**
+ * @swagger
+ * /api/auth/check-session:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Check if the current session is authenticated
+ *     description: Returns user details if a valid session cookie exists, otherwise returns isLoggedIn false.
+ *     responses:
+ *       200:
+ *         description: Session status returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 isLoggedIn:
+ *                   type: boolean
+ *                 isAdmin:
+ *                   type: boolean
+ *                 userRole:
+ *                   type: string
+ *                   nullable: true
+ *                 user:
+ *                   type: object
+ *                   nullable: true
+ */
 router.get('/check-session', async (req, res) => {
     console.log('Check session - Session userId:', req.session.userId);
     console.log('Check session - User object:', req.user);
@@ -66,7 +94,55 @@ router.get('/check-session', async (req, res) => {
     });
 });
 
-// Login endpoint - returns JSON with user data and redirect path
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Log in with email and password
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *                 redirectPath:
+ *                   type: string
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/login', async (req, res) => {
     try {
         // Call the existing login controller but modify response handling
@@ -125,7 +201,38 @@ router.post('/login', async (req, res) => {
 // -----------------------------------------------------
 
 // Signup routes ---------------------------------------
-// Select user type for signup - just returns success, no rendering needed
+
+/**
+ * @swagger
+ * /api/auth/select-user-type:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Store selected user type in session (first step of signup)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userType]
+ *             properties:
+ *               userType:
+ *                 type: string
+ *                 enum: [owner, seller, service_provider]
+ *     responses:
+ *       200:
+ *         description: User type selected successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Invalid user type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/select-user-type', async (req, res) => {
     try {
         // Store user type in session or return it
@@ -156,7 +263,48 @@ router.post('/select-user-type', async (req, res) => {
     }
 });
 
-// Owner signup
+/**
+ * @swagger
+ * /api/auth/signup/owner:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register a new pet owner account
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fullName, username, email, password, phoneNo]
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               phoneNo:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Owner account created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error or duplicate email/username
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/signup/owner', async (req, res) => {
     try {
         await signupController.handleSignupOwner(req, res);
@@ -184,7 +332,54 @@ router.post('/signup/owner', async (req, res) => {
     }
 });
 
-// Seller signup with license upload
+/**
+ * @swagger
+ * /api/auth/signup/seller:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register a new seller account (requires business license upload)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [fullName, username, email, password, phoneNo, businessName, license]
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               phoneNo:
+ *                 type: string
+ *               businessName:
+ *                 type: string
+ *               businessAddress:
+ *                 type: string
+ *               license:
+ *                 type: string
+ *                 format: binary
+ *                 description: Business license document (PDF, max 5MB)
+ *     responses:
+ *       200:
+ *         description: Seller account created, pending admin approval
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/signup/seller', upload.single('license'), async (req, res) => {
     try {
         await signupController.handleSignupSeller(req, res);
@@ -210,7 +405,55 @@ router.post('/signup/seller', upload.single('license'), async (req, res) => {
     }
 });
 
-// Service provider signup with certificate upload
+/**
+ * @swagger
+ * /api/auth/signup/service-provider:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Register a new service provider account (requires certificate upload)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [fullName, username, email, password, phoneNo, serviceType, certificate]
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               phoneNo:
+ *                 type: string
+ *               serviceType:
+ *                 type: string
+ *                 enum: [veterinarian, groomer, trainer, walker]
+ *               serviceAddress:
+ *                 type: string
+ *               certificate:
+ *                 type: string
+ *                 format: binary
+ *                 description: Professional certificate (PDF, max 5MB)
+ *     responses:
+ *       200:
+ *         description: Service provider account created, pending admin approval
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/signup/service-provider', upload.single('certificate'), async (req, res) => {
     try {
         await signupController.handleSignupServiceProvider(req, res);
@@ -236,7 +479,54 @@ router.post('/signup/service-provider', upload.single('certificate'), async (req
     }
 });
 
-// Save availability for service providers
+/**
+ * @swagger
+ * /api/auth/availability:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Save availability schedule for a service provider
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               availability:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     day:
+ *                       type: string
+ *                       enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
+ *                     slots:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           start:
+ *                             type: string
+ *                             example: "09:00"
+ *                           end:
+ *                             type: string
+ *                             example: "17:00"
+ *     responses:
+ *       200:
+ *         description: Availability saved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/availability', async (req, res) => {
     try {
         await signupController.saveAvailability(req, res);
@@ -261,7 +551,44 @@ router.post('/availability', async (req, res) => {
     }
 });
 
-// Get availability data (if needed for editing)
+/**
+ * @swagger
+ * /api/auth/availability:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Get service provider's current availability schedule
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Availability data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     availability:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Only service providers can access availability
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/availability', async (req, res) => {
     try {
         if (!req.session.userId) {
@@ -298,7 +625,34 @@ router.get('/availability', async (req, res) => {
 });
 // -----------------------------------------------------
 
-// Platform statistics endpoint
+/**
+ * @swagger
+ * /api/auth/stats:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Get public platform statistics (active users, sellers, etc.)
+ *     responses:
+ *       200:
+ *         description: Platform statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     activeUsers:
+ *                       type: integer
+ *                     activeSellers:
+ *                       type: integer
+ *                     activeServiceProviders:
+ *                       type: integer
+ *                     petsAvailable:
+ *                       type: integer
+ */
 router.get('/stats', async (req, res) => {
     try {
         const User = require('../models/users');
@@ -330,7 +684,34 @@ router.get('/stats', async (req, res) => {
     }
 });
 
-// About/dashboard data endpoint
+/**
+ * @swagger
+ * /api/auth/about:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Get platform data for the About page (same as /stats)
+ *     responses:
+ *       200:
+ *         description: Platform data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     activeUsers:
+ *                       type: integer
+ *                     activeSellers:
+ *                       type: integer
+ *                     activeServiceProviders:
+ *                       type: integer
+ *                     petsAvailable:
+ *                       type: integer
+ */
 router.get('/about', async (req, res) => {
     try {
         const User = require('../models/users');
@@ -362,7 +743,35 @@ router.get('/about', async (req, res) => {
     }
 });
 
-// Logout endpoint - POST method (more secure)
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Log out the current user and destroy the session
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully logged out
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 redirectPath:
+ *                   type: string
+ *       500:
+ *         description: Could not log out
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/logout', (req, res) => {
     // Add cache control headers
     res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
@@ -393,7 +802,29 @@ router.post('/logout', (req, res) => {
     });
 });
 
-// Also support GET for backward compatibility, but prefer POST
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Log out the current user (GET, kept for backward compatibility – prefer POST)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully logged out
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 redirectPath:
+ *                   type: string
+ */
 router.get('/logout', (req, res) => {
     res.header('Cache-Control', 'no-cache, private, no-store, must-revalidate, max-stale=0, post-check=0, pre-check=0');
     res.header('Pragma', 'no-cache');

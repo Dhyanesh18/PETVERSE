@@ -5,6 +5,22 @@ const Pet = require('../models/pets');
 const Product = require('../models/products');
 const Service = require('../models/serviceProvider');
 
+/**
+ * @swagger
+ * /api/featured-pets:
+ *   get:
+ *     tags: [General]
+ *     summary: Get up to 4 most recent available pets
+ *     responses:
+ *       200:
+ *         description: Array of featured pets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
 router.get('/featured-pets', async (req, res) => {
     try {
         const pets = await Pet.find({ available: true })
@@ -13,7 +29,6 @@ router.get('/featured-pets', async (req, res) => {
             .select({ 'images.data': 0 })
             .lean();
 
-        // Avoid browser/Swagger freezing by not returning raw buffers.
         const safePets = (pets || []).map((pet) => ({
             ...pet,
             thumbnail: pet.images && pet.images.length > 0 ? `/api/pets/image/${pet._id}/0` : null
@@ -27,6 +42,22 @@ router.get('/featured-pets', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/featured-products:
+ *   get:
+ *     tags: [General]
+ *     summary: Get up to 4 highest-rated available products
+ *     responses:
+ *       200:
+ *         description: Array of featured products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
 router.get('/featured-products', async (req, res) => {
     try {
         const products = await Product.find({ available: true })
@@ -48,6 +79,28 @@ router.get('/featured-products', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/check-session:
+ *   get:
+ *     tags: [General]
+ *     summary: Check if the current user session is active
+ *     responses:
+ *       200:
+ *         description: Session status with user info if logged in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 isLoggedIn:
+ *                   type: boolean
+ *                 user:
+ *                   type: object
+ *                   nullable: true
+ */
 router.get('/check-session', (req, res) => {
     if (req.session && req.session.userId && req.user) { 
         res.json({
@@ -72,7 +125,20 @@ router.get('/check-session', (req, res) => {
     }
 });
 
-// Pets API endpoints
+/**
+ * @swagger
+ * /api/pets:
+ *   get:
+ *     tags: [General]
+ *     summary: Get all available pets (no raw image data)
+ *     responses:
+ *       200:
+ *         description: List of pets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.get('/pets', async (req, res) => {
     try {
         const pets = await Pet.find({ available: true })
@@ -92,6 +158,33 @@ router.get('/pets', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/pets/{id}:
+ *   get:
+ *     tags: [General]
+ *     summary: Get a single pet by ObjectId
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Pet ObjectId (24-char hex)
+ *     responses:
+ *       200:
+ *         description: Pet details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Pet not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/pets/:id([0-9a-fA-F]{24})', async (req, res) => {
     try {
         const pet = await Pet.findById(req.params.id)
@@ -114,7 +207,20 @@ router.get('/pets/:id([0-9a-fA-F]{24})', async (req, res) => {
     }
 });
 
-// Products API endpoints
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     tags: [General]
+ *     summary: Get all available products (no raw image data)
+ *     responses:
+ *       200:
+ *         description: List of products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.get('/products', async (req, res) => {
     try {
         const products = await Product.find({ available: true })
@@ -135,6 +241,33 @@ router.get('/products', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   get:
+ *     tags: [General]
+ *     summary: Get a single product by ObjectId
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ObjectId (24-char hex)
+ *     responses:
+ *       200:
+ *         description: Product details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/products/:id([0-9a-fA-F]{24})', async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
@@ -157,18 +290,43 @@ router.get('/products/:id([0-9a-fA-F]{24})', async (req, res) => {
 });
 
 // Services API endpoints - REMOVED: Conflicts with /api/services route in service.routes.js
-// The correct services route is in service.routes.js which queries Users with role='service_provider'
-// router.get('/services', async (req, res) => {
-//     try {
-//         const services = await Service.find({ available: true });
-//         res.json({ success: true, data: services });
-//     } catch (err) {
-//         console.error('Error fetching services:', err);
-//         res.status(500).json({ success: false, message: 'Error fetching services' });
-//     }
-// });
 
-// Search API endpoint
+/**
+ * @swagger
+ * /api/search:
+ *   get:
+ *     tags: [General]
+ *     summary: Search across pets, products, and services
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Search keyword
+ *     responses:
+ *       200:
+ *         description: Search results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 pets:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 services:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ */
 router.get('/search', async (req, res) => {
     try {
         const query = req.query.q;
@@ -201,7 +359,6 @@ router.get('/search', async (req, res) => {
                 .limit(5)
                 .select({ 'images.data': 0 })
                 .lean(),
-            // Service providers can include certificate buffer; omit it.
             Service.find({
                 $or: [
                     { serviceType: searchRegex },
@@ -231,7 +388,39 @@ router.get('/search', async (req, res) => {
     }
 });
 
-// Pet image endpoint
+/**
+ * @swagger
+ * /api/pets/{id}/image/{imageIndex}:
+ *   get:
+ *     tags: [General]
+ *     summary: Serve a pet image binary by pet ID and index
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: imageIndex
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Raw image binary
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Image not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/pets/:id([0-9a-fA-F]{24})/image/:imageIndex?', async (req, res) => {
     try {
         const pet = await Pet.findById(req.params.id);
@@ -258,7 +447,39 @@ router.get('/pets/:id([0-9a-fA-F]{24})/image/:imageIndex?', async (req, res) => 
     }
 });
 
-// Product image endpoint
+/**
+ * @swagger
+ * /api/products/{id}/image/{imageIndex}:
+ *   get:
+ *     tags: [General]
+ *     summary: Serve a product image binary by product ID and index
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: imageIndex
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *     responses:
+ *       200:
+ *         description: Raw image binary
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Image not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/products/:id([0-9a-fA-F]{24})/image/:imageIndex?', async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);

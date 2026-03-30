@@ -5,7 +5,49 @@ const Product = require('../models/products');
 const Pet = require('../models/pets');
 const { isAuthenticated } = require('../middleware/auth');
 
-// Get cart with full details
+/**
+ * @swagger
+ * /api/cart:
+ *   get:
+ *     tags: [Cart]
+ *     summary: Get the current user's cart with full product details and totals
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Cart contents with subtotal, discount, and total
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cart:
+ *                       type: object
+ *                       properties:
+ *                         items:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                         totalItems:
+ *                           type: integer
+ *                         subtotal:
+ *                           type: string
+ *                         discount:
+ *                           type: string
+ *                         total:
+ *                           type: string
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/', isAuthenticated, async (req, res) => {
     try {
         let cart = await Cart.findOne({ userId: req.session.userId })
@@ -29,13 +71,12 @@ router.get('/', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Calculate cart totals
         let subtotal = 0;
         let totalDiscount = 0;
         
         const cartItems = cart.items.map(item => {
             if (!item.productId) {
-                return null; // Handle deleted products
+                return null;
             }
 
             let price = item.productId.price;
@@ -93,7 +134,30 @@ router.get('/', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get cart count only
+/**
+ * @swagger
+ * /api/cart/count:
+ *   get:
+ *     tags: [Cart]
+ *     summary: Get the total item count in the current user's cart
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Total number of items in cart
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cartCount:
+ *                       type: integer
+ */
 router.get('/count', isAuthenticated, async (req, res) => {
     try {
         const cart = await Cart.findOne({ userId: req.session.userId });
@@ -115,7 +179,52 @@ router.get('/count', isAuthenticated, async (req, res) => {
     }
 });
 
-// Add item to cart
+/**
+ * @swagger
+ * /api/cart/add:
+ *   post:
+ *     tags: [Cart]
+ *     summary: Add a product or pet to the cart
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productId, quantity]
+ *             properties:
+ *               productId:
+ *                 type: string
+ *                 description: ObjectId of the product or pet
+ *               quantity:
+ *                 type: integer
+ *                 minimum: 1
+ *               itemType:
+ *                 type: string
+ *                 enum: [Product, Pet]
+ *                 default: Product
+ *     responses:
+ *       200:
+ *         description: Item added to cart
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error or insufficient stock
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Product or pet not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/add', isAuthenticated, async (req, res) => {
     try {
         const { productId, quantity, itemType } = req.body;
@@ -136,7 +245,6 @@ router.post('/add', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Validate quantity
         if (quantity <= 0) {
             console.log('Validation failed: Invalid quantity', quantity);
             return res.status(400).json({
@@ -145,7 +253,6 @@ router.post('/add', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Validate ObjectId format
         const mongoose = require('mongoose');
         if (!mongoose.Types.ObjectId.isValid(productId)) {
             console.log('Validation failed: Invalid ObjectId format', productId);
@@ -155,11 +262,9 @@ router.post('/add', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Default to Product type if not specified
         const type = itemType || 'Product';
         console.log('Using item type:', type);
         
-        // Verify the product exists and has enough stock
         let item;
         if (type === 'Product') {
             item = await Product.findById(productId);
@@ -174,7 +279,6 @@ router.post('/add', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Check stock availability (for products)
         if (type === 'Product' && item.stock < quantity) {
             return res.status(400).json({
                 success: false,
@@ -183,7 +287,6 @@ router.post('/add', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Check product availability flag (mirror pet availability check)
         if (type === 'Product' && item.available === false) {
             console.log('Product availability check failed:', { available: item.available });
             return res.status(400).json({
@@ -192,7 +295,6 @@ router.post('/add', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Check if pet is available
         if (type === 'Pet' && !item.available) {
             console.log('Pet availability check failed:', { available: item.available });
             return res.status(400).json({
@@ -204,22 +306,18 @@ router.post('/add', isAuthenticated, async (req, res) => {
         let cart = await Cart.findOne({ userId: req.session.userId });
         
         if (!cart) {
-            // Create new cart if it doesn't exist
             cart = new Cart({
                 userId: req.session.userId,
                 items: [{ productId, quantity, itemType: type }]
             });
         } else {
-            // Check if product already exists in cart
             const existingItemIndex = cart.items.findIndex(item => 
                 item.productId.toString() === productId
             );
             
             if (existingItemIndex !== -1) {
-                // Update quantity if product exists
                 const newQuantity = cart.items[existingItemIndex].quantity + quantity;
                 
-                // Check stock for new quantity (for products)
                 if (type === 'Product' && item.stock < newQuantity) {
                     return res.status(400).json({
                         success: false,
@@ -231,14 +329,12 @@ router.post('/add', isAuthenticated, async (req, res) => {
                 
                 cart.items[existingItemIndex].quantity = newQuantity;
             } else {
-                // Add new item if product doesn't exist
                 cart.items.push({ productId, quantity, itemType: type });
             }
         }
 
         await cart.save();
         
-        // Calculate total items in cart
         const cartCount = cart.items.reduce((total, item) => total + item.quantity, 0);
         
         res.json({ 
@@ -264,7 +360,48 @@ router.post('/add', isAuthenticated, async (req, res) => {
     }
 });
 
-// Update cart item quantity
+/**
+ * @swagger
+ * /api/cart/update:
+ *   patch:
+ *     tags: [Cart]
+ *     summary: Update the quantity of an item in the cart
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [productId, quantity]
+ *             properties:
+ *               productId:
+ *                 type: string
+ *               quantity:
+ *                 type: integer
+ *                 minimum: 0
+ *                 description: Set to 0 to remove the item
+ *     responses:
+ *       200:
+ *         description: Cart updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Negative quantity or insufficient stock
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Cart or item not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.patch('/update', isAuthenticated, async (req, res) => {
     try {
         const { productId, quantity } = req.body;
@@ -283,7 +420,6 @@ router.patch('/update', isAuthenticated, async (req, res) => {
             });
         }
 
-        // If quantity is 0, remove the item
         if (quantity === 0) {
             return router.handle({ 
                 method: 'POST', 
@@ -312,7 +448,6 @@ router.patch('/update', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Check stock availability
         if (cartItem.itemType === 'Product') {
             const product = await Product.findById(productId);
             if (!product) {
@@ -331,7 +466,6 @@ router.patch('/update', isAuthenticated, async (req, res) => {
             }
         }
 
-        // Update the cart
         const updatedCart = await Cart.findOneAndUpdate(
             { userId: req.session.userId, "items.productId": productId },
             { $set: { "items.$.quantity": quantity } },
@@ -345,7 +479,6 @@ router.patch('/update', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Calculate the updated price for this item
         const updatedItem = updatedCart.items.find(item => 
             item.productId._id.toString() === productId
         );
@@ -376,7 +509,35 @@ router.patch('/update', isAuthenticated, async (req, res) => {
     }
 });
 
-// Remove item from cart
+/**
+ * @swagger
+ * /api/cart/remove/{productId}:
+ *   delete:
+ *     tags: [Cart]
+ *     summary: Remove a specific item from the cart
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ObjectId of the product to remove
+ *     responses:
+ *       200:
+ *         description: Item removed from cart
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Cart or item not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.delete('/remove/:productId', isAuthenticated, async (req, res) => {
     try {
         const { productId } = req.params;
@@ -408,12 +569,10 @@ router.delete('/remove/:productId', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Remove the item from the cart
         cart.items.splice(itemIndex, 1);
         
         await cart.save();
         
-        // Calculate total items in cart
         const cartCount = cart.items.reduce((total, item) => total + item.quantity, 0);
         
         res.json({ 
@@ -433,7 +592,22 @@ router.delete('/remove/:productId', isAuthenticated, async (req, res) => {
     }
 });
 
-// Clear entire cart
+/**
+ * @swagger
+ * /api/cart/clear:
+ *   delete:
+ *     tags: [Cart]
+ *     summary: Clear all items from the current user's cart
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Cart cleared
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.delete('/clear', isAuthenticated, async (req, res) => {
     try {
         const cart = await Cart.findOne({ userId: req.session.userId });

@@ -10,6 +10,28 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const Wallet = require('../models/wallet');
 
+/**
+ * @swagger
+ * /api/admin/dashboard:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get admin dashboard data (users, applications, pets, products, services, orders, stats)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Full dashboard payload
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Admin access required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get admin dashboard data
 router.get('/dashboard', adminAuth, async (req, res) => {
     try {
@@ -406,6 +428,22 @@ async function generateMonthlyRevenue() {
     };
 }
 
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get all registered users (password excluded)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Array of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 // Get all users - API endpoint
 router.get('/users', adminAuth, async (req, res) => {
     try {
@@ -424,6 +462,47 @@ router.get('/users', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/user-document/{userId}/{docType}:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Stream a user's license or certificate document
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: docType
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [license, certificate]
+ *     responses:
+ *       200:
+ *         description: Raw document binary
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Invalid document type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Document not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // API route to get user documents (license/certificate)
 router.get('/user-document/:userId/:docType', adminAuth, async (req, res) => {
     try {
@@ -468,6 +547,34 @@ router.get('/user-document/:userId/:docType', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/approve-user/{userId}:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Approve a seller or service provider application
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User approved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // API route for approving users
 router.post('/approve-user/:userId', adminAuth, async (req, res) => {
     try {
@@ -502,6 +609,42 @@ router.post('/approve-user/:userId', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/reject-user/{userId}:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Reject a seller or service provider application
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rejectionReason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User rejected successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // API route for rejecting users
 router.post('/reject-user/:userId', adminAuth, async (req, res) => {
     try {
@@ -538,6 +681,51 @@ router.post('/reject-user/:userId', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/order/{orderId}/status:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Update an order's status (admin). Cancelling a paid order triggers a refund.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, processing, shipped, delivered, completed, cancelled]
+ *     responses:
+ *       200:
+ *         description: Order status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Invalid status or insufficient balance for refund
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Admin route to update order status
 router.patch('/order/:orderId/status', adminAuth, async (req, res) => {
     try {
@@ -760,6 +948,37 @@ router.patch('/order/:orderId/status', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/order/{orderId}/status:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Update order status via POST (deprecated – use PATCH)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Delegates to PATCH handler
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 // Keep the POST method for backward compatibility
 router.post('/order/:orderId/status', adminAuth, async (req, res) => {
     // Redirect to PATCH method
@@ -767,6 +986,34 @@ router.post('/order/:orderId/status', adminAuth, async (req, res) => {
     return router.handle(req, res);
 });
 
+/**
+ * @swagger
+ * /api/admin/orders/{orderId}:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get full details of a single order
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order details with customer, seller, and items
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get single order details for admin
 router.get('/orders/:orderId', adminAuth, async (req, res) => {
     try {
@@ -837,6 +1084,30 @@ router.get('/orders/:orderId', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/user-document/{userId}:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Stream a user's document (license for sellers, certificate for service providers)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Raw binary document
+ *       404:
+ *         description: User or document not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get user document (license/certificate)
 router.get('/user-document/:userId', adminAuth, async (req, res) => {
     try {
@@ -877,6 +1148,35 @@ router.get('/user-document/:userId', adminAuth, async (req, res) => {
 });
 
 // Admin routes for pet, product, and service approval/rejection/deletion
+
+/**
+ * @swagger
+ * /api/admin/approve/pet/{id}:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Approve a pet listing
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Pet approved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Pet not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Approve pet
 router.post('/approve/pet/:id', adminAuth, async (req, res) => {
     try {
@@ -895,6 +1195,42 @@ router.post('/approve/pet/:id', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/reject/pet/{id}:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Reject a pet listing with an optional reason
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Pet rejected
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Pet not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Reject pet
 router.post('/reject/pet/:id', adminAuth, async (req, res) => {
     try {
@@ -914,6 +1250,34 @@ router.post('/reject/pet/:id', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/pet/{id}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Permanently delete a pet listing
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Pet deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Pet not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Delete pet
 router.delete('/pet/:id', adminAuth, async (req, res) => {
     try {
@@ -928,6 +1292,34 @@ router.delete('/pet/:id', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/approve/product/{id}:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Approve a product listing
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product approved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Approve product
 router.post('/approve/product/:id', adminAuth, async (req, res) => {
     try {
@@ -946,6 +1338,42 @@ router.post('/approve/product/:id', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/reject/product/{id}:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Reject a product listing with an optional reason
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Product rejected
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Reject product
 router.post('/reject/product/:id', adminAuth, async (req, res) => {
     try {
@@ -965,6 +1393,34 @@ router.post('/reject/product/:id', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/product/{id}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Permanently delete a product
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Delete product
 router.delete('/product/:id', adminAuth, async (req, res) => {
     try {
@@ -979,6 +1435,34 @@ router.delete('/product/:id', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/approve/service/{id}:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Approve a service listing
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Service approved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Service not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Approve service
 router.post('/approve/service/:id', adminAuth, async (req, res) => {
     try {
@@ -997,6 +1481,42 @@ router.post('/approve/service/:id', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/reject/service/{id}:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Reject a service listing with an optional reason
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Service rejected
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Service not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Reject service
 router.post('/reject/service/:id', adminAuth, async (req, res) => {
     try {
@@ -1016,6 +1536,34 @@ router.post('/reject/service/:id', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/service/{id}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Permanently delete a service
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Service deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Service not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Delete service
 router.delete('/service/:id', adminAuth, async (req, res) => {
     try {
@@ -1030,6 +1578,34 @@ router.delete('/service/:id', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/user/{userId}:
+ *   delete:
+ *     tags: [Admin]
+ *     summary: Permanently delete a user account
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: User deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Delete user
 router.delete('/user/:userId', adminAuth, async (req, res) => {
     try {
@@ -1043,6 +1619,28 @@ router.delete('/user/:userId', adminAuth, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/admin/analytics:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get comprehensive platform analytics (services, sellers, products, customers, events)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Analytics data across all platform segments
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get comprehensive analytics data
 router.get('/analytics', adminAuth, async (req, res) => {
     try {

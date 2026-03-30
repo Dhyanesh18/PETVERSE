@@ -18,12 +18,39 @@ const formatTime = (time) => {
     return `${formattedHours}:${minutes} ${ampm}`;
 };
 
-// Get service provider details and booking information
+/**
+ * @swagger
+ * /api/booking/{serviceId}:
+ *   get:
+ *     tags: [Booking]
+ *     summary: Get service provider details and booking info
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: serviceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Service provider user ID
+ *     responses:
+ *       200:
+ *         description: Service and user details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Service provider not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/:serviceId', isAuthenticated, async (req, res) => {
     try {
         const serviceId = req.params.serviceId;
         
-        // Find provider information from user model with role="service_provider"
         const provider = await User.findById(serviceId);
         
         if (!provider || provider.role !== 'service_provider') {
@@ -33,7 +60,6 @@ router.get('/:serviceId', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Create a service object with provider details
         const service = {
         _id: provider._id,
         name: provider.fullName,
@@ -68,7 +94,61 @@ router.get('/:serviceId', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get available time slots for a specific date
+/**
+ * @swagger
+ * /api/booking/available/slots:
+ *   get:
+ *     tags: [Booking]
+ *     summary: Get available time slots for a service provider on a specific date
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: serviceId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Service provider user ID
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2025-06-15"
+ *         description: Date in YYYY-MM-DD format
+ *     responses:
+ *       200:
+ *         description: Available and booked time slots
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     slots:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     availableSlots:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     totalSlots:
+ *                       type: integer
+ *                     bookedSlots:
+ *                       type: integer
+ *       400:
+ *         description: Missing serviceId or date
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/available/slots', isAuthenticated, async (req, res) => {
     try {
         const { serviceId, date } = req.query;
@@ -87,18 +167,15 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
         
         console.log('Fetching slots for serviceId:', serviceId, 'date:', date);
         
-        // Get the day of the week for the selected date
         const selectedDate = new Date(date);
         const dayOfWeek = getDayName(selectedDate.getDay());
         
         console.log('Day of week:', dayOfWeek);
         
-        // Get service provider's availability
         const providerAvailability = await Availability.findOne({ serviceProvider: serviceId });
         
         console.log('Provider availability found:', !!providerAvailability);
 
-        // Check if provider has explicitly blocked this specific date
         if (providerAvailability && providerAvailability.blockedDates && providerAvailability.blockedDates.includes(date)) {
             console.log('Date is blocked by provider:', date);
             return res.json({
@@ -113,37 +190,30 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
             });
         }
         
-        // Default slots if no availability is set
         let allPossibleSlots = [
         '09:00 AM', '10:00 AM', '11:00 AM',
         '12:00 PM', '01:00 PM', '02:00 PM',
         '03:00 PM', '04:00 PM', '05:00 PM'
         ];
 
-        // If provider has availability settings, check if it's valid
         if (providerAvailability) {
         console.log('Checking provider availability for day:', dayOfWeek);
         
-        // Check if provider has ANY working days (days that are not holidays and have slots)
         const hasAnyWorkingDays = providerAvailability.days.some(d => 
             !d.isHoliday && d.slots && d.slots.length > 0
         );
         
         if (!hasAnyWorkingDays) {
             console.log('Provider has no working days configured, using default slots for all days');
-            // Treat this as if no availability is configured
-            // Fall through to use default slots
         } else {
             const dayAvailability = providerAvailability.getByDay(dayOfWeek);
             console.log('Day availability:', JSON.stringify(dayAvailability));
             
-            // Check if this specific day is configured
             const dayExistsInConfig = providerAvailability.days.some(d => d.day === dayOfWeek.toLowerCase());
             
             if (!dayExistsInConfig) {
                 console.log('Day not configured in availability, using default slots');
             } else if (dayAvailability.isHoliday) {
-                // Only return empty if explicitly marked as holiday AND provider has other working days
                 console.log('Day is marked as holiday');
                 return res.json({ 
                 success: true,
@@ -157,10 +227,8 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
                 });
             } else if (dayAvailability.slots && dayAvailability.slots.length > 0) {
             console.log('Using custom slots from availability');
-            // Generate slots based on provider's availability
             allPossibleSlots = [];
             dayAvailability.slots.forEach(slot => {
-                // Generate 1-hour slots between start and end times
                 const [startHour, startMin] = slot.start.split(':').map(Number);
                 const [endHour, endMin] = slot.end.split(':').map(Number);
                 
@@ -171,12 +239,10 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
                 const timeString = `${currentHour.toString().padStart(2, '0')}:${currentMin.toString().padStart(2, '0')}`;
                 allPossibleSlots.push(formatTime(timeString));
                 
-                // Advance by 1 hour
                 currentHour++;
                 }
             });
         }
-        // If no slots configured, allPossibleSlots remains as default
         }
     } else {
         console.log('No provider availability, using default slots');
@@ -184,8 +250,6 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
         
         console.log('Total possible slots:', allPossibleSlots.length);
         
-        // Find bookings for this service provider on the selected date
-        // The booking.service field references the service provider's User ID directly
         const bookings = await Booking.find({ 
             service: serviceId, 
             date: date 
@@ -193,7 +257,6 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
         
         console.log(`Found ${bookings.length} bookings for provider ${serviceId} on ${date}`);
         
-        // Filter out already booked slots
         const bookedSlots = bookings.map(b => b.slot);
         const availableSlots = allPossibleSlots.filter(slot => !bookedSlots.includes(slot));
         
@@ -222,7 +285,54 @@ router.get('/available/slots', isAuthenticated, async (req, res) => {
     }
 });
 
-// Book a time slot
+/**
+ * @swagger
+ * /api/booking/create:
+ *   post:
+ *     tags: [Booking]
+ *     summary: Create a new booking for a service provider
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [serviceId, date, slot]
+ *             properties:
+ *               serviceId:
+ *                 type: string
+ *                 description: Service provider user ID
+ *               date:
+ *                 type: string
+ *                 format: date
+ *                 example: "2025-06-15"
+ *               slot:
+ *                 type: string
+ *                 example: "10:00 AM"
+ *               petName:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Booking created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Missing required fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       409:
+ *         description: Slot already booked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/create', isAuthenticated, async (req, res) => {
     try {
         const { serviceId, date, slot, petName } = req.body;
@@ -235,7 +345,6 @@ router.post('/create', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Find the provider
         const provider = await User.findById(serviceId);
         if (!provider || provider.role !== 'service_provider') {
         return res.status(404).json({
@@ -244,8 +353,6 @@ router.post('/create', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Check if slot is already booked
-        // The booking.service field stores the service provider's User ID directly
         const existing = await Booking.findOne({ 
         service: serviceId, 
         date, 
@@ -259,8 +366,6 @@ router.post('/create', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Create and save the booking
-        // Store the service provider's User ID directly in the service field
         const booking = new Booking({
         user: req.user._id,
         service: serviceId,
@@ -272,7 +377,6 @@ router.post('/create', isAuthenticated, async (req, res) => {
         
         await booking.save();
         
-        // Populate the booking with user and service provider details
         await booking.populate('user', 'fullName email');
         await booking.populate('service', 'fullName serviceType serviceAddress email phoneNo');
         
@@ -304,7 +408,22 @@ router.post('/create', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get user's bookings
+/**
+ * @swagger
+ * /api/booking/user/my-bookings:
+ *   get:
+ *     tags: [Booking]
+ *     summary: Get all bookings made by the logged-in user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User bookings list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.get('/user/my-bookings', isAuthenticated, async (req, res) => {
     try {
         const bookings = await Booking.find({ user: req.user._id })
@@ -327,7 +446,41 @@ router.get('/user/my-bookings', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get specific booking details
+/**
+ * @swagger
+ * /api/booking/details/{bookingId}:
+ *   get:
+ *     tags: [Booking]
+ *     summary: Get details of a specific booking by ID
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ObjectId
+ *     responses:
+ *       200:
+ *         description: Booking details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Unauthorized to view this booking
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Booking not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/details/:bookingId', isAuthenticated, async (req, res) => {
     try {
         const booking = await Booking.findById(req.params.bookingId)
@@ -341,7 +494,6 @@ router.get('/details/:bookingId', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Check if user is authorized to view this booking
         if (booking.user._id.toString() !== req.user._id.toString() && 
             booking.service._id.toString() !== req.user._id.toString()) {
         return res.status(403).json({
@@ -366,7 +518,47 @@ router.get('/details/:bookingId', isAuthenticated, async (req, res) => {
     }
     });
 
-    // Cancel a booking
+/**
+ * @swagger
+ * /api/booking/{bookingId}:
+ *   delete:
+ *     tags: [Booking]
+ *     summary: Cancel (delete) a booking by ID
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ObjectId
+ *     responses:
+ *       200:
+ *         description: Booking cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Cannot cancel past bookings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Unauthorized to cancel this booking
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Booking not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
     router.delete('/:bookingId', isAuthenticated, async (req, res) => {
     try {
         const booking = await Booking.findById(req.params.bookingId);
@@ -378,7 +570,6 @@ router.get('/details/:bookingId', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Check if user is authorized to cancel this booking
         if (booking.user.toString() !== req.user._id.toString()) {
         return res.status(403).json({
             success: false,
@@ -386,7 +577,6 @@ router.get('/details/:bookingId', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Check if booking can be cancelled (e.g., not in the past)
         const bookingDate = new Date(booking.date);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -414,7 +604,52 @@ router.get('/details/:bookingId', isAuthenticated, async (req, res) => {
     }
 });
 
-// Update booking status (for service providers)
+/**
+ * @swagger
+ * /api/booking/{bookingId}/status:
+ *   patch:
+ *     tags: [Booking]
+ *     summary: Update booking status (service provider only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Booking ObjectId
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, confirmed, completed, cancelled]
+ *     responses:
+ *       200:
+ *         description: Booking status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Invalid status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Unauthorized – must be the service provider for this booking
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.patch('/:bookingId/status', isAuthenticated, async (req, res) => {
     try {
         const { status } = req.body;
@@ -427,7 +662,6 @@ router.patch('/:bookingId/status', isAuthenticated, async (req, res) => {
         });
         }
         
-        // Check if user is the service provider for this booking
         if (booking.service.toString() !== req.user._id.toString()) {
         return res.status(403).json({
             success: false,
@@ -464,10 +698,30 @@ router.patch('/:bookingId/status', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get bookings for a service provider
+/**
+ * @swagger
+ * /api/booking/provider/bookings:
+ *   get:
+ *     tags: [Booking]
+ *     summary: Get all bookings for the logged-in service provider
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Provider bookings list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Only service providers can access this endpoint
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/provider/bookings', isAuthenticated, async (req, res) => {
     try {
-        // Check if user is a service provider
         if (req.user.role !== 'service_provider') {
         return res.status(403).json({
             success: false,

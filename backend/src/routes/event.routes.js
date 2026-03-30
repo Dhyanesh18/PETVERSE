@@ -13,13 +13,10 @@ const upload = multer({
         fileSize: 10 * 1024 * 1024 // 10MB max file size
     },
     fileFilter: function (req, file, callback) {
-        // Get file extension
         const ext = path.extname(file.originalname).toLowerCase();
         
-        // Allowed extensions for permission document
         const allowedExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'];
         
-        // Allowed MIME types
         const allowedMimeTypes = [
             'application/pdf',
             'application/msword',
@@ -29,7 +26,6 @@ const upload = multer({
             'image/png'
         ];
         
-        // Check both extension and MIME type
         if (allowedExtensions.includes(ext) && allowedMimeTypes.includes(file.mimetype)) {
             callback(null, true);
         } else {
@@ -74,12 +70,58 @@ function isOwner(req, res, next) {
 
 // Public routes ----------------------------------------------------
 
-// Get all events with filters (API endpoint)
+/**
+ * @swagger
+ * /api/events:
+ *   get:
+ *     tags: [Events]
+ *     summary: Get all upcoming events with optional filters
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by event category
+ *       - in: query
+ *         name: city
+ *         schema:
+ *           type: string
+ *         description: Filter by city name (case-insensitive)
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter events on a specific date (YYYY-MM-DD)
+ *       - in: query
+ *         name: feeType
+ *         schema:
+ *           type: string
+ *           enum: [free, paid]
+ *         description: Filter by free or paid events
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Keyword search on title, description and tags
+ *     responses:
+ *       200:
+ *         description: List of events with available slot info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/', async (req, res) => {
     try {
         const { category, city, date, feeType, search } = req.query;
 
-        // Build query - show all future events regardless of status
         let query = { eventDate: { $gte: new Date() } };
 
         if (category && category !== 'all') {
@@ -97,7 +139,6 @@ router.get('/', async (req, res) => {
             query.eventDate = { $gte: selectedDate, $lt: nextDay };
         }
 
-        // Fee type filter
         if (feeType === 'free') {
             query.entryFee = 0;
         } else if (feeType === 'paid') {
@@ -120,7 +161,6 @@ router.get('/', async (req, res) => {
         
         console.log(`Found ${events.length} events`);
 
-        // Add formatted date and available slots
         const eventsWithDetails = events.map(event => ({
             ...event,
             formattedDate: new Date(event.eventDate).toLocaleDateString('en-IN', {
@@ -157,7 +197,33 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get single event details
+/**
+ * @swagger
+ * /api/events/{id}:
+ *   get:
+ *     tags: [Events]
+ *     summary: Get full details of a single event by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ObjectId
+ *     responses:
+ *       200:
+ *         description: Event details with registration status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/:id', async (req, res) => {
     try {
         console.log('GET /api/events/:id - req.user:', req.user ? req.user._id : 'null');
@@ -229,7 +295,80 @@ router.get('/:id', async (req, res) => {
 
 // Service Provider Routes ------------------------------------------
 
-// Create new event (service provider only)
+/**
+ * @swagger
+ * /api/events/add:
+ *   post:
+ *     tags: [Events]
+ *     summary: Create a new event (service providers only, requires permission document)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [title, description, category, eventDate, startTime, endTime, venue, address, city, maxAttendees, permissionDocument]
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               eventDate:
+ *                 type: string
+ *                 format: date
+ *               startTime:
+ *                 type: string
+ *                 example: "09:00"
+ *               endTime:
+ *                 type: string
+ *                 example: "17:00"
+ *               venue:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               entryFee:
+ *                 type: number
+ *                 default: 0
+ *               maxAttendees:
+ *                 type: integer
+ *               contactEmail:
+ *                 type: string
+ *                 format: email
+ *               contactPhone:
+ *                 type: string
+ *               tags:
+ *                 type: string
+ *                 description: Comma-separated tags
+ *               permissionDocument:
+ *                 type: string
+ *                 format: binary
+ *                 description: Government permission letter (PDF/image, max 10MB)
+ *     responses:
+ *       201:
+ *         description: Event created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error or missing permission document
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Only service providers can create events
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/add', isAuthenticated, isServiceProvider, upload.single('permissionDocument'), async (req, res) => {
     try {
         const {
@@ -249,7 +388,6 @@ router.post('/add', isAuthenticated, isServiceProvider, upload.single('permissio
             tags
         } = req.body;
 
-        // Validate event date
         if (new Date(eventDate) <= new Date()) {
             return res.status(400).json({
                 success: false,
@@ -257,7 +395,6 @@ router.post('/add', isAuthenticated, isServiceProvider, upload.single('permissio
             });
         }
 
-        // Check if permission document is uploaded
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -265,7 +402,6 @@ router.post('/add', isAuthenticated, isServiceProvider, upload.single('permissio
             });
         }
 
-        // Process permission document
         const permissionDocument = {
             data: req.file.buffer,
             contentType: req.file.mimetype
@@ -309,7 +445,28 @@ router.post('/add', isAuthenticated, isServiceProvider, upload.single('permissio
     }
 });
 
-// Get organizer events (service provider dashboard)
+/**
+ * @swagger
+ * /api/events/my/organized:
+ *   get:
+ *     tags: [Events]
+ *     summary: Get all events organised by the logged-in service provider
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of organised events with attendee stats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Service providers only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/my/organized', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
         const events = await Event.find({ organizer: req.user._id })
@@ -359,7 +516,55 @@ router.get('/my/organized', isAuthenticated, isServiceProvider, async (req, res)
 
 // Owner Routes -----------------------------------------------------
 
-// Register for event
+/**
+ * @swagger
+ * /api/events/register:
+ *   post:
+ *     tags: [Events]
+ *     summary: Register for an event (pet owners only)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [eventId]
+ *             properties:
+ *               eventId:
+ *                 type: string
+ *               numberOfPets:
+ *                 type: integer
+ *                 default: 1
+ *               specialRequirements:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successfully registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Event full or already registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Only pet owners can register
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/register', isAuthenticated, isOwner, async (req, res) => {
     try {
         const { eventId, numberOfPets, specialRequirements } = req.body;
@@ -373,7 +578,6 @@ router.post('/register', isAuthenticated, isOwner, async (req, res) => {
             });
         }
 
-        // Check if event is full
         if (event.attendees.length >= event.maxAttendees) {
             return res.status(400).json({
                 success: false,
@@ -381,7 +585,6 @@ router.post('/register', isAuthenticated, isOwner, async (req, res) => {
             });
         }
 
-        // Check if already registered
         if (event.isUserRegistered(req.user._id)) {
             return res.status(400).json({
                 success: false,
@@ -389,7 +592,6 @@ router.post('/register', isAuthenticated, isOwner, async (req, res) => {
             });
         }
 
-        // Add attendee
         event.attendees.push({
             user: req.user._id,
             numberOfPets: parseInt(numberOfPets) || 1,
@@ -419,7 +621,41 @@ router.post('/register', isAuthenticated, isOwner, async (req, res) => {
     }
 });
 
-// View ticket for a registered user
+/**
+ * @swagger
+ * /api/events/{id}/ticket:
+ *   get:
+ *     tags: [Events]
+ *     summary: Get ticket details for a registered event (pet owners only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ObjectId
+ *     responses:
+ *       200:
+ *         description: Ticket details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Not registered for this event or not an owner
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/:id/ticket', isAuthenticated, isOwner, async (req, res) => {
     try {
         const eventId = req.params.id;
@@ -432,7 +668,6 @@ router.get('/:id/ticket', isAuthenticated, isOwner, async (req, res) => {
             });
         }
 
-        // Verify registration
         const attendee = (event.attendees || []).find(a => a.user.toString() === req.user._id.toString());
         if (!attendee) {
             return res.status(403).json({ 
@@ -483,7 +718,41 @@ router.get('/:id/ticket', isAuthenticated, isOwner, async (req, res) => {
     }
 });
 
-// Get event payment page data
+/**
+ * @swagger
+ * /api/events/{id}/payment:
+ *   get:
+ *     tags: [Events]
+ *     summary: Get payment page data for a paid event (pet owners only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ObjectId
+ *     responses:
+ *       200:
+ *         description: Event payment info and wallet balance
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Must register before paying
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.get('/:id/payment', isAuthenticated, isOwner, async (req, res) => {
     try {
         const eventId = req.params.id;
@@ -496,7 +765,6 @@ router.get('/:id/payment', isAuthenticated, isOwner, async (req, res) => {
             });
         }
 
-        // Ensure user is registered before paying
         const isRegistered = event.attendees && event.attendees.some(a => a.user.toString() === req.user._id.toString());
         if (!isRegistered) {
             return res.status(403).json({ 
@@ -536,7 +804,68 @@ router.get('/:id/payment', isAuthenticated, isOwner, async (req, res) => {
     }
 });
 
-// Handle event payment (wallet, UPI, credit card)
+/**
+ * @swagger
+ * /api/events/{id}/pay:
+ *   post:
+ *     tags: [Events]
+ *     summary: Pay entry fee for a registered event (pet owners only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ObjectId
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [paymentMethod]
+ *             properties:
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [wallet, upi, credit-card]
+ *               details:
+ *                 type: object
+ *                 description: Payment details (UPI ID or card info)
+ *                 properties:
+ *                   upiId:
+ *                     type: string
+ *                     example: "user@upi"
+ *                   cardName:
+ *                     type: string
+ *                   cardNumber:
+ *                     type: string
+ *                   expiryDate:
+ *                     type: string
+ *                     example: "12/26"
+ *                   cvv:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Payment successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Unsupported method, insufficient balance, or invalid details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Must register before paying
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.post('/:id/pay', isAuthenticated, isOwner, async (req, res) => {
     try {
         const eventId = req.params.id;
@@ -560,7 +889,6 @@ router.post('/:id/pay', isAuthenticated, isOwner, async (req, res) => {
         const amount = event.entryFee || 0;
         const { paymentMethod, details } = req.body || {};
 
-        // Support wallet, upi, and credit-card methods
         if (paymentMethod === 'wallet') {
             const wallet = await Wallet.findOne({ user: req.user._id });
             if (!wallet) {
@@ -581,7 +909,6 @@ router.post('/:id/pay', isAuthenticated, isOwner, async (req, res) => {
                 await wallet.deductFunds(amount);
             }
         } else if (paymentMethod === 'upi') {
-            // Basic UPI validation
             const upiId = details && details.upiId ? String(details.upiId).trim() : '';
             const upiRegex = /^[\w.\-]{2,}@[A-Za-z]{2,}$/;
             if (!upiRegex.test(upiId)) {
@@ -590,9 +917,7 @@ router.post('/:id/pay', isAuthenticated, isOwner, async (req, res) => {
                     error: 'Invalid UPI ID' 
                 });
             }
-            // Assume external UPI success for this implementation
         } else if (paymentMethod === 'credit-card') {
-            // Basic card validation (format only)
             const name = details && details.cardName ? String(details.cardName).trim() : '';
             const number = details && details.cardNumber ? String(details.cardNumber).replace(/\s+/g, '') : '';
             const expiry = details && details.expiryDate ? String(details.expiryDate).trim() : '';
@@ -606,7 +931,6 @@ router.post('/:id/pay', isAuthenticated, isOwner, async (req, res) => {
                     error: 'Invalid card details' 
                 });
             }
-            // Assume external card success for this implementation
         } else {
             return res.status(400).json({ 
                 success: false, 
@@ -634,7 +958,41 @@ router.post('/:id/pay', isAuthenticated, isOwner, async (req, res) => {
     }
 });
 
-// Unregister from event
+/**
+ * @swagger
+ * /api/events/{id}/unregister:
+ *   delete:
+ *     tags: [Events]
+ *     summary: Unregister from an event
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ObjectId
+ *     responses:
+ *       200:
+ *         description: Successfully unregistered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Not registered for this event
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Event not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 router.delete('/:id/unregister', isAuthenticated, async (req, res) => {
     try {
         const eventId = req.params.id;
@@ -648,7 +1006,6 @@ router.delete('/:id/unregister', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Check if user is registered
         const isRegistered = event.isUserRegistered(req.user._id);
         if (!isRegistered) {
             return res.status(400).json({
@@ -657,7 +1014,6 @@ router.delete('/:id/unregister', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Remove attendee
         event.attendees = event.attendees.filter(
             attendee => attendee.user.toString() !== req.user._id.toString()
         );
@@ -681,7 +1037,22 @@ router.delete('/:id/unregister', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get my events (registered events)
+/**
+ * @swagger
+ * /api/events/my/registered:
+ *   get:
+ *     tags: [Events]
+ *     summary: Get all upcoming events the logged-in user is registered for
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of registered upcoming events
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 router.get('/my/registered', isAuthenticated, async (req, res) => {
     try {
         const events = await Event.find({
