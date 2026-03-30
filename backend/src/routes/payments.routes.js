@@ -12,6 +12,41 @@ const Transaction = require('../models/transaction');
 const Event = require('../models/event');
 const UserModel = require('../models/users');
 
+/**
+ * @swagger
+ * /api/payment/checkout:
+ *   get:
+ *     tags: [Payment]
+ *     summary: Get checkout page data (cart items + shipping summary)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Checkout data including cart, totals, and shipping info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     cart:
+ *                       type: object
+ *                     user:
+ *                       type: object
+ *                     shippingInfo:
+ *                       type: object
+ *                       nullable: true
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // ------------------ Get Checkout Data (GET) ------------------
 router.get('/checkout', isAuthenticated, async (req, res) => {
     try {
@@ -91,6 +126,48 @@ router.get('/checkout', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/payment/checkout:
+ *   post:
+ *     tags: [Payment]
+ *     summary: Submit shipping info and proceed to payment page
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [fullName, address, city, state, zipCode, phone]
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               zipCode:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Shipping info saved, redirect to payment
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Missing fields or empty cart
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // ------------------ Submit Checkout (POST) ------------------
 router.post('/checkout', isAuthenticated, async (req, res) => {
     try {
@@ -171,6 +248,41 @@ router.post('/checkout', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/payment/wallet:
+ *   get:
+ *     tags: [Payment]
+ *     summary: Get the current user's wallet balance
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Wallet balance
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     wallet:
+ *                       type: object
+ *                       properties:
+ *                         balance:
+ *                           type: number
+ *                     userId:
+ *                       type: string
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // ------------------ Get Wallet Balance ------------------
 router.get('/wallet', isAuthenticated, async (req, res) => {
     try {
@@ -192,6 +304,43 @@ router.get('/wallet', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/payment/payment:
+ *   get:
+ *     tags: [Payment]
+ *     summary: Get payment page data (wallet balance + cart totals)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Payment page data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                     wallet:
+ *                       type: object
+ *                     cart:
+ *                       type: object
+ *                     shippingInfo:
+ *                       type: object
+ *                       nullable: true
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // ------------------ Get Payment Page Data ------------------
 router.get('/payment', isAuthenticated, async (req, res) => {
     try {
@@ -255,6 +404,69 @@ router.get('/payment', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/payment:
+ *   post:
+ *     tags: [Payment]
+ *     summary: Process order payment (wallet, UPI, card, or COD)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [paymentMethod]
+ *             properties:
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [wallet, upi, card, cod]
+ *               upiId:
+ *                 type: string
+ *                 description: Required when paymentMethod is upi
+ *               paymentDetails:
+ *                 type: object
+ *                 description: Required when paymentMethod is card
+ *                 properties:
+ *                   cardName:
+ *                     type: string
+ *                   cardNumber:
+ *                     type: string
+ *                   expiryDate:
+ *                     type: string
+ *                     example: "12/26"
+ *                   cvv:
+ *                     type: string
+ *     responses:
+ *       200:
+ *         description: Payment processed, order created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     orderId:
+ *                       type: string
+ *                     totalAmount:
+ *                       type: string
+ *                     paymentMethod:
+ *                       type: string
+ *                     redirectPath:
+ *                       type: string
+ *       400:
+ *         description: Insufficient balance, invalid payment details, or empty cart
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // ------------------ Process Payment (POST) ------------------
 router.post('/', isAuthenticated, async (req, res) => {
     try {
@@ -473,6 +685,57 @@ router.post('/', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/payment/payment/common:
+ *   get:
+ *     tags: [Payment]
+ *     summary: Get payment page data for event registration or service booking
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [event, service]
+ *       - in: query
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event or service provider MongoDB ID
+ *       - in: query
+ *         name: amount
+ *         schema:
+ *           type: number
+ *         description: Override amount (optional)
+ *     responses:
+ *       200:
+ *         description: Payment page context data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: Missing parameters or invalid type
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Event or service provider not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // ------------------ Common Payment Page Data (Events/Service Booking) ------------------
 router.get('/payment/common', isAuthenticated, async (req, res) => {
     try {
@@ -554,6 +817,59 @@ router.get('/payment/common', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/payment/payment/common:
+ *   post:
+ *     tags: [Payment]
+ *     summary: Process payment for event registration or service booking (wallet only)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [type, id, amount]
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 enum: [event, service]
+ *               id:
+ *                 type: string
+ *               amount:
+ *                 type: number
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [wallet]
+ *                 default: wallet
+ *     responses:
+ *       200:
+ *         description: Payment successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     newBalance:
+ *                       type: string
+ *                     amountPaid:
+ *                       type: string
+ *                     redirectPath:
+ *                       type: string
+ *       400:
+ *         description: Insufficient balance or invalid input
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // ------------------ Process Common Payment (POST) ------------------
 router.post('/payment/common', isAuthenticated, async (req, res) => {
     try {
@@ -632,6 +948,49 @@ router.post('/payment/common', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/payment/order-confirmation/{orderId}:
+ *   get:
+ *     tags: [Payment]
+ *     summary: Get order confirmation details after successful payment
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Order MongoDB ID (omit to get most recent order)
+ *     responses:
+ *       200:
+ *         description: Order confirmation data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     order:
+ *                       type: object
+ *       403:
+ *         description: Unauthorized to view this order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // ------------------ Order Confirmation Data ------------------
 router.get('/order-confirmation/:orderId?', isAuthenticated, async (req, res) => {
     try {
