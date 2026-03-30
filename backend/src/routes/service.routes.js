@@ -43,6 +43,70 @@ function mapServiceCategory(serviceType) {
     return categoryMap[serviceType.toLowerCase()] || serviceType;
 }
 
+/**
+ * @swagger
+ * /api/services:
+ *   get:
+ *     tags: [Services]
+ *     summary: Get all service providers with optional filters
+ *     parameters:
+ *       - in: query
+ *         name: categories
+ *         schema:
+ *           type: string
+ *         description: Comma-separated list of service categories
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: minRating
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: location
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [rating, reviews, price-low, price-high]
+ *           default: rating
+ *     responses:
+ *       200:
+ *         description: Paginated list of service providers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     services:
+ *                       type: array
+ *                     pagination:
+ *                       type: object
+ *                     filters:
+ *                       type: object
+ */
 // Get all service providers with filters
 router.get('/', async (req, res) => {
     try {
@@ -208,6 +272,30 @@ router.get('/', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/services/filter-options:
+ *   get:
+ *     tags: [Services]
+ *     summary: Get available service categories and sort options
+ *     responses:
+ *       200:
+ *         description: Available categories and sort options
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     categories:
+ *                       type: array
+ *                     sortOptions:
+ *                       type: array
+ */
 // Get filter options (categories)
 router.get('/filter-options', async (req, res) => {
     try {
@@ -248,6 +336,45 @@ router.get('/filter-options', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/services/breeders:
+ *   get:
+ *     tags: [Services]
+ *     summary: Get all breeder service providers
+ *     parameters:
+ *       - in: query
+ *         name: location
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *     responses:
+ *       200:
+ *         description: Paginated list of breeders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     services:
+ *                       type: array
+ *                     pagination:
+ *                       type: object
+ */
 // Get breeder services only
 router.get('/breeders', async (req, res) => {
     try {
@@ -325,6 +452,43 @@ router.get('/breeders', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/services/{id}:
+ *   get:
+ *     tags: [Services]
+ *     summary: Get a single service provider's details and reviews
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Service provider details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     service:
+ *                       type: object
+ *                     userReview:
+ *                       type: object
+ *                       nullable: true
+ *       404:
+ *         description: Service provider not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get single service provider details
 router.get('/:id', async (req, res) => {
     try {
@@ -430,6 +594,54 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/services/{id}/reviews:
+ *   get:
+ *     tags: [Services]
+ *     summary: Get paginated reviews for a service provider
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [newest, oldest, highest-rating, lowest-rating]
+ *           default: newest
+ *     responses:
+ *       200:
+ *         description: Paginated reviews
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     reviews:
+ *                       type: array
+ *                     statistics:
+ *                       type: object
+ *                     pagination:
+ *                       type: object
+ */
 // Get provider reviews only (for pagination)
 router.get('/:id/reviews', async (req, res) => {
     try {
@@ -503,6 +715,81 @@ router.get('/:id/reviews', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/services/{id}/book:
+ *   post:
+ *     tags: [Services]
+ *     summary: Book a service and process payment
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Service provider MongoDB ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [date, time, paymentMethod]
+ *             properties:
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               time:
+ *                 type: string
+ *                 example: "10:00"
+ *               paymentMethod:
+ *                 type: string
+ *                 enum: [wallet, upi, credit-card, card]
+ *               paymentDetails:
+ *                 type: object
+ *                 description: Required when paymentMethod is upi or card
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Booking created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     bookingId:
+ *                       type: string
+ *                     amount:
+ *                       type: number
+ *                     status:
+ *                       type: string
+ *       400:
+ *         description: Insufficient balance, invalid payment, or missing fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Service provider not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Book a service (create booking and process payment)
 router.post('/:id/book', isAuthenticated, async (req, res) => {
     try {
@@ -641,6 +928,55 @@ router.post('/:id/book', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/services/{id}/availability:
+ *   get:
+ *     tags: [Services]
+ *     summary: Get available time slots for a service provider on a given date
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date in YYYY-MM-DD format
+ *     responses:
+ *       200:
+ *         description: Available and booked time slots
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     date:
+ *                       type: string
+ *                     availableSlots:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     bookedSlots:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *       400:
+ *         description: Date parameter missing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get available time slots for a provider on a specific date
 router.get('/:id/availability', async (req, res) => {
     try {

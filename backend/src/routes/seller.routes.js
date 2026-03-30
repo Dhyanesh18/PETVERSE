@@ -60,6 +60,52 @@ function isSeller(req, res, next) {
     });
 }
 
+/**
+ * @swagger
+ * /api/seller/dashboard:
+ *   get:
+ *     tags: [Seller]
+ *     summary: Get seller dashboard data (orders, products, pets, reviews, stats)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Full dashboard data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     seller:
+ *                       type: object
+ *                     statistics:
+ *                       type: object
+ *                     recentOrders:
+ *                       type: array
+ *                     products:
+ *                       type: array
+ *                     pets:
+ *                       type: array
+ *                     reviews:
+ *                       type: array
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Sellers only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get seller dashboard data
 router.get('/dashboard', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -341,6 +387,54 @@ router.get('/dashboard', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/orders:
+ *   get:
+ *     tags: [Seller]
+ *     summary: Get all seller orders with optional filters and pagination
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, processing, shipped, delivered, completed, cancelled, all]
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [newest, oldest, amount-high, amount-low]
+ *           default: newest
+ *     responses:
+ *       200:
+ *         description: Paginated orders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     orders:
+ *                       type: array
+ *                     pagination:
+ *                       type: object
+ */
 // Get all seller orders with filters
 router.get('/orders', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -425,6 +519,42 @@ router.get('/orders', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/orders/{orderId}:
+ *   get:
+ *     tags: [Seller]
+ *     summary: Get details of a specific order
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     order:
+ *                       type: object
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get single order details
 router.get('/orders/:orderId', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -494,6 +624,51 @@ router.get('/orders/:orderId', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/orders/{orderId}/status:
+ *   patch:
+ *     tags: [Seller]
+ *     summary: Update the status of an order (with automatic refund handling)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, processing, shipped, delivered, completed, cancelled]
+ *     responses:
+ *       200:
+ *         description: Order status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Invalid status or insufficient seller balance for refund
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Update order status
 router.patch('/orders/:orderId/status', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -707,6 +882,36 @@ router.patch('/orders/:orderId/status', isAuthenticated, isSeller, async (req, r
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/profile:
+ *   get:
+ *     tags: [Seller]
+ *     summary: Get seller profile details
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Seller profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     seller:
+ *                       type: object
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get seller profile
 router.get('/profile', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -756,6 +961,41 @@ router.get('/profile', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/profile:
+ *   patch:
+ *     tags: [Seller]
+ *     summary: Update seller profile (businessName, businessAddress, phoneNo)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               businessName:
+ *                 type: string
+ *               businessAddress:
+ *                 type: string
+ *               phoneNo:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Invalid update fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Update seller profile
 router.patch('/profile', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -806,6 +1046,41 @@ router.patch('/profile', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/analytics:
+ *   get:
+ *     tags: [Seller]
+ *     summary: Get seller analytics (revenue trends, top products, order distribution)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *         description: Number of days to look back
+ *     responses:
+ *       200:
+ *         description: Analytics data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     revenueByDate:
+ *                       type: array
+ *                     topProducts:
+ *                       type: array
+ *                     statusDistribution:
+ *                       type: array
+ */
 // Get seller analytics/statistics
 router.get('/analytics', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -929,6 +1204,55 @@ const upload = multer({
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/products:
+ *   post:
+ *     tags: [Seller]
+ *     summary: Add a new product (seller only)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [name, description, price, category, brand, stock, images]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               brand:
+ *                 type: string
+ *               stock:
+ *                 type: integer
+ *               discount:
+ *                 type: number
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     responses:
+ *       201:
+ *         description: Product created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Add new product
 router.post('/products', isAuthenticated, isSeller, upload.array('images', 5), async (req, res) => {
     try {
@@ -1013,6 +1337,39 @@ router.post('/products', isAuthenticated, isSeller, upload.array('images', 5), a
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/products/{productId}/edit:
+ *   get:
+ *     tags: [Seller]
+ *     summary: Get product data for the edit form
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product edit data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 product:
+ *                   type: object
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get product for editing
 router.get('/products/:productId/edit', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -1241,6 +1598,42 @@ router.put('/products/:productId', isAuthenticated, isSeller, upload.array('newI
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/products/{productId}/toggle-status:
+ *   patch:
+ *     tags: [Seller]
+ *     summary: Toggle product availability (active/inactive)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Availability toggled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     available:
+ *                       type: boolean
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Toggle product status (activate/deactivate)
 router.patch('/products/:productId/toggle-status', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -1311,6 +1704,50 @@ const petUpload = multer({
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/pets:
+ *   post:
+ *     tags: [Seller]
+ *     summary: Add a new pet listing (seller only)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [name, breed, age, price, category, images]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               breed:
+ *                 type: string
+ *               age:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               gender:
+ *                 type: string
+ *                 enum: [male, female]
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     responses:
+ *       201:
+ *         description: Pet listing created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 // Add new pet
 router.post('/pets', isAuthenticated, isSeller, petUpload.array('images', 5), async (req, res) => {
     try {
@@ -1528,6 +1965,42 @@ router.put('/pets/:petId', isAuthenticated, isSeller, petUpload.array('images', 
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/pets/{petId}/toggle-status:
+ *   patch:
+ *     tags: [Seller]
+ *     summary: Toggle pet availability status
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: petId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Availability toggled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     available:
+ *                       type: boolean
+ *       404:
+ *         description: Pet not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Toggle pet status (available/unavailable)
 router.patch('/pets/:petId/toggle-status', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -1565,6 +2038,40 @@ router.patch('/pets/:petId/toggle-status', isAuthenticated, isSeller, async (req
     }
 });
 
+/**
+ * @swagger
+ * /api/seller/chats:
+ *   get:
+ *     tags: [Seller]
+ *     summary: Get all customer chats for the seller
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of chats with unread count
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     chats:
+ *                       type: array
+ *                     totalChats:
+ *                       type: integer
+ *                     unreadChats:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get all chats for seller (order-based)
 router.get('/chats', isAuthenticated, isSeller, async (req, res) => {
     try {
