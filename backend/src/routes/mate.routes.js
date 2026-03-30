@@ -31,6 +31,81 @@ function isAuthenticated(req, res, next) {
     });
 }
 
+/**
+ * @swagger
+ * /api/mate:
+ *   get:
+ *     tags: [Mate]
+ *     summary: Get all pet mate listings with optional filters and pagination
+ *     parameters:
+ *       - in: query
+ *         name: petType
+ *         schema:
+ *           type: string
+ *           example: dog,cat
+ *         description: Comma-separated pet types
+ *       - in: query
+ *         name: gender
+ *         schema:
+ *           type: string
+ *           example: male
+ *         description: Comma-separated gender values (male, female)
+ *       - in: query
+ *         name: breed
+ *         schema:
+ *           type: string
+ *         description: Comma-separated breed names
+ *       - in: query
+ *         name: state
+ *         schema:
+ *           type: string
+ *         description: State slug (e.g. maharashtra)
+ *       - in: query
+ *         name: district
+ *         schema:
+ *           type: string
+ *         description: District name (partial match)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *     responses:
+ *       200:
+ *         description: Paginated list of mate listings with image URLs (no raw buffers)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     pets:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                         page:
+ *                           type: integer
+ *                         limit:
+ *                           type: integer
+ *                         totalPages:
+ *                           type: integer
+ *                     filters:
+ *                       type: object
+ */
 // Get all mate listings with optional filters (API endpoint)
 router.get('/', async (req, res) => {
     try {
@@ -135,6 +210,42 @@ router.get('/', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/mate/filter-options:
+ *   get:
+ *     tags: [Mate]
+ *     summary: Get available filter options (pet types, genders, states, and distinct breeds)
+ *     responses:
+ *       200:
+ *         description: Filter options for the mate listing search UI
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     petTypes:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     genders:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     states:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     breeds:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ */
 // Get filter options (pet types, breeds, states)
 router.get('/filter-options', async (req, res) => {
     try {
@@ -205,6 +316,33 @@ router.get('/filter-options', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/mate/{id}:
+ *   get:
+ *     tags: [Mate]
+ *     summary: Get details of a single mate listing by ID (image URLs, no raw data)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: PetMate ObjectId
+ *     responses:
+ *       200:
+ *         description: Mate listing details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Mate listing not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get single mate listing details
 router.get('/:id', async (req, res) => {
     try {
@@ -247,6 +385,87 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/mate/add:
+ *   post:
+ *     tags: [Mate]
+ *     summary: Create a new pet mate listing (authenticated users only, 1–4 images required)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [petName, petType, breed, ageValue, ageUnit, gender, state, district, contactNumber, petImage]
+ *             properties:
+ *               petName:
+ *                 type: string
+ *               petType:
+ *                 type: string
+ *                 enum: [dog, cat, bird, other]
+ *               breed:
+ *                 type: string
+ *               breedOther:
+ *                 type: string
+ *                 description: Custom breed name when breed is "other"
+ *               ageValue:
+ *                 type: number
+ *                 description: Numeric age value
+ *               ageUnit:
+ *                 type: string
+ *                 enum: [months, years]
+ *               gender:
+ *                 type: string
+ *                 enum: [male, female]
+ *               description:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *                 description: State slug
+ *               district:
+ *                 type: string
+ *               contactNumber:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               registrationNumber:
+ *                 type: string
+ *               healthCheck:
+ *                 type: string
+ *                 enum: ["on", "true"]
+ *               terms:
+ *                 type: string
+ *                 enum: ["on", "true"]
+ *               petImage:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: 1 to 4 images (max 5 MB each)
+ *     responses:
+ *       201:
+ *         description: Mate listing created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error (missing images, invalid age, missing breed, etc.)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Add new mate listing (authenticated users only)
 router.post('/add', isAuthenticated, upload.array('petImage', 4), async (req, res) => {
     try {
@@ -369,6 +588,40 @@ router.post('/add', isAuthenticated, upload.array('petImage', 4), async (req, re
     }
 });
 
+/**
+ * @swagger
+ * /api/mate/my/listings:
+ *   get:
+ *     tags: [Mate]
+ *     summary: Get all mate listings created by the logged-in user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User's mate listings with image URLs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     listings:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                     total:
+ *                       type: integer
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get user's own mate listings
 router.get('/my/listings', isAuthenticated, async (req, res) => {
     try {
@@ -404,6 +657,64 @@ router.get('/my/listings', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/mate/{id}:
+ *   patch:
+ *     tags: [Mate]
+ *     summary: Update a mate listing (owner only, optionally replace images)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: PetMate ObjectId
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               petName:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               contactNumber:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               registrationNumber:
+ *                 type: string
+ *               petImage:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Replacement images (replaces all existing images)
+ *     responses:
+ *       200:
+ *         description: Mate listing updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Only the owner can update this listing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Mate listing not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Update mate listing
 router.patch('/:id', isAuthenticated, upload.array('petImage', 4), async (req, res) => {
     try {
@@ -458,6 +769,41 @@ router.patch('/:id', isAuthenticated, upload.array('petImage', 4), async (req, r
     }
 });
 
+/**
+ * @swagger
+ * /api/mate/{id}:
+ *   delete:
+ *     tags: [Mate]
+ *     summary: Delete a mate listing (owner only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: PetMate ObjectId
+ *     responses:
+ *       200:
+ *         description: Mate listing deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Only the owner can delete this listing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Mate listing not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Delete mate listing
 router.delete('/:id', isAuthenticated, async (req, res) => {
     try {
@@ -494,6 +840,41 @@ router.delete('/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/mate/image/{mateId}/{index}:
+ *   get:
+ *     tags: [Mate]
+ *     summary: Serve a mate listing image binary by listing ID and zero-based index
+ *     parameters:
+ *       - in: path
+ *         name: mateId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: PetMate ObjectId
+ *       - in: path
+ *         name: index
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Zero-based image index
+ *     responses:
+ *       200:
+ *         description: Raw image binary (cached 1 day)
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Listing or image not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get mate image (binary data for <img> tags)
 router.get('/image/:mateId/:index', async (req, res) => {
     try {

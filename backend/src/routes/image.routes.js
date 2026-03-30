@@ -19,6 +19,41 @@ router.use((req, res, next) => {
     next();
 });
 
+/**
+ * @swagger
+ * /images/product/{productId}/{index}:
+ *   get:
+ *     tags: [Images]
+ *     summary: Serve a product image by product ID and zero-based index
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ObjectId
+ *       - in: path
+ *         name: index
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Zero-based image index
+ *     responses:
+ *       200:
+ *         description: Raw image binary
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Product or image not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get product image by index
 router.get('/product/:productId/:index', async (req, res) => {
     try {
@@ -61,6 +96,56 @@ router.get('/product/:productId/:index', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /images/product/{productId}/metadata:
+ *   get:
+ *     tags: [Images]
+ *     summary: Get image metadata (URL list, content-types, sizes) for a product without binary data
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Product ObjectId
+ *     responses:
+ *       200:
+ *         description: Image metadata list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     productId:
+ *                       type: string
+ *                     count:
+ *                       type: integer
+ *                     images:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           index:
+ *                             type: integer
+ *                           url:
+ *                             type: string
+ *                           contentType:
+ *                             type: string
+ *                           size:
+ *                             type: integer
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get all product images metadata (URLs only, not binary data)
 router.get('/product/:productId/metadata', async (req, res) => {
     try {
@@ -98,6 +183,41 @@ router.get('/product/:productId/metadata', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /images/pet/{petId}/{index}:
+ *   get:
+ *     tags: [Images]
+ *     summary: Serve a pet image by pet ID and zero-based index
+ *     parameters:
+ *       - in: path
+ *         name: petId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Pet ObjectId
+ *       - in: path
+ *         name: index
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *         description: Zero-based image index
+ *     responses:
+ *       200:
+ *         description: Raw image binary
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Pet or image not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get pet image by index
 router.get('/pet/:petId/:index', async (req, res) => {
     try {
@@ -139,6 +259,41 @@ router.get('/pet/:petId/:index', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /images/event/{eventId}/{index}:
+ *   get:
+ *     tags: [Images]
+ *     summary: Serve an event banner/image by event ID and optional index
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ObjectId
+ *       - in: path
+ *         name: index
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Zero-based image index (defaults to 0)
+ *     responses:
+ *       200:
+ *         description: Raw image binary
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Event or image not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get event image/banner
 router.get('/event/:eventId/:index?', async (req, res) => {
     try {
@@ -174,6 +329,34 @@ router.get('/event/:eventId/:index?', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /images/user/{userId}/profile:
+ *   get:
+ *     tags: [Images]
+ *     summary: Serve a user's profile picture
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ObjectId
+ *     responses:
+ *       200:
+ *         description: Raw profile picture binary (cached 1 hour)
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: User or profile picture not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get user profile picture
 router.get('/user/:userId/profile', async (req, res) => {
     try {
@@ -199,6 +382,34 @@ router.get('/user/:userId/profile', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /images/document/license/{userId}:
+ *   get:
+ *     tags: [Images]
+ *     summary: Serve a seller's business license document (PDF or image)
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Seller's User ObjectId
+ *     responses:
+ *       200:
+ *         description: Raw license document binary
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: User not found or license not uploaded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get seller license document
 router.get('/document/license/:userId', async (req, res) => {
     try {
@@ -231,6 +442,34 @@ router.get('/document/license/:userId', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /images/document/certificate/{userId}:
+ *   get:
+ *     tags: [Images]
+ *     summary: Serve a service provider's professional certificate (PDF or image)
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Service provider's User ObjectId
+ *     responses:
+ *       200:
+ *         description: Raw certificate binary
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: User not found or certificate not uploaded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get service provider certificate
 router.get('/document/certificate/:userId', async (req, res) => {
     try {
@@ -263,6 +502,34 @@ router.get('/document/certificate/:userId', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /images/document/permission/{eventId}:
+ *   get:
+ *     tags: [Images]
+ *     summary: Serve a government permission document for an event
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Event ObjectId
+ *     responses:
+ *       200:
+ *         description: Raw permission document binary
+ *         content:
+ *           application/pdf:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Event not found or permission document missing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get event permission document
 router.get('/document/permission/:eventId', async (req, res) => {
     try {
@@ -288,6 +555,28 @@ router.get('/document/permission/:eventId', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /images/health:
+ *   get:
+ *     tags: [Images]
+ *     summary: Health check for the image service
+ *     responses:
+ *       200:
+ *         description: Image service is running
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
 // Health check endpoint for image service
 router.get('/health', (req, res) => {
     res.json({
