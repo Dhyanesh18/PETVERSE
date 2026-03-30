@@ -17,6 +17,9 @@ const { logWarning } = require('./utils/logger');
 
 dotenv.config();
 
+// Fail fast when MongoDB is unavailable (prevents 10s buffering timeouts)
+mongoose.set('bufferCommands', false);
+
 // If the project keeps `.env` under `backend/src/.env` (common when running
 // `node src/app.js` from `backend/`), load it explicitly.
 const localEnvPath = path.join(__dirname, '.env');
@@ -139,6 +142,10 @@ app.use((req, res, next) => {
 // 13. User authentication middleware - Attach user to req
 app.use(async (req, res, next) => {
     if (req.session.userId) {
+        // If DB is not connected, skip loading the user.
+        if (mongoose.connection.readyState !== 1) {
+            return next();
+        }
         try {
             const User = require('./models/users');
             req.user = await User.findById(req.session.userId);
@@ -153,6 +160,39 @@ app.use(async (req, res, next) => {
             req.session.userRole = null;
         }
     }
+    next();
+});
+
+// If MongoDB is disconnected, short-circuit DB-backed APIs with a clear message
+app.use((req, res, next) => {
+    // Allow docs + basic health checks even when DB is down
+    const allowedWhenDbDown = [
+        '/api',
+        '/api/health',
+        '/api/docs',
+        '/api/docs.json'
+    ];
+
+    if (req.path === '/images' || req.path.startsWith('/images/')) {
+        return next();
+    }
+
+    if (allowedWhenDbDown.includes(req.path)) {
+        return next();
+    }
+
+    // Most /api routes require DB
+    if (req.path.startsWith('/api/') && mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+            success: false,
+            error: 'Database unavailable',
+            message: 'MongoDB is not connected. Check Atlas IP whitelist or MONGODB_URI.',
+            details: {
+                mongoReadyState: mongoose.connection.readyState
+            }
+        });
+    }
+
     next();
 });
 

@@ -30,6 +30,7 @@ router.get('/home', async (req, res) => {
         const featuredPets = await Pet.find({ available: true })
             .sort({ createdAt: -1 })
             .limit(5)
+            .select({ 'images.data': 0 })
             .lean();
         
         console.log('Fetching products for homepage...');
@@ -37,6 +38,7 @@ router.get('/home', async (req, res) => {
         // Get products - remove isActive filter or make it optional
         const products = await Product.find()
             .limit(5)
+            .select({ 'images.data': 0 })
             .lean();
         
         console.log('Total products found:', products.length);
@@ -177,7 +179,9 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                 try {
                     // Try to fetch the product by ID
                     const product = await Product.findById(item.product)
-                        .select('name images price description seller brand category')
+                        // Avoid mixing inclusion (images) with exclusion (images.data) which causes
+                        // MongoDB projection "path collision" errors.
+                        .select({ name: 1, price: 1, description: 1, seller: 1, brand: 1, category: 1 })
                         .lean();
                     
                     if (product) {
@@ -186,11 +190,11 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                             product: {
                                 _id: product._id,
                                 name: product.name,
-                                images: product.images,
                                 price: product.price,
-                                image: product.images && product.images.length > 0
-                                    ? `/images/product/${product._id}/0`
-                                    : null
+                                brand: product.brand,
+                                category: product.category,
+                                thumbnail: `/api/images/product/${product._id}/0`,
+                                image: `/api/images/product/${product._id}/0`
                             }
                         });
                     } else {
