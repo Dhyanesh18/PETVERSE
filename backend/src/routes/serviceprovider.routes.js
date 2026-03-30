@@ -30,6 +30,48 @@ function isServiceProvider(req, res, next) {
     });
 }
 
+/**
+ * @swagger
+ * /api/service-provider/dashboard:
+ *   get:
+ *     tags: [ServiceProvider]
+ *     summary: Get service provider dashboard data
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard data including bookings, reviews, and statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     provider:
+ *                       type: object
+ *                     statistics:
+ *                       type: object
+ *                     bookings:
+ *                       type: object
+ *                     recentReviews:
+ *                       type: array
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Service providers only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get service provider dashboard data
 router.get('/dashboard', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -207,6 +249,59 @@ router.get('/dashboard', isAuthenticated, isServiceProvider, async (req, res) =>
     }
 });
 
+/**
+ * @swagger
+ * /api/service-provider/bookings:
+ *   get:
+ *     tags: [ServiceProvider]
+ *     summary: Get all bookings with optional filters
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [upcoming, past, today, all]
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Paginated bookings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     bookings:
+ *                       type: array
+ *                     pagination:
+ *                       type: object
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get all bookings with filters
 router.get('/bookings', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -285,6 +380,42 @@ router.get('/bookings', isAuthenticated, isServiceProvider, async (req, res) => 
     }
 });
 
+/**
+ * @swagger
+ * /api/service-provider/bookings/{bookingId}:
+ *   get:
+ *     tags: [ServiceProvider]
+ *     summary: Get a single booking's details
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Booking details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     booking:
+ *                       type: object
+ *       404:
+ *         description: Booking not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get single booking details
 router.get('/bookings/:bookingId', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -338,6 +469,51 @@ router.get('/bookings/:bookingId', isAuthenticated, isServiceProvider, async (re
     }
 });
 
+/**
+ * @swagger
+ * /api/service-provider/bookings/{bookingId}/status:
+ *   patch:
+ *     tags: [ServiceProvider]
+ *     summary: Update a booking's status
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookingId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [confirmed, completed, cancelled, no-show]
+ *     responses:
+ *       200:
+ *         description: Status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Invalid status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Booking not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Update booking status
 router.patch('/bookings/:bookingId/status', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -387,6 +563,36 @@ router.patch('/bookings/:bookingId/status', isAuthenticated, isServiceProvider, 
     }
 });
 
+/**
+ * @swagger
+ * /api/service-provider/profile:
+ *   get:
+ *     tags: [ServiceProvider]
+ *     summary: Get service provider profile details
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Provider profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     provider:
+ *                       type: object
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get service provider profile
 router.get('/profile', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -451,6 +657,47 @@ router.get('/profile', isAuthenticated, isServiceProvider, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/service-provider/profile:
+ *   patch:
+ *     tags: [ServiceProvider]
+ *     summary: Update service provider profile
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               serviceType:
+ *                 type: string
+ *               serviceAddress:
+ *                 type: string
+ *               serviceDescription:
+ *                 type: string
+ *               experienceYears:
+ *                 type: integer
+ *               availability:
+ *                 type: string
+ *               phoneNo:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Invalid update fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Update service provider profile
 router.patch('/profile', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -512,6 +759,41 @@ router.patch('/profile', isAuthenticated, isServiceProvider, async (req, res) =>
     }
 });
 
+/**
+ * @swagger
+ * /api/service-provider/analytics:
+ *   get:
+ *     tags: [ServiceProvider]
+ *     summary: Get analytics and statistics for the service provider
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: integer
+ *           default: 30
+ *         description: Number of days to look back
+ *     responses:
+ *       200:
+ *         description: Analytics data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     bookingsByDate:
+ *                       type: array
+ *                     statusDistribution:
+ *                       type: array
+ *                     monthlyRevenue:
+ *                       type: array
+ */
 // Get analytics/statistics
 router.get('/analytics', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -587,6 +869,32 @@ router.get('/analytics', isAuthenticated, isServiceProvider, async (req, res) =>
 
 // ===== AVAILABILITY MANAGEMENT ROUTES =====
 
+/**
+ * @swagger
+ * /api/service-provider/availability:
+ *   get:
+ *     tags: [ServiceProvider]
+ *     summary: Get the provider's weekly schedule and blocked dates
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Availability data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     days:
+ *                       type: array
+ *                     blockedDates:
+ *                       type: array
+ */
 // GET /api/service-provider/availability — fetch current schedule + blocked dates
 router.get('/availability', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -597,6 +905,41 @@ router.get('/availability', isAuthenticated, isServiceProvider, async (req, res)
     }
 });
 
+/**
+ * @swagger
+ * /api/service-provider/availability:
+ *   post:
+ *     tags: [ServiceProvider]
+ *     summary: Save the provider's weekly day schedule
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [days]
+ *             properties:
+ *               days:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     day:
+ *                       type: string
+ *                     slots:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *     responses:
+ *       200:
+ *         description: Schedule saved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ */
 // POST /api/service-provider/availability — save weekly day schedule
 router.post('/availability', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -615,6 +958,40 @@ router.post('/availability', isAuthenticated, isServiceProvider, async (req, res
     }
 });
 
+/**
+ * @swagger
+ * /api/service-provider/availability/block-date:
+ *   post:
+ *     tags: [ServiceProvider]
+ *     summary: Add a blocked date to the provider's schedule
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [date]
+ *             properties:
+ *               date:
+ *                 type: string
+ *                 format: date
+ *                 example: "2025-07-20"
+ *     responses:
+ *       200:
+ *         description: Date blocked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Invalid date format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // POST /api/service-provider/availability/block-date — add a blocked date
 router.post('/availability/block-date', isAuthenticated, isServiceProvider, async (req, res) => {
     try {
@@ -633,6 +1010,36 @@ router.post('/availability/block-date', isAuthenticated, isServiceProvider, asyn
     }
 });
 
+/**
+ * @swagger
+ * /api/service-provider/availability/block-date/{date}:
+ *   delete:
+ *     tags: [ServiceProvider]
+ *     summary: Remove a blocked date from the provider's schedule
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: date
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Date in YYYY-MM-DD format
+ *     responses:
+ *       200:
+ *         description: Date unblocked
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Invalid date format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // DELETE /api/service-provider/availability/block-date/:date — remove a blocked date
 router.delete('/availability/block-date/:date', isAuthenticated, isServiceProvider, async (req, res) => {
     try {

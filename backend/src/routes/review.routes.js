@@ -58,6 +58,60 @@ function isAuthenticated(req, res, next) {
     });
 }
 
+/**
+ * @swagger
+ * /api/reviews/{targetType}/{targetId}:
+ *   get:
+ *     tags: [Reviews]
+ *     summary: Get all reviews for a target (product, pet, or service provider)
+ *     parameters:
+ *       - in: path
+ *         name: targetType
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [Product, Pet, ServiceProvider]
+ *       - in: path
+ *         name: targetId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [newest, oldest, highest-rating, lowest-rating]
+ *           default: newest
+ *     responses:
+ *       200:
+ *         description: Paginated review list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     reviews:
+ *                       type: array
+ *                     pagination:
+ *                       type: object
+ *                     statistics:
+ *                       type: object
+ */
 // Get reviews for a specific target (Product, Seller, or Service Provider)
 router.get('/:targetType/:targetId', async (req, res) => {
     try {
@@ -204,6 +258,60 @@ router.get('/user/:targetType/:targetId', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/reviews/{targetType}/{targetId}:
+ *   post:
+ *     tags: [Reviews]
+ *     summary: Add a review for a product, pet, or service provider
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: targetType
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [Product, Pet, ServiceProvider]
+ *       - in: path
+ *         name: targetId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [rating]
+ *             properties:
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *               comment:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Review added
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Already reviewed or purchase required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Create or update review
 router.post('/', isAuthenticated, async (req, res) => {
     try {
@@ -372,6 +480,53 @@ router.post('/', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/reviews/{reviewId}:
+ *   put:
+ *     tags: [Reviews]
+ *     summary: Update an existing review (owner only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: reviewId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rating:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *               comment:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Review updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Not authorized to update this review
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Review not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Delete review (user can only delete their own review)
 router.delete('/:reviewId', isAuthenticated, async (req, res) => {
     try {
@@ -510,6 +665,52 @@ function getTimeAgo(date) {
     return Math.floor(seconds) + ' second' + (Math.floor(seconds) > 1 ? 's' : '') + ' ago';
 }
 
+/**
+ * @swagger
+ * /api/reviews/check-purchase/{targetType}/{targetId}:
+ *   get:
+ *     tags: [Reviews]
+ *     summary: Check if the user is eligible to review (purchased or booked)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: targetType
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [Product, Pet, ServiceProvider]
+ *       - in: path
+ *         name: targetId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Purchase eligibility check result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     canReview:
+ *                       type: boolean
+ *                     reason:
+ *                       type: string
+ *                     hasReviewed:
+ *                       type: boolean
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Check if user can review a specific item (GET /api/reviews/can-review/:targetType/:targetId)
 router.get('/can-review/:targetType/:targetId', isAuthenticated, async (req, res) => {
     try {

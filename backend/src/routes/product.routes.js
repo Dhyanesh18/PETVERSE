@@ -52,7 +52,73 @@ function isSeller(req, res, next) {
     });
 }
 
-// Get all products with optional filters (API endpoint)
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     tags: [Products]
+ *     summary: Get all products with optional filters and pagination
+ *     parameters:
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: brand
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: maxPrice
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: minRating
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: inStock
+ *         schema:
+ *           type: boolean
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 12
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [newest, price-low, price-high, rating, popular]
+ *     responses:
+ *       200:
+ *         description: Paginated product list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     products:
+ *                       type: array
+ *                     pagination:
+ *                       type: object
+ *                     filters:
+ *                       type: object
+ */
+// Get all products with search and filters
 router.get('/', async (req, res) => {
     try {
         const { 
@@ -184,7 +250,33 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Get filter options (categories, brands)
+/**
+ * @swagger
+ * /api/products/filter-options:
+ *   get:
+ *     tags: [Products]
+ *     summary: Get available filter options for products
+ *     responses:
+ *       200:
+ *         description: Filter options (categories, brands, price range)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     categories:
+ *                       type: array
+ *                     brands:
+ *                       type: array
+ *                     priceRange:
+ *                       type: object
+ */
+// Get filter options
 router.get('/filter-options', async (req, res) => {
     try {
         // Get distinct brands from database
@@ -291,6 +383,44 @@ router.get('/category/:category', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   get:
+ *     tags: [Products]
+ *     summary: Get a single product by ID, including reviews and related products
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product details with reviews and related products
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     product:
+ *                       type: object
+ *                     reviews:
+ *                       type: array
+ *                     relatedProducts:
+ *                       type: array
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get single product details by ID
 router.get('/:id', async (req, res) => {
     try {
@@ -367,6 +497,62 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/products:
+ *   post:
+ *     tags: [Products]
+ *     summary: Add a new product (sellers only)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [name, description, price, category, brand, stock, images]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               brand:
+ *                 type: string
+ *               stock:
+ *                 type: integer
+ *               discount:
+ *                 type: number
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Product images (1-5 files, max 5MB each)
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       403:
+ *         description: Sellers only
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Create new product (sellers only)
 router.post('/add', isAuthenticated, isSeller, upload.array('images', 5), async (req, res) => {
     try {
@@ -506,6 +692,65 @@ router.get('/my/listings', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   put:
+ *     tags: [Products]
+ *     summary: Update a product (seller/owner only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               brand:
+ *                 type: string
+ *               stock:
+ *                 type: integer
+ *               discount:
+ *                 type: number
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *     responses:
+ *       200:
+ *         description: Product updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Update product (owner only)
 router.patch('/:id', isAuthenticated, isSeller, upload.array('images', 5), async (req, res) => {
     try {
@@ -576,6 +821,42 @@ router.patch('/:id', isAuthenticated, isSeller, upload.array('images', 5), async
     }
 });
 
+/**
+ * @swagger
+ * /api/products/{id}/availability:
+ *   patch:
+ *     tags: [Products]
+ *     summary: Toggle product availability (sellers only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Availability toggled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     available:
+ *                       type: boolean
+ *       403:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Toggle product active status (owner only)
 router.patch('/:id/toggle', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -613,6 +894,40 @@ router.patch('/:id/toggle', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   delete:
+ *     tags: [Products]
+ *     summary: Delete a product (seller/owner only)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       403:
+ *         description: Not authorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Product not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Delete product (owner only)
 router.delete('/:id', isAuthenticated, isSeller, async (req, res) => {
     try {
@@ -644,6 +959,39 @@ router.delete('/:id', isAuthenticated, isSeller, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/products/image/{productId}/{index}:
+ *   get:
+ *     tags: [Products]
+ *     summary: Serve a product image by product ID and index
+ *     parameters:
+ *       - in: path
+ *         name: productId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: index
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Zero-based image index
+ *     responses:
+ *       200:
+ *         description: Image binary data
+ *         content:
+ *           image/jpeg:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: Image not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get product image (binary data for <img> tags)
 router.get('/image/:productId/:index', async (req, res) => {
     try {

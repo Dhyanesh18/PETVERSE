@@ -150,6 +150,44 @@ router.get('/home', async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/user/dashboard:
+ *   get:
+ *     tags: [User]
+ *     summary: Get user dashboard overview (orders, bookings, wishlist)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                     orders:
+ *                       type: array
+ *                     bookings:
+ *                       type: array
+ *                     wishlist:
+ *                       type: object
+ *                     wallet:
+ *                       type: object
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get user dashboard (owner dashboard)
 router.get('/dashboard', isAuthenticated, async (req, res) => {
     try {
@@ -477,6 +515,50 @@ router.get('/stats', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/user/addresses:
+ *   get:
+ *     tags: [User]
+ *     summary: Get all saved addresses for the user
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of addresses
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     addresses:
+ *                       type: array
+ */
+// Get user addresses
+router.get('/addresses', isAuthenticated, async (req, res) => {
+    try {
+        if (req.user.role !== 'owner' && req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                error: 'Access denied. This endpoint is for pet owners only.'
+            });
+        }
+        // ... implementation
+    } catch (err) {
+        console.error('Error loading addresses:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Error loading addresses',
+            message: err.message
+        });
+    }
+});
+
 // Get wishlist
 router.get('/wishlist', isAuthenticated, async (req, res) => {
     try {
@@ -591,6 +673,40 @@ router.get('/bookings', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/user/cart:
+ *   get:
+ *     tags: [User]
+ *     summary: Get the user's current shopping cart
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Cart content with totals
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                     subtotal:
+ *                       type: number
+ *                     total:
+ *                       type: number
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get cart
 router.get('/cart', isAuthenticated, async (req, res) => {
     try {
@@ -695,6 +811,44 @@ router.get('/cart/count', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/user/cart:
+ *   post:
+ *     tags: [User]
+ *     summary: Add a product or pet to the cart
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [itemId, itemType]
+ *             properties:
+ *               itemId:
+ *                 type: string
+ *               itemType:
+ *                 type: string
+ *                 enum: [product, pet]
+ *               quantity:
+ *                 type: integer
+ *                 default: 1
+ *     responses:
+ *       200:
+ *         description: Item added to cart
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Item already in cart or out of stock
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Add to cart
 router.post('/cart/add', isAuthenticated, async (req, res) => {
     try {
@@ -812,6 +966,35 @@ router.patch('/cart/update', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/user/cart/{itemId}:
+ *   delete:
+ *     tags: [User]
+ *     summary: Remove an item from the cart
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: itemId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Cart entry MongoDB ID
+ *     responses:
+ *       200:
+ *         description: Item removed from cart
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       404:
+ *         description: Item not in cart
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Remove from cart
 router.delete('/cart/remove/:productId', isAuthenticated, async (req, res) => {
     try {
@@ -1257,6 +1440,48 @@ router.post('/payment/process', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/user/orders/{orderId}/cancel:
+ *   patch:
+ *     tags: [User]
+ *     summary: Cancel an order and process refund
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Order cancelled and refunded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiResponse'
+ *       400:
+ *         description: Order cannot be cancelled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Cancel order by user
 router.patch('/orders/:orderId/cancel', isAuthenticated, async (req, res) => {
     try {
@@ -1523,6 +1748,55 @@ router.get('/order-confirmation/:orderId', isAuthenticated, async (req, res) => 
     }
 });
 
+/**
+ * @swagger
+ * /api/user/orders:
+ *   get:
+ *     tags: [User]
+ *     summary: Get all orders placed by the current user
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, processing, shipped, delivered, completed, cancelled, all]
+ *           default: all
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: Paginated order list
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     orders:
+ *                       type: array
+ *                     pagination:
+ *                       type: object
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get all user orders
 router.get('/orders', isAuthenticated, async (req, res) => {
     try {
@@ -1588,6 +1862,48 @@ router.get('/orders', isAuthenticated, async (req, res) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/user/orders/{orderId}:
+ *   get:
+ *     tags: [User]
+ *     summary: Get details of a specific order (user must be owner)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: orderId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Order details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     order:
+ *                       type: object
+ *       403:
+ *         description: Not authorized to view this order
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ *       404:
+ *         description: Order not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
 // Get single order details
 router.get('/orders/:orderId', isAuthenticated, async (req, res) => {
     try {
@@ -2021,8 +2337,38 @@ router.post('/wallet/add-money', isAuthenticated, async (req, res) => {
     }
 });
 
-// Update user profile
-router.put('/profile', isAuthenticated, async (req, res) => {
+/**
+ * @swagger
+ * /api/user/profile:
+ *   get:
+ *     tags: [User]
+ *     summary: Get the current user's profile
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiError'
+ */
+// Get user profile
+router.get('/profile', isAuthenticated, async (req, res) => {
     try {
         const { fullName, email, phone, businessName, businessAddress } = req.body;
         
