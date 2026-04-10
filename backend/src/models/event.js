@@ -87,6 +87,21 @@ const eventSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
         },
+        isPaid: {
+            type: Boolean,
+            default: false
+        },
+        paidAt: {
+            type: Date
+        },
+        paymentProvider: {
+            type: String,
+            default: ''
+        },
+        paymentIntentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            default: null
+        },
         registeredAt: {
             type: Date,
             default: Date.now

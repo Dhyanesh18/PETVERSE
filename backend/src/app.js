@@ -38,16 +38,6 @@ app.use(helmet({
 // 2. Compression middleware
 app.use(compression());
 
-// 3. Rate limiting - Global
-const globalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use('/api/', globalLimiter);
-
 // 4. Create rotating write stream for access logs
 const logsDir = path.join(__dirname, '../logs');
 if (!fs.existsSync(logsDir)) {
@@ -65,22 +55,52 @@ app.use(morgan('combined', { stream: accessLogStream })); // File logging
 app.use(morgan('dev')); // Console logging
 
 // 6. CORS configuration
+const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:5173'
+];
+const envOrigins = [process.env.FRONTEND_URL, process.env.CLIENT_URL]
+    .filter(Boolean)
+    .flatMap(v => String(v).split(',').map(s => s.trim()).filter(Boolean));
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
+
 const corsOptions = {
-    origin: [
-        process.env.FRONTEND_URL || 'http://localhost:3000', 
-        'http://localhost:3001',
-        'http://localhost:5173'
-    ],
+    origin: (origin, callback) => {
+        // Allow non-browser requests (no Origin header)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(null, false);
+    },
     credentials: true, // Allow cookies/session
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'CSRF-Token'],
     exposedHeaders: ['set-cookie']
 };
+
+// Apply CORS before any /api middleware that might short-circuit (e.g., rate limiting)
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// 3. Rate limiting - Global (after CORS so preflights get CORS headers)
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use('/api/', globalLimiter);
 
 // ===== BUILT-IN MIDDLEWARE =====
 
 // 7. Body parsers
+// Razorpay webhooks require the raw request body for signature verification.
+// Mount a raw body parser ONLY for the webhook endpoint, before JSON parsing.
+app.use('/api/payment/razorpay/webhook', express.raw({ type: '*/*' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json({ limit: '10mb' }));
 

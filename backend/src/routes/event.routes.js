@@ -3,6 +3,10 @@ const router = express.Router();
 const Event = require('../models/event');
 const User = require('../models/users');
 const Wallet = require('../models/wallet');
+const Transaction = require('../models/transaction');
+const PaymentIntent = require('../models/paymentIntent');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 const multer = require('multer');
 const path = require('path');
 
@@ -676,6 +680,15 @@ router.get('/:id/ticket', isAuthenticated, isOwner, async (req, res) => {
             });
         }
 
+        // For paid events, require payment before issuing ticket
+        if ((event.entryFee || 0) > 0 && !attendee.isPaid) {
+            return res.status(403).json({
+                success: false,
+                error: 'Payment required for this event',
+                redirectPath: `/events/${eventId}/payment`
+            });
+        }
+
         const ticket = {
             eventId: event._id,
             title: event.title,
@@ -878,11 +891,20 @@ router.post('/:id/pay', isAuthenticated, isOwner, async (req, res) => {
             });
         }
 
-        const isRegistered = event.attendees && event.attendees.some(a => a.user.toString() === req.user._id.toString());
-        if (!isRegistered) {
+        const attendeeIndex = (event.attendees || []).findIndex(a => a.user.toString() === req.user._id.toString());
+        if (attendeeIndex === -1) {
             return res.status(403).json({ 
                 success: false, 
                 error: 'Register for the event first' 
+            });
+        }
+
+        // If already paid, just redirect to ticket
+        if ((event.entryFee || 0) > 0 && event.attendees[attendeeIndex]?.isPaid) {
+            return res.json({
+                success: true,
+                message: 'Already paid',
+                data: { redirectPath: `/events/${eventId}/ticket` }
             });
         }
 
@@ -907,30 +929,157 @@ router.post('/:id/pay', isAuthenticated, isOwner, async (req, res) => {
                     });
                 }
                 await wallet.deductFunds(amount);
+
+                // Credit organizer wallet (best-effort)
+                let organizerWallet = await Wallet.findOne({ user: event.organizer });
+                if (!organizerWallet) {
+                    organizerWallet = new Wallet({ user: event.organizer, balance: 0 });
+                    await organizerWallet.save();
+                }
+                await organizerWallet.addFunds(amount);
+
+                await new Transaction({
+                    from: req.user._id,
+                    to: event.organizer,
+                    amount: amount,
+                    type: 'event_payment',
+                    description: `Event entry fee: ${event.title}`
+                }).save();
             }
+
+            event.attendees[attendeeIndex].isPaid = true;
+            event.attendees[attendeeIndex].paidAt = new Date();
+            event.attendees[attendeeIndex].paymentProvider = 'wallet';
+            event.attendees[attendeeIndex].paymentIntentId = null;
+            await event.save();
+
+            return res.json({ 
+                success: true, 
+                message: 'Payment successful',
+                data: {
+                    redirectPath: `/events/${eventId}/ticket`,
+                    paymentMethod,
+                    amount
+                }
+            });
         } else if (paymentMethod === 'upi') {
-            const upiId = details && details.upiId ? String(details.upiId).trim() : '';
-            const upiRegex = /^[\w.\-]{2,}@[A-Za-z]{2,}$/;
-            if (!upiRegex.test(upiId)) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: 'Invalid UPI ID' 
+            // Use Razorpay Checkout for real payments
+            const keyId = process.env.RAZORPAY_KEY_ID;
+            const keySecret = process.env.RAZORPAY_KEY_SECRET;
+            const currency = process.env.RAZORPAY_CURRENCY || 'INR';
+
+            if (!keyId || !keySecret) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Razorpay is not configured (missing RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET)'
                 });
             }
+
+            const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
+            const amountPaise = Math.round(parseFloat(amount) * 100);
+
+            const intent = await PaymentIntent.create({
+                user: req.user._id,
+                purpose: 'event_entry_fee',
+                amount: parseFloat(amount),
+                currency,
+                status: 'created',
+                provider: 'razorpay',
+                metadata: {
+                    eventId: String(event._id),
+                    paymentMethod
+                }
+            });
+
+            const rzpOrder = await razorpay.orders.create({
+                amount: amountPaise,
+                currency,
+                receipt: String(intent._id),
+                notes: {
+                    intentId: String(intent._id),
+                    purpose: 'event_entry_fee',
+                    eventId: String(event._id)
+                }
+            });
+
+            intent.providerOrderId = rzpOrder.id;
+            await intent.save();
+
+            return res.json({
+                success: true,
+                message: 'Razorpay order created',
+                data: {
+                    intentId: String(intent._id),
+                    razorpayOrderId: rzpOrder.id,
+                    amountPaise,
+                    currency,
+                    keyId,
+                    customer: {
+                        name: req.user.fullName || req.user.username || '',
+                        email: req.user.email || '',
+                        contact: req.user.phone || ''
+                    }
+                }
+            });
         } else if (paymentMethod === 'credit-card') {
-            const name = details && details.cardName ? String(details.cardName).trim() : '';
-            const number = details && details.cardNumber ? String(details.cardNumber).replace(/\s+/g, '') : '';
-            const expiry = details && details.expiryDate ? String(details.expiryDate).trim() : '';
-            const cvv = details && details.cvv ? String(details.cvv).trim() : '';
-            const numRegex = /^\d{13,19}$/;
-            const expRegex = /^(0[1-9]|1[0-2])\/(\d{2})$/;
-            const cvvRegex = /^\d{3,4}$/;
-            if (!name || !numRegex.test(number) || !expRegex.test(expiry) || !cvvRegex.test(cvv)) {
-                return res.status(400).json({ 
-                    success: false, 
-                    error: 'Invalid card details' 
+            // Use Razorpay Checkout for real payments
+            const keyId = process.env.RAZORPAY_KEY_ID;
+            const keySecret = process.env.RAZORPAY_KEY_SECRET;
+            const currency = process.env.RAZORPAY_CURRENCY || 'INR';
+
+            if (!keyId || !keySecret) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'Razorpay is not configured (missing RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET)'
                 });
             }
+
+            const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
+            const amountPaise = Math.round(parseFloat(amount) * 100);
+
+            const intent = await PaymentIntent.create({
+                user: req.user._id,
+                purpose: 'event_entry_fee',
+                amount: parseFloat(amount),
+                currency,
+                status: 'created',
+                provider: 'razorpay',
+                metadata: {
+                    eventId: String(event._id),
+                    paymentMethod
+                }
+            });
+
+            const rzpOrder = await razorpay.orders.create({
+                amount: amountPaise,
+                currency,
+                receipt: String(intent._id),
+                notes: {
+                    intentId: String(intent._id),
+                    purpose: 'event_entry_fee',
+                    eventId: String(event._id)
+                }
+            });
+
+            intent.providerOrderId = rzpOrder.id;
+            await intent.save();
+
+            return res.json({
+                success: true,
+                message: 'Razorpay order created',
+                data: {
+                    intentId: String(intent._id),
+                    razorpayOrderId: rzpOrder.id,
+                    amountPaise,
+                    currency,
+                    keyId,
+                    customer: {
+                        name: req.user.fullName || req.user.username || '',
+                        email: req.user.email || '',
+                        contact: req.user.phone || ''
+                    }
+                }
+            });
         } else {
             return res.status(400).json({ 
                 success: false, 
@@ -938,22 +1087,188 @@ router.post('/:id/pay', isAuthenticated, isOwner, async (req, res) => {
                 supportedMethods: ['wallet', 'upi', 'credit-card']
             });
         }
-
-        return res.json({ 
-            success: true, 
-            message: 'Payment successful',
-            data: {
-                redirectPath: `/events/${eventId}/ticket`,
-                paymentMethod,
-                amount
-            }
-        });
     } catch (err) {
         console.error('Event payment error:', err);
         return res.status(500).json({ 
             success: false, 
             error: 'Payment failed',
             message: err.message 
+        });
+    }
+});
+
+// Verify Razorpay payment for event entry fee
+router.post('/:id/razorpay/verify', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const { intentId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
+        const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+        if (!keySecret) {
+            return res.status(500).json({
+                success: false,
+                error: 'Razorpay is not configured (missing RAZORPAY_KEY_SECRET)'
+            });
+        }
+
+        if (!intentId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing verification parameters'
+            });
+        }
+
+        const event = await Event.findById(eventId);
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                error: 'Event not found'
+            });
+        }
+
+        const attendeeIndex = (event.attendees || []).findIndex(a => a.user.toString() === req.user._id.toString());
+        if (attendeeIndex === -1) {
+            return res.status(403).json({
+                success: false,
+                error: 'Register for the event first'
+            });
+        }
+
+        if ((event.entryFee || 0) > 0 && event.attendees[attendeeIndex]?.isPaid) {
+            return res.json({
+                success: true,
+                message: 'Already paid',
+                data: { redirectPath: `/events/${eventId}/ticket` }
+            });
+        }
+
+        const intent = await PaymentIntent.findById(intentId);
+        if (!intent || intent.user.toString() !== req.user._id.toString() || intent.purpose !== 'event_entry_fee') {
+            return res.status(404).json({
+                success: false,
+                error: 'Payment intent not found'
+            });
+        }
+
+        if (String(intent.metadata?.eventId || '') !== String(event._id)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Intent does not match event'
+            });
+        }
+
+        if (intent.providerOrderId && intent.providerOrderId !== razorpay_order_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'Order mismatch'
+            });
+        }
+
+        const expected = crypto
+            .createHmac('sha256', keySecret)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest('hex');
+
+        if (expected !== razorpay_signature) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid payment signature'
+            });
+        }
+
+        // Credit organizer wallet (best-effort)
+        let organizerWallet = await Wallet.findOne({ user: event.organizer });
+        if (!organizerWallet) {
+            organizerWallet = new Wallet({ user: event.organizer, balance: 0 });
+            await organizerWallet.save();
+        }
+        await organizerWallet.addFunds(intent.amount);
+
+        await new Transaction({
+            from: req.user._id,
+            to: event.organizer,
+            amount: intent.amount,
+            type: 'event_payment',
+            description: `Event entry fee: ${event.title}`
+        }).save();
+
+        event.attendees[attendeeIndex].isPaid = true;
+        event.attendees[attendeeIndex].paidAt = new Date();
+        event.attendees[attendeeIndex].paymentProvider = 'razorpay';
+        event.attendees[attendeeIndex].paymentIntentId = intent._id;
+        await event.save();
+
+        intent.status = 'paid';
+        intent.providerOrderId = razorpay_order_id;
+        intent.providerPaymentId = razorpay_payment_id;
+        intent.providerSignature = razorpay_signature;
+        await intent.save();
+
+        return res.json({
+            success: true,
+            message: 'Payment verified',
+            data: {
+                redirectPath: `/events/${eventId}/ticket`
+            }
+        });
+    } catch (err) {
+        console.error('Event Razorpay verify error:', err);
+        return res.status(500).json({
+            success: false,
+            error: 'Verification failed',
+            message: err.message
+        });
+    }
+});
+
+// Cancel Razorpay event payment (best-effort)
+router.post('/:id/razorpay/cancel', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const { intentId } = req.body || {};
+
+        if (!intentId) {
+            return res.status(400).json({
+                success: false,
+                error: 'intentId is required'
+            });
+        }
+
+        const intent = await PaymentIntent.findById(intentId);
+        if (!intent || intent.user.toString() !== req.user._id.toString() || intent.purpose !== 'event_entry_fee') {
+            return res.status(404).json({
+                success: false,
+                error: 'Payment intent not found'
+            });
+        }
+
+        if (String(intent.metadata?.eventId || '') !== String(eventId)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Intent does not match event'
+            });
+        }
+
+        if (intent.status === 'paid') {
+            return res.json({
+                success: true,
+                message: 'Payment already completed'
+            });
+        }
+
+        intent.status = 'cancelled';
+        await intent.save();
+
+        return res.json({
+            success: true,
+            message: 'Cancelled'
+        });
+    } catch (err) {
+        console.error('Event Razorpay cancel error:', err);
+        return res.status(500).json({
+            success: false,
+            error: 'Cancel failed',
+            message: err.message
         });
     }
 });

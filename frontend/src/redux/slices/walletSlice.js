@@ -50,7 +50,7 @@ export const fetchServiceProviderWallet = createAsyncThunk(
 // Add money to wallet
 export const addMoneyToWallet = createAsyncThunk(
   'wallet/addMoney',
-  async ({ amount, paymentMethod, paymentDetails }, { rejectWithValue }) => {
+  async ({ amount, paymentMethod }, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/user/wallet/add-money`, {
         method: 'POST',
@@ -60,8 +60,7 @@ export const addMoneyToWallet = createAsyncThunk(
         credentials: 'include',
         body: JSON.stringify({
           amount: parseFloat(amount),
-          paymentMethod,
-          paymentDetails
+          paymentMethod
         })
       });
       

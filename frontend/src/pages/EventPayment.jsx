@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getEventPaymentData, processEventPayment } from '../services/api';
+import { getEventPaymentData, processEventPayment, verifyEventRazorpayPayment, cancelEventRazorpayPayment } from '../services/api';
 import { fetchWalletData } from '../redux/slices/walletSlice';
 import { FaCheck, FaCreditCard, FaMobile, FaWallet, FaShieldAlt, FaCalendar, FaClock, FaMapMarker } from 'react-icons/fa';
 import { EventPaymentSkeleton } from '../components/Skeleton';
@@ -18,13 +18,6 @@ const EventPayment = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState('wallet');
-    const [paymentDetails, setPaymentDetails] = useState({
-        cardName: '',
-        cardNumber: '',
-        expiryDate: '',
-        cvv: '',
-        upiId: ''
-    });
 
     useEffect(() => {
         fetchPaymentData();
@@ -56,49 +49,12 @@ const EventPayment = () => {
         }
     };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setPaymentDetails(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
     const selectPaymentMethod = (method) => {
         setSelectedMethod(method);
     };
 
     const validatePaymentDetails = () => {
-        if (selectedMethod === 'credit-card') {
-            const { cardName, cardNumber, expiryDate, cvv } = paymentDetails;
-            const numRegex = /^\d{13,19}$/;
-            const expRegex = /^(0[1-9]|1[0-2])\/(\d{2})$/;
-            const cvvRegex = /^\d{3,4}$/;
-
-            if (!cardName.trim()) {
-                alert('Please enter card holder name');
-                return false;
-            }
-            if (!numRegex.test(cardNumber.replace(/\s+/g, ''))) {
-                alert('Please enter a valid card number (13-19 digits)');
-                return false;
-            }
-            if (!expRegex.test(expiryDate)) {
-                alert('Please enter expiry date in MM/YY format');
-                return false;
-            }
-            if (!cvvRegex.test(cvv)) {
-                alert('Please enter a valid CVV (3-4 digits)');
-                return false;
-            }
-        } else if (selectedMethod === 'upi') {
-            const { upiId } = paymentDetails;
-            const upiRegex = /^[\w.\-]{2,}@[A-Za-z]{2,}$/;
-            if (!upiRegex.test(upiId.trim())) {
-                alert('Please enter a valid UPI ID (e.g., yourname@upi)');
-                return false;
-            }
-        } else if (selectedMethod === 'wallet') {
+        if (selectedMethod === 'wallet') {
             if (walletBalance < (event?.entryFee || 0)) {
                 alert('Insufficient wallet balance');
                 return false;
@@ -109,6 +65,8 @@ const EventPayment = () => {
 
     const handlePayment = async (e) => {
         e.preventDefault();
+
+        let handedOffToRazorpay = false;
 
         if (!validatePaymentDetails()) {
             return;
@@ -122,29 +80,105 @@ const EventPayment = () => {
                 details: {}
             };
 
-            if (selectedMethod === 'upi') {
-                payload.details.upiId = paymentDetails.upiId.trim();
-            } else if (selectedMethod === 'credit-card') {
-                payload.details.cardName = paymentDetails.cardName.trim();
-                payload.details.cardNumber = paymentDetails.cardNumber.replace(/\s+/g, '');
-                payload.details.expiryDate = paymentDetails.expiryDate.trim();
-                payload.details.cvv = paymentDetails.cvv.trim();
-            }
-
             const response = await processEventPayment(id, payload);
 
             if (response.data.success) {
-                // Refresh wallet data if payment was made using wallet
+                // Wallet: immediate server-side payment
                 if (selectedMethod === 'wallet') {
                     await dispatch(fetchWalletData()).unwrap();
+                    navigate(response.data.data.redirectPath || `/events/${id}/ticket`);
+                    return;
                 }
+
+                // Razorpay flow for card/UPI
+                if ((selectedMethod === 'credit-card' || selectedMethod === 'upi') && response.data?.data?.razorpayOrderId) {
+                    const {
+                        intentId,
+                        razorpayOrderId,
+                        amountPaise,
+                        currency,
+                        keyId,
+                        customer
+                    } = response.data.data;
+
+                    const loadRazorpay = () => {
+                        return new Promise((resolve) => {
+                            if (window.Razorpay) return resolve(true);
+                            const script = document.createElement('script');
+                            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                            script.onload = () => resolve(true);
+                            script.onerror = () => resolve(false);
+                            document.body.appendChild(script);
+                        });
+                    };
+
+                    const ok = await loadRazorpay();
+                    if (!ok) {
+                        alert('Failed to load Razorpay. Please try again.');
+                        return;
+                    }
+
+                    const options = {
+                        key: keyId,
+                        amount: amountPaise,
+                        currency: currency || 'INR',
+                        name: 'PetVerse',
+                        description: 'Event Payment',
+                        order_id: razorpayOrderId,
+                        prefill: {
+                            name: customer?.name || '',
+                            email: customer?.email || '',
+                            contact: customer?.contact || ''
+                        },
+                        notes: {
+                            intentId
+                        },
+                        handler: async function (rzpResponse) {
+                            try {
+                                const verifyResp = await verifyEventRazorpayPayment(id, {
+                                    intentId,
+                                    razorpay_order_id: rzpResponse.razorpay_order_id,
+                                    razorpay_payment_id: rzpResponse.razorpay_payment_id,
+                                    razorpay_signature: rzpResponse.razorpay_signature
+                                });
+
+                                if (verifyResp.data?.success) {
+                                    navigate(verifyResp.data?.data?.redirectPath || `/events/${id}/ticket`);
+                                } else {
+                                    alert(verifyResp.data?.error || 'Payment verification failed');
+                                }
+                            } catch (e) {
+                                alert(e.response?.data?.error || 'Payment verification failed');
+                            } finally {
+                                setSubmitting(false);
+                            }
+                        },
+                        modal: {
+                            ondismiss: function () {
+                                cancelEventRazorpayPayment(id, { intentId }).catch(() => {});
+                                setSubmitting(false);
+                            }
+                        }
+                    };
+
+                    const rzp = new window.Razorpay(options);
+                    rzp.on('payment.failed', function (resp) {
+                        alert(resp.error?.description || 'Payment failed');
+                        setSubmitting(false);
+                    });
+                    handedOffToRazorpay = true;
+                    rzp.open();
+                    return;
+                }
+
                 navigate(response.data.data.redirectPath || `/events/${id}/ticket`);
             }
         } catch (error) {
             console.error('Payment failed:', error);
             alert(error.response?.data?.error || 'Payment failed. Please try again.');
         } finally {
-            setSubmitting(false);
+            // For Razorpay we clear submitting in handler/ondismiss
+            if (!handedOffToRazorpay) setSubmitting(false);
         }
     };
 
@@ -223,44 +257,8 @@ const EventPayment = () => {
                                         </div>
 
                                         {selectedMethod === 'credit-card' && (
-                                            <div className="mt-4 space-y-3 pl-8">
-                                                <input
-                                                    type="text"
-                                                    name="cardName"
-                                                    placeholder="Name on Card"
-                                                    value={paymentDetails.cardName}
-                                                    onChange={handleInputChange}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                                />
-                                                <div className="grid grid-cols-3 gap-3">
-                                                    <input
-                                                        type="text"
-                                                        name="cardNumber"
-                                                        placeholder="Card Number"
-                                                        value={paymentDetails.cardNumber}
-                                                        onChange={handleInputChange}
-                                                        maxLength="19"
-                                                        className="col-span-3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        name="expiryDate"
-                                                        placeholder="MM/YY"
-                                                        value={paymentDetails.expiryDate}
-                                                        onChange={handleInputChange}
-                                                        maxLength="5"
-                                                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                                    />
-                                                    <input
-                                                        type="text"
-                                                        name="cvv"
-                                                        placeholder="CVV"
-                                                        value={paymentDetails.cvv}
-                                                        onChange={handleInputChange}
-                                                        maxLength="4"
-                                                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                                    />
-                                                </div>
+                                            <div className="mt-4 pl-8 text-sm text-gray-600">
+                                                Card details are entered securely in Razorpay Checkout after you click “Proceed Payment”.
                                             </div>
                                         )}
                                     </div>
@@ -290,15 +288,8 @@ const EventPayment = () => {
                                         </div>
 
                                         {selectedMethod === 'upi' && (
-                                            <div className="mt-4 pl-8">
-                                                <input
-                                                    type="text"
-                                                    name="upiId"
-                                                    placeholder="yourname@upi"
-                                                    value={paymentDetails.upiId}
-                                                    onChange={handleInputChange}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
-                                                />
+                                            <div className="mt-4 pl-8 text-sm text-gray-600">
+                                                UPI details are entered securely in Razorpay Checkout after you click “Proceed Payment”.
                                             </div>
                                         )}
                                     </div>

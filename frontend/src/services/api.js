@@ -166,7 +166,17 @@ export const submitCheckout = (shippingData) => apiClient.post('/api/payment/che
 export const submitCheckoutForm = (formData) => apiClient.post('/api/payment/checkout', formData);
 export const prepareCheckout = () => apiClient.post('/checkout/prepare');
 export const processPayment = (paymentData) => apiClient.post('/api/payment', paymentData);
+export const verifyRazorpayPayment = (payload) => apiClient.post('/api/payment/razorpay/verify', payload);
 export const getWalletBalance = () => apiClient.get('/api/wallet');
+
+// ===== Razorpay (Wallet Top-up) APIs =====
+export const createWalletTopupOrder = (payload) => apiClient.post('/api/user/wallet/add-money', payload);
+export const verifyWalletTopup = (payload) => apiClient.post('/api/user/wallet/razorpay/verify', payload);
+export const cancelWalletTopup = (payload) => apiClient.post('/api/user/wallet/razorpay/cancel', payload);
+
+// ===== Razorpay (Event Payment) APIs =====
+export const verifyEventRazorpayPayment = (eventId, payload) => apiClient.post(`/api/events/${eventId}/razorpay/verify`, payload);
+export const cancelEventRazorpayPayment = (eventId, payload) => apiClient.post(`/api/events/${eventId}/razorpay/cancel`, payload);
 
 // ===== Review APIs =====
 export const getReviews = (type, itemId) => apiClient.get(`/api/reviews/${type}/${itemId}`);
