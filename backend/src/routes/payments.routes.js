@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const { isAuthenticated } = require('../middleware/auth');
 
+const crypto = require('crypto');
+const Razorpay = require('razorpay');
+
 const Cart = require('../models/cart');
 const User = require('../models/users');
 const Wallet = require('../models/wallet');
@@ -11,6 +14,105 @@ const Order = require('../models/order');
 const Transaction = require('../models/transaction');
 const Event = require('../models/event');
 const UserModel = require('../models/users');
+
+function getFrontendUrl() {
+    return (
+        process.env.FRONTEND_URL ||
+        process.env.CLIENT_URL ||
+        'http://localhost:5173'
+    );
+}
+
+function getRazorpayClient() {
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret) {
+        const err = new Error('RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET is not set');
+        err.statusCode = 500;
+        throw err;
+    }
+    return new Razorpay({ key_id: keyId, key_secret: keySecret });
+}
+
+function toPaise(amountInRupees) {
+    return Math.round(Number(amountInRupees) * 100);
+}
+
+async function creditWalletsAndLogTransactionsForOrder(order) {
+    const adminUserId = process.env.ADMIN_USER_ID || '6807e4424877bcd9980c7e00';
+    const adminWallet = await Wallet.findOne({ user: adminUserId });
+
+    const commission = Number(order.totalAmount) * 0.05;
+
+    for (const item of order.items) {
+        const itemTotal = Number(item.price) * Number(item.quantity);
+        const sellerShare = itemTotal * 0.95;
+
+        let sellerId = null;
+        if (item.itemType === 'Pet') {
+            const petDoc = await Pet.findById(item.product).lean();
+            sellerId = petDoc?.addedBy;
+        } else {
+            const productDoc = await Product.findById(item.product).lean();
+            sellerId = productDoc?.seller;
+        }
+
+        if (!sellerId) continue;
+
+        const sellerWallet = await Wallet.findOne({ user: sellerId });
+        if (sellerWallet) await sellerWallet.addFunds(sellerShare);
+
+        await new Transaction({
+            from: order.customer,
+            to: sellerId,
+            amount: sellerShare,
+            type: 'order_payment',
+            description: `Payment for order ${order.orderNumber || order._id}`
+        }).save();
+    }
+
+    if (adminWallet) await adminWallet.addFunds(commission);
+    await new Transaction({
+        from: order.customer,
+        to: adminUserId,
+        amount: commission,
+        type: 'commission',
+        description: `Platform commission for order ${order.orderNumber || order._id}`
+    }).save();
+}
+
+async function releaseReservedInventoryForOrder(order) {
+    for (const item of order.items) {
+        if (item.itemType === 'Pet') {
+            await Pet.findByIdAndUpdate(item.product, { $set: { available: true } });
+        } else {
+            await Product.findByIdAndUpdate(item.product, { $inc: { stock: item.quantity } });
+        }
+    }
+}
+
+async function markOrderPaidIfNeeded(order, paymentMeta = {}) {
+    if (!order) return;
+    if (order.paymentStatus === 'paid') return;
+
+    await creditWalletsAndLogTransactionsForOrder(order);
+
+    order.paymentStatus = 'paid';
+    order.status = 'processing';
+    order.paymentProviderPaymentId = paymentMeta.paymentId || order.paymentProviderPaymentId;
+    order.paymentProviderSignature = paymentMeta.signature || order.paymentProviderSignature;
+
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+        status: 'processing',
+        timestamp: new Date(),
+        updatedBy: order.seller,
+        updatedByRole: 'system',
+        notes: 'Payment confirmed via Razorpay'
+    });
+
+    await order.save();
+}
 
 /**
  * @swagger
@@ -531,28 +633,9 @@ router.post('/', isAuthenticated, async (req, res) => {
                     shortfall: (total - customerWallet.balance).toFixed(2)
                 });
             }
-        } else if (paymentMethod === 'upi') {
-            const { upiId } = req.body;
-            const upiRegex = /^[\w.\-]{2,}@[A-Za-z]{2,}$/;
-            if (!upiId || !upiRegex.test(upiId)) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Invalid UPI ID format'
-                });
-            }
-        } else if (paymentMethod === 'card') {
-            const { cardName, cardNumber, expiryDate, cvv } = req.body.paymentDetails || {};
-            const numRegex = /^\d{13,19}$/;
-            const expRegex = /^(0[1-9]|1[0-2])\/(\d{2})$/;
-            const cvvRegex = /^\d{3,4}$/;
-            
-            if (!cardName || !numRegex.test(cardNumber?.replace(/\s+/g, '')) || 
-                !expRegex.test(expiryDate) || !cvvRegex.test(cvv)) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Invalid card details'
-                });
-            }
+        } else if (paymentMethod === 'upi' || paymentMethod === 'card') {
+            // Real payments are processed via Razorpay Checkout.
+            // Do not collect/validate card or UPI credentials on the server.
         } else if (paymentMethod === 'cod') {
             // COD doesn't require additional validation
         } else {
@@ -561,6 +644,12 @@ router.post('/', isAuthenticated, async (req, res) => {
                 error: 'Unsupported payment method',
                 supportedMethods: ['wallet', 'upi', 'card', 'cod']
             });
+        }
+
+        // If using Razorpay, ensure configuration is present before reserving inventory.
+        let razorpayClient = null;
+        if (paymentMethod === 'card' || paymentMethod === 'upi') {
+            razorpayClient = getRazorpayClient();
         }
 
         // Deduct stock for products
@@ -586,6 +675,12 @@ router.post('/', isAuthenticated, async (req, res) => {
                 try {
                     const petDoc = await Pet.findById(item.productId._id || item.productId);
                     if (petDoc) {
+                        if (petDoc.available === false) {
+                            return res.status(400).json({
+                                success: false,
+                                error: `${petDoc.name || 'This pet'} is no longer available`
+                            });
+                        }
                         petDoc.available = false;
                         await petDoc.save();
                     }
@@ -608,41 +703,114 @@ router.post('/', isAuthenticated, async (req, res) => {
         let primarySellerId = null;
 
         for (const item of cart.items) {
-            const sellerId = item.productId.seller;
-            if (!primarySellerId) primarySellerId = sellerId; // Use first seller as primary
+            const doc = item.productId;
+            const sellerId = item.itemType === 'Pet' ? doc.addedBy : doc.seller;
+            if (!primarySellerId && sellerId) primarySellerId = sellerId; // Use first seller as primary
+
+            const unitPrice = item.itemType === 'Product' && doc.discount > 0
+                ? doc.price * (1 - doc.discount / 100)
+                : doc.price;
 
             const sellerWallet = await Wallet.findOne({ user: sellerId });
-            const itemPrice = item.productId.price * item.quantity;
+            const itemPrice = unitPrice * item.quantity;
             const itemSellerShare = itemPrice * 0.95;
-            if (sellerWallet) await sellerWallet.addFunds(itemSellerShare);
 
-            // Create transaction with required type field
-            await new Transaction({
-                from: req.user._id,
-                to: sellerId,
-                amount: itemSellerShare,
-                type: 'order_payment', // Add type field
-                description: `Payment for order items`
-            }).save();
+            // Only credit sellers immediately for wallet payments.
+            if (paymentMethod === 'wallet') {
+                if (sellerWallet) await sellerWallet.addFunds(itemSellerShare);
+                await new Transaction({
+                    from: req.user._id,
+                    to: sellerId,
+                    amount: itemSellerShare,
+                    type: 'order_payment',
+                    description: `Payment for order items`
+                }).save();
+            }
 
             // Add to order items with correct field name
             orderItems.push({
-                product: item.productId._id,
+                product: doc._id,
                 itemType: item.itemType || 'Product',
                 quantity: item.quantity,
-                price: item.productId.price
+                price: unitPrice
             });
         }
 
-        // Add commission to admin wallet with type
-        if (adminWallet) await adminWallet.addFunds(commission);
-        await new Transaction({
-            from: req.user._id,
-            to: "6807e4424877bcd9980c7e00",
-            amount: commission,
-            type: 'commission',
-            description: `Platform commission for order`
-        }).save();
+        // Add commission to admin wallet only for wallet payments (real-money methods will do this after confirmation)
+        if (paymentMethod === 'wallet') {
+            if (adminWallet) await adminWallet.addFunds(commission);
+            await new Transaction({
+                from: req.user._id,
+                to: "6807e4424877bcd9980c7e00",
+                amount: commission,
+                type: 'commission',
+                description: `Platform commission for order`
+            }).save();
+        }
+
+        // Razorpay flow for real-money (card/upi): create a pending order + Razorpay order and return details.
+        if (paymentMethod === 'card' || paymentMethod === 'upi') {
+            const currency = (process.env.RAZORPAY_CURRENCY || 'INR').toUpperCase();
+
+            const order = new Order({
+                customer: req.user._id,
+                seller: primarySellerId,
+                items: orderItems,
+                totalAmount: total,
+                status: 'pending',
+                paymentStatus: 'pending',
+                shippingAddress: shippingInfo,
+                paymentMethod,
+                paymentProvider: 'razorpay'
+            });
+            await order.save();
+
+            const razorpayOrder = await razorpayClient.orders.create({
+                amount: toPaise(total),
+                currency,
+                receipt: order.orderNumber || order._id.toString(),
+                notes: {
+                    orderId: order._id.toString(),
+                    userId: req.user._id.toString()
+                }
+            });
+
+            order.paymentProviderOrderId = razorpayOrder.id;
+            await order.save();
+
+            // Clear shipping info from session
+            delete req.session.shippingInfo;
+
+            // Clear cart (inventory already reserved)
+            cart.items = [];
+            await cart.save();
+
+            return res.json({
+                success: true,
+                message: 'Razorpay order created',
+                data: {
+                    orderId: order._id,
+                    orderNumber: order.orderNumber,
+                    paymentMethod,
+                    currency,
+                    amountPaise: razorpayOrder.amount,
+                    razorpayOrderId: razorpayOrder.id,
+                    keyId: process.env.RAZORPAY_KEY_ID,
+                    customer: {
+                        name: req.user.fullName || req.user.username || 'Customer',
+                        email: req.user.email,
+                        contact: req.user.phone || shippingInfo.phone || ''
+                    },
+                    notes: {
+                        orderId: order._id.toString()
+                    },
+                    callback: {
+                        successRedirect: `${getFrontendUrl()}/order-confirmation/${order._id}`,
+                        cancelRedirect: `${getFrontendUrl()}/payment?canceled=1&orderId=${order._id}`
+                    }
+                }
+            });
+        }
 
         const order = new Order({
             customer: req.user._id,
@@ -682,6 +850,200 @@ router.post('/', isAuthenticated, async (req, res) => {
             error: 'Payment processing failed',
             message: error.message
         });
+    }
+});
+
+// ------------------ Razorpay: Verify Payment Signature (Realtime confirmation) ------------------
+router.post('/razorpay/verify', isAuthenticated, async (req, res) => {
+    try {
+        const { orderId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
+
+        if (!orderId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing Razorpay verification fields',
+                requiredFields: ['orderId', 'razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature']
+            });
+        }
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                error: 'Order not found'
+            });
+        }
+
+        if (order.customer.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                error: 'Unauthorized'
+            });
+        }
+
+        if (order.paymentProvider !== 'razorpay' || !order.paymentProviderOrderId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Order is not a Razorpay order'
+            });
+        }
+
+        if (order.paymentProviderOrderId !== razorpay_order_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'Razorpay order ID mismatch'
+            });
+        }
+
+        const keySecret = process.env.RAZORPAY_KEY_SECRET;
+        const expected = crypto
+            .createHmac('sha256', keySecret)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest('hex');
+
+        if (expected !== razorpay_signature) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid payment signature'
+            });
+        }
+
+        await markOrderPaidIfNeeded(order, {
+            paymentId: razorpay_payment_id,
+            signature: razorpay_signature
+        });
+
+        return res.json({
+            success: true,
+            message: 'Payment verified',
+            data: {
+                orderId: order._id,
+                redirectPath: `/order-confirmation/${order._id}`
+            }
+        });
+    } catch (err) {
+        console.error('Razorpay verify error:', err);
+        return res.status(500).json({
+            success: false,
+            error: 'Verification failed',
+            message: err.message
+        });
+    }
+});
+
+// ------------------ Razorpay: Cancel Pending Payment (Release inventory) ------------------
+router.post('/razorpay/cancel', isAuthenticated, async (req, res) => {
+    try {
+        const { orderId } = req.body || {};
+        if (!orderId) {
+            return res.status(400).json({
+                success: false,
+                error: 'orderId is required'
+            });
+        }
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                error: 'Order not found'
+            });
+        }
+
+        if (order.customer.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                error: 'Unauthorized'
+            });
+        }
+
+        if (order.paymentProvider !== 'razorpay') {
+            return res.status(400).json({
+                success: false,
+                error: 'Not a Razorpay order'
+            });
+        }
+
+        if (order.paymentStatus !== 'pending') {
+            return res.json({
+                success: true,
+                message: 'Order is already finalized'
+            });
+        }
+
+        await releaseReservedInventoryForOrder(order);
+        order.paymentStatus = 'failed';
+        order.status = 'cancelled';
+        await order.save();
+
+        return res.json({
+            success: true,
+            message: 'Order cancelled'
+        });
+    } catch (err) {
+        console.error('Razorpay cancel error:', err);
+        return res.status(500).json({
+            success: false,
+            error: 'Cancel failed',
+            message: err.message
+        });
+    }
+});
+
+// ------------------ Razorpay: Webhook (Backup realtime confirmation) ------------------
+// NOTE: `src/app.js` mounts an `express.raw()` body parser for this path.
+router.post('/razorpay/webhook', async (req, res) => {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers['x-razorpay-signature'];
+
+    if (!webhookSecret) {
+        return res.status(500).send('RAZORPAY_WEBHOOK_SECRET is not set');
+    }
+
+    try {
+        const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(String(req.body || ''));
+        const expected = crypto.createHmac('sha256', webhookSecret).update(rawBody).digest('hex');
+
+        if (!signature || expected !== signature) {
+            return res.status(400).send('Invalid webhook signature');
+        }
+
+        const payload = JSON.parse(rawBody.toString('utf8') || '{}');
+        const event = payload.event;
+
+        // Typical success event
+        if (event === 'payment.captured') {
+            const payment = payload?.payload?.payment?.entity;
+            const razorpayOrderId = payment?.order_id;
+            const razorpayPaymentId = payment?.id;
+
+            if (razorpayOrderId) {
+                const order = await Order.findOne({ paymentProvider: 'razorpay', paymentProviderOrderId: razorpayOrderId });
+                if (order) {
+                    await markOrderPaidIfNeeded(order, { paymentId: razorpayPaymentId });
+                }
+            }
+        }
+
+        // Failure events (best-effort inventory release)
+        if (event === 'payment.failed') {
+            const payment = payload?.payload?.payment?.entity;
+            const razorpayOrderId = payment?.order_id;
+            if (razorpayOrderId) {
+                const order = await Order.findOne({ paymentProvider: 'razorpay', paymentProviderOrderId: razorpayOrderId });
+                if (order && order.paymentStatus === 'pending') {
+                    await releaseReservedInventoryForOrder(order);
+                    order.paymentStatus = 'failed';
+                    order.status = 'cancelled';
+                    await order.save();
+                }
+            }
+        }
+
+        return res.json({ received: true });
+    } catch (err) {
+        console.error('Razorpay webhook error:', err);
+        return res.status(500).json({ received: false });
     }
 });
 

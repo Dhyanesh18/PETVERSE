@@ -53,22 +53,50 @@ module.exports = {
             });
         }
         
-            return res.status(200).json({
-                success: true,
-                message: 'Login successful',
-                user: {
-                    id: user._id,
-                    _id: user._id,
-                    fullName: user.fullName,
-                    username: user.username,
-                    email: user.email,
-                    phone: user.phone,
-                    role: user.role,
-                    isApproved: user.isApproved,
-                    createdAt: user.createdAt,
-                    updatedAt: user.updatedAt
-                },
-                userRole: user.role
+            // Create a session so protected routes (isAuthenticated) work.
+            // Regenerate session ID on login to reduce session fixation risk.
+            return req.session.regenerate((regenErr) => {
+                if (regenErr) {
+                    console.error('Session regenerate error:', regenErr);
+                    return res.status(500).json({
+                        success: false,
+                        error: 'Server error. Please try again later.'
+                    });
+                }
+
+                req.session.userId = user._id;
+                req.session.userRole = user.role;
+
+                // Attach for this request; subsequent requests will load user from session in app.js middleware
+                req.user = user;
+
+                req.session.save((saveErr) => {
+                    if (saveErr) {
+                        console.error('Session save error:', saveErr);
+                        return res.status(500).json({
+                            success: false,
+                            error: 'Server error. Please try again later.'
+                        });
+                    }
+
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Login successful',
+                        user: {
+                            id: user._id,
+                            _id: user._id,
+                            fullName: user.fullName,
+                            username: user.username,
+                            email: user.email,
+                            phone: user.phone,
+                            role: user.role,
+                            isApproved: user.isApproved,
+                            createdAt: user.createdAt,
+                            updatedAt: user.updatedAt
+                        },
+                        userRole: user.role
+                    });
+                });
             });
 
         } catch (err) {

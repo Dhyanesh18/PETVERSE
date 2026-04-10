@@ -33,6 +33,7 @@
         "rotating-file-stream": "^3.2.8",
         "socket.io": "^4.8.1",
         "sqlite3": "^5.1.7",
+        "razorpay": "^2.9.6",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1"
     },

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { getCheckoutData } from '../services/api';
+import { getCheckoutData, submitCheckout } from '../services/api';
 import { FaShieldAlt, FaWallet, FaArrowLeft } from 'react-icons/fa';
 import { CheckoutSkeleton } from '../components/Skeleton';
 
@@ -52,6 +52,7 @@ const Checkout = () => {
     const { isAuthenticated } = useAuth();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [submitting, setSubmitting] = useState(false);
     const [checkoutData, setCheckoutData] = useState({ cart: { items: [], subtotal: 0, shipping: 0, tax: 0, total: 0 }, user: {} });
     
     const [shippingInfo, setShippingInfo] = useState({
@@ -357,18 +358,34 @@ const Checkout = () => {
                                     
                                     <button
                                         onClick={() => {
-                                            if (validateForm()) {
-                                                // Store shipping info in localStorage and navigate to payment
-                                                localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
-                                                navigate('/payment');
-                                            } else {
-                                                setError('Please fill in all required fields correctly.');
-                                            }
+                                            (async () => {
+                                                if (!validateForm()) {
+                                                    setError('Please fill in all required fields correctly.');
+                                                    return;
+                                                }
+
+                                                try {
+                                                    setSubmitting(true);
+                                                    setError('');
+                                                    const resp = await submitCheckout(shippingInfo);
+                                                    if (resp.data?.success) {
+                                                        localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
+                                                        navigate('/payment');
+                                                    } else {
+                                                        setError(resp.data?.error || 'Failed to save shipping information');
+                                                    }
+                                                } catch (e) {
+                                                    console.error('Checkout submit failed:', e);
+                                                    setError(e.response?.data?.error || 'Failed to save shipping information');
+                                                } finally {
+                                                    setSubmitting(false);
+                                                }
+                                            })();
                                         }}
-                                        disabled={safeCart.items.length === 0}
+                                        disabled={safeCart.items.length === 0 || submitting}
                                         className="px-8 py-3 bg-linear-to-r from-teal-500 to-teal-600 text-white rounded-lg hover:from-teal-600 hover:to-teal-700 transition-all font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        Continue to Payment
+                                        {submitting ? 'Saving...' : 'Continue to Payment'}
                                     </button>
                                 </div>
                             </div>

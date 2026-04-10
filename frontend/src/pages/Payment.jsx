@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
 import { FaWallet, FaCreditCard, FaMobile, FaMoneyBillWave, FaArrowLeft, FaLock } from 'react-icons/fa';
-import { processPayment } from '../services/api';
+import { processPayment, verifyRazorpayPayment } from '../services/api';
 import { fetchWalletData } from '../redux/slices/walletSlice';
 
 const Payment = () => {
@@ -11,13 +11,6 @@ const Payment = () => {
     const dispatch = useDispatch();
     const { isAuthenticated } = useAuth();
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('wallet');
-    const [paymentDetails, setPaymentDetails] = useState({
-        cardName: '',
-        cardNumber: '',
-        expiryDate: '',
-        cvv: '',
-        upiId: ''
-    });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
 
@@ -40,26 +33,107 @@ const Payment = () => {
         setError('');
 
         try {
-            const paymentData = {
-                paymentMethod: selectedPaymentMethod,
-                paymentDetails: selectedPaymentMethod === 'card' ? paymentDetails : undefined,
-                upiId: selectedPaymentMethod === 'upi' ? paymentDetails.upiId : undefined
-            };
+            const paymentData = { paymentMethod: selectedPaymentMethod };
 
             const response = await processPayment(paymentData);
-            if (response.data.success) {
-                // Refresh wallet data if payment was made using wallet
-                if (selectedPaymentMethod === 'wallet') {
-                    dispatch(fetchWalletData());
-                }
-                // Clear stored shipping info
-                localStorage.removeItem('shippingInfo');
-                // Navigate to order confirmation with order ID
-                const orderId = response.data.data.orderId;
-                navigate(`/order-confirmation/${orderId}`);
-            } else {
-                setError(response.data.error || 'Payment failed');
+
+            if (!response.data?.success) {
+                setError(response.data?.error || 'Payment failed');
+                return;
             }
+
+            // Razorpay flow for real money payments
+            if ((selectedPaymentMethod === 'card' || selectedPaymentMethod === 'upi') && response.data?.data?.razorpayOrderId) {
+                const {
+                    orderId,
+                    razorpayOrderId,
+                    amountPaise,
+                    currency,
+                    keyId,
+                    customer
+                } = response.data.data;
+
+                const loadRazorpay = () => {
+                    return new Promise((resolve) => {
+                        if (window.Razorpay) return resolve(true);
+                        const script = document.createElement('script');
+                        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                        script.onload = () => resolve(true);
+                        script.onerror = () => resolve(false);
+                        document.body.appendChild(script);
+                    });
+                };
+
+                const ok = await loadRazorpay();
+                if (!ok) {
+                    setError('Failed to load Razorpay. Please try again.');
+                    return;
+                }
+
+                const options = {
+                    key: keyId,
+                    amount: amountPaise,
+                    currency: currency || 'INR',
+                    name: 'PetVerse',
+                    description: 'Order Payment',
+                    order_id: razorpayOrderId,
+                    prefill: {
+                        name: customer?.name || '',
+                        email: customer?.email || '',
+                        contact: customer?.contact || ''
+                    },
+                    notes: {
+                        orderId
+                    },
+                    handler: async function (rzpResponse) {
+                        try {
+                            const verifyResp = await verifyRazorpayPayment({
+                                orderId,
+                                razorpay_order_id: rzpResponse.razorpay_order_id,
+                                razorpay_payment_id: rzpResponse.razorpay_payment_id,
+                                razorpay_signature: rzpResponse.razorpay_signature
+                            });
+
+                            if (verifyResp.data?.success) {
+                                localStorage.removeItem('shippingInfo');
+                                navigate(`/order-confirmation/${orderId}`);
+                            } else {
+                                setError(verifyResp.data?.error || 'Payment verification failed');
+                            }
+                        } catch (e) {
+                            console.error('Razorpay verify failed:', e);
+                            setError(e.response?.data?.error || 'Payment verification failed');
+                        }
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            setError('Payment was cancelled');
+                            // Best-effort: cancel pending order and release reserved inventory
+                            fetch('http://localhost:8080/api/payment/razorpay/cancel', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                credentials: 'include',
+                                body: JSON.stringify({ orderId })
+                            }).catch(() => {});
+                        }
+                    }
+                };
+
+                const rzp = new window.Razorpay(options);
+                rzp.on('payment.failed', function (resp) {
+                    setError(resp.error?.description || 'Payment failed');
+                });
+                rzp.open();
+                return;
+            }
+
+            // Wallet/COD: existing behavior
+            if (selectedPaymentMethod === 'wallet') {
+                dispatch(fetchWalletData());
+            }
+            localStorage.removeItem('shippingInfo');
+            const orderId = response.data.data.orderId;
+            navigate(`/order-confirmation/${orderId}`);
         } catch (err) {
             console.error('Payment error:', err);
             if (err.response && err.response.data && err.response.data.error) {
@@ -151,51 +225,9 @@ const Payment = () => {
                                     </div>
                                 </div>
                                 {selectedPaymentMethod === 'card' && (
-                                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Name on Card</label>
-                                            <input
-                                                type="text"
-                                                value={paymentDetails.cardName}
-                                                onChange={(e) => setPaymentDetails({...paymentDetails, cardName: e.target.value})}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                                placeholder="Enter name on card"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Card Number</label>
-                                            <input
-                                                type="text"
-                                                value={paymentDetails.cardNumber}
-                                                onChange={(e) => setPaymentDetails({...paymentDetails, cardNumber: e.target.value})}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                                placeholder="1234 5678 9012 3456"
-                                                maxLength="19"
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                                                <input
-                                                    type="text"
-                                                    value={paymentDetails.expiryDate}
-                                                    onChange={(e) => setPaymentDetails({...paymentDetails, expiryDate: e.target.value})}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                                    placeholder="MM/YY"
-                                                    maxLength="5"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">CVV</label>
-                                                <input
-                                                    type="text"
-                                                    value={paymentDetails.cvv}
-                                                    onChange={(e) => setPaymentDetails({...paymentDetails, cvv: e.target.value})}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                                    placeholder="123"
-                                                    maxLength="4"
-                                                />
-                                            </div>
+                                    <div className="mt-4 pt-4 border-t border-gray-200">
+                                        <div className="text-sm text-gray-600">
+                                            Card details are entered securely in Razorpay Checkout after you click “Complete Payment”.
                                         </div>
                                     </div>
                                 )}
@@ -226,18 +258,8 @@ const Payment = () => {
                                 </div>
                                 {selectedPaymentMethod === 'upi' && (
                                     <div className="mt-4 pt-4 border-t border-gray-200">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">UPI ID</label>
-                                        <input
-                                            type="text"
-                                            value={paymentDetails.upiId}
-                                            onChange={(e) => setPaymentDetails({...paymentDetails, upiId: e.target.value})}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                            placeholder="yourname@upi"
-                                        />
-                                        <div className="flex gap-2 mt-3">
-                                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Google Pay</span>
-                                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">PhonePe</span>
-                                            <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded">Paytm</span>
+                                        <div className="text-sm text-gray-600">
+                                            UPI payment happens in Razorpay Checkout after you click “Complete Payment”.
                                         </div>
                                     </div>
                                 )}

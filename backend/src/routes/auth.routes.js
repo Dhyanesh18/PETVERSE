@@ -791,7 +791,7 @@ router.post('/logout', (req, res) => {
             });
         }
         
-        res.clearCookie('connect.sid');
+        res.clearCookie('petverse.sid');
         console.log(`User ${userId} logged out at ${logoutTime}`);
         
         return res.json({
@@ -843,7 +843,7 @@ router.get('/logout', (req, res) => {
             });
         }
         
-        res.clearCookie('connect.sid');
+        res.clearCookie('petverse.sid');
         console.log(`User ${userId} logged out at ${logoutTime}`);
         
         return res.json({

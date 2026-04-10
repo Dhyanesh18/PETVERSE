@@ -5,10 +5,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../hooks/useAuth';
 import { 
     fetchWalletData, 
-    addMoneyToWallet, 
     transferMoneyFromWallet,
     clearError 
 } from '../redux/slices/walletSlice';
+import { createWalletTopupOrder, verifyWalletTopup, cancelWalletTopup } from '../services/api';
 import { FaWallet, FaPlus, FaMinus, FaHistory, FaArrowLeft, FaRupeeSign, FaCreditCard, FaMobile, FaExchangeAlt, FaUniversity } from 'react-icons/fa';
 
 const Wallet = () => {
@@ -33,13 +33,7 @@ const Wallet = () => {
         upiId: ''
     });
     const [paymentMethod, setPaymentMethod] = useState('card');
-    const [paymentDetails, setPaymentDetails] = useState({
-        cardName: '',
-        cardNumber: '',
-        expiryDate: '',
-        cvv: '',
-        upiId: ''
-    });
+    const [topupProcessing, setTopupProcessing] = useState(false);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -83,26 +77,101 @@ const Wallet = () => {
         }
 
         try {
-            const result = await dispatch(addMoneyToWallet({
+            setTopupProcessing(true);
+
+            const resp = await createWalletTopupOrder({
                 amount: parseFloat(addAmount),
-                paymentMethod,
-                paymentDetails: paymentMethod === 'card' ? paymentDetails : { upiId: paymentDetails.upiId }
-            })).unwrap();
-            
-            alert('Money added successfully!');
-            setShowAddMoney(false);
-            setAddAmount('');
-            setPaymentDetails({
-                cardName: '',
-                cardNumber: '',
-                expiryDate: '',
-                cvv: '',
-                upiId: ''
+                paymentMethod
             });
-            // Refresh wallet data
-            dispatch(fetchWalletData());
+
+            if (!resp.data?.success) {
+                alert(resp.data?.error || 'Failed to create payment order');
+                setTopupProcessing(false);
+                return;
+            }
+
+            const {
+                intentId,
+                razorpayOrderId,
+                amountPaise,
+                currency,
+                keyId,
+                customer
+            } = resp.data.data;
+
+            const loadRazorpay = () => {
+                return new Promise((resolve) => {
+                    if (window.Razorpay) return resolve(true);
+                    const script = document.createElement('script');
+                    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                    script.onload = () => resolve(true);
+                    script.onerror = () => resolve(false);
+                    document.body.appendChild(script);
+                });
+            };
+
+            const ok = await loadRazorpay();
+            if (!ok) {
+                alert('Failed to load Razorpay. Please try again.');
+                setTopupProcessing(false);
+                return;
+            }
+
+            const options = {
+                key: keyId,
+                amount: amountPaise,
+                currency: currency || 'INR',
+                name: 'PetVerse',
+                description: 'Wallet Top-up',
+                order_id: razorpayOrderId,
+                prefill: {
+                    name: customer?.name || '',
+                    email: customer?.email || '',
+                    contact: customer?.contact || ''
+                },
+                notes: {
+                    intentId
+                },
+                handler: async function (rzpResponse) {
+                    try {
+                        const verifyResp = await verifyWalletTopup({
+                            intentId,
+                            razorpay_order_id: rzpResponse.razorpay_order_id,
+                            razorpay_payment_id: rzpResponse.razorpay_payment_id,
+                            razorpay_signature: rzpResponse.razorpay_signature
+                        });
+
+                        if (verifyResp.data?.success) {
+                            alert('Money added successfully!');
+                            setShowAddMoney(false);
+                            setAddAmount('');
+                            dispatch(fetchWalletData());
+                        } else {
+                            alert(verifyResp.data?.error || 'Payment verification failed');
+                        }
+                    } catch (e) {
+                        alert(e.response?.data?.error || 'Payment verification failed');
+                    } finally {
+                        setTopupProcessing(false);
+                    }
+                },
+                modal: {
+                    ondismiss: function () {
+                        cancelWalletTopup({ intentId }).catch(() => {});
+                        setTopupProcessing(false);
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (resp) {
+                alert(resp.error?.description || 'Payment failed');
+                setTopupProcessing(false);
+            });
+            rzp.open();
         } catch (error) {
-            alert(error || 'Failed to add money. Please try again.');
+            alert(error.response?.data?.error || error.message || 'Failed to add money. Please try again.');
+            setTopupProcessing(false);
         }
     };
 
@@ -466,50 +535,9 @@ const Wallet = () => {
                                 </div>
 
                                 {/* Payment Details */}
-                                {paymentMethod === 'card' ? (
-                                    <div className="space-y-4">
-                                        <input
-                                            type="text"
-                                            placeholder="Cardholder Name"
-                                            value={paymentDetails.cardName}
-                                            onChange={(e) => setPaymentDetails(prev => ({ ...prev, cardName: e.target.value }))}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Card Number"
-                                            value={paymentDetails.cardNumber}
-                                            onChange={(e) => setPaymentDetails(prev => ({ ...prev, cardNumber: e.target.value }))}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                                        />
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <input
-                                                type="text"
-                                                placeholder="MM/YY"
-                                                value={paymentDetails.expiryDate}
-                                                onChange={(e) => setPaymentDetails(prev => ({ ...prev, expiryDate: e.target.value }))}
-                                                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="CVV"
-                                                value={paymentDetails.cvv}
-                                                onChange={(e) => setPaymentDetails(prev => ({ ...prev, cvv: e.target.value }))}
-                                                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                                            />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <input
-                                            type="text"
-                                            placeholder="UPI ID (e.g., user@paytm)"
-                                            value={paymentDetails.upiId}
-                                            onChange={(e) => setPaymentDetails(prev => ({ ...prev, upiId: e.target.value }))}
-                                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                                        />
-                                    </div>
-                                )}
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
+                                    Your {paymentMethod === 'card' ? 'card' : 'UPI'} details are entered securely in Razorpay Checkout after you click “Add Money”.
+                                </div>
 
                                 {/* Action Buttons */}
                                 <div className="flex gap-3 pt-4">
@@ -521,10 +549,10 @@ const Wallet = () => {
                                     </button>
                                     <button
                                         onClick={handleAddMoney}
-                                        disabled={processing}
+                                        disabled={topupProcessing}
                                         className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {processing ? 'Processing...' : 'Add Money'}
+                                        {topupProcessing ? 'Processing...' : 'Add Money'}
                                     </button>
                                 </div>
                             </div>

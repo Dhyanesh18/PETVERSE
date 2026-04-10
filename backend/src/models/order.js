@@ -57,6 +57,23 @@ const orderSchema = new mongoose.Schema({
     enum: ['cod', 'online', 'card', 'upi', 'wallet'],
     default: 'cod'
   },
+  paymentProvider: {
+    type: String,
+    enum: ['razorpay'],
+    default: null
+  },
+  paymentProviderOrderId: {
+    type: String,
+    default: null
+  },
+  paymentProviderPaymentId: {
+    type: String,
+    default: null
+  },
+  paymentProviderSignature: {
+    type: String,
+    default: null
+  },
   shippingAddress: {
     type: Object,
     required: true

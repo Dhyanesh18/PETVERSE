@@ -11,6 +11,9 @@ const PetMate = require('../models/petMate');
 const Transaction = require('../models/transaction');
 const Wallet = require('../models/wallet');
 const Event = require('../models/event');
+const PaymentIntent = require('../models/paymentIntent');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
@@ -2281,23 +2284,123 @@ router.post('/wallet/add-money', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Validate payment details based on method
-        if (paymentMethod === 'card') {
-            const { cardName, cardNumber, expiryDate, cvv } = paymentDetails;
-            if (!cardName || !cardNumber || !expiryDate || !cvv) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Invalid card details'
-                });
+        const keyId = process.env.RAZORPAY_KEY_ID;
+        const keySecret = process.env.RAZORPAY_KEY_SECRET;
+        const currency = process.env.RAZORPAY_CURRENCY || 'INR';
+
+        if (!keyId || !keySecret) {
+            return res.status(500).json({
+                success: false,
+                error: 'Razorpay is not configured (missing RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET)'
+            });
+        }
+
+        const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
+        const amountPaise = Math.round(parseFloat(amount) * 100);
+
+        const intent = await PaymentIntent.create({
+            user: req.user._id,
+            purpose: 'wallet_topup',
+            amount: parseFloat(amount),
+            currency,
+            status: 'created',
+            provider: 'razorpay',
+            metadata: {
+                paymentMethod
             }
-        } else if (paymentMethod === 'upi') {
-            const { upiId } = paymentDetails;
-            if (!upiId || !/^[\w.\-]{2,}@[A-Za-z]{2,}$/.test(upiId)) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Invalid UPI ID'
-                });
+        });
+
+        const rzpOrder = await razorpay.orders.create({
+            amount: amountPaise,
+            currency,
+            receipt: String(intent._id),
+            notes: {
+                intentId: String(intent._id),
+                purpose: 'wallet_topup'
             }
+        });
+
+        intent.providerOrderId = rzpOrder.id;
+        await intent.save();
+
+        return res.json({
+            success: true,
+            message: 'Razorpay order created',
+            data: {
+                intentId: String(intent._id),
+                razorpayOrderId: rzpOrder.id,
+                amountPaise,
+                currency,
+                keyId,
+                customer: {
+                    name: req.user.fullName || req.user.username || '',
+                    email: req.user.email || '',
+                    contact: req.user.phone || ''
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error adding money to wallet:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Error adding money to wallet',
+            message: error.message
+        });
+    }
+});
+
+// Verify Razorpay payment for wallet top-up
+router.post('/wallet/razorpay/verify', isAuthenticated, async (req, res) => {
+    try {
+        const { intentId, razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body || {};
+        const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+        if (!keySecret) {
+            return res.status(500).json({
+                success: false,
+                error: 'Razorpay is not configured (missing RAZORPAY_KEY_SECRET)'
+            });
+        }
+
+        if (!intentId || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing verification parameters'
+            });
+        }
+
+        const intent = await PaymentIntent.findById(intentId);
+        if (!intent || intent.user.toString() !== req.user._id.toString() || intent.purpose !== 'wallet_topup') {
+            return res.status(404).json({
+                success: false,
+                error: 'Payment intent not found'
+            });
+        }
+
+        if (intent.status === 'paid') {
+            return res.json({
+                success: true,
+                message: 'Payment already verified'
+            });
+        }
+
+        if (intent.providerOrderId && intent.providerOrderId !== razorpay_order_id) {
+            return res.status(400).json({
+                success: false,
+                error: 'Order mismatch'
+            });
+        }
+
+        const expected = crypto
+            .createHmac('sha256', keySecret)
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest('hex');
+
+        if (expected !== razorpay_signature) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid payment signature'
+            });
         }
 
         // Find or create wallet
@@ -2307,31 +2410,77 @@ router.post('/wallet/add-money', isAuthenticated, async (req, res) => {
             await wallet.save();
         }
 
-        // Add money to wallet
-        await wallet.addFunds(amount);
+        await wallet.addFunds(intent.amount);
 
-        // Create transaction record
         await new Transaction({
             from: req.user._id,
             to: req.user._id,
-            amount: amount,
+            amount: intent.amount,
             type: 'add_money',
-            description: `Added money via ${paymentMethod}`
+            description: 'Wallet top-up via Razorpay'
         }).save();
 
-        res.json({
+        intent.status = 'paid';
+        intent.providerOrderId = razorpay_order_id;
+        intent.providerPaymentId = razorpay_payment_id;
+        intent.providerSignature = razorpay_signature;
+        await intent.save();
+
+        return res.json({
             success: true,
-            message: 'Money added successfully',
+            message: 'Wallet top-up successful',
             data: {
-                newBalance: wallet.balance,
-                amountAdded: amount
+                balance: wallet.balance
             }
         });
     } catch (error) {
-        console.error('Error adding money to wallet:', error);
-        res.status(500).json({
+        console.error('Wallet top-up verify error:', error);
+        return res.status(500).json({
             success: false,
-            error: 'Error adding money to wallet',
+            error: 'Verification failed',
+            message: error.message
+        });
+    }
+});
+
+// Cancel Razorpay wallet top-up (best-effort)
+router.post('/wallet/razorpay/cancel', isAuthenticated, async (req, res) => {
+    try {
+        const { intentId } = req.body || {};
+        if (!intentId) {
+            return res.status(400).json({
+                success: false,
+                error: 'intentId is required'
+            });
+        }
+
+        const intent = await PaymentIntent.findById(intentId);
+        if (!intent || intent.user.toString() !== req.user._id.toString() || intent.purpose !== 'wallet_topup') {
+            return res.status(404).json({
+                success: false,
+                error: 'Payment intent not found'
+            });
+        }
+
+        if (intent.status === 'paid') {
+            return res.json({
+                success: true,
+                message: 'Payment already completed'
+            });
+        }
+
+        intent.status = 'cancelled';
+        await intent.save();
+
+        return res.json({
+            success: true,
+            message: 'Cancelled'
+        });
+    } catch (error) {
+        console.error('Wallet top-up cancel error:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Cancel failed',
             message: error.message
         });
     }
