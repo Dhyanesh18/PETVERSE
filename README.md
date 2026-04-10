@@ -1,6 +1,6 @@
 <div align="center">
 
-[PetVerse Homepage](./docs/image.png)
+![PetVerse Homepage](./backend/src/docs/image.png)
 
 &nbsp;
 
