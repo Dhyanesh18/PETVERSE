@@ -563,7 +563,7 @@ const EditProduct = () => {
                                                             });
                                                         })
                                                         .catch(err => console.log('Direct fetch error:', err));
-                                                    e.target.src = '/images/default-product.jpg';
+                                                    e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg';
                                                 }}
                                                 onLoad={(e) => {
                                                     console.log(`Product image loaded successfully: ${e.target.src}`);

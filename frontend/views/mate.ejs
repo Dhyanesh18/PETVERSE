@@ -185,7 +185,7 @@
                                 <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
                                      alt="<%= pet.name %>">
                             <% } else { %>
-                                <img src="/images/default-pet.jpg" alt="Default pet image">
+                                <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg" alt="Default pet image">
                             <% } %>
                             <div class="pet-badge <%= pet.gender === 'male' ? 'male' : 'female' %>">
                                 <i class="fas <%= pet.gender === 'male' ? 'fa-mars' : 'fa-venus' %>"></i>
@@ -789,7 +789,7 @@
 
             function renderPets(pets) {
                 petsGrid.innerHTML = pets.map(pet => {
-                    let imageHtml = '<img src="/images/default-pet.jpg" alt="Default pet image">';
+                    let imageHtml = '<img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg" alt="Default pet image">';
                     
                     if (pet.images && pet.images.length > 0) {
                         const image = pet.images[0];

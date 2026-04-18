@@ -11,7 +11,7 @@ const LostPetCard = ({ lostPet }) => {
 
     const getImageUrl = (index = 0) => {
         if (!lostPet.images || lostPet.images.length === 0) {
-            return '/images/default-pet.jpg';
+            return 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
         }
         
         const image = lostPet.images[index];
@@ -62,7 +62,7 @@ const LostPetCard = ({ lostPet }) => {
                         alt={lostPet.petName}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                            e.target.src = '/images/default-pet.jpg';
+                            e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
                         }}
                     />
                 </div>

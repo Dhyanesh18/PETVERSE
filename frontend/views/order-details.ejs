@@ -517,7 +517,7 @@
                                 <% if (item.product.images && item.product.images.length > 0) { %>
                                     <img src="data:<%= item.product.images[0].contentType %>;base64,<%= item.product.images[0].data.toString('base64') %>" alt="Product Image" class="product-img">
                                 <% } else { %>
-                                    <img src="/images/default-product.jpg" alt="Product Image" class="product-img">
+                                    <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="Product Image" class="product-img">
                                 <% } %>
                             </a>
                             <div class="product-info">
@@ -532,7 +532,7 @@
                                 <div class="product-price">₹<%= item.price.toLocaleString() %></div>
                             </div>
                         <% } else { %>
-                            <img src="/images/default-product.jpg" alt="Product Not Available" class="product-img">
+                            <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="Product Not Available" class="product-img">
                             <div class="product-info">
                                 <div class="product-name" style="color: #666;">Product No Longer Available</div>
                                 <div class="product-meta" style="color: #999;">

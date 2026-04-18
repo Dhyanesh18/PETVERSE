@@ -94,7 +94,7 @@ const Wishlist = () => {
                             <div key={pet._id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
                                 <div className="relative">
                                     <img
-                                        src={pet.images?.[0] || '/images/default-pet.jpg'}
+                                        src={pet.images?.[0] || 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg'}
                                         alt={pet.name}
                                         className="w-full h-48 object-cover"
                                     />

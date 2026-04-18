@@ -1107,10 +1107,10 @@
                                         <% } else if (product.images[0].data) { %>
                                             <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" alt="<%= product.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
                                         <% } else { %>
-                                            <img src="/images/default-product.jpg" alt="<%= product.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
+                                            <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="<%= product.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
                                         <% } %>
                                     <% } else { %>
-                                        <img src="/images/default-product.jpg" alt="<%= product.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
+                                        <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="<%= product.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
                                     <% } %>
                                 </div>
                                 <div style="padding: 12px; display: flex; flex-direction: column; flex-grow: 1;">
@@ -1159,10 +1159,10 @@
                                         <% } else if (pet.images[0].data) { %>
                                             <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" alt="<%= pet.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
                                         <% } else { %>
-                                            <img src="/images/default-pet.jpg" alt="<%= pet.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
+                                            <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg" alt="<%= pet.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
                                         <% } %>
                                     <% } else { %>
-                                        <img src="/images/default-pet.jpg" alt="<%= pet.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
+                                        <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg" alt="<%= pet.name %>" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;" />
                                     <% } %>
                                 </div>
                                 <div style="padding: 12px; display: flex; flex-direction: column; flex-grow: 1;">
@@ -1341,10 +1341,10 @@
                                                 <% } else if (item.product.images[0].data) { %>
                                                     <img src="data:<%= item.product.images[0].contentType %>;base64,<%= item.product.images[0].data.toString('base64') %>" alt="<%= item.product.name %>" class="product-image">
                                                 <% } else { %>
-                                                    <img src="/images/default-product.jpg" alt="No image" class="product-image">
+                                                    <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="No image" class="product-image">
                                                 <% } %>
                                             <% } else { %>
-                                                <img src="/images/default-product.jpg" alt="No image" class="product-image">
+                                                <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="No image" class="product-image">
                                             <% } %>
                                             <div class="product-info">
                                                 <% if (item.product) { %>
@@ -1715,7 +1715,7 @@
                                 if (!item.product) {
                                     return `
                                         <div class="order-item">
-                                            <img src="/images/default-product.jpg" alt="Product Unavailable" class="order-item-image">
+                                            <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="Product Unavailable" class="order-item-image">
                                             <div class="order-item-details">
                                                 <h4 style="color: #666;">Product No Longer Available</h4>
                                                 <p style="color: #999; font-size: 0.9em;">This product has been removed from our catalog</p>
@@ -1729,7 +1729,7 @@
                                 const productName = item.product.name;
                                 
                                 // Handle different image formats
-                                let productImage = '/images/default-product.jpg';
+                                let productImage = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg';
                                 if (item.product.images && item.product.images.length > 0) {
                                     const img = item.product.images[0];
                                     if (img.url) {

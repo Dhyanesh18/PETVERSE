@@ -50,7 +50,7 @@ const Events = () => {
             <section 
                 className="text-white py-20 px-5 text-center mt-0 relative overflow-hidden bg-cover bg-center"
                 style={{
-                    background: `linear-gradient(135deg, rgba(102, 201, 234, 0.5) 0%, rgba(75, 162, 162, 0.3) 100%), url('/images/dog-event.png') no-repeat center center`,
+                    background: `linear-gradient(135deg, rgba(102, 201, 234, 0.5) 0%, rgba(75, 162, 162, 0.3) 100%), url('https://res.cloudinary.com/darnvbr0g/image/upload/v1776528197/petverse/dog-event.jpg') no-repeat center center`,
                     backgroundSize: 'cover'
                 }}
             >

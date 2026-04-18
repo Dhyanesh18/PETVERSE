@@ -68,7 +68,7 @@
                     if (service.serviceType.toLowerCase() === 'breeder') { %>
                         <div class="service-card">
                             <div class="service-image">
-                                <% let imagePath = '/images/services/service12.jpg' %>
+                                <% let imagePath = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528267/petverse/services/service12.webp' %>
                                 <img src="<%= imagePath %>" alt="<%= service.name %>">
                             </div>
                             <div class="service-info">
@@ -169,7 +169,7 @@
                 servicesContainer.innerHTML = data.services.map(service => `
                     <div class="service-card">
                         <div class="service-image">
-                            <img src="/images/services/service12.jpg" alt="${service.fullName}">
+                            <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528267/petverse/services/service12.webp" alt="${service.fullName}">
                         </div>
                         <div class="service-info">
                             <h2 class="service-name">${service.fullName}</h2>

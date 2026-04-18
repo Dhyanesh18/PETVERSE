@@ -348,11 +348,11 @@
                                         <img src="data:<%= item.productId.images[0].contentType %>;base64,<%= item.productId.images[0].data.toString('base64') %>" 
                                              class="order-item-image" alt="<%= item.productId.name %>">
                                     <% } else { %>
-                                        <img src="<%= item.productId.images[0].url || '/images/default-product.jpg' %>" 
+                                        <img src="<%= item.productId.images[0].url || 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg' %>" 
                                              class="order-item-image" alt="<%= item.productId.name %>">
                                     <% } %>
                                 <% } else { %>
-                                    <img src="/images/default-product.jpg" class="order-item-image" alt="<%= item.productId?.name || 'Product' %>">
+                                    <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" class="order-item-image" alt="<%= item.productId?.name || 'Product' %>">
                                 <% } %>
                                 <div class="order-item-details">
                                     <h4 class="order-item-name"><%= item.productId?.name || 'Unknown Product' %></h4>

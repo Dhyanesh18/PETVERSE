@@ -140,7 +140,7 @@ const SignupSeller = () => {
     return (
         <div 
             className="min-h-screen flex items-center justify-center py-5 px-4 bg-cover bg-center"
-            style={{ backgroundImage: "url('/images/login/LOGIN_CROP.jpg')" }}
+            style={{ backgroundImage: "url('https://res.cloudinary.com/darnvbr0g/image/upload/v1776528214/petverse/login/LOGIN_CROP.jpg')" }}
         >
             <div className="w-full max-w-4xl bg-white shadow-[0_12px_30px_rgba(0,0,0,0.2)] rounded-2xl p-8 my-2">
                 {/* Header */}

@@ -34,7 +34,7 @@
                         <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" 
                              alt="<%= product.title || product.name %>">
                     <% } else { %>
-                        <img src="/images/default-product.jpg" alt="<%= product.title || product.name %>">
+                        <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="<%= product.title || product.name %>">
                     <% } %>
                 </div>
             </div>
@@ -180,7 +180,7 @@
                                 <% if (similarProduct.images && similarProduct.images.length > 0) { %>
                                     <img src="data:<%= similarProduct.images[0].contentType %>;base64,<%= similarProduct.images[0].data.toString('base64') %>" alt="<%= similarProduct.name %>">
                                 <% } else { %>
-                                    <img src="/images/default-product.jpg" alt="<%= similarProduct.name %>">
+                                    <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="<%= similarProduct.name %>">
                                 <% } %>
                             </div>
                             <div class="product-info">

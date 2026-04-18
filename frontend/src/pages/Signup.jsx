@@ -11,19 +11,19 @@ const Signup = () => {
         {
             type: 'owner',
             name: 'Pet Owner',
-            image: '/images/profiles/pet_owner.jpg',
+            image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528261/petverse/profiles/pet_owner.jpg',
             route: '/signup/owner'
         },
         {
             type: 'seller',
             name: 'Seller',
-            image: '/images/profiles/service.jpg',
+            image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528263/petverse/profiles/service.jpg',
             route: '/signup/seller'
         },
         {
             type: 'service',
             name: 'Service Provider',
-            image: '/images/profiles/seller.jpg',
+            image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528262/petverse/profiles/seller.jpg',
             route: '/signup/service-provider'
         }
     ];
@@ -46,7 +46,7 @@ const Signup = () => {
     return (
         <div 
             className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
-            style={{ backgroundImage: "url('/images/login/LOGIN_CROP.jpg')" }}
+            style={{ backgroundImage: "url('https://res.cloudinary.com/darnvbr0g/image/upload/v1776528214/petverse/login/LOGIN_CROP.jpg')" }}
         >
             {/* Overlay */}
             <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm"></div>

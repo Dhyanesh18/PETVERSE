@@ -700,7 +700,7 @@ const SellerDashboard = () => {
                                                         }
                                                     } else {
                                                         // Final fallback if even the category-specific image fails
-                                                        e.target.src = '/images/default-pet.jpg';
+                                                        e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
                                                     }
                                                 }}
                                             />

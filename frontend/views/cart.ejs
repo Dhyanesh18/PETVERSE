@@ -400,7 +400,7 @@
                 <% cart.items.forEach(item => { %>
                     <div class="cart-item" data-product-id="<%= item.productId._id %>">
                         <a href="<%= item.itemType === 'Pet' ? `/seller/detail/${item.productId._id}` : `/buy/${item.productId._id}` %>" class="cart-item-link">
-                            <img src="<%= item.productId.images && item.productId.images.length > 0 ? `data:${item.productId.images[0].contentType};base64,${item.productId.images[0].data.toString('base64')}` : '/images/default-product.jpg' %>" 
+                            <img src="<%= item.productId.images && item.productId.images.length > 0 ? `data:${item.productId.images[0].contentType};base64,${item.productId.images[0].data.toString('base64')}` : 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg' %>" 
                                  alt="<%= item.productId.name %>" 
                                  class="item-image">
                         </a>

@@ -18,7 +18,7 @@ const PetsManagement = ({ data }) => {
             if (pet.images[0].url) return pet.images[0].url;
             return `/api/pets/image/${pet._id}/0`;
         }
-        return '/images/default-pet.jpg';
+        return 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
     };
 
     const filteredPets = pets.filter(pet =>
@@ -57,7 +57,7 @@ const PetsManagement = ({ data }) => {
                             <img 
                                 src={getImageUrl(pet)} 
                                 alt={pet.name} 
-                                onError={(e) => e.target.src = '/images/default-pet.jpg'} 
+                                onError={(e) => e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg'} 
                             />
                         </div>
                         <div className="pet-info-admin">

@@ -46,7 +46,7 @@ const About = () => {
         {
             name: 'Dhyaneshvar K',
             role: 'Member 1',
-            image: '/images/mem.jpg',
+            image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528215/petverse/mem.webp',
             social: {
                 linkedin: '#',
                 twitter: '#',
@@ -56,7 +56,7 @@ const About = () => {
         {
             name: 'Jeevan M',
             role: 'Member 2',
-            image: '/images/mem.jpg',
+            image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528215/petverse/mem.webp',
             social: {
                 linkedin: '#',
                 twitter: '#',
@@ -66,7 +66,7 @@ const About = () => {
         {
             name: 'Suresh',
             role: 'Member 3',
-            image: '/images/mem.jpg',
+            image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528215/petverse/mem.webp',
             social: {
                 linkedin: '#',
                 twitter: '#',
@@ -76,7 +76,7 @@ const About = () => {
         {
             name: 'Koushik',
             role: 'Member 4',
-            image: '/images/mem.jpg',
+            image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528215/petverse/mem.webp',
             social: {
                 linkedin: '#',
                 twitter: '#',
@@ -86,7 +86,7 @@ const About = () => {
         {
             name: 'Charan',
             role: 'Member 5',
-            image: '/images/mem.jpg',
+            image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528215/petverse/mem.webp',
             social: {
                 linkedin: '#',
                 twitter: '#',

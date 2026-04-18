@@ -580,7 +580,7 @@
                             <% if (item.product && item.product.images && item.product.images.length > 0) { %>
                                 <img src="data:<%= item.product.images[0].contentType %>;base64,<%= item.product.images[0].data.toString('base64') %>" alt="<%= item.product.name %>" class="product-img">
                             <% } else { %>
-                                <img src="/images/default-product.jpg" alt="Product" class="product-img">
+                                <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="Product" class="product-img">
                             <% } %>
                             <div class="product-info">
                                 <div class="product-name"><%= item.product ? item.product.name : 'Product' %></div>

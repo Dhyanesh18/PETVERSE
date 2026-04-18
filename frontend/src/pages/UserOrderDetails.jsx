@@ -345,7 +345,7 @@ const UserOrderDetails = () => {
                                                     onClick={() => navigate(`/buy/${productId}`)}
                                                     onError={(e) => {
                                                         console.log('Image failed to load for product:', productId);
-                                                        e.target.src = '/images/default-product.jpg';
+                                                        e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg';
                                                     }}
                                                     onLoad={() => {
                                                         console.log('Image loaded successfully for product:', productId);

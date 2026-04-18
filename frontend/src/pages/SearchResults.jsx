@@ -122,7 +122,7 @@ const SearchResults = () => {
                                                 <img
                                                     src={pet.images && pet.images.length > 0 
                                                         ? `/api/images/pet/${pet._id}/0` 
-                                                        : '/images/default-pet.jpg'
+                                                        : 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg'
                                                     }
                                                     alt={pet.name}
                                                     className="w-full h-48 object-cover rounded-lg"
@@ -159,7 +159,7 @@ const SearchResults = () => {
                                                 <img
                                                     src={product.images && product.images.length > 0 
                                                         ? `/api/images/product/${product._id}/0` 
-                                                        : '/images/default-product.jpg'
+                                                        : 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg'
                                                     }
                                                     alt={product.name}
                                                     className="w-full h-48 object-cover rounded-lg"

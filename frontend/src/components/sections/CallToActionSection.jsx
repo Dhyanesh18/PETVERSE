@@ -4,7 +4,7 @@ const CallToActionSection = () => {
     return (
         <section 
             className="relative text-center bg-cover bg-center py-24 px-24 text-white h-[350px] m-0 border-b border-gray-500"
-            style={{ backgroundImage: "url('/images/slide1.jpg')" }}
+            style={{ backgroundImage: "url('https://res.cloudinary.com/darnvbr0g/image/upload/v1776528276/petverse/slide1.jpg')" }}
         >
             <div className="absolute inset-0 bg-black/50 z-1"></div>
             

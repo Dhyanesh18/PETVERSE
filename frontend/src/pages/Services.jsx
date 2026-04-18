@@ -45,15 +45,15 @@ const Services = () => {
 
     const getServiceImage = (serviceType) => {
         const imageMap = {
-            'veterinarian': '/images/services/service1.jpg',
-            'groomer': '/images/services/service7.jpg',
-            'pet sitter': '/images/services/service11.jpg',
-            'trainer': '/images/services/service6.jpg',
-            'breeder': '/images/services/service12.jpg',
-            'walking': '/images/services/service2.jpg',
-            'sitting': '/images/services/service11.jpg'
+            'veterinarian': 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528265/petverse/services/service1.png',
+            'groomer': 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528273/petverse/services/service7.jpg',
+            'pet sitter': 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528266/petverse/services/service11.avif',
+            'trainer': 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528272/petverse/services/service6.jpg',
+            'breeder': 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528267/petverse/services/service12.webp',
+            'walking': 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528268/petverse/services/service2.jpg',
+            'sitting': 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528266/petverse/services/service11.avif'
         };
-        return imageMap[serviceType?.toLowerCase()] || '/images/services/service2.jpg';
+        return imageMap[serviceType?.toLowerCase()] || 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528268/petverse/services/service2.jpg';
     };
 
     const renderStars = (rating) => {
@@ -93,7 +93,7 @@ const Services = () => {
             <section 
                 className="text-white py-20 px-5 text-center relative overflow-hidden bg-cover bg-center"
                 style={{
-                    background: `linear-gradient(135deg, rgba(102, 201, 234, 0.5) 0%, rgba(75, 162, 162, 0.3) 100%), url('/images/service-hero.jpg') no-repeat center center`,
+                    background: `linear-gradient(135deg, rgba(102, 201, 234, 0.5) 0%, rgba(75, 162, 162, 0.3) 100%), url('https://res.cloudinary.com/darnvbr0g/image/upload/v1776528264/petverse/service-hero.jpg') no-repeat center center`,
                     backgroundSize: 'cover'
                 }}
             >
@@ -252,7 +252,7 @@ const Services = () => {
                                                 alt={service.name}
                                                 className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                                                 onError={(e) => {
-                                                    e.target.src = '/images/services/service2.jpg';
+                                                    e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528268/petverse/services/service2.jpg';
                                                 }}
                                             />
                                         </div>

@@ -362,7 +362,7 @@ const Login = () => {
         <div 
             className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-cover bg-center"
             style={{
-                backgroundImage: "url('/images/login/LOGIN_CROP.jpg')"
+                backgroundImage: "url('https://res.cloudinary.com/darnvbr0g/image/upload/v1776528214/petverse/login/LOGIN_CROP.jpg')"
             }}
         >
             <div className="w-full max-w-md bg-white shadow-[0_8px_20px_rgba(0,0,0,0.3)] rounded-xl p-8">

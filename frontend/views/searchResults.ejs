@@ -34,7 +34,7 @@
                     <img src="data:<%= pet.images[0].contentType %>;base64,<%= pet.images[0].data.toString('base64') %>" 
                         alt="<%= pet.name %>">
                     <% } else { %>
-                    <img src="/images/default-pet.jpg" alt="No image available">
+                    <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg" alt="No image available">
                     <% } %>
                 </div>
                 <div class="pet-info">
@@ -77,7 +77,7 @@
                     <% if (product.images && product.images.length > 0) { %>
                         <img src="data:<%= product.images[0].contentType %>;base64,<%= product.images[0].data.toString('base64') %>" alt="<%= product.name %>">
                     <% } else { %>
-                        <img src="/images/default-product.jpg" alt="<%= product.name %>">
+                        <img src="https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg" alt="<%= product.name %>">
                     <% } %>
                     </div>
                     <div class="product-info">
@@ -142,13 +142,13 @@
                 >
                 <div class="service-image">
                     <%
-                    let imagePath = '/images/services/service2.jpg'; // fallback
+                    let imagePath = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528268/petverse/services/service2.jpg'; // fallback
                     switch (service.serviceType.toLowerCase()) {
-                        case 'veterinarian': imagePath = '/images/services/service1.jpg'; break;
-                        case 'groomer': imagePath = '/images/services/service7.jpg'; break;
-                        case 'pet sitter': imagePath = '/images/services/service11.jpg'; break;
-                        case 'trainer': imagePath = '/images/services/service6.jpg'; break;
-                        case 'breeder': imagePath = '/images/services/service12.jpg'; break;
+                        case 'veterinarian': imagePath = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528265/petverse/services/service1.png'; break;
+                        case 'groomer': imagePath = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528273/petverse/services/service7.jpg'; break;
+                        case 'pet sitter': imagePath = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528266/petverse/services/service11.avif'; break;
+                        case 'trainer': imagePath = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528272/petverse/services/service6.jpg'; break;
+                        case 'breeder': imagePath = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528267/petverse/services/service12.webp'; break;
                     }
                     %>
                     <img src="<%= imagePath %>" alt="<%= service.name %>">

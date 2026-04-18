@@ -3,7 +3,7 @@ import { FaMars, FaVenus, FaPaw, FaBirthdayCake, FaMapMarkerAlt, FaPhone, FaEnve
 const MateCard = ({ pet }) => {
     const getImageUrl = (index = 0) => {
         if (!pet || !pet._id) {
-            return '/images/default-pet.jpg';
+            return 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
         }
 
         // Check if images array exists with binary data (like in mate.ejs)
@@ -56,7 +56,7 @@ const MateCard = ({ pet }) => {
                     onError={(e) => {
                         console.error('Failed to load pet mate image:', e.target.src);
                         console.error('Pet data:', pet);
-                        e.target.src = '/images/default-pet.jpg';
+                        e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
                     }}
                 />
                 <div className={`absolute top-2.5 right-2.5 px-2.5 py-1.5 rounded-full text-white font-bold ${

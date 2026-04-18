@@ -62,7 +62,7 @@ const LostPetDetail = () => {
 
     const getImageUrl = (index = 0) => {
         if (!pet.images || pet.images.length === 0) {
-            return '/images/default-pet.jpg';
+            return 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
         }
         
         const image = pet.images[index];
@@ -147,7 +147,7 @@ const LostPetDetail = () => {
                                     className="w-full h-full object-cover"
                                     onError={(e) => {
                                         console.error('Failed to load image:', e.target.src);
-                                        e.target.src = '/images/default-pet.jpg';
+                                        e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
                                     }}
                                 />
                             </div>
@@ -167,7 +167,7 @@ const LostPetDetail = () => {
                                                 className="w-full h-full object-cover"
                                                 onError={(e) => {
                                                     console.error('Failed to load thumbnail:', e.target.src);
-                                                    e.target.src = '/images/default-pet.jpg';
+                                                    e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
                                                 }}
                                             />
                                         </button>

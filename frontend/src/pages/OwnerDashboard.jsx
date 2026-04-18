@@ -80,7 +80,7 @@ const OwnerDashboard = () => {
 
     const getImageUrl = (item, type = 'product') => {
         if (!item || !item._id) {
-            return type === 'pet' ? '/images/default-pet.jpg' : '/images/default-product.jpg';
+            return type === 'pet' ? 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg' : 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg';
         }
         
         if (item.thumbnail) {
@@ -117,8 +117,8 @@ const OwnerDashboard = () => {
                 // First fallback: try placeholder images from public folder
                 setFallbackAttempts(1);
                 const placeholderImages = {
-                    'product': ['/images/food1.jpg', '/images/toy1.jpg', '/images/acc1.jpg'],
-                    'pet': ['/images/dog1.jpg', '/images/cat1.jpg', '/images/dog2.jpg']
+                    'product': ['https://res.cloudinary.com/darnvbr0g/image/upload/v1776528206/petverse/food1.jpg', 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528279/petverse/toy1.jpg', 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528109/petverse/acc1.jpg'],
+                    'pet': ['https://res.cloudinary.com/darnvbr0g/image/upload/v1776528200/petverse/dog1.jpg', 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528113/petverse/cat1.jpg', 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528202/petverse/dog2.jpg']
                 };
                 const randomImage = placeholderImages[type][Math.floor(Math.random() * placeholderImages[type].length)];
                 setImgSrc(randomImage);
@@ -127,7 +127,7 @@ const OwnerDashboard = () => {
                 // Final fallback: use default images
                 setFallbackAttempts(2);
                 setHasError(true);
-                const fallback = type === 'pet' ? '/images/default-pet.jpg' : '/images/default-product.jpg';
+                const fallback = type === 'pet' ? 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg' : 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg';
                 setImgSrc(fallback);
                 console.error(`${type} image failed to load:`, e.target.src, 'Using final fallback:', fallback);
                 if (onError) onError(e);

@@ -18,7 +18,7 @@ const ProductsManagement = ({ data }) => {
             if (product.images[0].url) return product.images[0].url;
             return `/api/products/image/${product._id}/0`;
         }
-        return '/images/default-product.jpg';
+        return 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg';
     };
 
     const filteredProducts = products.filter(product =>
@@ -57,7 +57,7 @@ const ProductsManagement = ({ data }) => {
                             <img 
                                 src={getImageUrl(product)} 
                                 alt={product.name} 
-                                onError={(e) => e.target.src = '/images/default-product.jpg'} 
+                                onError={(e) => e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528196/petverse/default-product.jpg'} 
                             />
                         </div>
                         <div className="product-info-admin">

@@ -5,7 +5,7 @@ const HeroSection = () => {
         <section 
             className="relative h-screen w-full bg-cover bg-center bg-fixed"
             style={{
-                backgroundImage: "url('/images/hero.jpg')",
+                backgroundImage: "url('https://res.cloudinary.com/darnvbr0g/image/upload/v1776528213/petverse/hero.png')",
             }}
         >
             <div className="absolute inset-0 bg-black/50 z-[1"></div>

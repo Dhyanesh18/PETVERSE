@@ -416,7 +416,7 @@ const EditPet = () => {
                                                 alt={`Pet ${index + 1}`}
                                                 className="w-full h-32 object-cover rounded-md"
                                                 onError={(e) => {
-                                                    e.target.src = '/images/default-pet.jpg';
+                                                    e.target.src = 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528194/petverse/default-pet.jpg';
                                                 }}
                                             />
                                             <label className="absolute top-2 right-2 bg-white rounded-full p-1">
