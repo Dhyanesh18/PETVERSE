@@ -90,7 +90,7 @@ const SellerDashboard = () => {
 
     const fetchSellerChats = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+            const API_URL = import.meta.env.VITE_API_URL || '';
             const response = await fetch(`${API_URL}/api/seller/chats`, {
                 credentials: 'include'
             });
@@ -125,7 +125,7 @@ const SellerDashboard = () => {
         }
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+            const API_URL = import.meta.env.VITE_API_URL || '';
             const response = await fetch(`${API_URL}/api/seller/chats/${chatId}`, {
                 method: 'DELETE',
                 credentials: 'include'
@@ -569,10 +569,7 @@ const SellerDashboard = () => {
                                                     if (!e.target.dataset.fallbackAttempted) {
                                                         e.target.dataset.fallbackAttempted = 'true';
                                                         // Try alternative API endpoints
-                                                        if (e.target.src.includes('localhost:8080')) {
-                                                            e.target.src = `/api/images/product/${product._id}/0`;
-                                                            return;
-                                                        } else if (e.target.src.includes('/api/images/')) {
+                                                        if (e.target.src.includes('/api/images/')) {
                                                             // If API also fails, show fallback
                                                             console.log('Image API failed, showing category-specific fallback');
                                                         }
@@ -679,10 +676,7 @@ const SellerDashboard = () => {
                                                     if (!e.target.dataset.fallbackAttempted) {
                                                         e.target.dataset.fallbackAttempted = 'true';
                                                         // Try alternative API endpoints
-                                                        if (e.target.src.includes('localhost:8080')) {
-                                                            e.target.src = `/api/images/pet/${pet._id}/0`;
-                                                            return;
-                                                        } else if (e.target.src.includes('/api/images/')) {
+                                                        if (e.target.src.includes('/api/images/')) {
                                                             // If API also fails, show fallback
                                                             console.log('Pet image API failed, showing category-specific fallback');
                                                         }

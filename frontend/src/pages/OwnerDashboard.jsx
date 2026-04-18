@@ -93,7 +93,7 @@ const OwnerDashboard = () => {
         if (item.images && item.images.length > 0) {
             const image = item.images[0];
             if (image && image.url) {
-                return image.url.startsWith('http') ? image.url : `/api/images/${type}/${item._id}/0`;
+                return image.url.startsWith('http') ? image.url : image.url;
             }
         }
         

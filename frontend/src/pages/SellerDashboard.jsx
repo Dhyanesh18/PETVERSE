@@ -91,7 +91,7 @@ const SellerDashboard = () => {
 
     const fetchSellerChats = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+            const API_URL = import.meta.env.VITE_API_URL || '';
             const response = await fetch(`${API_URL}/api/seller/chats`, {
                 credentials: 'include'
             });
@@ -108,7 +108,7 @@ const SellerDashboard = () => {
 
     const fetchSellerInquiries = async () => {
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+            const API_URL = import.meta.env.VITE_API_URL || '';
             const response = await fetch(`${API_URL}/api/seller/inquiries`, {
                 credentials: 'include'
             });
@@ -162,7 +162,7 @@ const SellerDashboard = () => {
         }
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+            const API_URL = import.meta.env.VITE_API_URL || '';
             const response = await fetch(`${API_URL}/api/seller/chats/${chatId}`, {
                 method: 'DELETE',
                 credentials: 'include'

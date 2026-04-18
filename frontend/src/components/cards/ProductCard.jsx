@@ -25,7 +25,16 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted = fa
         
         // If thumbnail is a relative path
         if (product.thumbnail) {
-            return `/api/products/image/${product._id}/0`;
+            if (product.thumbnail.startsWith('/api/products/image/')) {
+                return product.thumbnail;
+            }
+            // If it's the old format /images/product/...
+            if (product.thumbnail.startsWith('/images/product/')) {
+                // Convert to correct API format
+                const productId = product._id;
+                return `/api/products/image/${productId}/0`;
+            }
+            return product.thumbnail;
         }
         
         // Fallback placeholder based on category
