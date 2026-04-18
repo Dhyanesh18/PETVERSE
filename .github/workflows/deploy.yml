@@ -12,11 +12,13 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: backend/package-lock.json
+
       - run: npm ci
       - run: npm test
 
@@ -34,4 +36,5 @@ jobs:
             cd ~/PETVERSE
             git pull origin main
             docker-compose down
+            docker system prune -f
             docker-compose up -d --build
