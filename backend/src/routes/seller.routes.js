@@ -7,6 +7,7 @@ const Pet = require('../models/pets');
 const Wallet = require('../models/wallet');
 const Transaction = require('../models/transaction');
 const User = require('../models/users');
+const { refundRazorpayPayment, toPaise } = require('../utils/razorpay');
 
 // Middleware to check if user is authenticated
 async function isAuthenticated(req, res, next) {
@@ -763,80 +764,117 @@ router.patch('/orders/:orderId/status', isAuthenticated, isSeller, async (req, r
                 });
             }
             
-            // Only process refund if customer paid online (not COD) and not already refunded
+            // Only process refund if customer paid (not COD) and not already refunded
             if (order.paymentMethod !== 'cod' && order.paymentStatus === 'paid') {
-                console.log('Processing refund for online payment...');
-                
-                // Get wallets
-                const customerWallet = await Wallet.findOne({ user: order.customer._id });
-                const sellerWallet = await Wallet.findOne({ user: req.user._id });
-                
-                if (!customerWallet) {
-                    return res.status(400).json({ 
-                        success: false, 
-                        error: 'Customer wallet not found' 
-                    });
-                }
-                
-                if (!sellerWallet) {
-                    return res.status(400).json({ 
-                        success: false, 
-                        error: 'Seller wallet not found' 
-                    });
-                }
-                
+                console.log('Processing refund...');
+
                 const refundAmount = order.totalAmount;
                 const sellerShare = refundAmount * 0.95; // Seller received 95% of the order
                 const adminCommission = refundAmount * 0.05; // Admin received 5%
-                
-                // Refund customer
-                await customerWallet.addFunds(refundAmount);
-                console.log(`Refunded ₹${refundAmount} to customer wallet`);
-                
-                // Deduct from seller (only their share)
-                try {
-                    await sellerWallet.deductFunds(sellerShare);
-                    console.log(`Deducted ₹${sellerShare} from seller`);
-                } catch (err) {
-                    console.error('Seller has insufficient balance for refund:', err.message);
+                const platformAdminId = process.env.ADMIN_USER_ID || '6807e4424877bcd9980c7e00';
+
+                const sellerWallet = await Wallet.findOne({ user: req.user._id });
+                if (!sellerWallet) {
                     return res.status(400).json({
                         success: false,
-                        error: 'Insufficient seller balance for refund. Please add funds to your wallet.'
+                        error: 'Seller wallet not found'
                     });
                 }
-                
-                // Deduct from admin wallet
-                const adminWallet = await Wallet.findOne({ user: "6807e4424877bcd9980c7e00" });
-                if (adminWallet) {
-                    try {
-                        await adminWallet.deductFunds(adminCommission);
-                        console.log(`Deducted ₹${adminCommission} commission from admin`);
-                    } catch (err) {
-                        console.error('Admin has insufficient balance for refund:', err.message);
+
+                const isRazorpayPayment = order.paymentProvider === 'razorpay' && !!order.paymentProviderPaymentId;
+
+                // Razorpay-paid orders: refund back to original method.
+                if (isRazorpayPayment) {
+                    if (sellerWallet.balance < sellerShare) {
+                        return res.status(400).json({
+                            success: false,
+                            error: 'Insufficient seller balance for refund. Please add funds to your wallet.'
+                        });
                     }
+
+                    const refund = await refundRazorpayPayment({
+                        paymentId: order.paymentProviderPaymentId,
+                        amountPaise: toPaise(refundAmount),
+                        notes: {
+                            orderId: order._id.toString(),
+                            action: 'seller_cancelled'
+                        },
+                        receipt: order.orderNumber || order._id.toString()
+                    });
+
+                    await sellerWallet.deductFunds(sellerShare);
+                    await new Transaction({
+                        from: req.user._id,
+                        to: platformAdminId,
+                        amount: sellerShare,
+                        type: 'refund',
+                        description: 'Reversal for Razorpay-refunded order (seller share)'
+                    }).save();
+
+                    const adminWallet = await Wallet.findOne({ user: platformAdminId });
+                    if (adminWallet) {
+                        try {
+                            await adminWallet.deductFunds(adminCommission);
+                        } catch (err) {
+                            console.error('Admin has insufficient balance to reverse commission:', err.message);
+                        }
+                    }
+
+                    order.paymentProviderRefundId = refund.id;
+                    order.paymentProviderRefundStatus = refund.status;
+                    order.refundedAt = refund.created_at ? new Date(refund.created_at * 1000) : new Date();
+                    order.paymentStatus = 'refunded';
+                    console.log('Seller Razorpay refund created:', refund.id);
+                } else {
+                    // Wallet-paid orders: refund within wallet (existing behavior)
+                    const customerWallet = await Wallet.findOne({ user: order.customer._id });
+                    if (!customerWallet) {
+                        return res.status(400).json({
+                            success: false,
+                            error: 'Customer wallet not found'
+                        });
+                    }
+
+                    await customerWallet.addFunds(refundAmount);
+
+                    try {
+                        await sellerWallet.deductFunds(sellerShare);
+                    } catch (err) {
+                        console.error('Seller has insufficient balance for refund:', err.message);
+                        return res.status(400).json({
+                            success: false,
+                            error: 'Insufficient seller balance for refund. Please add funds to your wallet.'
+                        });
+                    }
+
+                    const adminWallet = await Wallet.findOne({ user: platformAdminId });
+                    if (adminWallet) {
+                        try {
+                            await adminWallet.deductFunds(adminCommission);
+                        } catch (err) {
+                            console.error('Admin has insufficient balance for refund:', err.message);
+                        }
+                    }
+
+                    await new Transaction({
+                        from: platformAdminId,
+                        to: order.customer._id,
+                        amount: refundAmount,
+                        type: 'refund',
+                        description: 'Refund for cancelled order'
+                    }).save();
+
+                    await new Transaction({
+                        from: req.user._id,
+                        to: platformAdminId,
+                        amount: sellerShare,
+                        type: 'refund',
+                        description: 'Refund deduction for cancelled order'
+                    }).save();
+
+                    order.paymentStatus = 'refunded';
+                    console.log('Wallet refund completed successfully');
                 }
-                
-                // Create refund transaction record for customer
-                await new Transaction({
-                    from: "6807e4424877bcd9980c7e00",
-                    to: order.customer._id,
-                    amount: refundAmount,
-                    type: 'refund',
-                    description: `Refund for cancelled order`
-                }).save();
-                
-                // Create transaction record for seller deduction
-                await new Transaction({
-                    from: req.user._id,
-                    to: "6807e4424877bcd9980c7e00",
-                    amount: sellerShare,
-                    type: 'refund',
-                    description: `Refund deduction for cancelled order`
-                }).save();
-                
-                // Update payment status to refunded
-                order.paymentStatus = 'refunded';
-                console.log('Refund completed successfully');
             } else if (order.paymentMethod === 'cod') {
                 console.log('COD order cancelled - no refund needed');
                 // For COD orders, just update payment status to cancelled

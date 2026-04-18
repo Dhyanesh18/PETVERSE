@@ -7,6 +7,7 @@ const Transaction = require('../models/transaction');
 const PaymentIntent = require('../models/paymentIntent');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const { refundRazorpayPayment, toPaise } = require('../utils/razorpay');
 const multer = require('multer');
 const path = require('path');
 
@@ -706,6 +707,11 @@ router.get('/:id/ticket', isAuthenticated, isOwner, async (req, res) => {
             organizerName: event.organizer?.fullName || 'Organizer',
             organizerEmail: event.organizer?.email,
             entryFee: event.entryFee,
+            payment: {
+                provider: attendee.paymentProvider || null,
+                intentId: attendee.paymentIntentId ? String(attendee.paymentIntentId) : null,
+                isPaid: !!attendee.isPaid
+            },
             formattedDate: new Date(event.eventDate).toLocaleDateString('en-IN', {
                 weekday: 'long',
                 year: 'numeric',
@@ -1268,6 +1274,154 @@ router.post('/:id/razorpay/cancel', isAuthenticated, isOwner, async (req, res) =
         return res.status(500).json({
             success: false,
             error: 'Cancel failed',
+            message: err.message
+        });
+    }
+});
+
+// Refund Razorpay event entry fee (refund to original payment method)
+router.post('/:id/razorpay/refund', isAuthenticated, isOwner, async (req, res) => {
+    try {
+        const eventId = req.params.id;
+        const { intentId } = req.body || {};
+
+        if (!intentId) {
+            return res.status(400).json({
+                success: false,
+                error: 'intentId is required'
+            });
+        }
+
+        const event = await Event.findById(eventId);
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                error: 'Event not found'
+            });
+        }
+
+        const attendeeIndex = (event.attendees || []).findIndex(a => a.user.toString() === req.user._id.toString());
+        if (attendeeIndex === -1) {
+            return res.status(403).json({
+                success: false,
+                error: 'Not registered for this event'
+            });
+        }
+
+        const intent = await PaymentIntent.findById(intentId);
+        if (!intent || intent.user.toString() !== req.user._id.toString() || intent.purpose !== 'event_entry_fee') {
+            return res.status(404).json({
+                success: false,
+                error: 'Payment intent not found'
+            });
+        }
+
+        if (String(intent.metadata?.eventId || '') !== String(event._id)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Intent does not match event'
+            });
+        }
+
+        if (intent.status === 'refunded') {
+            return res.json({
+                success: true,
+                message: 'Already refunded',
+                data: {
+                    intentId: String(intent._id),
+                    refundId: intent.providerRefundId || null,
+                    refundStatus: intent.providerRefundStatus || null
+                }
+            });
+        }
+
+        if (intent.status !== 'paid' || !intent.providerPaymentId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Payment is not completed or missing payment reference'
+            });
+        }
+
+        // Ensure attendee is currently marked paid
+        if (!event.attendees[attendeeIndex]?.isPaid) {
+            return res.status(400).json({
+                success: false,
+                error: 'Attendee is not marked as paid'
+            });
+        }
+
+        // Reverse organizer wallet credit (best-effort safeguard)
+        let organizerWallet = await Wallet.findOne({ user: event.organizer });
+        if (!organizerWallet) {
+            organizerWallet = new Wallet({ user: event.organizer, balance: 0 });
+            await organizerWallet.save();
+        }
+
+        if (organizerWallet.balance < intent.amount) {
+            return res.status(400).json({
+                success: false,
+                error: 'Organizer has insufficient wallet balance to process refund'
+            });
+        }
+
+        const refund = await refundRazorpayPayment({
+            paymentId: intent.providerPaymentId,
+            amountPaise: toPaise(intent.amount),
+            notes: {
+                intentId: String(intent._id),
+                purpose: 'event_entry_fee',
+                eventId: String(event._id),
+                userId: String(req.user._id)
+            },
+            receipt: String(intent._id)
+        });
+
+        if (refund.status === 'failed') {
+            return res.status(500).json({
+                success: false,
+                error: 'Refund failed',
+                message: 'Razorpay returned a failed refund status'
+            });
+        }
+
+        await organizerWallet.deductFunds(intent.amount);
+
+        await new Transaction({
+            from: event.organizer,
+            to: req.user._id,
+            amount: intent.amount,
+            type: 'refund',
+            description: `Event entry fee refunded to original payment method (Razorpay): ${event.title}`
+        }).save();
+
+        // Mark attendee as unpaid so ticket access is blocked again
+        event.attendees[attendeeIndex].isPaid = false;
+        event.attendees[attendeeIndex].paidAt = null;
+        event.attendees[attendeeIndex].paymentProvider = null;
+        event.attendees[attendeeIndex].paymentIntentId = null;
+        await event.save();
+
+        intent.status = 'refunded';
+        intent.providerRefundId = refund.id;
+        intent.providerRefundStatus = refund.status;
+        intent.refundedAt = refund.created_at ? new Date(refund.created_at * 1000) : new Date();
+        await intent.save();
+
+        return res.json({
+            success: true,
+            message: 'Refund initiated',
+            data: {
+                intentId: String(intent._id),
+                refundId: refund.id,
+                refundStatus: refund.status,
+                redirectPath: `/events/${eventId}`
+            }
+        });
+    } catch (err) {
+        console.error('Event Razorpay refund error:', err);
+        return res.status(500).json({
+            success: false,
+            error: 'Refund failed',
             message: err.message
         });
     }

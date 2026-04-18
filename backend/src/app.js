@@ -180,7 +180,8 @@ app.use((req, res, next) => {
         '/api',
         '/api/health',
         '/api/docs',
-        '/api/docs.json'
+        '/api/docs.json',
+        '/api/auth/check-session'
     ];
 
     if (req.path === '/images' || req.path.startsWith('/images/')) {
