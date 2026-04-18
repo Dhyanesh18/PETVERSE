@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/users');
+const { cacheMiddleware } = require('../middleware/cache');
 const Review = require('../models/reviews');
 const Wallet = require('../models/wallet');
 const Transaction = require('../models/transaction');
@@ -108,7 +109,7 @@ function mapServiceCategory(serviceType) {
  *                       type: object
  */
 // Get all service providers with filters
-router.get('/', async (req, res) => {
+router.get('/', cacheMiddleware('services', 300), async (req, res) => {
     try {
         const { 
             categories, 

@@ -4,6 +4,7 @@ const router = express.Router();
 const Pet = require('../models/pets');
 const Product = require('../models/products');
 const Service = require('../models/serviceProvider');
+const { cacheMiddleware } = require('../middleware/cache');
 
 /**
  * @swagger
@@ -21,7 +22,7 @@ const Service = require('../models/serviceProvider');
  *               items:
  *                 type: object
  */
-router.get('/featured-pets', async (req, res) => {
+router.get('/featured-pets', cacheMiddleware('featured-pets', 600), async (req, res) => {
     try {
         const pets = await Pet.find({ available: true })
             .sort({ createdAt: -1 })
@@ -58,7 +59,7 @@ router.get('/featured-pets', async (req, res) => {
  *               items:
  *                 type: object
  */
-router.get('/featured-products', async (req, res) => {
+router.get('/featured-products', cacheMiddleware('featured-products', 600), async (req, res) => {
     try {
         const products = await Product.find({ available: true })
             .sort({ avgRating: -1 })

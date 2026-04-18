@@ -254,9 +254,22 @@ const apiRoutes = require('./routes/apiRoutes');
 const lostPetRoutes = require('./routes/lostPet.routes');
 const otpRoutes = require('./routes/otp.routes');
 const forgotPasswordRoutes = require('./routes/forgotPassword.routes');
+const b2bRoutes = require('./routes/b2b.routes');
 
 // Swagger
 const { setupSwagger } = require('./docs/swagger');
+
+// Initialise Redis connection (graceful degradation — app works without Redis)
+const { getClient: initRedis } = require('./utils/redis');
+if (process.env.NODE_ENV !== 'test') {
+    try { initRedis(); } catch { /* ignored — Redis is optional */ }
+}
+
+// Initialise Typesense (graceful degradation — search falls back to MongoDB if unavailable)
+const { initTypesense } = require('./utils/typesense');
+if (process.env.NODE_ENV !== 'test') {
+    initTypesense(); // non-blocking; logs success or warns on failure
+}
 
 app.use('/api', apiRoutes);
 app.use('/api/auth', authRoutes);
@@ -279,6 +292,7 @@ app.use('/api/images', imageRoutes);
 app.use('/api/lost-pets', lostPetRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/forgot-password', forgotPasswordRoutes);
+app.use('/api/b2b', b2bRoutes);
 
 app.get('/api/health', (req, res) => {
     res.json({

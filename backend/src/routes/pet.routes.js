@@ -4,6 +4,9 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const Pet = require('../models/pets');
 const { uploadMultipleToCloudinary, deleteMultipleFromCloudinary } = require('../utils/cloudinary');
+const { cacheMiddleware } = require('../middleware/cache');
+const { cacheInvalidatePattern } = require('../utils/redis');
+const { syncPet, deletePet: deletePetFromTypesense } = require('../utils/typesense');
 
 // Helper: get image URL (Cloudinary URL or legacy binary endpoint)
 function getImageUrl(entityType, entityId, image, index) {
@@ -126,7 +129,7 @@ function isSeller(req, res, next) {
  *                       type: object
  */
 // Get all pets with optional filters (API endpoint)
-router.get('/', async (req, res) => {
+router.get('/', cacheMiddleware('pets', 300), async (req, res) => {
     try {
         const { category, available, minPrice, maxPrice, gender, breed, age, page = 1, limit = 12 } = req.query;
         
@@ -532,6 +535,8 @@ router.post('/add', isAuthenticated, isSeller, upload.array('images', 5), async 
         });
 
         const newPet = await Pet.create(petData);
+        await cacheInvalidatePattern('pets:*');
+        syncPet(newPet).catch(() => {}); // fire-and-forget Typesense sync
         console.log('Successfully created pet listing with ID:', newPet._id);
         
         res.status(201).json({
@@ -814,6 +819,8 @@ router.delete('/:id', isAuthenticated, isSeller, async (req, res) => {
         }
 
         await Pet.findByIdAndDelete(req.params.id);
+        await cacheInvalidatePattern('pets:*');
+        deletePetFromTypesense(req.params.id).catch(() => {}); // fire-and-forget
 
         res.json({
             success: true,

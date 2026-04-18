@@ -7,6 +7,11 @@
     "scripts": {
         "start": "node src/app.js",
         "dev": "nodemon src/app.js",
+        "test": "jest --testEnvironment=node --forceExit",
+        "test:coverage": "jest --coverage --testEnvironment=node --forceExit",
+        "test:report": "jest --coverage --json --outputFile=coverage/test-results.json --testEnvironment=node --forceExit && echo Test report written to coverage/test-results.json — HTML report at coverage/lcov-report/index.html",
+        "benchmark": "node src/scripts/redis-benchmark.js",
+        "ts:index": "node src/scripts/typesense-index.js",
         "create:test-user": "node src/scripts/create-test-user.js",
         "test:email": "node src/scripts/test-email.js"
     },
@@ -39,9 +44,32 @@
         "sqlite3": "^5.1.7",
         "supertest": "^7.2.2",
         "swagger-jsdoc": "^6.2.8",
-        "swagger-ui-express": "^5.0.1"
+        "swagger-ui-express": "^5.0.1",
+        "typesense": "^1.8.2"
     },
     "devDependencies": {
         "nodemon": "^3.1.10"
+    },
+    "jest": {
+        "testEnvironment": "node",
+        "testMatch": [
+            "**/src/__tests__/**/*.test.js"
+        ],
+        "setupFiles": [
+            "./src/__tests__/setup.js"
+        ],
+        "coverageDirectory": "coverage",
+        "collectCoverageFrom": [
+            "src/**/*.js",
+            "!src/scripts/**",
+            "!src/docs/**"
+        ],
+        "coverageReporters": [
+            "text",
+            "lcov",
+            "html",
+            "json-summary"
+        ],
+        "testTimeout": 15000
     }
 }

@@ -4,7 +4,15 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - ./backend/src/.env
+      - ./backend/.env
+    depends_on:
+      - redis
+      - typesense
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - TYPESENSE_HOST=typesense
+      - TYPESENSE_PORT=8108
+      - TYPESENSE_PROTOCOL=http
 
   frontend:
     build: ./frontend
@@ -12,3 +20,23 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  typesense:
+    image: typesense/typesense:0.25.2
+    ports:
+      - "8108:8108"
+    volumes:
+      - typesense_data:/data
+    command: --data-dir /data --api-key=${TYPESENSE_API_KEY:-petverse-dev-key} --enable-cors
+
+volumes:
+  redis_data:
+  typesense_data:

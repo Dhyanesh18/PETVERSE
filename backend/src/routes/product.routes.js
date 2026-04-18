@@ -3,6 +3,9 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const multer = require('multer');
 const Product = require('../models/products');
+const { cacheMiddleware } = require('../middleware/cache');
+const { cacheInvalidatePattern } = require('../utils/redis');
+const { syncProduct, deleteProduct: deleteProductFromTypesense } = require('../utils/typesense');
 
 router.param('id', (req, res, next, id) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -119,7 +122,7 @@ function isSeller(req, res, next) {
  *                       type: object
  */
 // Get all products with search and filters
-router.get('/', async (req, res) => {
+router.get('/', cacheMiddleware('products', 300), async (req, res) => {
     try {
         const { 
             category, 
@@ -625,6 +628,8 @@ router.post('/add', isAuthenticated, isSeller, upload.array('images', 5), async 
         });
 
         const newProduct = await Product.create(productData);
+        await cacheInvalidatePattern('products:*');
+        syncProduct(newProduct).catch(() => {}); // fire-and-forget Typesense sync
         console.log('Successfully created product with ID:', newProduct._id);
         
         res.status(201).json({
@@ -944,6 +949,8 @@ router.delete('/:id', isAuthenticated, isSeller, async (req, res) => {
         }
 
         await Product.findByIdAndDelete(req.params.id);
+        await cacheInvalidatePattern('products:*');
+        deleteProductFromTypesense(req.params.id).catch(() => {}); // fire-and-forget
 
         res.json({
             success: true,
