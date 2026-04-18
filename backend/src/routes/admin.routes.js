@@ -142,29 +142,30 @@ router.get('/dashboard', adminAuth, async (req, res) => {
             console.error('Error loading pets:', err);
         }
         
-        // Get services data
+        // Get services data — built from service provider User accounts (source of truth)
         let services = [];
         let pendingServices = [];
         let approvedServices = [];
         let rejectedServices = [];
         try {
-            const Service = require('../models/Service');
-            const allServices = await Service.find().populate('provider').sort({ createdAt: -1 });
-            services = allServices.map(service => ({
-                _id: service._id,
-                name: `${service.serviceType} Services`,
-                description: service.description || `Professional ${service.serviceType} services`,
-                provider: service.provider ? {
-                    _id: service.provider._id,
-                    fullName: service.provider.fullName || 'Service Provider',
-                    serviceType: service.serviceType
-                } : null,
-                serviceType: service.serviceType,
-                rate: service.rate,
-                price: service.rate,
-                isApproved: service.isApproved,
-                rejectionReason: service.rejectionReason,
-                createdAt: service.createdAt
+            const allProviders = await ServiceProvider.find().sort({ createdAt: -1 }).lean();
+            services = allProviders.map(sp => ({
+                _id: sp._id,
+                name: sp.fullName || sp.username || 'Service Provider',
+                description: sp.serviceDescription || `Professional ${sp.serviceType || 'pet'} services`,
+                provider: {
+                    _id: sp._id,
+                    fullName: sp.fullName || sp.username,
+                    email: sp.email,
+                    serviceType: sp.serviceType,
+                    serviceAddress: sp.serviceAddress,
+                    phoneNo: sp.phoneNo
+                },
+                serviceType: sp.serviceType,
+                price: sp.rate || null,
+                isApproved: sp.isApproved,
+                rejectionReason: sp.rejectionReason,
+                createdAt: sp.createdAt
             }));
             pendingServices = services.filter(s => s.isApproved === false && !s.rejectionReason);
             approvedServices = services.filter(s => s.isApproved === true);
@@ -1649,7 +1650,6 @@ router.get('/analytics', adminAuth, async (req, res) => {
         // Models
         const Product = require('../models/products');
         const Pet = require('../models/pets');
-        const Service = require('../models/Service');
         const Booking = require('../models/Booking');
         const Event = require('../models/event');
         
@@ -1696,11 +1696,12 @@ router.get('/analytics', adminAuth, async (req, res) => {
         // Service revenue by month (last 12 months)
         const serviceRevenueByMonth = await getRevenueByMonth(serviceTransactions);
         
-        // Service types breakdown
-        const services = await Service.find().populate('provider');
+        // Service types breakdown — count from approved service provider Users (source of truth)
+        const approvedProviders = await User.find({ role: 'service_provider', isApproved: true }).select('serviceType').lean();
+        const totalActiveServiceProviders = approvedProviders.length;
         const serviceTypeBreakdown = {};
-        services.forEach(service => {
-            const type = service.serviceType || 'other';
+        approvedProviders.forEach(provider => {
+            const type = provider.serviceType || 'other';
             serviceTypeBreakdown[type] = (serviceTypeBreakdown[type] || 0) + 1;
         });
         
@@ -1869,7 +1870,7 @@ router.get('/analytics', adminAuth, async (req, res) => {
                 serviceAnalytics: {
                     totalRevenue: totalServiceRevenue,
                     totalBookings: totalBookings,
-                    totalServices: services.length,
+                    totalServices: totalActiveServiceProviders,
                     topServiceProviders,
                     revenueByMonth: serviceRevenueByMonth,
                     serviceTypeBreakdown

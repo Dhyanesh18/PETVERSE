@@ -123,7 +123,7 @@ router.get('/', async (req, res) => {
         
         console.log('\n=== SERVICES API CALLED ===');
         
-        let query = { role: 'service_provider' };
+        let query = { role: 'service_provider', isApproved: true };
         
         // Filter by categories
         if (categories) {
