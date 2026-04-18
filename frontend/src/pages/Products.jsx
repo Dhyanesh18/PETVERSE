@@ -409,7 +409,7 @@ const Products = () => {
                                         <img
                                             src={
                                                 product.images && product.images.length > 0
-                                                    ? `http://localhost:8080/api/products/${product._id}/image/0`
+                                                    ? `/api/products/${product._id}/image/0`
                                                     : product.category?.toLowerCase().includes('food') || product.name?.toLowerCase().includes('food')
                                                         ? 'https://images.unsplash.com/photo-1589924691995-400dc9ecc119?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
                                                         : product.category?.toLowerCase().includes('toy') || product.name?.toLowerCase().includes('toy')

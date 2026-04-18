@@ -20,7 +20,7 @@ const PetChatModal = ({ isOpen, onClose, pet, seller, user }) => {
     useEffect(() => {
         if (isOpen && pet && seller && user) {
             // Connect to socket
-            const socketInstance = io('http://localhost:8080', {
+            const socketInstance = io('', {
                 withCredentials: true
             });
 

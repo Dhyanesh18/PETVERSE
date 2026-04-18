@@ -20,7 +20,7 @@ const ChatModal = ({ isOpen, onClose, order, user }) => {
     useEffect(() => {
         if (isOpen && order && user) {
             // Connect to socket
-            const socketInstance = io('http://localhost:8080', {
+            const socketInstance = io('', {
                 withCredentials: true
             });
 

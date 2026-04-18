@@ -198,16 +198,16 @@ const PetDetail = () => {
                                     <img
                                         src={
                                             pet.imageUrls && pet.imageUrls.length > 0 
-                                                ? `http://localhost:8080${pet.imageUrls[selectedImage]}`
-                                                : `http://localhost:8080/api/pets/image/${pet._id}/${selectedImage}`
+                                                ? `${pet.imageUrls[selectedImage]}`
+                                                : `/api/pets/image/${pet._id}/${selectedImage}`
                                         }
                                         alt={pet.name}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
                                             if (pet.imageUrls && pet.imageUrls[selectedImage] && !e.target.src.includes('/images/pet/')) {
-                                                e.target.src = `http://localhost:8080${pet.imageUrls[selectedImage]}`;
+                                                e.target.src = `${pet.imageUrls[selectedImage]}`;
                                             } else if (pet.images && pet.images.length > selectedImage && !e.target.src.includes('/api/pets/image/')) {
-                                                e.target.src = `http://localhost:8080/api/pets/image/${pet._id}/${selectedImage}`;
+                                                e.target.src = `/api/pets/image/${pet._id}/${selectedImage}`;
                                             } else {
                                                 const breed = pet.breed?.toLowerCase() || '';
                                                 if (breed.includes('dog') || breed.includes('german') || breed.includes('shepherd')) {
@@ -222,7 +222,7 @@ const PetDetail = () => {
                                     />
                                 ) : pet.thumbnail ? (
                                     <img
-                                        src={`http://localhost:8080${pet.thumbnail}`}
+                                        src={`${pet.thumbnail}`}
                                         alt={pet.name}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
@@ -264,16 +264,16 @@ const PetDetail = () => {
                                             <img
                                                 src={
                                                     pet.imageUrls && pet.imageUrls.length > 0 
-                                                        ? `http://localhost:8080${pet.imageUrls[index]}`
-                                                        : `http://localhost:8080/api/pets/image/${pet._id}/${index}`
+                                                        ? `${pet.imageUrls[index]}`
+                                                        : `/api/pets/image/${pet._id}/${index}`
                                                 }
                                                 alt={`${pet.name} ${index + 1}`}
                                                 className="w-full h-full object-cover"
                                                 onError={(e) => {
                                                     if (pet.imageUrls && pet.imageUrls[index] && !e.target.src.includes('/images/pet/')) {
-                                                        e.target.src = `http://localhost:8080${pet.imageUrls[index]}`;
+                                                        e.target.src = `${pet.imageUrls[index]}`;
                                                     } else if (pet.images && pet.images[index] && !e.target.src.includes('/api/pets/image/')) {
-                                                        e.target.src = `http://localhost:8080/api/pets/image/${pet._id}/${index}`;
+                                                        e.target.src = `/api/pets/image/${pet._id}/${index}`;
                                                     } else {
                                                         e.target.src = 'https://via.placeholder.com/80x80/e5e7eb/6b7280?text=' + (index + 1);
                                                     }
@@ -448,9 +448,9 @@ const PetDetail = () => {
                                             <img
                                                 src={
                                                     similarPet.images && similarPet.images.length > 0
-                                                        ? `http://localhost:8080/api/pets/${similarPet._id}/image/0`
+                                                        ? `/api/pets/${similarPet._id}/image/0`
                                                         : similarPet.thumbnail 
-                                                        ? `http://localhost:8080${similarPet.thumbnail}`
+                                                        ? `${similarPet.thumbnail}`
                                                         : similarPet.category === 'dogs' || similarPet.breed?.toLowerCase().includes('dog') || similarPet.breed?.toLowerCase().includes('shepherd') || similarPet.breed?.toLowerCase().includes('rottweiler')
                                                             ? 'https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
                                                             : similarPet.category === 'cats' || similarPet.breed?.toLowerCase().includes('cat') || similarPet.breed?.toLowerCase().includes('persian') || similarPet.breed?.toLowerCase().includes('siamese')

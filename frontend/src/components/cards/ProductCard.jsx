@@ -9,19 +9,19 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted = fa
     const getImageSrc = () => {
         // If product has images, use the API endpoint
         if (product.images && product.images.length > 0) {
-            return `http://localhost:8080/api/products/image/${product._id}/0`;
+            return `/api/products/image/${product._id}/0`;
         }
         
         // If thumbnail is provided as API endpoint path
         if (product.thumbnail) {
             if (product.thumbnail.startsWith('/api/products/image/')) {
-                return `http://localhost:8080${product.thumbnail}`;
+                return `${product.thumbnail}`;
             }
             // If it's the old format /images/product/...
             if (product.thumbnail.startsWith('/images/product/')) {
                 // Convert to correct API format
                 const productId = product._id;
-                return `http://localhost:8080/api/products/image/${productId}/0`;
+                return `/api/products/image/${productId}/0`;
             }
         }
         

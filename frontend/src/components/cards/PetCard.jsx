@@ -9,19 +9,19 @@ const PetCard = ({ pet, onAddToCart, onToggleWishlist, isWishlisted = false, var
     const getImageSrc = () => {
         // If pet has images, use the API endpoint
         if (pet.images && pet.images.length > 0) {
-            return `http://localhost:8080/api/pets/image/${pet._id}/0`;
+            return `/api/pets/image/${pet._id}/0`;
         }
         
         // If thumbnail is provided as API endpoint path
         if (pet.thumbnail) {
             if (pet.thumbnail.startsWith('/api/pets/image/')) {
-                return `http://localhost:8080${pet.thumbnail}`;
+                return `${pet.thumbnail}`;
             }
             // If it's the old format /images/pet/...
             if (pet.thumbnail.startsWith('/images/pet/')) {
                 // Convert to correct API format
                 const petId = pet._id;
-                return `http://localhost:8080/api/pets/image/${petId}/0`;
+                return `/api/pets/image/${petId}/0`;
             }
         }
         

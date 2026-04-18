@@ -37,7 +37,7 @@ const ClaimReview = () => {
     };
 
     const getClaimImageUrl = (claimId, index) => {
-        return `http://localhost:8080/api/lost-pets/claims/image/${claimId}/${index}`;
+        return `/api/lost-pets/claims/image/${claimId}/${index}`;
     };
 
     const handleReviewSubmit = async () => {

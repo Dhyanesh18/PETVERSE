@@ -7,23 +7,35 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
+    allowedHosts: 'all',
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://backend:8080',
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {
-          proxy.on('error', (err, _req, _res) => {
+          proxy.on('error', (err) => {
             console.log('proxy error', err);
           });
-          proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('Sending Request to the Target:', req.method, req.url);
+          proxy.on('proxyReq', (_proxyReq, req) => {
+            console.log('proxy request:', req.method, req.url);
           });
-          proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+          proxy.on('proxyRes', (proxyRes, req) => {
+            console.log('proxy response:', proxyRes.statusCode, req.url);
           });
         },
-      }
+      },
+      '/socket.io': {
+        target: 'http://backend:8080',
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+      '/images': {
+        target: 'http://backend:8080',
+        changeOrigin: true,
+        secure: false,
+      },
     }
   }
 })

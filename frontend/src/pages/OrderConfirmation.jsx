@@ -31,7 +31,7 @@ const OrderConfirmation = () => {
     useEffect(() => {
         const fetchOrderDetails = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/api/payment/order-confirmation/${orderId}`, {
+                const response = await fetch(`/api/payment/order-confirmation/${orderId}`, {
                     credentials: 'include'
                 });
                 const data = await response.json();

@@ -424,7 +424,7 @@ const Pets = () => {
                                         <img
                                             src={
                                                 pet.images && pet.images.length > 0
-                                                    ? `http://localhost:8080/api/pets/${pet._id}/image/0`
+                                                    ? `/api/pets/${pet._id}/image/0`
                                                     : pet.category === 'dogs' || pet.breed.toLowerCase().includes('dog') || pet.breed.toLowerCase().includes('shepherd') || pet.breed.toLowerCase().includes('rottweiler')
                                                         ? 'https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
                                                         : pet.category === 'cats' || pet.breed.toLowerCase().includes('cat') || pet.breed.toLowerCase().includes('persian') || pet.breed.toLowerCase().includes('siamese')

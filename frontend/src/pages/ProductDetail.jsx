@@ -748,7 +748,7 @@ const ProductDetail = () => {
                                             <img
                                                 src={
                                                     similarProduct.images && similarProduct.images.length > 0
-                                                        ? `http://localhost:8080/api/products/${similarProduct._id}/image/0`
+                                                        ? `/api/products/${similarProduct._id}/image/0`
                                                         : similarProduct.category?.toLowerCase().includes('food') || similarProduct.name?.toLowerCase().includes('food')
                                                         ? 'https://images.unsplash.com/photo-1589924691995-400dc9ecc119?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
                                                         : similarProduct.category?.toLowerCase().includes('toy') || similarProduct.name?.toLowerCase().includes('toy')

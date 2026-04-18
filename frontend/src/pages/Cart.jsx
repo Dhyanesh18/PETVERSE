@@ -43,7 +43,7 @@ const Cart = () => {
         
         try {
             // Use the cart routes API directly since updateCartItem might not exist
-            const response = await fetch('http://localhost:8080/api/cart/update', {
+            const response = await fetch('/api/cart/update', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ const Cart = () => {
         if (window.confirm('Remove this item from cart?')) {
             try {
                 // Use the cart routes API directly
-                const response = await fetch(`http://localhost:8080/api/cart/remove/${productId}`, {
+                const response = await fetch(`/api/cart/remove/${productId}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ const Cart = () => {
                                             <img
                                                 src={
                                                     item.images && item.images.length > 0
-                                                        ? `http://localhost:8080/api/${item.itemType === 'Pet' ? 'pets' : 'products'}/${item.productId || item._id}/image/0`
+                                                        ? `/api/${item.itemType === 'Pet' ? 'pets' : 'products'}/${item.productId || item._id}/image/0`
                                                         : item.itemType === 'Pet'
                                                             ? 'https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
                                                             : 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
