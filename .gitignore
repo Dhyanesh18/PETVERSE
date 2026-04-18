@@ -1,0 +1,10 @@
+# Ignore environment variables
+.env
+
+# Ignore test coverage reports
+backend/coverage/
+backend/test-results.json
+
+# Standard Node ignores
+node_modules/
+dist/
