@@ -8,11 +8,6 @@ services:
     depends_on:
       - redis
       - typesense
-    environment:
-      - REDIS_URL=redis://redis:6379
-      - TYPESENSE_HOST=typesense
-      - TYPESENSE_PORT=8108
-      - TYPESENSE_PROTOCOL=http
 
   frontend:
     build: ./frontend
