@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import './SellerChatModal.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 const SellerChatModal = ({ isOpen, onClose, chat, seller }) => {
     const [socket, setSocket] = useState(null);

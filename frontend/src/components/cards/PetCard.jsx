@@ -25,7 +25,16 @@ const PetCard = ({ pet, onAddToCart, onToggleWishlist, isWishlisted = false, var
         
         // If thumbnail is a relative path
         if (pet.thumbnail) {
-            return `/api/pets/image/${pet._id}/0`;
+            if (pet.thumbnail.startsWith('/api/pets/image/')) {
+                return pet.thumbnail;
+            }
+            // If it's the old format /images/pet/...
+            if (pet.thumbnail.startsWith('/images/pet/')) {
+                // Convert to correct API format
+                const petId = pet._id;
+                return `/api/pets/image/${petId}/0`;
+            }
+            return pet.thumbnail;
         }
         
         // Fallback placeholder based on category/breed
