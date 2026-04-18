@@ -23,7 +23,7 @@ const paymentIntentSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ['created', 'paid', 'failed', 'cancelled'],
+            enum: ['created', 'paid', 'failed', 'cancelled', 'refunded'],
             default: 'created'
         },
         provider: {
@@ -42,6 +42,19 @@ const paymentIntentSchema = new mongoose.Schema(
         providerSignature: {
             type: String,
             default: ''
+        },
+        providerRefundId: {
+            type: String,
+            default: ''
+        },
+        providerRefundStatus: {
+            type: String,
+            enum: ['', 'pending', 'processed', 'failed'],
+            default: ''
+        },
+        refundedAt: {
+            type: Date,
+            default: null
         },
         metadata: {
             type: Object,

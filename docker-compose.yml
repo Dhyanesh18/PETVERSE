@@ -10,5 +10,7 @@ services:
     build: ./frontend
     ports:
       - "3000:3000"
+    environment:
+      - VITE_PROXY_TARGET=http://backend:8080
     depends_on:
       - backend

@@ -49,7 +49,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed', 'refunded'],
+    enum: ['pending', 'paid', 'failed', 'refunded', 'cancelled'],
     default: 'pending'
   },
   paymentMethod: {
@@ -72,6 +72,19 @@ const orderSchema = new mongoose.Schema({
   },
   paymentProviderSignature: {
     type: String,
+    default: null
+  },
+  paymentProviderRefundId: {
+    type: String,
+    default: null
+  },
+  paymentProviderRefundStatus: {
+    type: String,
+    enum: ['pending', 'processed', 'failed'],
+    default: null
+  },
+  refundedAt: {
+    type: Date,
     default: null
   },
   shippingAddress: {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getEventTicket } from '../services/api';
+import { getEventTicket, refundEventRazorpayPayment } from '../services/api';
 import { FaQrcode, FaPrint, FaArrowLeft } from 'react-icons/fa';
 import { EventTicketSkeleton } from '../components/Skeleton';
 
@@ -31,6 +31,26 @@ const EventTicket = () => {
 
     const handlePrint = () => {
         window.print();
+    };
+
+    const handleRefund = async () => {
+        const intentId = ticket?.payment?.intentId;
+        if (!intentId) return;
+
+        const ok = window.confirm('Refund the entry fee back to the original payment method? This will invalidate your ticket.');
+        if (!ok) return;
+
+        try {
+            const resp = await refundEventRazorpayPayment(ticket.eventId, { intentId });
+            if (resp.data?.success) {
+                alert('Refund initiated. Ticket is now invalid.');
+                navigate(`/events/${ticket.eventId}`);
+            } else {
+                alert(resp.data?.error || 'Refund failed');
+            }
+        } catch (e) {
+            alert(e.response?.data?.error || 'Refund failed');
+        }
     };
 
     const formatDate = (dateString) => {
@@ -164,6 +184,14 @@ const EventTicket = () => {
                                 <FaPrint />
                                 Print Ticket
                             </button>
+                            {Number(ticket.entryFee || 0) > 0 && ticket.payment?.provider === 'razorpay' && ticket.payment?.intentId && (
+                                <button
+                                    onClick={handleRefund}
+                                    className="flex items-center justify-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-md transition duration-200"
+                                >
+                                    Refund Entry Fee
+                                </button>
+                            )}
                             <button
                                 onClick={() => navigate(`/events/${ticket.eventId}`)}
                                 className="flex items-center justify-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-md transition duration-200"

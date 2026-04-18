@@ -8,7 +8,7 @@ import {
     transferMoneyFromWallet,
     clearError 
 } from '../redux/slices/walletSlice';
-import { createWalletTopupOrder, verifyWalletTopup, cancelWalletTopup } from '../services/api';
+import { createWalletTopupOrder, verifyWalletTopup, cancelWalletTopup, refundWalletTopup, getPaymentIntents } from '../services/api';
 import { FaWallet, FaPlus, FaMinus, FaHistory, FaArrowLeft, FaRupeeSign, FaCreditCard, FaMobile, FaExchangeAlt, FaUniversity } from 'react-icons/fa';
 
 const Wallet = () => {
@@ -34,6 +34,9 @@ const Wallet = () => {
     });
     const [paymentMethod, setPaymentMethod] = useState('card');
     const [topupProcessing, setTopupProcessing] = useState(false);
+    const [topupIntents, setTopupIntents] = useState([]);
+    const [topupIntentsLoading, setTopupIntentsLoading] = useState(false);
+    const [topupRefundProcessingId, setTopupRefundProcessingId] = useState(null);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -42,6 +45,9 @@ const Wallet = () => {
         }
         // Fetch wallet data on component mount
         dispatch(fetchWalletData());
+
+        // Fetch recent top-up intents for refund UI
+        fetchTopupIntents();
         
         // Refetch wallet data when user returns to this page
         const handleVisibilityChange = () => {
@@ -62,6 +68,20 @@ const Wallet = () => {
             window.removeEventListener('focus', handleFocus);
         };
     }, [isAuthenticated, navigate, dispatch]);
+
+    const fetchTopupIntents = async () => {
+        try {
+            setTopupIntentsLoading(true);
+            const resp = await getPaymentIntents({ purpose: 'wallet_topup', limit: 10 });
+            const intents = resp.data?.data?.intents || [];
+            setTopupIntents(intents);
+        } catch (e) {
+            // Non-blocking
+            setTopupIntents([]);
+        } finally {
+            setTopupIntentsLoading(false);
+        }
+    };
 
     // Clear errors when component unmounts
     useEffect(() => {
@@ -146,6 +166,7 @@ const Wallet = () => {
                             setShowAddMoney(false);
                             setAddAmount('');
                             dispatch(fetchWalletData());
+                            fetchTopupIntents();
                         } else {
                             alert(verifyResp.data?.error || 'Payment verification failed');
                         }
@@ -243,6 +264,28 @@ const Wallet = () => {
             });
         } catch {
             return 'Invalid date';
+        }
+    };
+
+    const handleRefundTopup = async (intentId) => {
+        if (!intentId) return;
+        const ok = window.confirm('Refund this wallet top-up back to the original payment method?');
+        if (!ok) return;
+
+        try {
+            setTopupRefundProcessingId(intentId);
+            const resp = await refundWalletTopup({ intentId });
+            if (resp.data?.success) {
+                alert('Refund initiated. It may take time to reflect in your bank/app.');
+                dispatch(fetchWalletData());
+                fetchTopupIntents();
+            } else {
+                alert(resp.data?.error || 'Refund failed');
+            }
+        } catch (e) {
+            alert(e.response?.data?.error || 'Refund failed');
+        } finally {
+            setTopupRefundProcessingId(null);
         }
     };
 
@@ -468,6 +511,53 @@ const Wallet = () => {
                             )}
                         </div>
                     </div>
+
+                    {/* Recent Top-ups (Refund) */}
+                    {user?.role !== 'admin' && (
+                        <div className="bg-white rounded-xl shadow-md border border-gray-100 mt-8">
+                            <div className="p-6 border-b border-gray-200">
+                                <div className="flex items-center gap-3">
+                                    <FaPlus className="text-2xl text-green-600" />
+                                    <h2 className="text-2xl font-bold text-gray-800">Recent Top-ups</h2>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">Refund a top-up back to the original payment method.</p>
+                            </div>
+
+                            <div className="p-6">
+                                {topupIntentsLoading ? (
+                                    <div className="text-gray-600">Loading...</div>
+                                ) : (topupIntents && topupIntents.length > 0) ? (
+                                    <div className="space-y-3">
+                                        {topupIntents.map((i) => (
+                                            <div key={i._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                                <div>
+                                                    <div className="font-semibold text-gray-800">₹{Number(i.amount || 0).toLocaleString('en-IN')}</div>
+                                                    <div className="text-xs text-gray-500">{i.createdAt ? formatDate(i.createdAt) : ''}</div>
+                                                    <div className="text-xs text-gray-600">Status: {i.status}</div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {i.status === 'paid' && (
+                                                        <button
+                                                            onClick={() => handleRefundTopup(i._id)}
+                                                            disabled={topupRefundProcessingId === i._id}
+                                                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold disabled:opacity-50"
+                                                        >
+                                                            {topupRefundProcessingId === i._id ? 'Refunding...' : 'Refund'}
+                                                        </button>
+                                                    )}
+                                                    {i.status === 'refunded' && (
+                                                        <div className="text-sm font-semibold text-green-700">Refunded</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-gray-600">No top-ups found.</div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Add Money Modal */}

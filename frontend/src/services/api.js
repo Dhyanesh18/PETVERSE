@@ -169,14 +169,19 @@ export const processPayment = (paymentData) => apiClient.post('/api/payment', pa
 export const verifyRazorpayPayment = (payload) => apiClient.post('/api/payment/razorpay/verify', payload);
 export const getWalletBalance = () => apiClient.get('/api/wallet');
 
+// ===== Payment Intent APIs =====
+export const getPaymentIntents = (params) => apiClient.get('/api/user/payment-intents', { params });
+
 // ===== Razorpay (Wallet Top-up) APIs =====
 export const createWalletTopupOrder = (payload) => apiClient.post('/api/user/wallet/add-money', payload);
 export const verifyWalletTopup = (payload) => apiClient.post('/api/user/wallet/razorpay/verify', payload);
 export const cancelWalletTopup = (payload) => apiClient.post('/api/user/wallet/razorpay/cancel', payload);
+export const refundWalletTopup = (payload) => apiClient.post('/api/user/wallet/razorpay/refund', payload);
 
 // ===== Razorpay (Event Payment) APIs =====
 export const verifyEventRazorpayPayment = (eventId, payload) => apiClient.post(`/api/events/${eventId}/razorpay/verify`, payload);
 export const cancelEventRazorpayPayment = (eventId, payload) => apiClient.post(`/api/events/${eventId}/razorpay/cancel`, payload);
+export const refundEventRazorpayPayment = (eventId, payload) => apiClient.post(`/api/events/${eventId}/razorpay/refund`, payload);
 
 // ===== Review APIs =====
 export const getReviews = (type, itemId) => apiClient.get(`/api/reviews/${type}/${itemId}`);

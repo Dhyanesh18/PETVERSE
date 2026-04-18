@@ -38,60 +38,82 @@ const upload = multer({
  *                   nullable: true
  */
 router.get('/check-session', async (req, res) => {
-    console.log('Check session - Session userId:', req.session.userId);
-    console.log('Check session - User object:', req.user);
-    console.log('Check session - Session userRole:', req.session.userRole);
-    
-    if (req.session.userId) {
-        // If user object is not attached but session exists, try to reload user
-        if (!req.user) {
-            try {
-                const User = require('../models/users');
-                req.user = await User.findById(req.session.userId);
-                console.log('Reloaded user:', req.user);
-            } catch (error) {
-                console.error('Error reloading user:', error);
-                req.session.userId = null;
-                req.session.userRole = null;
+    try {
+        // If the session middleware isn't mounted for some reason, treat as logged out.
+        if (!req.session) {
+            return res.json({
+                success: true,
+                isLoggedIn: false,
+                isAdmin: false,
+                userRole: null,
+                user: null
+            });
+        }
+
+        console.log('Check session - Session userId:', req.session.userId);
+        console.log('Check session - User object:', req.user);
+        console.log('Check session - Session userRole:', req.session.userRole);
+
+        if (req.session.userId) {
+            // If user object is not attached but session exists, try to reload user
+            if (!req.user) {
+                try {
+                    const User = require('../models/users');
+                    req.user = await User.findById(req.session.userId);
+                    console.log('Reloaded user:', req.user);
+                } catch (error) {
+                    console.error('Error reloading user:', error);
+                    req.session.userId = null;
+                    req.session.userRole = null;
+                    return res.json({
+                        success: true,
+                        isLoggedIn: false,
+                        isAdmin: false,
+                        userRole: null,
+                        user: null
+                    });
+                }
+            }
+
+            if (req.user) {
                 return res.json({
                     success: true,
-                    isLoggedIn: false,
-                    isAdmin: false,
-                    userRole: null,
-                    user: null
+                    isLoggedIn: true,
+                    isAdmin: req.user.role === 'admin',
+                    userRole: req.user.role,
+                    user: {
+                        id: req.user._id,
+                        _id: req.user._id,
+                        fullName: req.user.fullName,
+                        username: req.user.username,
+                        email: req.user.email,
+                        phone: req.user.phone,
+                        role: req.user.role,
+                        isApproved: req.user.isApproved,
+                        createdAt: req.user.createdAt,
+                        updatedAt: req.user.updatedAt
+                    }
                 });
             }
         }
-        
-        if (req.user) {
-            return res.json({
-                success: true,
-                isLoggedIn: true,
-                isAdmin: req.user.role === 'admin',
-                userRole: req.user.role,
-                user: {
-                    id: req.user._id,
-                    _id: req.user._id,
-                    fullName: req.user.fullName,
-                    username: req.user.username,
-                    email: req.user.email,
-                    phone: req.user.phone,
-                    role: req.user.role,
-                    isApproved: req.user.isApproved,
-                    createdAt: req.user.createdAt,
-                    updatedAt: req.user.updatedAt
-                }
-            });
-        }
+
+        return res.json({
+            success: true,
+            isLoggedIn: false,
+            isAdmin: false,
+            userRole: null,
+            user: null
+        });
+    } catch (error) {
+        console.error('Unexpected check-session error:', error);
+        return res.json({
+            success: true,
+            isLoggedIn: false,
+            isAdmin: false,
+            userRole: null,
+            user: null
+        });
     }
-    
-    return res.json({
-        success: true,
-        isLoggedIn: false,
-        isAdmin: false,
-        userRole: null,
-        user: null
-    });
 });
 
 /**
