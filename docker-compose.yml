@@ -30,6 +30,8 @@ services:
     image: typesense/typesense:0.25.2
     ports:
       - "8108:8108"
+    env_file:
+      - ./backend/.env
     volumes:
       - typesense_data:/data
     command: --data-dir /data --api-key=${TYPESENSE_API_KEY:-petverse-dev-key} --enable-cors

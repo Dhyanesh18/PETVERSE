@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const PetMate = require('../models/petMate');
 const auth = require('../middleware/auth');
+const { syncMate, deleteMate: deleteMateFromTypesense } = require('../utils/typesense');
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -565,6 +566,7 @@ router.post('/add', isAuthenticated, upload.array('petImage', 4), async (req, re
 
         const newMate = await PetMate.create(mateData);
         console.log('Successfully created new mate listing with ID:', newMate._id);
+        syncMate(newMate).catch(() => {}); // fire-and-forget Typesense sync
         
         res.status(201).json({
             success: true,
@@ -751,6 +753,7 @@ router.patch('/:id', isAuthenticated, upload.array('petImage', 4), async (req, r
         }
 
         await mate.save();
+        syncMate(mate).catch(() => {}); // fire-and-forget Typesense sync
 
         res.json({
             success: true,

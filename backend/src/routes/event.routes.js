@@ -8,6 +8,7 @@ const PaymentIntent = require('../models/paymentIntent');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const { refundRazorpayPayment, toPaise } = require('../utils/razorpay');
+const { syncEvent, deleteEvent: deleteEventFromTypesense } = require('../utils/typesense');
 const multer = require('multer');
 const path = require('path');
 
@@ -430,6 +431,7 @@ router.post('/add', isAuthenticated, isServiceProvider, upload.single('permissio
         });
 
         await newEvent.save();
+        syncEvent(newEvent).catch(() => {}); // fire-and-forget Typesense sync
 
         res.status(201).json({
             success: true,

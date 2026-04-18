@@ -8,6 +8,7 @@ const Order = require('../models/order');
 const Transaction = require('../models/transaction');
 const mongoose = require('mongoose');
 const fs = require('fs');
+const { syncService } = require('../utils/typesense');
 const Wallet = require('../models/wallet');
 const { refundRazorpayPayment, toPaise } = require('../utils/razorpay');
 
@@ -595,6 +596,8 @@ router.post('/approve-user/:userId', adminAuth, async (req, res) => {
         user.rejectedAt = undefined;
         user.rejectedBy = undefined;
         await user.save();
+        // Sync service provider to Typesense so they appear in search immediately
+        if (user.role === 'service_provider') syncService(user).catch(() => {});
         
         res.json({ 
             success: true, 
