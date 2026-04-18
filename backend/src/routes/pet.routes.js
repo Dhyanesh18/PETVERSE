@@ -3,6 +3,13 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const multer = require('multer');
 const Pet = require('../models/pets');
+const { uploadMultipleToCloudinary, deleteMultipleFromCloudinary } = require('../utils/cloudinary');
+
+// Helper: get image URL (Cloudinary URL or legacy binary endpoint)
+function getImageUrl(entityType, entityId, image, index) {
+    if (image.url) return image.url;
+    return `/images/${entityType}/${entityId}/${index}`;
+}
 
 router.param('id', (req, res, next, id) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -195,13 +202,11 @@ router.get('/', async (req, res) => {
             addedBy: pet.addedBy,
             createdAt: pet.createdAt,
             imageCount: pet.images ? pet.images.length : 0,
-            // Provide image URLs instead of raw data
-            imageUrls: pet.images ? pet.images.map((_, index) => 
-                `/images/pet/${pet._id}/${index}`
+            imageUrls: pet.images ? pet.images.map((img, index) => 
+                getImageUrl('pet', pet._id, img, index)
             ) : [],
-            // Provide first image URL as thumbnail
             thumbnail: pet.images && pet.images.length > 0 ? 
-                `/images/pet/${pet._id}/0` : null
+                getImageUrl('pet', pet._id, pet.images[0], 0) : null
         }));
         
         res.json({
@@ -328,11 +333,11 @@ router.get('/:id', async (req, res) => {
         const petForResponse = {
             ...pet,
             imageCount: pet.images ? pet.images.length : 0,
-            imageUrls: pet.images ? pet.images.map((_, index) => 
-                `/images/pet/${pet._id}/${index}`
+            imageUrls: pet.images ? pet.images.map((img, index) => 
+                getImageUrl('pet', pet._id, img, index)
             ) : [],
             thumbnail: pet.images && pet.images.length > 0 ? 
-                `/images/pet/${pet._id}/0` : null
+                getImageUrl('pet', pet._id, pet.images[0], 0) : null
         };
 
         // Remove raw image data
@@ -349,7 +354,7 @@ router.get('/:id', async (req, res) => {
             price: p.price,
             description: p.description,
             thumbnail: p.images && p.images.length > 0 ? 
-                `/images/pet/${p._id}/0` : null
+                getImageUrl('pet', p._id, p.images[0], 0) : null
         }));
 
         res.json({
@@ -500,6 +505,9 @@ router.post('/add', isAuthenticated, isSeller, upload.array('images', 5), async 
             });
         }
 
+        // Upload images to Cloudinary
+        const cloudinaryImages = await uploadMultipleToCloudinary(req.files, 'petverse/pets');
+
         const petData = {
             name: req.body.name,
             category: req.body.category,
@@ -510,9 +518,9 @@ router.post('/add', isAuthenticated, isSeller, upload.array('images', 5), async 
             description: req.body.description || '',
             available: req.body.available !== 'false', // Default to true
             addedBy: req.user._id,
-            images: req.files.map(file => ({
-                data: file.buffer,
-                contentType: file.mimetype
+            images: cloudinaryImages.map(img => ({
+                url: img.url,
+                publicId: img.publicId
             }))
         };
 
@@ -590,11 +598,11 @@ router.get('/my/listings', isAuthenticated, isSeller, async (req, res) => {
         const listingsForResponse = listings.map(listing => ({
             ...listing,
             imageCount: listing.images ? listing.images.length : 0,
-            imageUrls: listing.images ? listing.images.map((_, index) => 
-                `/images/pet/${listing._id}/${index}`
+            imageUrls: listing.images ? listing.images.map((img, index) => 
+                getImageUrl('pet', listing._id, img, index)
             ) : [],
             thumbnail: listing.images && listing.images.length > 0 ? 
-                `/images/pet/${listing._id}/0` : null
+                getImageUrl('pet', listing._id, listing.images[0], 0) : null
         }));
 
         // Remove raw image data
@@ -715,9 +723,10 @@ router.patch('/:id', isAuthenticated, isSeller, upload.array('images', 5), async
 
         // Add new images if provided
         if (req.files && req.files.length > 0) {
-            const newImages = req.files.map(file => ({
-                data: file.buffer,
-                contentType: file.mimetype
+            const cloudinaryImages = await uploadMultipleToCloudinary(req.files, 'petverse/pets');
+            const newImages = cloudinaryImages.map(img => ({
+                url: img.url,
+                publicId: img.publicId
             }));
             pet.images = [...(pet.images || []), ...newImages];
         }
@@ -796,6 +805,14 @@ router.delete('/:id', isAuthenticated, isSeller, async (req, res) => {
             });
         }
 
+        // Delete images from Cloudinary
+        const publicIds = pet.images
+            .filter(img => img.publicId)
+            .map(img => img.publicId);
+        if (publicIds.length > 0) {
+            await deleteMultipleFromCloudinary(publicIds).catch(err => console.error('Cloudinary delete error:', err));
+        }
+
         await Pet.findByIdAndDelete(req.params.id);
 
         res.json({
@@ -859,8 +876,15 @@ router.get('/image/:petId/:index', async (req, res) => {
         }
         
         const image = pet.images[imageIndex];
-        res.set('Content-Type', image.contentType);
-        res.set('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
+        if (!image.data) {
+            return res.redirect('/images/default-pet.jpg');
+        }
+        res.set('Content-Type', image.contentType || 'image/jpeg');
+        res.set('Cache-Control', 'public, max-age=86400');
         res.send(image.data);
     } catch (err) {
         console.error('Image load error:', err);
@@ -936,7 +960,7 @@ router.get('/category/:category', async (req, res) => {
             available: pet.available,
             addedBy: pet.addedBy,
             thumbnail: pet.images && pet.images.length > 0 ? 
-                `/images/pet/${pet._id}/0` : null
+                getImageUrl('pet', pet._id, pet.images[0], 0) : null
         }));
 
         res.json({

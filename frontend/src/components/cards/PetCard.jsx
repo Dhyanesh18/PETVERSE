@@ -5,24 +5,27 @@ import { FaShoppingCart, FaHeart } from 'react-icons/fa';
 const PetCard = ({ pet, onAddToCart, onToggleWishlist, isWishlisted = false, variant = 'default' }) => {
     const isFeature = variant === 'feature';
     
-    // Get image - handle both API endpoint and fallback
+    // Get image - handle Cloudinary URLs, API endpoints, and fallback
     const getImageSrc = () => {
-        // If pet has images, use the API endpoint
+        // If thumbnail is a full URL (Cloudinary), use it directly
+        if (pet.thumbnail && pet.thumbnail.startsWith('http')) {
+            return pet.thumbnail;
+        }
+
+        // If imageUrls exist (Cloudinary URLs from API)
+        if (pet.imageUrls && pet.imageUrls.length > 0) {
+            if (pet.imageUrls[0].startsWith('http')) return pet.imageUrls[0];
+            return pet.imageUrls[0]; // already relative
+        }
+
+        // If pet has images array, use the API endpoint (relative = through Vite proxy)
         if (pet.images && pet.images.length > 0) {
-            return `http://localhost:8080/api/pets/image/${pet._id}/0`;
+            return `/api/pets/image/${pet._id}/0`;
         }
         
-        // If thumbnail is provided as API endpoint path
+        // If thumbnail is a relative path
         if (pet.thumbnail) {
-            if (pet.thumbnail.startsWith('/api/pets/image/')) {
-                return `http://localhost:8080${pet.thumbnail}`;
-            }
-            // If it's the old format /images/pet/...
-            if (pet.thumbnail.startsWith('/images/pet/')) {
-                // Convert to correct API format
-                const petId = pet._id;
-                return `http://localhost:8080/api/pets/image/${petId}/0`;
-            }
+            return `/api/pets/image/${pet._id}/0`;
         }
         
         // Fallback placeholder based on category/breed

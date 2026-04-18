@@ -30,4 +30,9 @@ const transactionSchema = new mongoose.Schema({
   }
 });
 
+// Indexes for transaction lookups
+transactionSchema.index({ from: 1, createdAt: -1 });
+transactionSchema.index({ to: 1, createdAt: -1 });
+transactionSchema.index({ type: 1 });
+
 module.exports = mongoose.model('Transaction', transactionSchema);

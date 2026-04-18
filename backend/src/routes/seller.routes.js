@@ -248,7 +248,7 @@ router.get('/dashboard', isAuthenticated, isSeller, async (req, res) => {
                     _id: item.product?._id,
                     name: item.product?.name || 'Product',
                     image: item.product?.images?.[0] 
-                        ? `/images/product/${item.product._id}/0` 
+                        ? getImageUrl('product', item.product._id, item.product.images[0], 0)
                         : null
                 },
                 quantity: item.quantity,
@@ -274,7 +274,7 @@ router.get('/dashboard', isAuthenticated, isSeller, async (req, res) => {
             available: product.available !== false,
             status: product.stock > 0 ? 'In Stock' : 'Out of Stock',
             thumbnail: product.images && product.images.length > 0 
-                ? `/images/product/${product._id}/0` 
+                ? getImageUrl('product', product._id, product.images[0], 0)
                 : null
         }));
 
@@ -289,7 +289,7 @@ router.get('/dashboard', isAuthenticated, isSeller, async (req, res) => {
             gender: pet.gender,
             available: pet.available !== false,
             thumbnail: pet.images && pet.images.length > 0 
-                ? `/images/pet/${pet._id}/0` 
+                ? getImageUrl('pet', pet._id, pet.images[0], 0)
                 : null
         }));
 
@@ -479,7 +479,7 @@ router.get('/orders', isAuthenticated, isSeller, async (req, res) => {
                     _id: item.product?._id,
                     name: item.product?.name || 'Product',
                     image: item.product?.images?.[0] 
-                        ? `/images/product/${item.product._id}/0` 
+                        ? getImageUrl('product', item.product._id, item.product.images[0], 0)
                         : null
                 },
                 quantity: item.quantity,
@@ -590,8 +590,8 @@ router.get('/orders/:orderId', isAuthenticated, isSeller, async (req, res) => {
                     _id: item.product?._id,
                     name: item.product?.name || 'Product',
                     description: item.product?.description,
-                    images: item.product?.images?.map((_, index) => 
-                        `/images/product/${item.product._id}/${index}`
+                    images: item.product?.images?.map((img, index) => 
+                        img.url || `/images/product/${item.product._id}/${index}`
                     ) || []
                 },
                 quantity: item.quantity,
@@ -1135,7 +1135,7 @@ router.get('/analytics', isAuthenticated, isSeller, async (req, res) => {
             productId: item._id._id,
             name: item._id.name,
             thumbnail: item._id.images?.[0] 
-                ? `/images/product/${item._id._id}/0` 
+                ? (item._id.images[0].url || `/images/product/${item._id._id}/0`)
                 : null,
             totalSold: item.totalSold,
             revenue: item.revenue.toFixed(2)
@@ -1171,25 +1171,17 @@ router.get('/analytics', isAuthenticated, isSeller, async (req, res) => {
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { uploadMultipleToCloudinary, deleteMultipleFromCloudinary } = require('../utils/cloudinary');
 
-// Configure multer for product images
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadPath = path.join(__dirname, '../../..', 'frontend', 'public', 'images', 'products');
-        // Ensure directory exists
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'product-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
+// Helper: get image URL (Cloudinary URL or legacy binary endpoint)
+function getImageUrl(entityType, entityId, image, index) {
+    if (image && image.url) return image.url;
+    return `/images/${entityType}/${entityId}/${index}`;
+}
 
+// Configure multer for product images (memory storage for Cloudinary upload)
 const upload = multer({
-    storage: storage,
+    storage: multer.memoryStorage(),
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB limit
         files: 5 // Maximum 5 files
@@ -1276,20 +1268,12 @@ router.post('/products', isAuthenticated, isSeller, upload.array('images', 5), a
             });
         }
 
-        // Process images for MongoDB storage (binary data)
-        const images = [];
-        
-        for (const file of req.files) {
-            const imageData = {
-                data: fs.readFileSync(file.path),
-                contentType: file.mimetype,
-                filename: file.filename
-            };
-            images.push(imageData);
-            
-            // Delete temporary file after reading
-            fs.unlinkSync(file.path);
-        }
+        // Upload images to Cloudinary
+        const cloudinaryImages = await uploadMultipleToCloudinary(req.files, 'petverse/products');
+        const images = cloudinaryImages.map(img => ({
+            url: img.url,
+            publicId: img.publicId
+        }));
 
         // Create product
         const product = new Product({
@@ -1456,23 +1440,16 @@ router.post('/products/:productId/edit', isAuthenticated, isSeller, upload.array
             product.images = newImages;
         }
 
-        // Add new images as binary data
+        // Add new images via Cloudinary
         if (req.files && req.files.length > 0) {
-            const newImages = [];
-            
-            for (const file of req.files) {
-                if (product.images.length + newImages.length >= 5) break; // Max 5 images
-                
-                const imageData = {
-                    data: fs.readFileSync(file.path),
-                    contentType: file.mimetype,
-                    filename: file.filename
-                };
-                newImages.push(imageData);
-                
-                // Delete temporary file after reading
-                fs.unlinkSync(file.path);
-            }
+            const cloudinaryImages = await uploadMultipleToCloudinary(
+                req.files.slice(0, 5 - product.images.length),
+                'petverse/products'
+            );
+            const newImages = cloudinaryImages.map(img => ({
+                url: img.url,
+                publicId: img.publicId
+            }));
             
             product.images = [...product.images, ...newImages];
         }
@@ -1542,26 +1519,26 @@ router.put('/products/:productId', isAuthenticated, isSeller, upload.array('newI
         // Handle image deletions
         if (imagesToDelete) {
             const imagesToDeleteArray = JSON.parse(imagesToDelete);
+            // Collect Cloudinary publicIds for deletion
+            const publicIdsToDelete = product.images
+                .filter((img, index) => imagesToDeleteArray.includes(index) && img.publicId)
+                .map(img => img.publicId);
+            if (publicIdsToDelete.length > 0) {
+                await deleteMultipleFromCloudinary(publicIdsToDelete).catch(err => console.error('Cloudinary delete error:', err));
+            }
             product.images = product.images.filter((_, index) => !imagesToDeleteArray.includes(index));
         }
 
-        // Add new images as binary data
+        // Add new images via Cloudinary
         if (req.files && req.files.length > 0) {
-            const newImages = [];
-            
-            for (const file of req.files) {
-                if (product.images.length + newImages.length >= 5) break; // Max 5 images
-                
-                const imageData = {
-                    data: fs.readFileSync(file.path),
-                    contentType: file.mimetype,
-                    filename: file.filename
-                };
-                newImages.push(imageData);
-                
-                // Delete temporary file after reading
-                fs.unlinkSync(file.path);
-            }
+            const cloudinaryImages = await uploadMultipleToCloudinary(
+                req.files.slice(0, 5 - product.images.length),
+                'petverse/products'
+            );
+            const newImages = cloudinaryImages.map(img => ({
+                url: img.url,
+                publicId: img.publicId
+            }));
             
             product.images = [...product.images, ...newImages];
         }
@@ -1673,26 +1650,11 @@ router.patch('/products/:productId/toggle-status', isAuthenticated, isSeller, as
 });
 
 // Pet Management Routes
-const petStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadPath = path.join(__dirname, '../../..', 'frontend', 'public', 'images', 'pets');
-        // Ensure directory exists
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'pet-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
 const petUpload = multer({
-    storage: petStorage,
+    storage: multer.memoryStorage(),
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit
-        files: 5 // Maximum 5 files
+        fileSize: 5 * 1024 * 1024,
+        files: 5
     },
     fileFilter: (req, file, cb) => {
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
@@ -1771,21 +1733,12 @@ router.post('/pets', isAuthenticated, isSeller, petUpload.array('images', 5), as
             });
         }
 
-        // Process images for database storage
-        const fs = require('fs');
-        const images = [];
-        
-        for (const file of req.files) {
-            const imageData = {
-                data: fs.readFileSync(file.path),
-                contentType: file.mimetype,
-                filename: file.filename
-            };
-            images.push(imageData);
-            
-            // Clean up temporary file
-            fs.unlinkSync(file.path);
-        }
+        // Upload images to Cloudinary
+        const cloudinaryImages = await uploadMultipleToCloudinary(req.files, 'petverse/pets');
+        const images = cloudinaryImages.map(img => ({
+            url: img.url,
+            publicId: img.publicId
+        }));
 
         // Create pet
         const pet = new Pet({
@@ -1905,7 +1858,6 @@ router.put('/pets/:petId', isAuthenticated, isSeller, petUpload.array('images', 
 
         // Handle image updates
         if (req.files && req.files.length > 0) {
-            const fs = require('fs');
             const newImages = [];
             
             // Keep existing images if requested
@@ -1913,19 +1865,17 @@ router.put('/pets/:petId', isAuthenticated, isSeller, petUpload.array('images', 
                 newImages.push(...pet.images);
             }
             
-            // Add new images
-            for (const file of req.files) {
-                if (newImages.length >= 5) break; // Max 5 images
-                
-                const imageData = {
-                    data: fs.readFileSync(file.path),
-                    contentType: file.mimetype,
-                    filename: file.filename
-                };
-                newImages.push(imageData);
-                
-                // Clean up temporary file
-                fs.unlinkSync(file.path);
+            // Upload new images to Cloudinary
+            const cloudinaryImages = await uploadMultipleToCloudinary(
+                req.files.slice(0, 5 - newImages.length),
+                'petverse/pets'
+            );
+            for (const img of cloudinaryImages) {
+                if (newImages.length >= 5) break;
+                newImages.push({
+                    url: img.url,
+                    publicId: img.publicId
+                });
             }
 
             if (newImages.length > 0) {

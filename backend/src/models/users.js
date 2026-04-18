@@ -75,6 +75,9 @@ const userSchema = new mongoose.Schema({
     timestamps: true 
 });
 
+// Indexes for admin queries
+userSchema.index({ role: 1, isApproved: 1 });
+
 // Password hashing
 userSchema.pre('save', async function(next) {
     if (!this.isModified('password')) return next();

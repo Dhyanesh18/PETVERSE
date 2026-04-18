@@ -176,8 +176,8 @@ router.get('/', async (req, res) => {
             createdAt: pet.createdAt,
             imageCount: pet.images ? pet.images.length : 0,
             // Provide image URLs instead of raw data
-            imageUrls: pet.images ? pet.images.map((_, index) => 
-                `/images/mate/${pet._id}/${index}`
+            imageUrls: pet.images ? pet.images.map((img, index) => 
+                img.url || `/images/mate/${pet._id}/${index}`
             ) : []
         }));
         
@@ -361,8 +361,8 @@ router.get('/:id', async (req, res) => {
         const mateForResponse = {
             ...mate,
             imageCount: mate.images ? mate.images.length : 0,
-            imageUrls: mate.images ? mate.images.map((_, index) => 
-                `/images/mate/${mate._id}/${index}`
+            imageUrls: mate.images ? mate.images.map((img, index) => 
+                img.url || `/images/mate/${mate._id}/${index}`
             ) : []
         };
         
@@ -632,8 +632,8 @@ router.get('/my/listings', isAuthenticated, async (req, res) => {
         const listingsForResponse = listings.map(listing => ({
             ...listing,
             imageCount: listing.images ? listing.images.length : 0,
-            imageUrls: listing.images ? listing.images.map((_, index) => 
-                `/images/mate/${listing._id}/${index}`
+            imageUrls: listing.images ? listing.images.map((img, index) => 
+                img.url || `/images/mate/${listing._id}/${index}`
             ) : []
         }));
 
@@ -889,8 +889,15 @@ router.get('/image/:mateId/:index', async (req, res) => {
         }
         
         const image = mate.images[imageIndex];
-        res.set('Content-Type', image.contentType);
-        res.set('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
+        if (!image.data) {
+            return res.redirect('/images/default-pet.jpg');
+        }
+        res.set('Content-Type', image.contentType || 'image/jpeg');
+        res.set('Cache-Control', 'public, max-age=86400');
         res.send(image.data);
     } catch (err) {
         console.error('Image load error:', err);

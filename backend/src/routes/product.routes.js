@@ -211,12 +211,12 @@ router.get('/', async (req, res) => {
                 createdAt: product.createdAt,
                 imageCount: product.images ? product.images.length : 0,
                 // Provide image URLs instead of raw data
-                imageUrls: product.images ? product.images.map((_, index) => 
-                    `/images/product/${product._id}/${index}`
+                imageUrls: product.images ? product.images.map((img, index) => 
+                    img.url || `/images/product/${product._id}/${index}`
                 ) : [],
                 // Provide first image URL as thumbnail
                 thumbnail: product.images && product.images.length > 0 ? 
-                    `/images/product/${product._id}/0` : null
+                    (product.images[0].url || `/images/product/${product._id}/0`) : null
             };
         });
         
@@ -457,11 +457,11 @@ router.get('/:id', async (req, res) => {
                 ? (product.price - discountedPrice).toFixed(2) 
                 : 0,
             imageCount: product.images ? product.images.length : 0,
-            imageUrls: product.images ? product.images.map((_, index) => 
-                `/images/product/${product._id}/${index}`
+            imageUrls: product.images ? product.images.map((img, index) => 
+                img.url || `/images/product/${product._id}/${index}`
             ) : [],
             thumbnail: product.images && product.images.length > 0 ? 
-                `/images/product/${product._id}/0` : null
+                (product.images[0].url || `/images/product/${product._id}/0`) : null
         };
 
         // Remove raw image data
@@ -664,11 +664,11 @@ router.get('/my/listings', isAuthenticated, isSeller, async (req, res) => {
                 ...product,
                 discountedPrice: discountedPrice.toFixed(2),
                 imageCount: product.images ? product.images.length : 0,
-                imageUrls: product.images ? product.images.map((_, index) => 
-                    `/images/product/${product._id}/${index}`
+                imageUrls: product.images ? product.images.map((img, index) => 
+                    img.url || `/images/product/${product._id}/${index}`
                 ) : [],
                 thumbnail: product.images && product.images.length > 0 ? 
-                    `/images/product/${product._id}/0` : null
+                    (product.images[0].url || `/images/product/${product._id}/0`) : null
             };
         });
 
@@ -1006,8 +1006,15 @@ router.get('/image/:productId/:index', async (req, res) => {
         }
         
         const image = product.images[imageIndex];
-        res.set('Content-Type', image.contentType);
-        res.set('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
+        if (!image.data) {
+            return res.redirect('/images/default-product.jpg');
+        }
+        res.set('Content-Type', image.contentType || 'image/jpeg');
+        res.set('Cache-Control', 'public, max-age=86400');
         res.send(image.data);
     } catch (err) {
         console.error('Image load error:', err);

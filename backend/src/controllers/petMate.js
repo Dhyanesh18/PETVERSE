@@ -1,5 +1,6 @@
 const PetMate = require('../models/petMate');
 const User = require('../models/users');
+const { uploadMultipleToCloudinary } = require('../utils/cloudinary');
 
 exports.showMatePage = async (req, res) => {
     try {
@@ -95,21 +96,26 @@ exports.filterPets = async (req, res) => {
         
         console.log(`Found ${pets.length} pets matching filters`);
         
-        // Convert image buffers to base64 strings for JSON response
-        const petsWithBase64Images = pets.map(pet => {
+        // Convert image data for JSON response
+        const petsWithImages = pets.map(pet => {
             if (pet.images && pet.images.length > 0) {
-                pet.images = pet.images.map(img => ({
-                    contentType: img.contentType,
-                    dataBase64: Buffer.from(img.data.buffer || img.data).toString('base64')
-                }));
+                pet.images = pet.images.map(img => {
+                    if (img.url) {
+                        return { url: img.url, publicId: img.publicId };
+                    }
+                    return {
+                        contentType: img.contentType,
+                        dataBase64: Buffer.from(img.data.buffer || img.data).toString('base64')
+                    };
+                });
             }
             return pet;
         });
         
         res.json({
             success: true,
-            pets: petsWithBase64Images,
-            count: petsWithBase64Images.length
+            pets: petsWithImages,
+            count: petsWithImages.length
         });
     } catch (err) {
         console.error('Error filtering pets:', err);
@@ -146,6 +152,9 @@ exports.addMateListing = async (req, res) => {
             throw new Error('Maximum age in years is 30');
         }
 
+        // Upload images to Cloudinary
+        const cloudinaryImages = await uploadMultipleToCloudinary(req.files, 'petverse/mates');
+
         const mateData = {
             name: req.body.petName,
             petType: req.body.petType,
@@ -164,9 +173,9 @@ exports.addMateListing = async (req, res) => {
                 phone: req.body.contactNumber,
                 email: req.body.email
             },
-            images: req.files.map(file => ({
-                data: file.buffer,
-                contentType: file.mimetype
+            images: cloudinaryImages.map(img => ({
+                url: img.url,
+                publicId: img.publicId
             })),
             registrationNumber: req.body.registrationNumber || '',
             healthChecked: req.body.healthCheck === 'on',
@@ -227,6 +236,10 @@ exports.getMateImage = async (req, res) => {
         }
         
         const image = mate.images[imageIndex];
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
         res.set('Content-Type', image.contentType);
         res.send(image.data);
     } catch (err) {

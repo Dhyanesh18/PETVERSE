@@ -1,5 +1,6 @@
 const Pet = require('../models/pets');
 const User = require('../models/users');
+const { uploadMultipleToCloudinary, deleteMultipleFromCloudinary } = require('../utils/cloudinary');
 
 // Create new pet listing
 exports.createPet = async (req, res) => {
@@ -12,12 +13,15 @@ exports.createPet = async (req, res) => {
             });
         }
 
+        // Upload images to Cloudinary
+        const cloudinaryImages = await uploadMultipleToCloudinary(req.files, 'petverse/pets');
+
         const petData = {
             ...req.body,
             addedBy: req.user._id,
-            images: req.files.map(file => ({
-                data: file.buffer,
-                contentType: file.mimetype
+            images: cloudinaryImages.map(img => ({
+                url: img.url,
+                publicId: img.publicId
             }))
         };
 
@@ -143,9 +147,10 @@ exports.updatePet = async (req, res) => {
         
         // Handle image updates if provided
         if (req.files && req.files.length > 0) {
-            updates.images = req.files.map(file => ({
-                data: file.buffer,
-                contentType: file.mimetype
+            const cloudinaryImages = await uploadMultipleToCloudinary(req.files, 'petverse/pets');
+            updates.images = cloudinaryImages.map(img => ({
+                url: img.url,
+                publicId: img.publicId
             }));
         }
 
@@ -189,6 +194,14 @@ exports.deletePet = async (req, res) => {
             });
         }
 
+        // Delete images from Cloudinary
+        const publicIds = pet.images
+            .filter(img => img.publicId)
+            .map(img => img.publicId);
+        if (publicIds.length > 0) {
+            await deleteMultipleFromCloudinary(publicIds).catch(err => console.error('Cloudinary delete error:', err));
+        }
+
         await pet.deleteOne();
         
         res.status(200).json({
@@ -215,6 +228,10 @@ exports.getPetImage = async (req, res) => {
         }
         
         const image = pet.images[imageIndex];
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
         res.set('Content-Type', image.contentType);
         res.send(image.data);
     } catch (err) {

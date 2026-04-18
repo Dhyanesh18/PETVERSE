@@ -24,12 +24,12 @@ const MateCard = ({ pet }) => {
             
             // If image is a string URL
             if (typeof image === 'string') {
-                return image.startsWith('http') ? image : `http://localhost:8080${image}`;
+                return image.startsWith('http') ? image : image;
             }
             
             // If image has url property
             if (image && image.url) {
-                return image.url.startsWith('http') ? image.url : `http://localhost:8080${image.url}`;
+                return image.url.startsWith('http') ? image.url : image.url;
             }
         }
 
@@ -38,12 +38,12 @@ const MateCard = ({ pet }) => {
             const imageUrl = pet.imageUrls[index];
             
             if (typeof imageUrl === 'string') {
-                return imageUrl.startsWith('http') ? imageUrl : `http://localhost:8080${imageUrl}`;
+                return imageUrl.startsWith('http') ? imageUrl : imageUrl;
             }
         }
 
         // Fallback: try to load from API endpoint
-        return `http://localhost:8080/api/mate/image/${pet._id}/${index}`;
+        return `/api/mate/image/${pet._id}/${index}`;
     };
 
     return (

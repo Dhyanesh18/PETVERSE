@@ -117,6 +117,11 @@ const orderSchema = new mongoose.Schema({
     }
 });
 
+// Indexes for order queries
+orderSchema.index({ customer: 1, createdAt: -1 });
+orderSchema.index({ seller: 1, status: 1 });
+orderSchema.index({ status: 1 });
+orderSchema.index({ paymentStatus: 1 });
 
 orderSchema.pre('validate', async function(next) {
   if (!this.orderNumber) {

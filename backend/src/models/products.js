@@ -88,6 +88,13 @@ const productSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Indexes for common queries
+productSchema.index({ category: 1, isApproved: 1 });
+productSchema.index({ seller: 1 });
+productSchema.index({ isApproved: 1, createdAt: -1 });
+productSchema.index({ price: 1 });
+productSchema.index({ name: 'text', description: 'text', category: 'text' });
+
 function arrayLimit(val) {
     return val.length <= 5;
 }

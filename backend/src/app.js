@@ -10,11 +10,11 @@ const morgan = require('morgan');
 const rfs = require('rotating-file-stream');
 const mongoSanitize = require('express-mongo-sanitize');
 const compression = require('compression');
-const rateLimit = require('express-rate-limit');
 const csurf = require('csurf');
 const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 const { logWarning } = require('./utils/logger');
 
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 dotenv.config();
 
 // Fail fast when MongoDB is unavailable (prevents 10s buffering timeouts)
@@ -85,16 +85,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
-// 3. Rate limiting - Global (after CORS so preflights get CORS headers)
-const globalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use('/api/', globalLimiter);
-
 // ===== BUILT-IN MIDDLEWARE =====
 
 // 7. Body parsers
@@ -105,7 +95,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.json({ limit: '10mb' }));
 
 // 8. Static file serving
-app.use('/images', express.static(path.join(__dirname, 'public/images')));
+app.use('/images', express.static(path.join(__dirname, '..', '..', 'frontend', 'public', 'images')));
 
 // 9. Data sanitization against NoSQL injection
 app.use(mongoSanitize({

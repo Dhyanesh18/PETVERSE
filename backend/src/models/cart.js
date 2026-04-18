@@ -37,6 +37,9 @@ const cartSchema = new mongoose.Schema({
     }
 });
 
+// Index for user cart lookup
+cartSchema.index({ userId: 1 });
+
 // Update the updatedAt field before saving
 cartSchema.pre('save', function(next) {
     this.updatedAt = Date.now();

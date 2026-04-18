@@ -74,6 +74,14 @@ const petSchema = new mongoose.Schema({
         default: false
     }
 });
+
+// Indexes for common queries
+petSchema.index({ category: 1, isApproved: 1 });
+petSchema.index({ addedBy: 1 });
+petSchema.index({ isApproved: 1, createdAt: -1 });
+petSchema.index({ price: 1 });
+petSchema.index({ name: 'text', breed: 'text', category: 'text' });
+
 function arrayLimit(val) {
     return val.length >= 1 && val.length <= 5;
 }

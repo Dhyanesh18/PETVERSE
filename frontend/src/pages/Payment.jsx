@@ -109,7 +109,7 @@ const Payment = () => {
                         ondismiss: function () {
                             setError('Payment was cancelled');
                             // Best-effort: cancel pending order and release reserved inventory
-                            fetch('http://localhost:8080/api/payment/razorpay/cancel', {
+                            fetch('/api/payment/razorpay/cancel', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 credentials: 'include',

@@ -85,21 +85,21 @@ const OwnerDashboard = () => {
         
         if (item.thumbnail) {
             if (item.thumbnail.startsWith('/images/')) {
-                return `http://localhost:8080/api${item.thumbnail}`;
+                return item.thumbnail;
             }
-            return item.thumbnail.startsWith('http') ? item.thumbnail : `http://localhost:8080${item.thumbnail}`;
+            return item.thumbnail.startsWith('http') ? item.thumbnail : item.thumbnail;
         }
         
         if (item.images && item.images.length > 0) {
             const image = item.images[0];
             if (image && image.url) {
-                return image.url.startsWith('http') ? image.url : `http://localhost:8080${image.url}`;
+                return image.url.startsWith('http') ? image.url : `/api/images/${type}/${item._id}/0`;
             }
         }
         
         // For items from MongoDB with stored images, use the API endpoint
         // This will serve the binary data stored in MongoDB
-        return `http://localhost:8080/api/images/${type}/${item._id}/0`;
+        return `/api/images/${type}/${item._id}/0`;
     };
 
     // Smart Image Component with multiple fallback strategies

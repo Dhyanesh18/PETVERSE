@@ -438,7 +438,14 @@ router.get('/pets/:id([0-9a-fA-F]{24})/image/:imageIndex?', async (req, res) => 
         }
 
         const image = pet.images[imageIndex];
-        res.set('Content-Type', image.contentType);
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
+        if (!image.data) {
+            return res.redirect('/images/default-pet.jpg');
+        }
+        res.set('Content-Type', image.contentType || 'image/jpeg');
         res.set('Cache-Control', 'public, max-age=86400');
         res.send(image.data);
     } catch (err) {
@@ -497,7 +504,14 @@ router.get('/products/:id([0-9a-fA-F]{24})/image/:imageIndex?', async (req, res)
         }
 
         const image = product.images[imageIndex];
-        res.set('Content-Type', image.contentType);
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
+        if (!image.data) {
+            return res.redirect('/images/default-product.jpg');
+        }
+        res.set('Content-Type', image.contentType || 'image/jpeg');
         res.set('Cache-Control', 'public, max-age=86400');
         res.send(image.data);
     } catch (err) {

@@ -69,16 +69,16 @@ const LostPetDetail = () => {
         
         // Handle string URLs (external URLs or stored paths)
         if (typeof image === 'string') {
-            return image.startsWith('http') ? image : `http://localhost:8080/api/lost-pets/image/${id}/${index}`;
+            return image.startsWith('http') ? image : `/api/lost-pets/image/${id}/${index}`;
         }
         
         // Handle object with url property
         if (typeof image === 'object' && image?.url) {
-            return image.url.startsWith('http') ? image.url : `http://localhost:8080/api/lost-pets/image/${id}/${index}`;
+            return image.url.startsWith('http') ? image.url : `/api/lost-pets/image/${id}/${index}`;
         }
         
         // Fallback: try to load from API endpoint (for MongoDB binary data)
-        return `http://localhost:8080/api/lost-pets/image/${id}/${index}`;
+        return `/api/lost-pets/image/${id}/${index}`;
     };
 
     if (loading) {

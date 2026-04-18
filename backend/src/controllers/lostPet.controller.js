@@ -1,4 +1,5 @@
 const LostPet = require('../models/lostPet');
+const { uploadMultipleToCloudinary } = require('../utils/cloudinary');
 
 // Haversine formula to calculate distance between two coordinates
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -41,6 +42,9 @@ exports.createLostPet = async (req, res) => {
             }
         }
 
+        // Upload images to Cloudinary
+        const cloudinaryImages = await uploadMultipleToCloudinary(req.files, 'petverse/lost-pets');
+
         const lostPetData = {
             ...req.body,
             lastSeenLocation: {
@@ -58,9 +62,9 @@ exports.createLostPet = async (req, res) => {
                 email: req.body.contactEmail,
                 alternatePhone: req.body.alternatePhone
             },
-            images: req.files.map(file => ({
-                data: file.buffer,
-                contentType: file.mimetype
+            images: cloudinaryImages.map(img => ({
+                url: img.url,
+                publicId: img.publicId
             })),
             postedBy: req.user._id,
             verificationQuestions,

@@ -2,6 +2,7 @@ const User = require("../models/users");
 const Seller = require("../models/seller");
 const ServiceProvider = require("../models/serviceProvider");
 const Availability = require("../models/availability");
+const { uploadToCloudinary } = require('../utils/cloudinary');
 
 module.exports = {
     showSignupForm: (req, res) => {
@@ -130,6 +131,12 @@ module.exports = {
                 });
             }
     
+            // Upload license to Cloudinary
+            const licenseUpload = await uploadToCloudinary(req.file.buffer, {
+                folder: 'petverse/licenses',
+                resourceType: 'image'
+            });
+
             // Create new seller
             const newSeller = await Seller.create({
                 email: req.body.email,
@@ -142,8 +149,8 @@ module.exports = {
                 businessAddress: req.body.businessAddress,
                 taxId: req.body.taxId || undefined,
                 license: {
-                    data: req.file.buffer,
-                    contentType: req.file.mimetype
+                    url: licenseUpload.url,
+                    publicId: licenseUpload.publicId
                 },
                 isApproved: false
             });
@@ -205,6 +212,12 @@ module.exports = {
                 });
             }
 
+            // Upload certificate to Cloudinary
+            const certUpload = await uploadToCloudinary(req.file.buffer, {
+                folder: 'petverse/certificates',
+                resourceType: 'image'
+            });
+
             // Create new service provider
             const newProvider = await ServiceProvider.create({
                 email: req.body.email,
@@ -216,8 +229,8 @@ module.exports = {
                 serviceType: req.body.serviceType,
                 serviceAddress: req.body.businessAddress,
                 certificate: {
-                    data: req.file.buffer,
-                    contentType: req.file.mimetype
+                    url: certUpload.url,
+                    publicId: certUpload.publicId
                 },
                 isApproved: false
             });

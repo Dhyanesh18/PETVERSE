@@ -2,6 +2,7 @@ const Event = require('../models/event');
 const User = require('../models/users');
 const Wallet = require('../models/wallet');
 const Transaction = require('../models/transaction');
+const { uploadToCloudinary } = require('../utils/cloudinary');
 
 // Get all events (public listing) - Renders initial page
 exports.getEvents = async (req, res) => {
@@ -167,10 +168,15 @@ exports.createEvent = async (req, res) => {
             });
         }
 
-        // Process permission document
+        // Upload permission document to Cloudinary
+        const docUpload = await uploadToCloudinary(req.file.buffer, {
+            folder: 'petverse/events',
+            resourceType: 'image'
+        });
+
         const permissionDocument = {
-            data: req.file.buffer,
-            contentType: req.file.mimetype
+            url: docUpload.url,
+            publicId: docUpload.publicId
         };
 
         const newEvent = new Event({

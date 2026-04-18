@@ -11,8 +11,12 @@ const PetsManagement = ({ data }) => {
 
     // Helper function to get full image URL
     const getImageUrl = (pet) => {
+        if (pet.imageUrls && pet.imageUrls.length > 0) {
+            return pet.imageUrls[0].startsWith('http') ? pet.imageUrls[0] : pet.imageUrls[0];
+        }
         if (pet.images && pet.images.length > 0) {
-            return `http://localhost:8080/api/pets/image/${pet._id}/0`;
+            if (pet.images[0].url) return pet.images[0].url;
+            return `/api/pets/image/${pet._id}/0`;
         }
         return '/images/default-pet.jpg';
     };

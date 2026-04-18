@@ -15,6 +15,12 @@ const PaymentIntent = require('../models/paymentIntent');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
+// Helper: get image URL (Cloudinary URL or legacy path fallback)
+function getImageUrl(entityType, entityId, image, index) {
+    if (image && image.url) return image.url;
+    return `/images/${entityType}/${entityId}/${index}`;
+}
+
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
     if (req.session.userId && req.user) {
@@ -111,7 +117,7 @@ router.get('/home', async (req, res) => {
                     description: pet.description,
                     gender: pet.gender,
                     thumbnail: pet.images && pet.images.length > 0 
-                        ? `/images/pet/${pet._id}/0` 
+                        ? (pet.images[0].url || `/images/pet/${pet._id}/0`)
                         : null
                 })),
                 featuredProducts: featuredProducts.map(product => ({
@@ -126,7 +132,7 @@ router.get('/home', async (req, res) => {
                     reviewCount: product.reviewCount,
                     category: product.category,
                     thumbnail: product.images && product.images.length > 0 
-                        ? `/images/product/${product._id}/0` 
+                        ? (product.images[0].url || `/images/product/${product._id}/0`)
                         : null
                 })),
                 features: [
@@ -235,7 +241,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                                 brand: product.brand,
                                 category: product.category,
                                 thumbnail: `/api/images/product/${product._id}/0`,
-                                image: `/api/images/product/${product._id}/0`
+                                image: product.images && product.images.length > 0 ? getImageUrl('product', product._id, product.images[0], 0) : `/api/images/product/${product._id}/0`
                             }
                         });
                     } else {
@@ -380,7 +386,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                             _id: item.product._id,
                             name: item.product.name,
                             image: item.product.images && item.product.images.length > 0
-                                ? `/images/product/${item.product._id}/0`
+                                ? getImageUrl('product', item.product._id, item.product.images[0], 0)
                                 : null
                         },
                         quantity: item.quantity,
@@ -446,7 +452,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                         price: pet.price,
                         age: pet.age,
                         thumbnail: pet.images && pet.images.length > 0
-                            ? `/images/pet/${pet._id}/0`
+                            ? getImageUrl('pet', pet._id, pet.images[0], 0)
                             : null
                     })),
                     products: wishlistedProducts.map(product => ({
@@ -455,7 +461,7 @@ router.get('/dashboard', isAuthenticated, async (req, res) => {
                         price: product.price,
                         discount: product.discount || 0,
                         thumbnail: product.images && product.images.length > 0
-                            ? `/images/product/${product._id}/0`
+                            ? getImageUrl('product', product._id, product.images[0], 0)
                             : null
                     }))
                 }
@@ -748,8 +754,8 @@ router.get('/cart', isAuthenticated, async (req, res) => {
                 itemType: item.itemType,
                 thumbnail: product.images && product.images.length > 0
                     ? item.itemType === 'Pet'
-                        ? `/images/pet/${product._id}/0`
-                        : `/images/product/${product._id}/0`
+                        ? getImageUrl('pet', product._id, product.images[0], 0)
+                        : getImageUrl('product', product._id, product.images[0], 0)
                     : null,
                 breed: product.breed,
                 brand: product.brand,
@@ -1085,8 +1091,8 @@ router.post('/checkout/prepare', isAuthenticated, async (req, res) => {
                     itemType: item.itemType,
                     thumbnail: item.productId.images && item.productId.images.length > 0
                         ? item.itemType === 'Pet'
-                            ? `/images/pet/${item.productId._id}/0`
-                            : `/images/product/${item.productId._id}/0`
+                            ? getImageUrl('pet', item.productId._id, item.productId.images[0], 0)
+                            : getImageUrl('product', item.productId._id, item.productId.images[0], 0)
                         : null
                 })),
                 summary: {
@@ -1255,8 +1261,8 @@ router.get('/payment/info', isAuthenticated, async (req, res) => {
                     itemType: item.itemType,
                     thumbnail: product.images && product.images.length > 0
                         ? item.itemType === 'Pet'
-                            ? `/images/pet/${product._id}/0`
-                            : `/images/product/${product._id}/0`
+                            ? getImageUrl('pet', product._id, product.images[0], 0)
+                            : getImageUrl('product', product._id, product.images[0], 0)
                         : null
                 });
             });
@@ -1732,7 +1738,7 @@ router.get('/order-confirmation/:orderId', isAuthenticated, async (req, res) => 
                             _id: item.product._id,
                             name: item.product.name,
                             thumbnail: item.product.images && item.product.images.length > 0
-                                ? `/images/product/${item.product._id}/0`
+                                ? getImageUrl('product', item.product._id, item.product.images[0], 0)
                                 : null
                         },
                         quantity: item.quantity,
@@ -1830,7 +1836,7 @@ router.get('/orders', isAuthenticated, async (req, res) => {
                         _id: item.product._id,
                         name: item.product.name,
                         thumbnail: item.product.images && item.product.images.length > 0
-                            ? `/images/product/${item.product._id}/0`
+                            ? getImageUrl('product', item.product._id, item.product.images[0], 0)
                             : null
                     },
                     quantity: item.quantity,
@@ -1936,8 +1942,8 @@ router.get('/orders/:orderId', isAuthenticated, async (req, res) => {
                             _id: item.product._id,
                             name: item.product.name,
                             description: item.product.description,
-                            images: item.product.images?.map((_, index) => 
-                                `/images/product/${item.product._id}/${index}`
+                            images: item.product.images?.map((img, index) => 
+                                img.url || `/images/product/${item.product._id}/${index}`
                             ) || []
                         },
                         quantity: item.quantity,
@@ -2062,7 +2068,7 @@ router.get('/wishlist', isAuthenticated, async (req, res) => {
                     age: pet.age,
                     gender: pet.gender,
                     thumbnail: pet.images && pet.images.length > 0
-                        ? `/images/pet/${pet._id}/0`
+                        ? getImageUrl('pet', pet._id, pet.images[0], 0)
                         : null
                 })),
                 products: wishlistedProducts.map(product => ({
@@ -2074,7 +2080,7 @@ router.get('/wishlist', isAuthenticated, async (req, res) => {
                         ? (product.price * (1 - product.discount / 100)).toFixed(2)
                         : product.price.toFixed(2),
                     thumbnail: product.images && product.images.length > 0
-                        ? `/images/product/${product._id}/0`
+                        ? getImageUrl('product', product._id, product.images[0], 0)
                         : null
                 }))
             }

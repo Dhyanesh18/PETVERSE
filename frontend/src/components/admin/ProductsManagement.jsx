@@ -11,8 +11,12 @@ const ProductsManagement = ({ data }) => {
 
     // Helper function to get full image URL
     const getImageUrl = (product) => {
+        if (product.imageUrls && product.imageUrls.length > 0) {
+            return product.imageUrls[0].startsWith('http') ? product.imageUrls[0] : product.imageUrls[0];
+        }
         if (product.images && product.images.length > 0) {
-            return `http://localhost:8080/api/products/image/${product._id}/0`;
+            if (product.images[0].url) return product.images[0].url;
+            return `/api/products/image/${product._id}/0`;
         }
         return '/images/default-product.jpg';
     };

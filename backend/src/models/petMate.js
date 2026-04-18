@@ -61,7 +61,10 @@ const petMateSchema = new Schema({
     },
     images: [{
         data: Buffer,
-        contentType: String
+        contentType: String,
+        url: String,
+        publicId: String,
+        uploadedAt: { type: Date, default: Date.now }
     }],
     registrationNumber: {
         type: String
@@ -94,5 +97,10 @@ petMateSchema.index({
     'location.state': 'text', 
     'location.district': 'text'
 });
+
+// Additional indexes for filtering
+petMateSchema.index({ species: 1, gender: 1 });
+petMateSchema.index({ listedBy: 1 });
+petMateSchema.index({ isAvailable: 1 });
 
 module.exports = mongoose.model('PetMate', petMateSchema);

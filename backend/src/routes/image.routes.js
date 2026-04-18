@@ -80,11 +80,19 @@ router.get('/product/:productId/:index', async (req, res) => {
         }
         
         const image = product.images[index];
-        console.log(`Serving image: ${image.contentType}, size: ${image.data?.length || 0} bytes`);
+        
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
+        
+        if (!image.data) {
+            return res.redirect('/images/default-product.jpg');
+        }
         
         // Set appropriate headers for image serving
-        res.set('Content-Type', image.contentType);
-        res.set('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+        res.set('Content-Type', image.contentType || 'image/jpeg');
+        res.set('Cache-Control', 'public, max-age=86400');
         res.send(image.data);
     } catch (err) {
         console.error('Error serving product image:', err);
@@ -244,9 +252,17 @@ router.get('/pet/:petId/:index', async (req, res) => {
         }
         
         const image = pet.images[index];
-        console.log(`Serving pet image: ${image.contentType}, size: ${image.data?.length || 0} bytes`);
         
-        res.set('Content-Type', image.contentType);
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
+        
+        if (!image.data) {
+            return res.redirect('/images/default-pet.jpg');
+        }
+        
+        res.set('Content-Type', image.contentType || 'image/jpeg');
         res.set('Cache-Control', 'public, max-age=86400');
         res.send(image.data);
     } catch (err) {
@@ -316,7 +332,16 @@ router.get('/event/:eventId/:index?', async (req, res) => {
         
         const image = event.images[index];
         
-        res.set('Content-Type', image.contentType);
+        // Redirect to Cloudinary URL if available
+        if (image.url) {
+            return res.redirect(image.url);
+        }
+        
+        if (!image.data) {
+            return res.redirect('/images/dog-event.png');
+        }
+        
+        res.set('Content-Type', image.contentType || 'image/jpeg');
         res.set('Cache-Control', 'public, max-age=86400');
         res.send(image.data);
     } catch (err) {
@@ -362,7 +387,19 @@ router.get('/user/:userId/profile', async (req, res) => {
     try {
         const user = await User.findById(req.params.userId).select('profilePicture');
         
-        if (!user || !user.profilePicture || !user.profilePicture.data) {
+        if (!user || !user.profilePicture) {
+            return res.status(404).json({
+                success: false,
+                error: 'Profile picture not found'
+            });
+        }
+        
+        // Redirect to Cloudinary URL if available
+        if (user.profilePicture.url) {
+            return res.redirect(user.profilePicture.url);
+        }
+        
+        if (!user.profilePicture.data) {
             return res.status(404).json({
                 success: false,
                 error: 'Profile picture not found'
@@ -422,7 +459,19 @@ router.get('/document/license/:userId', async (req, res) => {
             });
         }
 
-        if (user.role !== 'seller' || !user.license || !user.license.data) {
+        if (user.role !== 'seller' || !user.license) {
+            return res.status(404).json({
+                success: false,
+                error: 'License document not found'
+            });
+        }
+        
+        // Redirect to Cloudinary URL if available
+        if (user.license.url) {
+            return res.redirect(user.license.url);
+        }
+        
+        if (!user.license.data) {
             return res.status(404).json({
                 success: false,
                 error: 'License document not found'
@@ -482,7 +531,19 @@ router.get('/document/certificate/:userId', async (req, res) => {
             });
         }
 
-        if (user.role !== 'service_provider' || !user.certificate || !user.certificate.data) {
+        if (user.role !== 'service_provider' || !user.certificate) {
+            return res.status(404).json({
+                success: false,
+                error: 'Certificate not found'
+            });
+        }
+        
+        // Redirect to Cloudinary URL if available
+        if (user.certificate.url) {
+            return res.redirect(user.certificate.url);
+        }
+        
+        if (!user.certificate.data) {
             return res.status(404).json({
                 success: false,
                 error: 'Certificate not found'
@@ -535,7 +596,19 @@ router.get('/document/permission/:eventId', async (req, res) => {
     try {
         const event = await Event.findById(req.params.eventId).select('permissionDocument');
         
-        if (!event || !event.permissionDocument || !event.permissionDocument.data) {
+        if (!event || !event.permissionDocument) {
+            return res.status(404).json({
+                success: false,
+                error: 'Permission document not found'
+            });
+        }
+        
+        // Redirect to Cloudinary URL if available
+        if (event.permissionDocument.url) {
+            return res.redirect(event.permissionDocument.url);
+        }
+        
+        if (!event.permissionDocument.data) {
             return res.status(404).json({
                 success: false,
                 error: 'Permission document not found'

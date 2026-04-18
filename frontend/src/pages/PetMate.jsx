@@ -127,7 +127,7 @@ const PetMate = () => {
 
     const fetchFilterOptions = async () => {
         try {
-            const response = await fetch('http://localhost:8080/api/mate/filter-options');
+            const response = await fetch('/api/mate/filter-options');
             const data = await response.json();
             
             if (data.success) {
@@ -148,7 +148,7 @@ const PetMate = () => {
             if (selectedState) params.append('state', selectedState);
             if (selectedDistrict) params.append('district', selectedDistrict);
 
-            const response = await fetch(`http://localhost:8080/api/mate?${params.toString()}`);
+            const response = await fetch(`/api/mate?${params.toString()}`);
             const data = await response.json();
             
             if (data.success) {
@@ -254,7 +254,7 @@ const PetMate = () => {
                 formDataToSend.append('petImage', file);
             });
 
-            const response = await fetch('http://localhost:8080/api/mate/add', {
+            const response = await fetch('/api/mate/add', {
                 method: 'POST',
                 body: formDataToSend,
                 credentials: 'include'

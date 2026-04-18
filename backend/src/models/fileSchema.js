@@ -1,13 +1,19 @@
 const mongoose = require('mongoose');
 
 const fileSchema = new mongoose.Schema({
+    // Legacy: raw binary data stored in MongoDB
     data: {
-        type: Buffer,
-        required: true
+        type: Buffer
     },
     contentType: {
-        type: String,
-        required: true
+        type: String
+    },
+    // Cloudinary fields
+    url: {
+        type: String
+    },
+    publicId: {
+        type: String
     },
     uploadedAt: {
         type: Date,

@@ -45,4 +45,9 @@ const serviceSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
+// Indexes for service queries
+serviceSchema.index({ provider: 1 });
+serviceSchema.index({ serviceType: 1, isApproved: 1 });
+serviceSchema.index({ isApproved: 1 });
+
 module.exports = mongoose.model('Service', serviceSchema);

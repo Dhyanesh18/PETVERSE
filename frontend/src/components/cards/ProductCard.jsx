@@ -5,24 +5,27 @@ import { FaStar, FaShoppingCart, FaHeart } from 'react-icons/fa';
 const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted = false, variant = 'default' }) => {
     const isFeature = variant === 'feature';
     
-    // Get image - handle both API endpoint and fallback
+    // Get image - handle Cloudinary URLs, API endpoints, and fallback
     const getImageSrc = () => {
-        // If product has images, use the API endpoint
+        // If thumbnail is a full URL (Cloudinary), use it directly
+        if (product.thumbnail && product.thumbnail.startsWith('http')) {
+            return product.thumbnail;
+        }
+
+        // If imageUrls exist (Cloudinary URLs from API)
+        if (product.imageUrls && product.imageUrls.length > 0) {
+            if (product.imageUrls[0].startsWith('http')) return product.imageUrls[0];
+            return product.imageUrls[0]; // already relative
+        }
+
+        // If product has images array, use the API endpoint (relative = through Vite proxy)
         if (product.images && product.images.length > 0) {
-            return `http://localhost:8080/api/products/image/${product._id}/0`;
+            return `/api/products/image/${product._id}/0`;
         }
         
-        // If thumbnail is provided as API endpoint path
+        // If thumbnail is a relative path
         if (product.thumbnail) {
-            if (product.thumbnail.startsWith('/api/products/image/')) {
-                return `http://localhost:8080${product.thumbnail}`;
-            }
-            // If it's the old format /images/product/...
-            if (product.thumbnail.startsWith('/images/product/')) {
-                // Convert to correct API format
-                const productId = product._id;
-                return `http://localhost:8080/api/products/image/${productId}/0`;
-            }
+            return `/api/products/image/${product._id}/0`;
         }
         
         // Fallback placeholder based on category
