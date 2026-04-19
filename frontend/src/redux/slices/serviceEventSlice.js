@@ -304,7 +304,14 @@ export const selectFilteredServices = (state) => {
 
     // Filter by rating
     if (serviceFilters.minRating) {
-        filtered = filtered.filter(service => service.avgRating >= parseFloat(serviceFilters.minRating));
+        const minRating = parseFloat(serviceFilters.minRating);
+        filtered = filtered.filter((service) => {
+            const ratingValue =
+                typeof service?.rating === 'number'
+                    ? service.rating
+                    : parseFloat(service?.rating ?? service?.avgRating ?? 0);
+            return ratingValue >= minRating;
+        });
     }
 
     // Filter by location
