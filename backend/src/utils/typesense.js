@@ -142,9 +142,11 @@ async function initTypesense() {
         await ensureCollections();
         isConnected = true;
         console.log('[Typesense] Connected — all collections ready');
+        return true;
     } catch (err) {
         isConnected = false;
         console.warn('[Typesense] Not available — search will fall back to MongoDB:', err.message);
+        return false;
     }
 }
 

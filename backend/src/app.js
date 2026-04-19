@@ -267,9 +267,39 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // Initialise Typesense (graceful degradation — search falls back to MongoDB if unavailable)
-const { initTypesense } = require('./utils/typesense');
+const { initTypesense, bulkImport, petToDoc, productToDoc, serviceToDoc, eventToDoc, mateToDoc } = require('./utils/typesense');
 if (process.env.NODE_ENV !== 'test') {
-    initTypesense(); // non-blocking; logs success or warns on failure
+    initTypesense().then(async (connected) => {
+        if (!connected) return;
+        // Bulk-sync all existing MongoDB data into Typesense on startup
+        try {
+            const Pet      = require('./models/pets');
+            const Product  = require('./models/products');
+            const User     = require('./models/users');
+            const Event    = require('./models/event');
+            const PetMate  = require('./models/petMate');
+
+            const [pets, products, services, events, mates] = await Promise.all([
+                Pet.find({ available: true }).lean(),
+                Product.find({ isActive: { $ne: false } }).lean(),
+                User.find({ role: 'service_provider', isApproved: true }).lean(),
+                Event.find({}).lean(),
+                PetMate.find({}).lean()
+            ]);
+
+            await Promise.all([
+                bulkImport('pets',     pets.map(petToDoc)),
+                bulkImport('products', products.map(productToDoc)),
+                bulkImport('services', services.map(serviceToDoc)),
+                bulkImport('events',   events.map(eventToDoc)),
+                bulkImport('mates',    mates.map(mateToDoc))
+            ]);
+
+            console.log(`[Typesense] Startup sync complete — pets:${pets.length} products:${products.length} services:${services.length} events:${events.length} mates:${mates.length}`);
+        } catch (err) {
+            console.warn('[Typesense] Startup sync failed:', err.message);
+        }
+    });
 }
 
 app.use('/api', apiRoutes);

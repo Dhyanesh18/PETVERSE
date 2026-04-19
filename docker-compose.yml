@@ -34,7 +34,7 @@ services:
       - ./backend/.env
     volumes:
       - typesense_data:/data
-    command: --data-dir /data --api-key=${TYPESENSE_API_KEY:-petverse-dev-key} --enable-cors
+    command: --data-dir /data --enable-cors
 
 volumes:
   redis_data:
