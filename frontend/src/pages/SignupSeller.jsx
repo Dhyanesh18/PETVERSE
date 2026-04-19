@@ -24,7 +24,7 @@ const SignupSeller = () => {
     const [fileName, setFileName] = useState('Upload your license');
     const navigate = useNavigate();
 
-    const validateField = (name, value) => {
+    const validateField = (name, value, values = formData) => {
         let error = '';
         switch (name) {
             case 'email':
@@ -38,7 +38,7 @@ const SignupSeller = () => {
                     error = 'Password must be at least 6 characters';
                 break;
             case 'confirmPassword':
-                if (value !== formData.password)
+                if (value !== values.password)
                     error = 'Passwords do not match';
                 break;
             case 'username':
@@ -57,12 +57,29 @@ const SignupSeller = () => {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         const fieldValue = type === 'checkbox' ? checked : value;
-        
-        setFormData(prev => ({ ...prev, [name]: fieldValue }));
-        
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
-        }
+
+        const nextValues = { ...formData, [name]: fieldValue };
+        setFormData(nextValues);
+
+        setErrors(prev => {
+            const nextErrors = { ...prev };
+
+            if (touched[name]) {
+                nextErrors[name] = validateField(name, fieldValue, nextValues);
+            } else if (nextErrors[name]) {
+                nextErrors[name] = '';
+            }
+
+            if (name === 'password' && (touched.confirmPassword || nextValues.confirmPassword)) {
+                nextErrors.confirmPassword = validateField(
+                    'confirmPassword',
+                    nextValues.confirmPassword,
+                    nextValues
+                );
+            }
+
+            return nextErrors;
+        });
     };
 
     const handleFileChange = (e) => {
@@ -70,6 +87,10 @@ const SignupSeller = () => {
         if (file) {
             setFormData(prev => ({ ...prev, license: file }));
             setFileName(file.name);
+
+            if (errors.license) {
+                setErrors(prev => ({ ...prev, license: '' }));
+            }
         }
     };
 

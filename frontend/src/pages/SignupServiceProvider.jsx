@@ -32,7 +32,7 @@ const SignupServiceProvider = () => {
         { value: 'breeder', label: 'Breeder' }
     ];
 
-    const validateField = (name, value) => {
+    const validateField = (name, value, values = formData) => {
         let error = '';
         switch (name) {
             case 'email':
@@ -46,7 +46,7 @@ const SignupServiceProvider = () => {
                     error = 'Password must be at least 6 characters';
                 break;
             case 'confirmPassword':
-                if (value !== formData.password)
+                if (value !== values.password)
                     error = 'Passwords do not match';
                 break;
             case 'serviceType':
@@ -67,12 +67,29 @@ const SignupServiceProvider = () => {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         const fieldValue = type === 'checkbox' ? checked : value;
-        
-        setFormData(prev => ({ ...prev, [name]: fieldValue }));
-        
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
-        }
+
+        const nextValues = { ...formData, [name]: fieldValue };
+        setFormData(nextValues);
+
+        setErrors(prev => {
+            const nextErrors = { ...prev };
+
+            if (touched[name]) {
+                nextErrors[name] = validateField(name, fieldValue, nextValues);
+            } else if (nextErrors[name]) {
+                nextErrors[name] = '';
+            }
+
+            if (name === 'password' && (touched.confirmPassword || nextValues.confirmPassword)) {
+                nextErrors.confirmPassword = validateField(
+                    'confirmPassword',
+                    nextValues.confirmPassword,
+                    nextValues
+                );
+            }
+
+            return nextErrors;
+        });
     };
 
     const handleFileChange = (e) => {
@@ -80,6 +97,10 @@ const SignupServiceProvider = () => {
         if (file) {
             setFormData(prev => ({ ...prev, certificate: file }));
             setFileName(file.name);
+
+            if (errors.certificate) {
+                setErrors(prev => ({ ...prev, certificate: '' }));
+            }
         }
     };
 

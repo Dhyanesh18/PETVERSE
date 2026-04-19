@@ -31,10 +31,28 @@ const EventDetail = () => {
     const [isFull, setIsFull] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [touched, setTouched] = useState({});
+    const [errors, setErrors] = useState({});
     const [formData, setFormData] = useState({
         numberOfPets: 1,
         specialRequirements: ''
     });
+
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'numberOfPets': {
+                if (value === '' || value === null || value === undefined) return 'Number of pets is required';
+                const num = Number(value);
+                if (Number.isNaN(num)) return 'Enter a valid number';
+                if (!Number.isInteger(num)) return 'Enter a whole number';
+                if (num < 1) return 'Minimum is 1';
+                if (num > 5) return 'Maximum is 5';
+                return '';
+            }
+            default:
+                return '';
+        }
+    };
 
     useEffect(() => {
         if (id) {
@@ -75,10 +93,38 @@ const EventDetail = () => {
             ...prev,
             [name]: value
         }));
+
+        if (touched[name]) {
+            const err = validateField(name, value);
+            setErrors(prev => ({
+                ...prev,
+                [name]: err
+            }));
+        }
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        setTouched(prev => ({
+            ...prev,
+            [name]: true
+        }));
+        const err = validateField(name, value);
+        setErrors(prev => ({
+            ...prev,
+            [name]: err
+        }));
     };
 
     const handleRegister = async (e) => {
         e.preventDefault();
+
+        const numErr = validateField('numberOfPets', formData.numberOfPets);
+        if (numErr) {
+            setTouched(prev => ({ ...prev, numberOfPets: true }));
+            setErrors(prev => ({ ...prev, numberOfPets: numErr }));
+            return;
+        }
         
         if (!user) {
             navigate('/login');
@@ -316,9 +362,13 @@ const EventDetail = () => {
                                                 max="5"
                                                 value={formData.numberOfPets}
                                                 onChange={handleInputChange}
+                                                onBlur={handleBlur}
                                                 required
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
                                             />
+                                            {touched.numberOfPets && errors.numberOfPets && (
+                                                <small className="block mt-1 text-red-500">{errors.numberOfPets}</small>
+                                            )}
                                         </div>
 
                                         <div className="mb-6">
@@ -338,7 +388,7 @@ const EventDetail = () => {
 
                                         <button
                                             type="submit"
-                                            disabled={submitting}
+                                            disabled={submitting || !!validateField('numberOfPets', formData.numberOfPets)}
                                             className="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-4 rounded-md transition duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
                                         >
                                             <FaCalendarCheck />

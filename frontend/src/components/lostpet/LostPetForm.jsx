@@ -27,6 +27,8 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
     const [images, setImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [touched, setTouched] = useState({});
+    const [errors, setErrors] = useState({});
     const [verificationQuestions, setVerificationQuestions] = useState([
         { question: '', answer: '' }
     ]);
@@ -41,20 +43,160 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
         }
     }, [userLocation]);
 
+    const validateField = (name, value, values = formData) => {
+        switch (name) {
+            case 'petName':
+            case 'breed':
+            case 'color':
+            case 'age':
+            case 'address':
+            case 'city':
+            case 'state':
+            case 'description':
+            case 'contactName':
+                return value?.trim() ? '' : 'This field is required';
+            case 'latitude':
+            case 'longitude': {
+                if (value === '' || value === null || value === undefined) return 'This field is required';
+                const num = Number(value);
+                if (Number.isNaN(num)) return 'Enter a valid number';
+                return '';
+            }
+            case 'lastSeenDate':
+                return value ? '' : 'Last seen date is required';
+            case 'contactPhone': {
+                if (!value?.trim()) return 'Phone number is required';
+                const ok = /^\+?[0-9\s-]{7,15}$/.test(value.trim());
+                return ok ? '' : 'Enter a valid phone number';
+            }
+            case 'alternatePhone': {
+                if (!value?.trim()) return '';
+                const ok = /^\+?[0-9\s-]{7,15}$/.test(value.trim());
+                return ok ? '' : 'Enter a valid phone number';
+            }
+            case 'contactEmail': {
+                if (!value?.trim()) return 'Email is required';
+                const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+                return ok ? '' : 'Enter a valid email';
+            }
+            case 'rewardAmount': {
+                if (!values.rewardOffered) return '';
+                const num = Number(value);
+                if (Number.isNaN(num)) return 'Enter a valid amount';
+                if (num < 0) return 'Amount cannot be negative';
+                return '';
+            }
+            case 'images':
+                return images.length > 0 ? '' : 'Please upload at least one image';
+            default:
+                return '';
+        }
+    };
+
+    const validateAll = (values = formData) => {
+        const fields = [
+            'petName',
+            'petType',
+            'breed',
+            'color',
+            'age',
+            'gender',
+            'address',
+            'city',
+            'state',
+            'latitude',
+            'longitude',
+            'lastSeenDate',
+            'description',
+            'contactName',
+            'contactPhone',
+            'contactEmail',
+            'alternatePhone',
+            'rewardAmount',
+            'images'
+        ];
+
+        const nextErrors = {};
+        for (const field of fields) {
+            const err = validateField(field, values[field], values);
+            if (err) nextErrors[field] = err;
+        }
+
+        if (images.length > 5) {
+            nextErrors.images = 'Maximum 5 images allowed';
+        }
+
+        return nextErrors;
+    };
+
+    const handleBlur = (e) => {
+        const { name } = e.target;
+        setTouched(prev => ({
+            ...prev,
+            [name]: true
+        }));
+        const err = validateField(name, formData[name]);
+        setErrors(prev => ({
+            ...prev,
+            [name]: err
+        }));
+    };
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        const nextValue = type === 'checkbox' ? checked : value;
+
+        if (type === 'checkbox') {
+            setTouched(prev => ({
+                ...prev,
+                [name]: true
+            }));
+        }
+
+        setFormData(prev => {
+            const next = {
+                ...prev,
+                [name]: nextValue
+            };
+
+            if (touched[name] || type === 'checkbox') {
+                const err = validateField(name, nextValue, next);
+                setErrors(prevErrors => ({
+                    ...prevErrors,
+                    [name]: err
+                }));
+            }
+
+            if (name === 'rewardOffered' && !checked) {
+                setErrors(prevErrors => ({
+                    ...prevErrors,
+                    rewardAmount: ''
+                }));
+            }
+
+            return next;
+        });
     };
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
+        setTouched(prev => ({
+            ...prev,
+            images: true
+        }));
+
         if (files.length + images.length > 5) {
-            alert('Maximum 5 images allowed');
+            setErrors(prev => ({
+                ...prev,
+                images: 'Maximum 5 images allowed'
+            }));
             return;
         }
+
+        setErrors(prev => ({
+            ...prev,
+            images: ''
+        }));
 
         setImages(prev => [...prev, ...files]);
 
@@ -69,7 +211,16 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
     };
 
     const removeImage = (index) => {
-        setImages(prev => prev.filter((_, i) => i !== index));
+        setImages(prev => {
+            const next = prev.filter((_, i) => i !== index);
+            if (touched.images) {
+                setErrors(prevErrors => ({
+                    ...prevErrors,
+                    images: next.length > 0 ? '' : 'Please upload at least one image'
+                }));
+            }
+            return next;
+        });
         setImagePreviews(prev => prev.filter((_, i) => i !== index));
     };
 
@@ -91,9 +242,31 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (images.length === 0) {
-            alert('Please upload at least one image');
+
+        const nextErrors = validateAll();
+        if (Object.keys(nextErrors).length > 0) {
+            setErrors(nextErrors);
+            setTouched({
+                petName: true,
+                petType: true,
+                breed: true,
+                color: true,
+                age: true,
+                gender: true,
+                address: true,
+                city: true,
+                state: true,
+                latitude: true,
+                longitude: true,
+                lastSeenDate: true,
+                description: true,
+                contactName: true,
+                contactPhone: true,
+                contactEmail: true,
+                alternatePhone: true,
+                rewardAmount: true,
+                images: true
+            });
             return;
         }
 
@@ -155,9 +328,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="petName"
                                     value={formData.petName}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.petName && errors.petName && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.petName}</p>
+                                )}
                             </div>
 
                             <div>
@@ -168,6 +345,7 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="petType"
                                     value={formData.petType}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 >
@@ -188,9 +366,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="breed"
                                     value={formData.breed}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.breed && errors.breed && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.breed}</p>
+                                )}
                             </div>
 
                             <div>
@@ -202,9 +384,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="color"
                                     value={formData.color}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.color && errors.color && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.color}</p>
+                                )}
                             </div>
 
                             <div>
@@ -216,10 +402,14 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="age"
                                     value={formData.age}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     placeholder="e.g., 2 years, 6 months"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.age && errors.age && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.age}</p>
+                                )}
                             </div>
 
                             <div>
@@ -230,6 +420,7 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="gender"
                                     value={formData.gender}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 >
@@ -254,9 +445,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="address"
                                     value={formData.address}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.address && errors.address && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+                                )}
                             </div>
 
                             <div>
@@ -268,9 +463,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="city"
                                     value={formData.city}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.city && errors.city && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.city}</p>
+                                )}
                             </div>
 
                             <div>
@@ -282,9 +481,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="state"
                                     value={formData.state}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.state && errors.state && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.state}</p>
+                                )}
                             </div>
 
                             <div>
@@ -297,9 +500,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="latitude"
                                     value={formData.latitude}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.latitude && errors.latitude && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.latitude}</p>
+                                )}
                             </div>
 
                             <div>
@@ -312,9 +519,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="longitude"
                                     value={formData.longitude}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.longitude && errors.longitude && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.longitude}</p>
+                                )}
                             </div>
 
                             <div>
@@ -326,10 +537,14 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="lastSeenDate"
                                     value={formData.lastSeenDate}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     max={new Date().toISOString().split('T')[0]}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.lastSeenDate && errors.lastSeenDate && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.lastSeenDate}</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -344,11 +559,15 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
+                                onBlur={handleBlur}
                                 required
                                 rows="3"
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 placeholder="Describe your pet and circumstances when last seen..."
                             />
+                            {touched.description && errors.description && (
+                                <p className="mt-1 text-sm text-red-500">{errors.description}</p>
+                            )}
                         </div>
 
                         <div>
@@ -380,9 +599,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="contactName"
                                     value={formData.contactName}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.contactName && errors.contactName && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.contactName}</p>
+                                )}
                             </div>
 
                             <div>
@@ -394,9 +617,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="contactPhone"
                                     value={formData.contactPhone}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.contactPhone && errors.contactPhone && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.contactPhone}</p>
+                                )}
                             </div>
 
                             <div>
@@ -408,9 +635,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="contactEmail"
                                     value={formData.contactEmail}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.contactEmail && errors.contactEmail && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.contactEmail}</p>
+                                )}
                             </div>
 
                             <div>
@@ -422,8 +653,12 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="alternatePhone"
                                     value={formData.alternatePhone}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.alternatePhone && errors.alternatePhone && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.alternatePhone}</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -522,9 +757,13 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                     name="rewardAmount"
                                     value={formData.rewardAmount}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     min="0"
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.rewardAmount && errors.rewardAmount && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.rewardAmount}</p>
+                                )}
                             </div>
                         )}
                     </div>
@@ -546,6 +785,9 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                                 onChange={handleImageChange}
                                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
                             />
+                            {touched.images && errors.images && (
+                                <p className="mt-2 text-sm text-red-500">{errors.images}</p>
+                            )}
                         </div>
 
                         {imagePreviews.length > 0 && (
@@ -581,7 +823,7 @@ const LostPetForm = ({ onClose, onSubmit, userLocation }) => {
                         </button>
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || Object.keys(validateAll()).length > 0}
                             className="flex-1 px-6 py-3 bg-linear-to-r from-teal-600 to-cyan-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (

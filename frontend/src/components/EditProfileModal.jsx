@@ -12,6 +12,32 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
     });
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const [touched, setTouched] = useState({});
+
+    const validateField = (name, value, values = formData) => {
+        switch (name) {
+            case 'fullName':
+                if (!value.trim()) return 'Full name is required';
+                return '';
+            case 'email':
+                if (!value.trim()) return 'Email is required';
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email format';
+                return '';
+            case 'phone': {
+                if (!value.trim()) return 'Phone number is required';
+                if (!/^[0-9]{10}$/.test(value.replace(/\D/g, ''))) return 'Phone number must be 10 digits';
+                return '';
+            }
+            case 'businessName':
+                if (user?.role === 'seller' && !value.trim()) return 'Business name is required';
+                return '';
+            case 'businessAddress':
+                if (user?.role === 'seller' && !value.trim()) return 'Business address is required';
+                return '';
+            default:
+                return '';
+        }
+    };
 
     useEffect(() => {
         if (user) {
@@ -28,47 +54,46 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        // Clear error for this field
-        if (errors[name]) {
-            setErrors(prev => ({
-                ...prev,
-                [name]: ''
-            }));
-        }
+        const nextValues = { ...formData, [name]: value };
+        setFormData(nextValues);
+
+        setErrors(prev => {
+            const nextErrors = { ...prev };
+            if (touched[name]) {
+                nextErrors[name] = validateField(name, value, nextValues);
+            } else if (nextErrors[name]) {
+                nextErrors[name] = '';
+            }
+            return nextErrors;
+        });
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        setTouched(prev => ({ ...prev, [name]: true }));
+        const fieldError = validateField(name, value);
+        setErrors(prev => ({ ...prev, [name]: fieldError }));
     };
 
     const validateForm = () => {
         const newErrors = {};
+        const nextTouched = {};
         
-        if (!formData.fullName.trim()) {
-            newErrors.fullName = 'Full name is required';
-        }
-        
-        if (!formData.email.trim()) {
-            newErrors.email = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            newErrors.email = 'Invalid email format';
-        }
-        
-        if (!formData.phone.trim()) {
-            newErrors.phone = 'Phone number is required';
-        } else if (!/^[0-9]{10}$/.test(formData.phone.replace(/\D/g, ''))) {
-            newErrors.phone = 'Phone number must be 10 digits';
-        }
+        ['fullName', 'email', 'phone'].forEach((name) => {
+            nextTouched[name] = true;
+            const err = validateField(name, formData[name]);
+            if (err) newErrors[name] = err;
+        });
 
         if (user?.role === 'seller') {
-            if (!formData.businessName.trim()) {
-                newErrors.businessName = 'Business name is required';
-            }
-            if (!formData.businessAddress.trim()) {
-                newErrors.businessAddress = 'Business address is required';
-            }
+            ['businessName', 'businessAddress'].forEach((name) => {
+                nextTouched[name] = true;
+                const err = validateField(name, formData[name]);
+                if (err) newErrors[name] = err;
+            });
         }
 
+        setTouched(prev => ({ ...prev, ...nextTouched }));
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -128,12 +153,13 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                                 name="fullName"
                                 value={formData.fullName}
                                 onChange={handleChange}
+                                onBlur={handleBlur}
                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
                                     errors.fullName ? 'border-red-500' : 'border-gray-300'
                                 }`}
                                 placeholder="Enter your full name"
                             />
-                            {errors.fullName && (
+                            {touched.fullName && errors.fullName && (
                                 <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
                             )}
                         </div>
@@ -167,12 +193,13 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
+                                onBlur={handleBlur}
                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
                                     errors.email ? 'border-red-500' : 'border-gray-300'
                                 }`}
                                 placeholder="Enter your email"
                             />
-                            {errors.email && (
+                            {touched.email && errors.email && (
                                 <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                             )}
                         </div>
@@ -188,12 +215,13 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
+                                onBlur={handleBlur}
                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
                                     errors.phone ? 'border-red-500' : 'border-gray-300'
                                 }`}
                                 placeholder="Enter your phone number"
                             />
-                            {errors.phone && (
+                            {touched.phone && errors.phone && (
                                 <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
                             )}
                         </div>
@@ -210,12 +238,13 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                                     name="businessName"
                                     value={formData.businessName}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
                                         errors.businessName ? 'border-red-500' : 'border-gray-300'
                                     }`}
                                     placeholder="Enter business name"
                                 />
-                                {errors.businessName && (
+                                {touched.businessName && errors.businessName && (
                                     <p className="mt-1 text-sm text-red-600">{errors.businessName}</p>
                                 )}
                             </div>
@@ -232,13 +261,14 @@ const EditProfileModal = ({ isOpen, onClose, user, onSave }) => {
                                     name="businessAddress"
                                     value={formData.businessAddress}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     rows="3"
                                     className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
                                         errors.businessAddress ? 'border-red-500' : 'border-gray-300'
                                     }`}
                                     placeholder="Enter business address"
                                 />
-                                {errors.businessAddress && (
+                                {touched.businessAddress && errors.businessAddress && (
                                     <p className="mt-1 text-sm text-red-600">{errors.businessAddress}</p>
                                 )}
                             </div>

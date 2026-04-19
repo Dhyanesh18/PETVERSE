@@ -174,31 +174,52 @@ const AddEvent = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            setTouched(prev => ({
+                ...prev,
+                permissionDocument: true
+            }));
+
             // Validate file size (10MB)
             if (file.size > 10 * 1024 * 1024) {
-                alert('File size must be less than 10MB');
                 e.target.value = '';
                 setPermissionDocument(null);
                 setDocumentPreview('');
+                setErrors(prev => ({
+                    ...prev,
+                    permissionDocument: 'File size must be less than 10MB'
+                }));
                 return;
             }
 
             // Validate file type
             const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
             if (!allowedTypes.includes(file.type)) {
-                alert('Only PDF, DOC, DOCX, JPG, JPEG, and PNG files are allowed');
                 e.target.value = '';
                 setPermissionDocument(null);
                 setDocumentPreview('');
+                setErrors(prev => ({
+                    ...prev,
+                    permissionDocument: 'Only PDF, DOC, DOCX, JPG, JPEG, and PNG files are allowed'
+                }));
                 return;
             }
 
             setPermissionDocument(file);
             setDocumentPreview(file.name);
+            setErrors(prev => ({
+                ...prev,
+                permissionDocument: ''
+            }));
             console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
         } else {
             setPermissionDocument(null);
             setDocumentPreview('');
+            if (touched.permissionDocument) {
+                setErrors(prev => ({
+                    ...prev,
+                    permissionDocument: 'Government permission letter is required'
+                }));
+            }
         }
     };
 
@@ -251,15 +272,7 @@ const AddEvent = () => {
 
         // Validate permission document
         if (!permissionDocument) {
-            setError('Government permission letter is required');
-            setErrors(newErrors);
-            // Mark all fields as touched
-            const allTouched = {};
-            Object.keys(formData).forEach(key => {
-                allTouched[key] = true;
-            });
-            setTouched(allTouched);
-            return;
+            newErrors.permissionDocument = 'Government permission letter is required';
         }
 
         // Check if there are any errors
@@ -271,6 +284,7 @@ const AddEvent = () => {
             Object.keys(formData).forEach(key => {
                 allTouched[key] = true;
             });
+            allTouched.permissionDocument = true;
             setTouched(allTouched);
             return;
         }
@@ -454,6 +468,9 @@ const AddEvent = () => {
                                 <small className="text-gray-500 block mt-1">
                                     Upload government permission letter (PDF, DOC, DOCX, JPG, PNG - Max 10MB)
                                 </small>
+                                {touched.permissionDocument && errors.permissionDocument && (
+                                    <small className="text-red-500 block mt-1">{errors.permissionDocument}</small>
+                                )}
                                 {documentPreview && (
                                     <div className="mt-2 p-2 bg-gray-100 rounded text-sm text-gray-700">
                                         Selected: {documentPreview}
