@@ -21,6 +21,83 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
     const [imagePreviews, setImagePreviews] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [touched, setTouched] = useState({});
+    const [fieldErrors, setFieldErrors] = useState({});
+
+    const validateField = (name, value) => {
+        switch (name) {
+            case 'claimerName':
+            case 'foundAddress':
+            case 'foundCity':
+            case 'foundState':
+            case 'foundDate':
+            case 'description':
+                return value?.trim() ? '' : 'This field is required';
+            case 'claimerPhone': {
+                if (!value?.trim()) return 'Phone number is required';
+                const ok = /^\+?[0-9\s-]{7,15}$/.test(value.trim());
+                return ok ? '' : 'Enter a valid phone number';
+            }
+            case 'claimerEmail': {
+                if (!value?.trim()) return 'Email is required';
+                const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+                return ok ? '' : 'Enter a valid email';
+            }
+            case 'images':
+                return images.length > 0 ? '' : 'Please upload at least one clear image of the found pet';
+            default:
+                return '';
+        }
+    };
+
+    const validateAll = (values = formData) => {
+        const fields = [
+            'images',
+            'claimerName',
+            'claimerPhone',
+            'claimerEmail',
+            'foundAddress',
+            'foundCity',
+            'foundState',
+            'foundDate',
+            'description'
+        ];
+
+        const nextErrors = {};
+        for (const field of fields) {
+            const err = validateField(field, values[field]);
+            if (err) nextErrors[field] = err;
+        }
+
+        if (lostPet?.verificationQuestions?.length) {
+            lostPet.verificationQuestions.forEach((_, index) => {
+                const key = `answer_${index}`;
+                const answer = values.verificationAnswers?.[key] || '';
+                if (!answer.trim()) {
+                    nextErrors[key] = 'This answer is required';
+                }
+            });
+        }
+
+        if (images.length > 3) {
+            nextErrors.images = 'You can upload maximum 3 images';
+        }
+
+        return nextErrors;
+    };
+
+    const handleBlur = (e) => {
+        const { name } = e.target;
+        setTouched(prev => ({
+            ...prev,
+            [name]: true
+        }));
+        const err = validateField(name, formData[name]);
+        setFieldErrors(prev => ({
+            ...prev,
+            [name]: err
+        }));
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -28,25 +105,54 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
             ...prev,
             [name]: value
         }));
+
+        if (touched[name]) {
+            const err = validateField(name, value);
+            setFieldErrors(prev => ({
+                ...prev,
+                [name]: err
+            }));
+        }
     };
 
     const handleVerificationAnswer = (index, value) => {
+        const key = `answer_${index}`;
         setFormData(prev => ({
             ...prev,
             verificationAnswers: {
                 ...prev.verificationAnswers,
-                [`answer_${index}`]: value
+                [key]: value
             }
         }));
+
+        if (touched[key]) {
+            setFieldErrors(prev => ({
+                ...prev,
+                [key]: value.trim() ? '' : 'This answer is required'
+            }));
+        }
     };
 
     const handleImageChange = (e) => {
         const files = Array.from(e.target.files);
+
+        setTouched(prev => ({
+            ...prev,
+            images: true
+        }));
         
         if (files.length + images.length > 3) {
-            setError('You can upload maximum 3 images');
+            setFieldErrors(prev => ({
+                ...prev,
+                images: 'You can upload maximum 3 images'
+            }));
             return;
         }
+
+        setFieldErrors(prev => ({
+            ...prev,
+            images: ''
+        }));
 
         setImages(prev => [...prev, ...files]);
         
@@ -61,15 +167,42 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
     };
 
     const removeImage = (index) => {
-        setImages(prev => prev.filter((_, i) => i !== index));
+        setImages(prev => {
+            const next = prev.filter((_, i) => i !== index);
+            if (touched.images) {
+                setFieldErrors(prevErrors => ({
+                    ...prevErrors,
+                    images: next.length > 0 ? '' : 'Please upload at least one clear image of the found pet'
+                }));
+            }
+            return next;
+        });
         setImagePreviews(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (images.length === 0) {
-            setError('Please upload at least one clear image of the found pet');
+        const nextErrors = validateAll();
+        if (Object.keys(nextErrors).length > 0) {
+            setFieldErrors(nextErrors);
+            const nextTouched = {
+                images: true,
+                claimerName: true,
+                claimerPhone: true,
+                claimerEmail: true,
+                foundAddress: true,
+                foundCity: true,
+                foundState: true,
+                foundDate: true,
+                description: true
+            };
+            if (lostPet?.verificationQuestions?.length) {
+                lostPet.verificationQuestions.forEach((_, index) => {
+                    nextTouched[`answer_${index}`] = true;
+                });
+            }
+            setTouched(nextTouched);
             return;
         }
 
@@ -168,6 +301,10 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                             <FaCamera className="text-teal-600" />
                             <span className="text-teal-700 font-medium">Upload Images (Max 3)</span>
                         </label>
+
+                        {touched.images && fieldErrors.images && (
+                            <p className="text-sm text-red-600">{fieldErrors.images}</p>
+                        )}
                         
                         {imagePreviews.length > 0 && (
                             <div className="grid grid-cols-3 gap-2 mt-2">
@@ -209,10 +346,19 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                                         type="text"
                                         value={formData.verificationAnswers[`answer_${index}`] || ''}
                                         onChange={(e) => handleVerificationAnswer(index, e.target.value)}
+                                        onBlur={() => {
+                                            const key = `answer_${index}`;
+                                            setTouched(prev => ({ ...prev, [key]: true }));
+                                            const val = formData.verificationAnswers[key] || '';
+                                            setFieldErrors(prev => ({ ...prev, [key]: val.trim() ? '' : 'This answer is required' }));
+                                        }}
                                         required
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                         placeholder="Your answer"
                                     />
+                                    {touched[`answer_${index}`] && fieldErrors[`answer_${index}`] && (
+                                        <p className="mt-1 text-sm text-red-600">{fieldErrors[`answer_${index}`]}</p>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -232,9 +378,13 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                                     name="claimerName"
                                     value={formData.claimerName}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.claimerName && fieldErrors.claimerName && (
+                                    <p className="mt-1 text-sm text-red-600">{fieldErrors.claimerName}</p>
+                                )}
                             </div>
 
                             <div>
@@ -246,9 +396,13 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                                     name="claimerPhone"
                                     value={formData.claimerPhone}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.claimerPhone && fieldErrors.claimerPhone && (
+                                    <p className="mt-1 text-sm text-red-600">{fieldErrors.claimerPhone}</p>
+                                )}
                             </div>
 
                             <div className="md:col-span-2">
@@ -260,9 +414,13 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                                     name="claimerEmail"
                                     value={formData.claimerEmail}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.claimerEmail && fieldErrors.claimerEmail && (
+                                    <p className="mt-1 text-sm text-red-600">{fieldErrors.claimerEmail}</p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -283,9 +441,13 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                                 name="foundAddress"
                                 value={formData.foundAddress}
                                 onChange={handleChange}
+                                onBlur={handleBlur}
                                 required
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                             />
+                            {touched.foundAddress && fieldErrors.foundAddress && (
+                                <p className="mt-1 text-sm text-red-600">{fieldErrors.foundAddress}</p>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -298,9 +460,13 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                                     name="foundCity"
                                     value={formData.foundCity}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.foundCity && fieldErrors.foundCity && (
+                                    <p className="mt-1 text-sm text-red-600">{fieldErrors.foundCity}</p>
+                                )}
                             </div>
 
                             <div>
@@ -312,9 +478,13 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                                     name="foundState"
                                     value={formData.foundState}
                                     onChange={handleChange}
+                                    onBlur={handleBlur}
                                     required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
+                                {touched.foundState && fieldErrors.foundState && (
+                                    <p className="mt-1 text-sm text-red-600">{fieldErrors.foundState}</p>
+                                )}
                             </div>
                         </div>
 
@@ -328,10 +498,14 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                                 name="foundDate"
                                 value={formData.foundDate}
                                 onChange={handleChange}
+                                onBlur={handleBlur}
                                 required
                                 max={new Date().toISOString().split('T')[0]}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                             />
+                            {touched.foundDate && fieldErrors.foundDate && (
+                                <p className="mt-1 text-sm text-red-600">{fieldErrors.foundDate}</p>
+                            )}
                         </div>
                     </div>
 
@@ -344,11 +518,15 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                             name="description"
                             value={formData.description}
                             onChange={handleChange}
+                            onBlur={handleBlur}
                             required
                             rows="4"
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                             placeholder="Describe the condition of the pet, behavior, and any other relevant details..."
                         />
+                        {touched.description && fieldErrors.description && (
+                            <p className="mt-1 text-sm text-red-600">{fieldErrors.description}</p>
+                        )}
                     </div>
 
                     {/* Submit Buttons */}
@@ -362,7 +540,7 @@ const FoundClaimForm = ({ lostPet, onClose, onSuccess }) => {
                         </button>
                         <button
                             type="submit"
-                            disabled={loading || images.length === 0}
+                            disabled={loading || Object.keys(validateAll()).length > 0}
                             className="flex-1 px-6 py-3 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:shadow-lg transition-all duration-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? 'Submitting...' : 'Submit Claim'}

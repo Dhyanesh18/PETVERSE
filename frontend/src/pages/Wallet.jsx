@@ -17,7 +17,7 @@ const Wallet = () => {
     const { isAuthenticated, user } = useAuth();
     
     // Redux state
-    const { balance, transactions, statistics, gstInfo, loading, processing, error } = useSelector(state => state.wallet);
+    const { balance, transactions, gstInfo, loading, processing } = useSelector(state => state.wallet);
     
     // Local UI state
     const [showAddMoney, setShowAddMoney] = useState(false);
@@ -37,6 +37,76 @@ const Wallet = () => {
     const [topupIntents, setTopupIntents] = useState([]);
     const [topupIntentsLoading, setTopupIntentsLoading] = useState(false);
     const [topupRefundProcessingId, setTopupRefundProcessingId] = useState(null);
+    const [addAmountTouched, setAddAmountTouched] = useState(false);
+    const [transferTouched, setTransferTouched] = useState({
+        amount: false,
+        accountHolderName: false,
+        accountNumber: false,
+        ifscCode: false,
+        bankName: false,
+        upiId: false
+    });
+
+    const availableBalance = Number(balance) || 0;
+
+    const addAmountError = (() => {
+        const amt = Number(addAmount);
+        if (!addAmount) return 'Amount is required';
+        if (Number.isNaN(amt) || amt <= 0) return 'Enter a valid amount';
+        return '';
+    })();
+
+    const computeTransferErrors = (amountValue, typeValue, detailsValue) => {
+        const nextErrors = {
+            amount: '',
+            accountHolderName: '',
+            accountNumber: '',
+            ifscCode: '',
+            bankName: '',
+            upiId: ''
+        };
+
+        const amt = Number(amountValue);
+        if (!amountValue) {
+            nextErrors.amount = 'Amount is required';
+        } else if (Number.isNaN(amt) || amt <= 0) {
+            nextErrors.amount = 'Enter a valid amount';
+        } else if (amt > availableBalance) {
+            nextErrors.amount = 'Insufficient balance in wallet';
+        }
+
+        if (typeValue === 'bank') {
+            if (!detailsValue.accountHolderName?.trim()) {
+                nextErrors.accountHolderName = 'Account holder name is required';
+            }
+
+            const acct = (detailsValue.accountNumber || '').replace(/\s+/g, '');
+            if (!acct) {
+                nextErrors.accountNumber = 'Account number is required';
+            } else if (!/^\d{9,18}$/.test(acct)) {
+                nextErrors.accountNumber = 'Enter a valid account number';
+            }
+
+            const ifsc = (detailsValue.ifscCode || '').trim().toUpperCase();
+            if (!ifsc) {
+                nextErrors.ifscCode = 'IFSC code is required';
+            } else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc)) {
+                nextErrors.ifscCode = 'Enter a valid IFSC code';
+            }
+        } else {
+            const upi = (detailsValue.upiId || '').trim();
+            if (!upi) {
+                nextErrors.upiId = 'UPI ID is required';
+            } else if (!/^[^\s@]+@[^\s@]+$/.test(upi)) {
+                nextErrors.upiId = 'Enter a valid UPI ID (e.g., user@bank)';
+            }
+        }
+
+        return nextErrors;
+    };
+
+    const transferErrors = computeTransferErrors(transferAmount, transferType, transferDetails);
+    const hasTransferErrors = Object.values(transferErrors).some(Boolean);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -75,7 +145,7 @@ const Wallet = () => {
             const resp = await getPaymentIntents({ purpose: 'wallet_topup', limit: 10 });
             const intents = resp.data?.data?.intents || [];
             setTopupIntents(intents);
-        } catch (e) {
+        } catch {
             // Non-blocking
             setTopupIntents([]);
         } finally {
@@ -91,10 +161,8 @@ const Wallet = () => {
     }, [dispatch]);
 
     const handleAddMoney = async () => {
-        if (!addAmount || parseFloat(addAmount) <= 0) {
-            alert('Please enter a valid amount');
-            return;
-        }
+        setAddAmountTouched(true);
+        if (addAmountError) return;
 
         try {
             setTopupProcessing(true);
@@ -197,31 +265,21 @@ const Wallet = () => {
     };
 
     const handleTransferMoney = async () => {
-        if (!transferAmount || parseFloat(transferAmount) <= 0) {
-            alert('Please enter a valid amount');
-            return;
-        }
+        const nextTouched = {
+            amount: true,
+            accountHolderName: transferType === 'bank',
+            accountNumber: transferType === 'bank',
+            ifscCode: transferType === 'bank',
+            bankName: false,
+            upiId: transferType === 'upi'
+        };
+        setTransferTouched(nextTouched);
 
-        if (parseFloat(transferAmount) > balance) {
-            alert('Insufficient balance in wallet');
-            return;
-        }
-
-        // Validate based on transfer type
-        if (transferType === 'bank') {
-            if (!transferDetails.accountHolderName || !transferDetails.accountNumber || !transferDetails.ifscCode) {
-                alert('Please fill in all bank account details');
-                return;
-            }
-        } else {
-            if (!transferDetails.upiId) {
-                alert('Please provide UPI ID');
-                return;
-            }
-        }
+        const currentErrors = computeTransferErrors(transferAmount, transferType, transferDetails);
+        if (Object.values(currentErrors).some(Boolean)) return;
 
         try {
-            const result = await dispatch(transferMoneyFromWallet({
+            await dispatch(transferMoneyFromWallet({
                 amount: parseFloat(transferAmount),
                 transferType,
                 transferDetails: transferType === 'bank' ? {
@@ -586,11 +644,15 @@ const Wallet = () => {
                                             type="number"
                                             value={addAmount}
                                             onChange={(e) => setAddAmount(e.target.value)}
+                                            onBlur={() => setAddAmountTouched(true)}
                                             placeholder="Enter amount"
                                             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                             min="1"
                                         />
                                     </div>
+                                    {addAmountTouched && addAmountError && (
+                                        <p className="mt-2 text-sm text-red-600">{addAmountError}</p>
+                                    )}
                                 </div>
 
                                 {/* Payment Method Selection */}
@@ -600,6 +662,7 @@ const Wallet = () => {
                                     </label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
+                                            type="button"
                                             onClick={() => setPaymentMethod('card')}
                                             className={`flex items-center gap-2 p-3 border rounded-lg transition-colors ${
                                                 paymentMethod === 'card'
@@ -611,6 +674,7 @@ const Wallet = () => {
                                             Card
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() => setPaymentMethod('upi')}
                                             className={`flex items-center gap-2 p-3 border rounded-lg transition-colors ${
                                                 paymentMethod === 'upi'
@@ -639,7 +703,7 @@ const Wallet = () => {
                                     </button>
                                     <button
                                         onClick={handleAddMoney}
-                                        disabled={topupProcessing}
+                                        disabled={topupProcessing || !!addAmountError}
                                         className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {topupProcessing ? 'Processing...' : 'Add Money'}
@@ -682,12 +746,16 @@ const Wallet = () => {
                                             type="number"
                                             value={transferAmount}
                                             onChange={(e) => setTransferAmount(e.target.value)}
+                                            onBlur={() => setTransferTouched(prev => ({ ...prev, amount: true }))}
                                             placeholder="Enter amount"
                                             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                             min="1"
-                                            max={balance}
+                                            max={availableBalance}
                                         />
                                     </div>
+                                    {transferTouched.amount && transferErrors.amount && (
+                                        <p className="mt-2 text-sm text-red-600">{transferErrors.amount}</p>
+                                    )}
                                 </div>
 
                                 {/* Transfer Type Selection */}
@@ -697,6 +765,7 @@ const Wallet = () => {
                                     </label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
+                                            type="button"
                                             onClick={() => setTransferType('bank')}
                                             className={`flex items-center gap-2 p-3 border rounded-lg transition-colors ${
                                                 transferType === 'bank'
@@ -708,6 +777,7 @@ const Wallet = () => {
                                             Bank Account
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() => setTransferType('upi')}
                                             className={`flex items-center gap-2 p-3 border rounded-lg transition-colors ${
                                                 transferType === 'upi'
@@ -729,22 +799,34 @@ const Wallet = () => {
                                             placeholder="Account Holder Name"
                                             value={transferDetails.accountHolderName}
                                             onChange={(e) => setTransferDetails(prev => ({ ...prev, accountHolderName: e.target.value }))}
+                                            onBlur={() => setTransferTouched(prev => ({ ...prev, accountHolderName: true }))}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                         />
+                                        {transferTouched.accountHolderName && transferErrors.accountHolderName && (
+                                            <p className="-mt-2 text-sm text-red-600">{transferErrors.accountHolderName}</p>
+                                        )}
                                         <input
                                             type="text"
                                             placeholder="Account Number"
                                             value={transferDetails.accountNumber}
                                             onChange={(e) => setTransferDetails(prev => ({ ...prev, accountNumber: e.target.value }))}
+                                            onBlur={() => setTransferTouched(prev => ({ ...prev, accountNumber: true }))}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                         />
+                                        {transferTouched.accountNumber && transferErrors.accountNumber && (
+                                            <p className="-mt-2 text-sm text-red-600">{transferErrors.accountNumber}</p>
+                                        )}
                                         <input
                                             type="text"
                                             placeholder="IFSC Code"
                                             value={transferDetails.ifscCode}
                                             onChange={(e) => setTransferDetails(prev => ({ ...prev, ifscCode: e.target.value }))}
+                                            onBlur={() => setTransferTouched(prev => ({ ...prev, ifscCode: true }))}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                         />
+                                        {transferTouched.ifscCode && transferErrors.ifscCode && (
+                                            <p className="-mt-2 text-sm text-red-600">{transferErrors.ifscCode}</p>
+                                        )}
                                         <input
                                             type="text"
                                             placeholder="Bank Name (Optional)"
@@ -765,8 +847,12 @@ const Wallet = () => {
                                             placeholder="UPI ID (e.g., user@paytm)"
                                             value={transferDetails.upiId}
                                             onChange={(e) => setTransferDetails(prev => ({ ...prev, upiId: e.target.value }))}
+                                            onBlur={() => setTransferTouched(prev => ({ ...prev, upiId: true }))}
                                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                         />
+                                        {transferTouched.upiId && transferErrors.upiId && (
+                                            <p className="-mt-2 text-sm text-red-600">{transferErrors.upiId}</p>
+                                        )}
                                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                             <p className="text-xs text-blue-700">
                                                 <strong>Note:</strong> UPI withdrawals are processed instantly to your registered UPI ID.
@@ -785,7 +871,7 @@ const Wallet = () => {
                                     </button>
                                     <button
                                         onClick={handleTransferMoney}
-                                        disabled={processing}
+                                        disabled={processing || hasTransferErrors}
                                         className="flex-1 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {processing ? 'Processing...' : 'Withdraw Now'}

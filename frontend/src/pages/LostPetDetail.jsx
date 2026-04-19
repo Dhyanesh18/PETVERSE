@@ -18,8 +18,11 @@ const LostPetDetail = () => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [showCommentForm, setShowCommentForm] = useState(false);
     const [comment, setComment] = useState('');
+    const [commentTouched, setCommentTouched] = useState(false);
     const [submittingComment, setSubmittingComment] = useState(false);
     const [showClaimForm, setShowClaimForm] = useState(false);
+
+    const commentError = commentTouched && !comment.trim() ? 'Comment is required' : '';
 
     useEffect(() => {
         dispatch(fetchLostPetById(id));
@@ -37,7 +40,10 @@ const LostPetDetail = () => {
 
     const handleCommentSubmit = async (e) => {
         e.preventDefault();
-        if (!comment.trim()) return;
+        if (!comment.trim()) {
+            setCommentTouched(true);
+            return;
+        }
 
         setSubmittingComment(true);
         try {
@@ -259,15 +265,18 @@ const LostPetDetail = () => {
                                     <textarea
                                         value={comment}
                                         onChange={(e) => setComment(e.target.value)}
+                                        onBlur={() => setCommentTouched(true)}
                                         placeholder="Share any information about this pet..."
                                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:outline-none resize-none"
                                         rows="4"
-                                        required
                                     />
+                                    {commentError && (
+                                        <small className="block mt-2 text-red-500">{commentError}</small>
+                                    )}
                                     <div className="flex gap-2 mt-3">
                                         <button
                                             type="submit"
-                                            disabled={submittingComment}
+                                            disabled={submittingComment || !comment.trim()}
                                             className="bg-teal-600 text-white px-6 py-2 rounded-md hover:bg-teal-700 transition-colors font-semibold disabled:opacity-50"
                                         >
                                             {submittingComment ? 'Posting...' : 'Post Comment'}
@@ -277,6 +286,7 @@ const LostPetDetail = () => {
                                             onClick={() => {
                                                 setShowCommentForm(false);
                                                 setComment('');
+                                                setCommentTouched(false);
                                             }}
                                             className="bg-gray-200 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-300 transition-colors font-semibold"
                                         >

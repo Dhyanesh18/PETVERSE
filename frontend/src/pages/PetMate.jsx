@@ -93,9 +93,93 @@ const PetMate = () => {
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [fileInfo, setFileInfo] = useState('No files chosen (Max 4 images)');
     const [submitting, setSubmitting] = useState(false);
+
+    const [touchedFields, setTouchedFields] = useState({});
+    const [validationErrors, setValidationErrors] = useState({});
     
     // Alert state
     const [alert, setAlert] = useState(null);
+
+    const validateField = (name, value, values = formData) => {
+        switch (name) {
+            case 'petName':
+            case 'breed':
+            case 'district':
+            case 'description':
+                return value?.trim() ? '' : 'This field is required';
+            case 'petType':
+            case 'ageUnit':
+            case 'gender':
+            case 'state':
+                return value ? '' : 'This field is required';
+            case 'ageValue': {
+                if (value === '' || value === null || value === undefined) return 'Age is required';
+                const num = Number(value);
+                if (Number.isNaN(num)) return 'Enter a valid age';
+                if (num < 0) return 'Age cannot be negative';
+                return '';
+            }
+            case 'contactNumber': {
+                if (!value?.trim()) return 'Contact number is required';
+                const normalized = value.trim();
+                const ok = /^\+?[0-9\s-]{7,15}$/.test(normalized);
+                return ok ? '' : 'Enter a valid contact number';
+            }
+            case 'email': {
+                if (!value?.trim()) return 'Email is required';
+                const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+                return ok ? '' : 'Enter a valid email';
+            }
+            case 'healthCheck':
+                return values.healthCheck ? '' : 'Please confirm your pet is healthy';
+            case 'terms':
+                return values.terms ? '' : 'Please accept the terms & conditions';
+            case 'petImage':
+                return selectedFiles.length > 0 ? '' : 'At least one image is required';
+            default:
+                return '';
+        }
+    };
+
+    const validateAll = (values = formData) => {
+        const fields = [
+            'petName',
+            'petType',
+            'breed',
+            'ageValue',
+            'ageUnit',
+            'gender',
+            'state',
+            'district',
+            'description',
+            'petImage',
+            'contactNumber',
+            'email',
+            'healthCheck',
+            'terms'
+        ];
+
+        const nextErrors = {};
+        for (const field of fields) {
+            const err = validateField(field, values[field], values);
+            if (err) nextErrors[field] = err;
+        }
+        return nextErrors;
+    };
+
+    const handleBlur = (e) => {
+        const { name } = e.target;
+        setTouchedFields(prev => ({
+            ...prev,
+            [name]: true
+        }));
+
+        const err = validateField(name, formData[name]);
+        setValidationErrors(prev => ({
+            ...prev,
+            [name]: err
+        }));
+    };
 
     // Fetch filter options on mount
     useEffect(() => {
@@ -193,18 +277,49 @@ const PetMate = () => {
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+
+        if (type === 'checkbox' || type === 'radio') {
+            setTouchedFields(prev => ({
+                ...prev,
+                [name]: true
+            }));
+        }
+
+        const nextValue = type === 'checkbox' ? checked : value;
+
+        setFormData(prev => {
+            const next = {
+                ...prev,
+                [name]: nextValue
+            };
+
+            if (touchedFields[name] || type === 'checkbox' || type === 'radio') {
+                const err = validateField(name, nextValue, next);
+                setValidationErrors(prevErrors => ({
+                    ...prevErrors,
+                    [name]: err
+                }));
+            }
+
+            return next;
+        });
     };
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
+
+        setTouchedFields(prev => ({
+            ...prev,
+            petImage: true
+        }));
         
         if (files.length > 4) {
             setFileInfo('Maximum 4 images allowed');
             setSelectedFiles([]);
+            setValidationErrors(prev => ({
+                ...prev,
+                petImage: 'Maximum 4 images allowed'
+            }));
             return;
         }
 
@@ -226,19 +341,45 @@ const PetMate = () => {
         if (errorMessage) {
             setFileInfo(errorMessage);
             setSelectedFiles([]);
+            setValidationErrors(prev => ({
+                ...prev,
+                petImage: errorMessage
+            }));
         } else {
             const totalSize = files.reduce((sum, file) => sum + file.size, 0);
             const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
             setFileInfo(`${files.length} file(s) selected (${totalSizeMB} MB)`);
             setSelectedFiles(files);
+            setValidationErrors(prev => ({
+                ...prev,
+                petImage: ''
+            }));
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (selectedFiles.length === 0) {
-            setAlert({ type: 'error', message: 'At least one image is required' });
+
+        const allErrors = validateAll();
+        if (Object.keys(allErrors).length > 0) {
+            setAlert({ type: 'error', message: 'Please fix the highlighted fields' });
+            setValidationErrors(allErrors);
+            setTouchedFields({
+                petName: true,
+                petType: true,
+                breed: true,
+                ageValue: true,
+                ageUnit: true,
+                gender: true,
+                state: true,
+                district: true,
+                description: true,
+                petImage: true,
+                contactNumber: true,
+                email: true,
+                healthCheck: true,
+                terms: true
+            });
             return;
         }
 
@@ -283,6 +424,8 @@ const PetMate = () => {
                 });
                 setSelectedFiles([]);
                 setFileInfo('No files chosen (Max 4 images)');
+                setTouchedFields({});
+                setValidationErrors({});
                 // Refresh pets list
                 fetchPets();
             } else {
@@ -457,9 +600,13 @@ const PetMate = () => {
                                 name="petName" 
                                 value={formData.petName}
                                 onChange={handleInputChange}
+                                onBlur={handleBlur}
                                 className="w-full p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63]"
                                 required 
                             />
+                            {touchedFields.petName && validationErrors.petName && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.petName}</small>
+                            )}
                         </div>
                         
                         <div className="mb-5">
@@ -471,6 +618,7 @@ const PetMate = () => {
                                 name="petType"
                                 value={formData.petType}
                                 onChange={handleInputChange}
+                                onBlur={handleBlur}
                                 className="w-full p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63] appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e')] bg-no-repeat bg-position-[right_10px_center] bg-size-[20px]"
                                 required
                             >
@@ -480,6 +628,9 @@ const PetMate = () => {
                                 <option value="bird">Bird</option>
                                 <option value="other">Other</option>
                             </select>
+                            {touchedFields.petType && validationErrors.petType && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.petType}</small>
+                            )}
                         </div>
                         
                         <div className="mb-5">
@@ -492,9 +643,13 @@ const PetMate = () => {
                                 name="breed"
                                 value={formData.breed}
                                 onChange={handleInputChange}
+                                onBlur={handleBlur}
                                 className="w-full p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63]"
                                 required 
                             />
+                            {touchedFields.breed && validationErrors.breed && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.breed}</small>
+                            )}
                         </div>
                         
                         <div className="mb-5">
@@ -511,6 +666,7 @@ const PetMate = () => {
                                     step="0.1"
                                     value={formData.ageValue}
                                     onChange={handleInputChange}
+                                    onBlur={handleBlur}
                                     className="flex-2 p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63]"
                                     required
                                 />
@@ -519,6 +675,7 @@ const PetMate = () => {
                                     name="ageUnit"
                                     value={formData.ageUnit}
                                     onChange={handleInputChange}
+                                    onBlur={handleBlur}
                                     className="flex-1 p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63] appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e')] bg-no-repeat bg-position-[right_10px_center] bg-size-[:20px]"
                                     required
                                 >
@@ -527,6 +684,11 @@ const PetMate = () => {
                                     <option value="years">Years</option>
                                 </select>
                             </div>
+                            {(touchedFields.ageValue && validationErrors.ageValue) || (touchedFields.ageUnit && validationErrors.ageUnit) ? (
+                                <small className="block mt-1 text-sm text-[#e91e63]">
+                                    {validationErrors.ageValue || validationErrors.ageUnit}
+                                </small>
+                            ) : null}
                         </div>
                         
                         <div className="mb-5">
@@ -560,6 +722,9 @@ const PetMate = () => {
                                     <label htmlFor="female" className="cursor-pointer">Female</label>
                                 </div>
                             </div>
+                            {touchedFields.gender && validationErrors.gender && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.gender}</small>
+                            )}
                         </div>
 
                         <div className="mb-5">
@@ -572,6 +737,7 @@ const PetMate = () => {
                                 name="registrationNumber"
                                 value={formData.registrationNumber}
                                 onChange={handleInputChange}
+                                onBlur={handleBlur}
                                 className="w-full p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63]"
                             />
                         </div>
@@ -585,6 +751,7 @@ const PetMate = () => {
                                 name="state"
                                 value={formData.state}
                                 onChange={handleInputChange}
+                                onBlur={handleBlur}
                                 className="w-full p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63] appearance-none bg-[url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e')] bg-no-repeat bg-position-[right_10px_center] bg-size-[20px]"
                                 required
                             >
@@ -595,6 +762,9 @@ const PetMate = () => {
                                     </option>
                                 ))}
                             </select>
+                            {touchedFields.state && validationErrors.state && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.state}</small>
+                            )}
                         </div>
                         
                         <div className="mb-5">
@@ -607,9 +777,13 @@ const PetMate = () => {
                                 name="district"
                                 value={formData.district}
                                 onChange={handleInputChange}
+                                onBlur={handleBlur}
                                 className="w-full p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63]"
                                 required 
                             />
+                            {touchedFields.district && validationErrors.district && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.district}</small>
+                            )}
                         </div>
                         
                         <div className="mb-5 md:col-span-2">
@@ -623,9 +797,13 @@ const PetMate = () => {
                                 placeholder="Describe your pet's personality, health, past breeding history, and any specific preferences for a mate."
                                 value={formData.description}
                                 onChange={handleInputChange}
+                                onBlur={handleBlur}
                                 className="w-full p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63] resize-y"
                                 required
                             />
+                            {touchedFields.description && validationErrors.description && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.description}</small>
+                            )}
                         </div>
                         
                         <div className="mb-5 md:col-span-2">
@@ -650,6 +828,9 @@ const PetMate = () => {
                                     <FaCloudUploadAlt className="inline mr-2" /> Choose Files
                                 </label>
                                 <span className="mt-2 text-gray-500 text-sm">{fileInfo}</span>
+                                {touchedFields.petImage && validationErrors.petImage && (
+                                    <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.petImage}</small>
+                                )}
                             </div>
                         </div>
                         
@@ -663,9 +844,13 @@ const PetMate = () => {
                                 name="contactNumber"
                                 value={formData.contactNumber}
                                 onChange={handleInputChange}
+                                onBlur={handleBlur}
                                 className="w-full p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63]"
                                 required 
                             />
+                            {touchedFields.contactNumber && validationErrors.contactNumber && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.contactNumber}</small>
+                            )}
                         </div>
                         
                         <div className="mb-5">
@@ -678,9 +863,13 @@ const PetMate = () => {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleInputChange}
+                                onBlur={handleBlur}
                                 className="w-full p-3 border border-gray-300 rounded-md text-base outline-none focus:border-[#e91e63]"
                                 required 
                             />
+                            {touchedFields.email && validationErrors.email && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.email}</small>
+                            )}
                         </div>
                         
                         <div className="mb-5 md:col-span-2">
@@ -698,6 +887,9 @@ const PetMate = () => {
                                     I confirm my pet is healthy and has all necessary vaccinations <span className="text-[#e91e63]">*</span>
                                 </label>
                             </div>
+                            {touchedFields.healthCheck && validationErrors.healthCheck && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.healthCheck}</small>
+                            )}
                         </div>
                         
                         <div className="mb-5 md:col-span-2">
@@ -715,13 +907,16 @@ const PetMate = () => {
                                     I agree to PetVerse's <a href="/terms" className="text-[#e91e63] hover:underline">Terms & Conditions</a> <span className="text-[#e91e63]">*</span>
                                 </label>
                             </div>
+                            {touchedFields.terms && validationErrors.terms && (
+                                <small className="block mt-1 text-sm text-[#e91e63]">{validationErrors.terms}</small>
+                            )}
                         </div>
                     </div>
                     
                     <button 
                         type="submit" 
                         className="block w-full max-w-[300px] mx-auto mt-8 py-3.5 px-5 bg-[#e91e63] text-white border-none rounded-md text-lg font-semibold cursor-pointer transition-colors duration-300 hover:bg-[#c2185b] disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={submitting}
+                        disabled={submitting || Object.keys(validateAll()).length > 0}
                     >
                         {submitting ? (
                             <>

@@ -19,7 +19,7 @@ const SignupOwner = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
 
-    const validateField = (name, value) => {
+    const validateField = (name, value, values = formData) => {
         let error = '';
         switch (name) {
             case 'email':
@@ -45,7 +45,7 @@ const SignupOwner = () => {
             case 'confirmPassword':
                 if (!value) {
                     error = 'Please confirm your password';
-                } else if (value !== formData.password) {
+                } else if (value !== values.password) {
                     error = 'Passwords do not match';
                 }
                 break;
@@ -85,12 +85,29 @@ const SignupOwner = () => {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         const fieldValue = type === 'checkbox' ? checked : value;
-        
-        setFormData(prev => ({ ...prev, [name]: fieldValue }));
-        
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: '' }));
-        }
+
+        const nextValues = { ...formData, [name]: fieldValue };
+        setFormData(nextValues);
+
+        setErrors(prev => {
+            const nextErrors = { ...prev };
+
+            if (touched[name]) {
+                nextErrors[name] = validateField(name, fieldValue, nextValues);
+            } else if (nextErrors[name]) {
+                nextErrors[name] = '';
+            }
+
+            if (name === 'password' && (touched.confirmPassword || nextValues.confirmPassword)) {
+                nextErrors.confirmPassword = validateField(
+                    'confirmPassword',
+                    nextValues.confirmPassword,
+                    nextValues
+                );
+            }
+
+            return nextErrors;
+        });
     };
 
     const handleBlur = (e) => {

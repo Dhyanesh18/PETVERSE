@@ -14,6 +14,8 @@ const ClaimReview = () => {
     const [reviewAction, setReviewAction] = useState('');
     const [rejectionReason, setRejectionReason] = useState('');
     const [ownerNotes, setOwnerNotes] = useState('');
+    const [reviewTouched, setReviewTouched] = useState({});
+    const [reviewErrors, setReviewErrors] = useState({});
 
     useEffect(() => {
         fetchClaimsAndPet();
@@ -44,7 +46,8 @@ const ClaimReview = () => {
         if (!selectedClaim || !reviewAction) return;
 
         if (reviewAction === 'reject' && !rejectionReason.trim()) {
-            alert('Please provide a reason for rejection');
+            setReviewTouched(prev => ({ ...prev, rejectionReason: true }));
+            setReviewErrors(prev => ({ ...prev, rejectionReason: 'Reason for rejection is required' }));
             return;
         }
 
@@ -264,7 +267,11 @@ const ClaimReview = () => {
                                                 <div className="space-y-4">
                                                     <div className="flex gap-2">
                                                         <button
-                                                            onClick={() => setReviewAction('approve')}
+                                                            onClick={() => {
+                                                                setReviewAction('approve');
+                                                                setReviewErrors({});
+                                                                setReviewTouched({});
+                                                            }}
                                                             className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
                                                                 reviewAction === 'approve'
                                                                     ? 'bg-green-600 text-white'
@@ -275,7 +282,10 @@ const ClaimReview = () => {
                                                             Approve
                                                         </button>
                                                         <button
-                                                            onClick={() => setReviewAction('reject')}
+                                                            onClick={() => {
+                                                                setReviewAction('reject');
+                                                                setReviewErrors(prev => ({ ...prev, rejectionReason: '' }));
+                                                            }}
                                                             className={`flex-1 py-2 px-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
                                                                 reviewAction === 'reject'
                                                                     ? 'bg-red-600 text-white'
@@ -309,12 +319,31 @@ const ClaimReview = () => {
                                                             </label>
                                                             <textarea
                                                                 value={rejectionReason}
-                                                                onChange={(e) => setRejectionReason(e.target.value)}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    setRejectionReason(val);
+                                                                    if (reviewTouched.rejectionReason) {
+                                                                        setReviewErrors(prev => ({
+                                                                            ...prev,
+                                                                            rejectionReason: val.trim() ? '' : 'Reason for rejection is required'
+                                                                        }));
+                                                                    }
+                                                                }}
+                                                                onBlur={() => {
+                                                                    setReviewTouched(prev => ({ ...prev, rejectionReason: true }));
+                                                                    setReviewErrors(prev => ({
+                                                                        ...prev,
+                                                                        rejectionReason: rejectionReason.trim() ? '' : 'Reason for rejection is required'
+                                                                    }));
+                                                                }}
                                                                 rows="2"
                                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
                                                                 placeholder="E.g., This doesn't look like my pet..."
                                                                 required
                                                             />
+                                                            {reviewTouched.rejectionReason && reviewErrors.rejectionReason && (
+                                                                <small className="block mt-1 text-red-500">{reviewErrors.rejectionReason}</small>
+                                                            )}
                                                         </div>
                                                     )}
 
@@ -332,7 +361,7 @@ const ClaimReview = () => {
                                                         </button>
                                                         <button
                                                             onClick={handleReviewSubmit}
-                                                            disabled={!reviewAction}
+                                                            disabled={!reviewAction || (reviewAction === 'reject' && !rejectionReason.trim())}
                                                             className="flex-1 py-2 px-4 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                                         >
                                                             Submit Review

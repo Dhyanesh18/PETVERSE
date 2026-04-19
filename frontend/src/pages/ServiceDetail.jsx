@@ -41,6 +41,40 @@ const ServiceDetail = () => {
         comment: ''
     });
 
+    const [reviewTouched, setReviewTouched] = useState({});
+    const [reviewErrors, setReviewErrors] = useState({});
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+
+    const validateReviewField = (name, value) => {
+        switch (name) {
+            case 'rating': {
+                const num = Number(value);
+                if (Number.isNaN(num)) return 'Select a rating';
+                if (num < 1 || num > 5) return 'Select a rating';
+                return '';
+            }
+            case 'comment':
+                return value?.trim() ? '' : 'Review is required';
+            default:
+                return '';
+        }
+    };
+
+    const validateReviewAll = (values = reviewForm) => {
+        const nextErrors = {};
+        const ratingErr = validateReviewField('rating', values.rating);
+        const commentErr = validateReviewField('comment', values.comment);
+        if (ratingErr) nextErrors.rating = ratingErr;
+        if (commentErr) nextErrors.comment = commentErr;
+        return nextErrors;
+    };
+
+    const handleReviewRatingChange = (rating) => {
+        setReviewTouched(prev => ({ ...prev, rating: true }));
+        setReviewForm(prev => ({ ...prev, rating }));
+        setReviewErrors(prev => ({ ...prev, rating: validateReviewField('rating', rating) }));
+    };
+
     const [reviewsPage, setReviewsPage] = useState(1);
     const [hasMoreReviews, setHasMoreReviews] = useState(true);
 
@@ -110,6 +144,8 @@ const ServiceDetail = () => {
         setShowReviewModal(true);
         setEditingReview(null);
         setReviewForm({ rating: 5, comment: '' });
+        setReviewTouched({});
+        setReviewErrors({});
     };
 
     const handleEditReview = (review) => {
@@ -119,11 +155,22 @@ const ServiceDetail = () => {
             rating: review.rating,
             comment: review.comment
         });
+        setReviewTouched({});
+        setReviewErrors({});
     };
 
     const handleSubmitReview = async (e) => {
         e.preventDefault();
+
+        const nextErrors = validateReviewAll();
+        if (Object.keys(nextErrors).length > 0) {
+            setReviewErrors(nextErrors);
+            setReviewTouched({ rating: true, comment: true });
+            return;
+        }
+
         try {
+            setReviewSubmitting(true);
             await addReview({
                 targetId: id,
                 targetType: 'ServiceProvider',
@@ -134,11 +181,15 @@ const ServiceDetail = () => {
             setShowReviewModal(false);
             setReviewForm({ rating: 5, comment: '' });
             setEditingReview(null);
+            setReviewTouched({});
+            setReviewErrors({});
             fetchReviews(1);
             fetchServiceDetails(); // Refresh to update rating
         } catch (error) {
             console.error('Error submitting review:', error);
             alert(error.response?.data?.message || 'Failed to submit review');
+        } finally {
+            setReviewSubmitting(false);
         }
     };
 
@@ -456,6 +507,8 @@ const ServiceDetail = () => {
                                 onClick={() => {
                                     setShowReviewModal(false);
                                     setEditingReview(null);
+                                    setReviewTouched({});
+                                    setReviewErrors({});
                                 }}
                                 className="text-gray-500 hover:text-gray-700 transition-colors"
                             >
@@ -468,21 +521,37 @@ const ServiceDetail = () => {
                                 <label className="block text-gray-700 font-medium mb-2">Rating</label>
                                 <div className="flex gap-2">
                                     {renderStars(reviewForm.rating, true, (rating) => 
-                                        setReviewForm(prev => ({ ...prev, rating }))
+                                        handleReviewRatingChange(rating)
                                     )}
                                 </div>
+                                {reviewTouched.rating && reviewErrors.rating && (
+                                    <small className="block mt-1 text-red-500">{reviewErrors.rating}</small>
+                                )}
                             </div>
 
                             <div className="mb-6">
                                 <label className="block text-gray-700 font-medium mb-2">Your Review</label>
                                 <textarea
                                     value={reviewForm.comment}
-                                    onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                                    onChange={(e) => {
+                                        const nextVal = e.target.value;
+                                        setReviewForm(prev => ({ ...prev, comment: nextVal }));
+                                        if (reviewTouched.comment) {
+                                            setReviewErrors(prev => ({ ...prev, comment: validateReviewField('comment', nextVal) }));
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        setReviewTouched(prev => ({ ...prev, comment: true }));
+                                        setReviewErrors(prev => ({ ...prev, comment: validateReviewField('comment', reviewForm.comment) }));
+                                    }}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 focus:outline-none"
                                     rows="4"
                                     required
                                     placeholder="Share your experience..."
                                 />
+                                {reviewTouched.comment && reviewErrors.comment && (
+                                    <small className="block mt-1 text-red-500">{reviewErrors.comment}</small>
+                                )}
                             </div>
 
                             <div className="flex gap-3">
@@ -498,9 +567,10 @@ const ServiceDetail = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 bg-teal-600 text-white py-2 rounded-md hover:bg-teal-700 transition-colors font-semibold hover:shadow-md"
+                                    disabled={reviewSubmitting || Object.keys(validateReviewAll()).length > 0}
+                                    className="flex-1 bg-teal-600 text-white py-2 rounded-md hover:bg-teal-700 transition-colors font-semibold hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {editingReview ? 'Update' : 'Submit'} Review
+                                    {reviewSubmitting ? 'Submitting...' : `${editingReview ? 'Update' : 'Submit'} Review`}
                                 </button>
                             </div>
                         </form>
