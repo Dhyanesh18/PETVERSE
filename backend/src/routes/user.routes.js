@@ -97,16 +97,16 @@ router.get('/home', async (req, res) => {
             success: true,
             data: {
                 slides: [
-                    { image: '/images/slide1.jpg', caption: 'Adorable Puppies' },
-                    { image: '/images/slide2.jpg', caption: 'Playful Kittens' },
-                    { image: '/images/slide3.jpg', caption: 'Exotic Birds' }
+                    { image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528276/petverse/slide1.jpg', caption: 'Adorable Puppies' },
+                    { image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528277/petverse/slide2.jpg', caption: 'Playful Kittens' },
+                    { image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528278/petverse/slide3.jpg', caption: 'Exotic Birds' }
                 ],
                 petCategories: [
-                    { name: 'Dogs', image: '/images/dog.jpg', url: '/pets?category=dogs' },
-                    { name: 'Cats', image: '/images/cat.jpg', url: '/pets?category=cats' },
-                    { name: 'Birds', image: '/images/bird.jpg', url: '/pets?category=birds' },
-                    { name: 'Fish', image: '/images/fish.jpg', url: '/pets?category=fish' },
-                    { name: 'Others', image:'/images/hamster.jpg', url:'/pets?category=other'}
+                    { name: 'Dogs', image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528199/petverse/dog.jpg', url: '/pets?category=dogs' },
+                    { name: 'Cats', image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528112/petverse/cat.jpg', url: '/pets?category=cats' },
+                    { name: 'Birds', image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528111/petverse/bird.jpg', url: '/pets?category=birds' },
+                    { name: 'Fish', image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528205/petverse/fish.jpg', url: '/pets?category=fish' },
+                    { name: 'Others', image: 'https://res.cloudinary.com/darnvbr0g/image/upload/v1776528208/petverse/hamster.jpg', url: '/pets?category=other'}
                 ],
                 featuredPets: featuredPets.map(pet => ({
                     _id: pet._id,
