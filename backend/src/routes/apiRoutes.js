@@ -140,7 +140,7 @@ router.get('/check-session', (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.get('/pets', async (req, res) => {
+router.get('/pets', cacheMiddleware('pets', 300), async (req, res) => {
     try {
         const pets = await Pet.find({ available: true })
             .select({ 'images.data': 0 })
@@ -151,7 +151,6 @@ router.get('/pets', async (req, res) => {
             thumbnail: pet.images && pet.images.length > 0 ? `/api/pets/image/${pet._id}/0` : null
         }));
 
-        res.set('Cache-Control', 'no-store');
         res.json({ success: true, data: safePets });
     } catch (err) {
         console.error('Error fetching pets:', err);
@@ -222,7 +221,7 @@ router.get('/pets/:id([0-9a-fA-F]{24})', async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/ApiResponse'
  */
-router.get('/products', async (req, res) => {
+router.get('/products', cacheMiddleware('products', 300), async (req, res) => {
     try {
         const products = await Product.find({ available: true })
             .select({ 'images.data': 0 })
@@ -234,7 +233,6 @@ router.get('/products', async (req, res) => {
         }));
 
         console.log('Found products:', safeProducts.length);
-        res.set('Cache-Control', 'no-store');
         res.json({ success: true, data: safeProducts });
     } catch (err) {
         console.error('Error fetching products:', err);
